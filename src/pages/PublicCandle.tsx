@@ -144,6 +144,7 @@ export default function PublicCandle() {
   const [answers, setAnswers] = useState<ReviewAnswers>({})
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(0)
+  const [sentFinal, setSentFinal] = useState(false)
   const [failed, setFailed] = useState<string | null>(null)
 
   useEffect(() => {
@@ -184,6 +185,7 @@ export default function PublicCandle() {
       if (!url) throw new Error('no url')
       await sendFeedback(url, p)
       setSent((n) => n + 1)
+      setSentFinal(p.finished === 'yes')
       notify('Спасибо! Отзыв отправлен')
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch {
@@ -212,7 +214,9 @@ export default function PublicCandle() {
           </Text>
           {sent > 0 && (
             <Text color="emerald.300" mt="3">
-              Отзыв получен{sent > 1 ? ` (${sent})` : ''}. Можно отправить ещё один, когда свеча догорит.
+              {sentFinal
+                ? 'Спасибо! Отзыв получен.'
+                : `Отзыв получен${sent > 1 ? ` (${sent})` : ''}. Можно отправить ещё один, когда свеча догорит.`}
             </Text>
           )}
         </Box>
