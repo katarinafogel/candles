@@ -2,7 +2,7 @@ import { Box, Button, Center, Container, Flex, Heading, Input, Spinner, Stack, T
 import type { Session } from '@supabase/supabase-js'
 import { useEffect, useState, type ReactNode } from 'react'
 import { FcGoogle } from 'react-icons/fc'
-import { LuFlame, LuMail } from 'react-icons/lu'
+import { LuFlame } from 'react-icons/lu'
 import { publicBase } from '../lib/config'
 import { authRedirect, supabase, supabaseConfigured } from '../lib/supabase'
 import { startSync } from '../lib/sync'
@@ -39,9 +39,6 @@ function Shell({ children }: { children: ReactNode }) {
 }
 
 function Login() {
-  const [email, setEmail] = useState('')
-  const [code, setCode] = useState('')
-  const [sent, setSent] = useState(false)
   const [busy, setBusy] = useState(false)
 
   async function google() {
@@ -53,70 +50,15 @@ function Login() {
     }
   }
 
-  async function sendCode() {
-    setBusy(true)
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { shouldCreateUser: true, emailRedirectTo: authRedirect() },
-    })
-    setBusy(false)
-    if (error) return notify('Не удалось отправить письмо', 'error', error.message)
-    setSent(true)
-  }
-
-  async function verify() {
-    setBusy(true)
-    // A code typed into the app works even when the letter is opened on another device.
-    const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: 'email' })
-    setBusy(false)
-    if (error) notify('Код не подошёл', 'error', error.message)
-  }
-
   return (
     <Shell>
-      <Stack gap="5">
-        <Button size="lg" variant="outline" onClick={google} loading={busy && !sent}>
+      <Stack gap="4">
+        <Button size="lg" variant="outline" onClick={google} loading={busy}>
           <FcGoogle /> Войти через Google
         </Button>
-        <Flex align="center" gap="3" color="fg.subtle" fontSize="xs">
-          <Box flex="1" h="1px" bg="border" />
-          или по почте
-          <Box flex="1" h="1px" bg="border" />
-        </Flex>
-        {!sent ? (
-          <>
-            <Field label="Почта">
-              <Input type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            </Field>
-            <Button onClick={sendCode} disabled={!/^\S+@\S+\.\S+$/.test(email.trim())} loading={busy}>
-              <LuMail /> Получить письмо
-            </Button>
-          </>
-        ) : (
-          <>
-            <Text fontSize="sm" color="fg.muted">
-              Отправили письмо на <b>{email}</b>. Откройте ссылку из письма в этом же браузере — или введите код, если он есть в
-              письме.
-            </Text>
-            <Field label="Код из письма">
-              <Input
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                fontSize="xl"
-                letterSpacing="0.3em"
-                textAlign="center"
-              />
-            </Field>
-            <Button onClick={verify} disabled={code.length < 6} loading={busy}>
-              Войти
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setSent(false)}>
-              Другая почта
-            </Button>
-          </>
-        )}
+        <Text fontSize="xs" color="fg.subtle" textAlign="center">
+          Аккаунт создаётся при первом входе
+        </Text>
       </Stack>
     </Shell>
   )
