@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { LuCopy, LuDownload } from 'react-icons/lu'
 import { candleLink } from '../lib/config'
 import { saveFile } from '../lib/download'
-import { useData } from '../store'
+import { useAppSelector, useData } from '../store'
 import { notify } from './ui'
 
 export const qrDataUrl = (text: string, width = 512) =>
@@ -12,7 +12,8 @@ export const qrDataUrl = (text: string, width = 512) =>
 
 export function QrBlock({ candleId }: { candleId: string }) {
   const d = useData()
-  const link = candleLink(candleId, d.settings)
+  const slug = useAppSelector((s) => s.local.profile?.slug ?? '')
+  const link = candleLink(slug, candleId, d.settings)
   const [src, setSrc] = useState('')
   useEffect(() => {
     qrDataUrl(link).then(setSrc)

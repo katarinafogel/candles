@@ -64,10 +64,6 @@ export default function Instructions() {
                 disabled={!edit.title.trim()}
                 onClick={() => {
                   dispatch(actions.upsertInstruction(edit))
-                  // Candles with this template must be re-published so recipients see the new text.
-                  if (edit.id)
-                    for (const c of Object.values(d.candles))
-                      if (c.instructionId === edit.id && c.published) dispatch(actions.updateCandle({ id: c.id, published: false }))
                   setEdit(null)
                 }}
               >

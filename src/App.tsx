@@ -1,4 +1,5 @@
-import { Route, Routes } from 'react-router-dom'
+import { Outlet, Route, Routes } from 'react-router-dom'
+import { AuthGate } from './components/AuthGate'
 import Layout from './components/Layout'
 import CandlePage from './pages/CandlePage'
 import Candles from './pages/Candles'
@@ -24,7 +25,14 @@ export default function App() {
   return (
     <Routes>
       {/* The recipient's page lives outside the master layout. */}
-      <Route path="/c/:id" element={<PublicCandle />} />
+      <Route path="/c/:slug/:id" element={<PublicCandle />} />
+      <Route
+        element={
+          <AuthGate>
+            <Outlet />
+          </AuthGate>
+        }
+      >
       <Route path="/print" element={<PrintQr />} />
       <Route element={<Layout />}>
         <Route index element={<Home />} />
@@ -45,6 +53,7 @@ export default function App() {
         <Route path="settings" element={<Settings />} />
         <Route path="more" element={<More />} />
         <Route path="*" element={<Home />} />
+      </Route>
       </Route>
     </Routes>
   )

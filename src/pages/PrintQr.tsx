@@ -5,7 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { qrDataUrl } from '../components/QrBlock'
 import { NumInput } from '../components/ui'
 import { candleLink } from '../lib/config'
-import { useData } from '../store'
+import { useAppSelector, useData } from '../store'
 
 /** A printable sheet of QR codes with the candle id under each. */
 export default function PrintQr() {
@@ -13,15 +13,16 @@ export default function PrintQr() {
   const nav = useNavigate()
   const [sp] = useSearchParams()
   const ids = (sp.get('ids') ?? '').split(',').filter(Boolean)
+  const slug = useAppSelector((s) => s.local.profile?.slug ?? '')
   const [sizeCm, setSizeCm] = useState<number | undefined>(2.5)
   const [srcs, setSrcs] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    Promise.all(ids.map(async (id) => [id, await qrDataUrl(candleLink(id, d.settings), 600)] as const)).then((e) =>
+    Promise.all(ids.map(async (id) => [id, await qrDataUrl(candleLink(slug, id, d.settings), 600)] as const)).then((e) =>
       setSrcs(Object.fromEntries(e)),
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sp.get('ids'), d.settings.publicUrl])
+  }, [sp.get('ids'), d.settings.publicUrl, slug])
 
   const size = `${sizeCm ?? 2.5}cm`
   return (

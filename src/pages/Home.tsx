@@ -1,19 +1,16 @@
-import { Alert, Box, Button, Flex, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/react'
+import { Box, Button, Flex, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
-import { LuDownload, LuDroplets, LuFlaskConical, LuRefreshCw } from 'react-icons/lu'
+import { LuDroplets, LuFlaskConical, LuRefreshCw } from 'react-icons/lu'
 import { Link as RouterLink } from 'react-router-dom'
 import { IdBadge, Link, notify, PageHeader, Section, Stat } from '../components/ui'
-import { downloadBackup } from '../lib/backup'
-import { fmt, fmtDate, stockOf, thresholdOf } from '../lib/calc'
+import { fmt, stockOf, thresholdOf } from '../lib/calc'
 import { unitLabel } from '../lib/labels'
-import { pullAll } from '../lib/publish'
+import { load } from '../lib/sync'
 import { fallbackUse, lowMaterials, unreadReviews } from '../lib/selectors'
-import { store, useAppDispatch, useData } from '../store'
-import { actions } from '../store/dataSlice'
+import { store, useData } from '../store'
 
 export default function Home() {
   const d = useData()
-  const dispatch = useAppDispatch()
   const [pulling, setPulling] = useState(false)
   const holders = Object.values(d.holders)
   const candles = Object.values(d.candles)
@@ -22,22 +19,13 @@ export default function Home() {
   const low = lowMaterials(d)
   const unread = unreadReviews(d)
 
-  const s = d.settings
-  const weekAgo = Date.now() - 7 * 86400000
-  const needBackup =
-    !!s.lastChangeAt &&
-    (!s.lastBackupAt || (new Date(s.lastBackupAt).getTime() < weekAgo && s.lastChangeAt > s.lastBackupAt))
-
   async function pull() {
     setPulling(true)
-    try {
-      const n = await pullAll(store.getState, dispatch)
-      notify(n ? `Новых отзывов: ${n}` : 'Новых отзывов нет')
-    } catch (e) {
-      notify('Не удалось подтянуть отзывы', 'error', (e as Error).message)
-    } finally {
-      setPulling(false)
-    }
+    await load()
+    setPulling(false)
+    const err = store.getState().local.sync.error
+    if (err) notify('Не удалось обновить', 'error', err)
+    else notify('Обновлено')
   }
 
   return (
@@ -55,29 +43,6 @@ export default function Home() {
         </Button>
       </PageHeader>
 
-      {needBackup && (
-        <Alert.Root status="warning" mb="4" borderRadius="l3">
-          <Alert.Indicator />
-          <Alert.Content>
-            <Alert.Title>Давно не было бэкапа</Alert.Title>
-            <Alert.Description>
-              {s.lastBackupAt ? `Последний — ${fmtDate(s.lastBackupAt)}.` : 'Бэкап ещё ни разу не делался.'} Данные живут
-              только на этом устройстве.
-            </Alert.Description>
-          </Alert.Content>
-          <Button
-            size="sm"
-            variant="surface"
-            colorPalette="orange"
-            onClick={async () => {
-              await downloadBackup(d)
-              dispatch(actions.markBackup(new Date().toISOString()))
-            }}
-          >
-            <LuDownload /> Скачать
-          </Button>
-        </Alert.Root>
-      )}
 
       <Section title="Подсвечники">
         <SimpleGrid columns={{ base: 2, sm: 3, lg: 6 }} gap="3">
@@ -124,7 +89,7 @@ export default function Home() {
           title={`Непрочитанные отзывы${unread.length ? ` · ${unread.length}` : ''}`}
           actions={
             <Button size="xs" variant="outline" onClick={pull} loading={pulling}>
-              <LuRefreshCw /> Подтянуть
+              <LuRefreshCw /> Обновить
             </Button>
           }
         >
@@ -147,8 +112,7 @@ export default function Home() {
             </Stack>
           ) : (
             <Text color="fg.muted" fontSize="sm">
-              Нет непрочитанных.{' '}
-              {s.lastPullAt && `Последнее подтягивание: ${fmtDate(s.lastPullAt)}.`}
+              Нет непрочитанных.
             </Text>
           )}
         </Section>

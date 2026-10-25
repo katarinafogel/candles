@@ -2,8 +2,8 @@ import { Box, Flex, Stack, Text } from '@chakra-ui/react'
 import { useEffect, type ReactNode } from 'react'
 import { LuBox, LuEllipsis, LuFlame, LuHouse, LuLayers, LuMessageSquare, LuScrollText, LuSettings, LuSparkles, LuUsers, LuWarehouse } from 'react-icons/lu'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { publishPending } from '../lib/publish'
-import { useAppDispatch, useAppSelector, store } from '../store'
+import { SyncBadge } from './SyncBadge'
+import { useAppDispatch, useAppSelector } from '../store'
 import { localActions } from '../store/localSlice'
 
 interface NavItem {
@@ -94,14 +94,6 @@ export default function Layout() {
   useEffect(() => {
     // Ask the browser not to evict our IndexedDB when space runs low.
     navigator.storage?.persist?.().then((ok) => dispatch(localActions.setPersistGranted(ok)))
-    const retry = () => publishPending(store.getState, dispatch)
-    retry()
-    window.addEventListener('online', retry)
-    const t = setInterval(retry, 5 * 60 * 1000)
-    return () => {
-      window.removeEventListener('online', retry)
-      clearInterval(t)
-    }
   }, [dispatch])
 
   return (
@@ -128,6 +120,9 @@ export default function Layout() {
             Мастерская свечей
           </Text>
         </Flex>
+        <Box mb="4" px="2">
+          <SyncBadge />
+        </Box>
         <Stack gap="1">
           {primary.map((i) => (
             <SideLink key={i.to} item={i} />
@@ -140,6 +135,9 @@ export default function Layout() {
       </Box>
 
       <Box flex="1" minW="0" px={{ base: '4', md: '8' }} pt={{ base: '4', md: '8' }} pb={{ base: '24', md: '10' }} maxW="1200px">
+        <Box display={{ base: 'flex', md: 'none' }} justifyContent="flex-end" mb="2">
+          <SyncBadge />
+        </Box>
         <Outlet />
       </Box>
 
