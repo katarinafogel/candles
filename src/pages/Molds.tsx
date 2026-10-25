@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { Check, Chips, Empty, Field, Modal, NumInput, PageHeader, Select, TextArea, TextInput } from '../components/ui'
 import { fmt } from '../lib/calc'
 import { moldPurposeLabel, moldStatusLabel, wickSchemeLabel } from '../lib/labels'
-import { moldStats } from '../lib/selectors'
+import { moldStats, sortMolds } from '../lib/selectors'
 import { useAppDispatch, useData } from '../store'
 import { actions } from '../store/dataSlice'
 import type { Mold, MoldPurpose, MoldStatus, WickScheme } from '../types'
@@ -89,6 +89,13 @@ export function MoldDialog({ mold, onClose }: { mold: Omit<Mold, 'id'> & { id?: 
             options={Object.entries(wickSchemeLabel).map(([value, label]) => ({ value: value as WickScheme, label }))}
           />
         </Field>
+        <Field label="Оценка" helper="чем больше звёзд, тем выше форма в списках">
+          <Chips
+            value={m.rating ? String(m.rating) : undefined}
+            onChange={(v) => set('rating', v ? Number(v) : undefined)}
+            options={[1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: '★'.repeat(n) }))}
+          />
+        </Field>
         <Field label="Статус">
           <Select
             value={m.status}
@@ -109,9 +116,10 @@ export default function Molds() {
   const nav = useNavigate()
   const [edit, setEdit] = useState<(Omit<Mold, 'id'> & { id?: string }) | null>(null)
   const [showRetired, setShowRetired] = useState(false)
-  const list = Object.values(d.molds)
-    .filter((m) => showRetired || m.status === 'active')
-    .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+  const list = sortMolds(
+    d,
+    Object.values(d.molds).filter((m) => showRetired || m.status === 'active'),
+  )
 
   return (
     <>
@@ -142,7 +150,16 @@ export default function Molds() {
               onClick={() => nav(`/molds/${m.id}`)}
             >
               <Flex justify="space-between" gap="2">
-                <Text fontWeight="semibold">{m.name}</Text>
+                <HStack gap="2" minW="0">
+                  <Text fontWeight="semibold" truncate>
+                    {m.name}
+                  </Text>
+                  {m.rating && (
+                    <Text fontSize="xs" color="emerald.300" whiteSpace="nowrap">
+                      {'★'.repeat(m.rating)}
+                    </Text>
+                  )}
+                </HStack>
                 <HStack gap="1">
                   <Badge variant="subtle">{moldPurposeLabel[m.purpose]}</Badge>
                   {m.status !== 'active' && <Badge colorPalette="red">{moldStatusLabel[m.status]}</Badge>}

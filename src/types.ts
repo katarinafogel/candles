@@ -25,6 +25,8 @@ export interface Mold {
   dyePct?: number
   plasticizerPct?: number
   status: MoldStatus
+  /** 1–5 stars; higher-rated molds come first in lists. */
+  rating?: number
   comment: string
 }
 
