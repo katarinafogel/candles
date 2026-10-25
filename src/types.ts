@@ -27,6 +27,8 @@ export interface Mold {
   status: MoldStatus
   /** 1–5 stars; higher-rated molds come first in lists. */
   rating?: number
+  /** Archived molds are hidden from new mixes and molded candles. */
+  archived?: boolean
   comment: string
 }
 

@@ -7,7 +7,7 @@ import { Check, Empty, Field, IdBadge, Modal, notify, NumInput, PageHeader, Sele
 import { fmt } from '../lib/calc'
 import { nowLocal, toIso } from '../lib/dates'
 import { candleStageLabel, candleStageOrder, wickSchemeLabel } from '../lib/labels'
-import { byId, candleRating, materialOptions, moldOfCandle, sootShare } from '../lib/selectors'
+import { byId, candleRating, materialOptions, moldOfCandle, sootShare, sortMolds } from '../lib/selectors'
 import { useAppDispatch, useData } from '../store'
 import { actions } from '../store/dataSlice'
 import type { CandleStage, WickScheme } from '../types'
@@ -43,7 +43,7 @@ function ReadyDialog({ ids, onClose }: { ids: string[]; onClose: () => void }) {
 function MoldedCandleDialog({ onClose }: { onClose: () => void }) {
   const d = useData()
   const dispatch = useAppDispatch()
-  const molds = Object.values(d.molds).filter((m) => m.purpose === 'candle' && m.status === 'active')
+  const molds = sortMolds(d, Object.values(d.molds).filter((m) => m.purpose === 'candle' && m.status === 'active' && !m.archived))
   const [moldId, setMoldId] = useState(molds[0]?.id ?? '')
   const mold = d.molds[moldId]
   const [name, setName] = useState(mold?.name ?? '')

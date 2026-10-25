@@ -214,6 +214,54 @@ export function Chips<T extends string>({
   )
 }
 
+/** Five stars: tapping the third sets 3; tapping the current value clears it. */
+export function StarRating({
+  value,
+  onChange,
+  size = 'md',
+}: {
+  value: number | undefined
+  onChange: (v: number | undefined) => void
+  size?: 'sm' | 'md'
+}) {
+  const px = size === 'sm' ? '18px' : '24px'
+  return (
+    <HStack gap="0.5" role="radiogroup" aria-label="Оценка">
+      {[1, 2, 3, 4, 5].map((n) => {
+        const on = (value ?? 0) >= n
+        return (
+          <Box
+            as="button"
+            key={n}
+            role="radio"
+            aria-checked={value === n}
+            aria-label={`${n} из 5`}
+            p="0.5"
+            lineHeight="0"
+            color={on ? 'emerald.300' : 'fg.subtle'}
+            _hover={{ color: 'emerald.200' }}
+            cursor="pointer"
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation()
+              onChange(value === n ? undefined : n)
+            }}
+          >
+            <svg width={px} height={px} viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 2.8l2.83 5.73 6.33.92-4.58 4.46 1.08 6.3L12 17.24l-5.66 2.97 1.08-6.3L2.84 9.45l6.33-.92z"
+                fill={on ? 'currentColor' : 'none'}
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </Box>
+        )
+      })}
+    </HStack>
+  )
+}
+
 export function Modal({
   open,
   onClose,
