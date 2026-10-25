@@ -11,6 +11,7 @@ import { byId, candleRating, materialOptions, moldOfCandle, sootShare, sortMolds
 import { useAppDispatch, useData } from '../store'
 import { actions } from '../store/dataSlice'
 import type { CandleStage, WickScheme } from '../types'
+import { withUndo } from '../lib/undo'
 
 function ReadyDialog({ ids, onClose }: { ids: string[]; onClose: () => void }) {
   const dispatch = useAppDispatch()
@@ -24,8 +25,7 @@ function ReadyDialog({ ids, onClose }: { ids: string[]; onClose: () => void }) {
         <Button
           onClick={() => {
             const iso = toIso(date)
-            dispatch(actions.advanceCandles({ ids, date: iso, params: { step: 'ready', readyAt: iso } }))
-            notify('Свечи готовы')
+            withUndo('candle', ids, () => dispatch(actions.advanceCandles({ ids, date: iso, params: { step: 'ready', readyAt: iso } })), 'Свечи готовы')
             onClose()
           }}
         >
@@ -253,7 +253,7 @@ export default function Candles() {
           return (
             <Flex key={c.id} align="center" gap="3" p="3" borderWidth="1px" borderColor={on ? 'emerald.600' : 'border'} bg={on ? 'emerald.subtle' : 'bg.subtle'} borderRadius="l3">
               <Check checked={on} onChange={(v) => setSel(v ? [...sel, c.id] : sel.filter((x) => x !== c.id))} />
-              <Box flex="1" minW="0" cursor="pointer" onClick={() => nav(`/candles/${c.id}`)}>
+              <Box flex="1" minW="0" cursor="pointer" onClick={() => nav(`/candles/${c.id}`, { state: { back: `/candles${sp.size ? `?${sp}` : ''}` } })}>
                 <HStack gap="2">
                   <IdBadge id={c.id} />
                   <Text fontWeight="medium" truncate>

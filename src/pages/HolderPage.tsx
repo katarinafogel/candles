@@ -6,7 +6,7 @@ import { History } from '../components/History'
 import { DefectDialog, HolderStepDialog } from '../components/StepDialogs'
 import { confirmAction, Empty, IdBadge, Link, notify, PageHeader, Row, Section, Select } from '../components/ui'
 import { daysBetween, fmt, fmtDateTime } from '../lib/calc'
-import { candleStageLabel, defectReasonLabel, holderNextTitle, holderStageLabel, varnishKindLabel } from '../lib/labels'
+import { candleStageLabel, defectReasonLabel, holderNextTitle, holderStageLabel, moldPurposeLabel, varnishKindLabel } from '../lib/labels'
 import { holderTitle } from '../lib/selectors'
 import { useAppDispatch, useData } from '../store'
 import { actions, nextHolderStage } from '../store/dataSlice'
@@ -49,7 +49,7 @@ export default function HolderPage() {
   const dispatch = useAppDispatch()
   const [dialog, setDialog] = useState<'next' | 'defect' | null>(null)
   const h = d.holders[id]
-  if (!h) return <Empty>Подсвечник {id} не найден</Empty>
+  if (!h) return <Empty>Изделие {id} не найдено</Empty>
   const mold = d.molds[h.moldId]
   const candle = h.candleId ? d.candles[h.candleId] : undefined
   const mat = (mid?: string) => (mid ? d.materials[mid]?.name ?? '—' : '—')
@@ -85,7 +85,7 @@ export default function HolderPage() {
         )}
       </PageHeader>
 
-      <Section title="Подсвечник">
+      <Section title={moldPurposeLabel[h.purpose].replace(/^./, (c) => c.toUpperCase())}>
         <Row label="Этап">
           <Text color={h.stage === 'defect' ? 'red.400' : 'emerald.300'}>{holderStageLabel[h.stage]}</Text>
         </Row>
@@ -127,18 +127,20 @@ export default function HolderPage() {
             </Text>
           </Row>
         )}
-        <Row label="Свеча">
-          {candle ? (
-            <HStack>
-              <IdBadge id={candle.id} to={`/candles/${candle.id}`} />
-              <Text>
-                {candle.name} · {candleStageLabel[candle.stage]}
-              </Text>
-            </HStack>
-          ) : (
-            '—'
-          )}
-        </Row>
+        {h.purpose === 'holder' && (
+          <Row label="Свеча">
+            {candle ? (
+              <HStack>
+                <IdBadge id={candle.id} to={`/candles/${candle.id}`} />
+                <Text>
+                  {candle.name} · {candleStageLabel[candle.stage]}
+                </Text>
+              </HStack>
+            ) : (
+              '—'
+            )}
+          </Row>
+        )}
       </Section>
 
       <Section title="Рецепт гипса">

@@ -25,7 +25,7 @@ import {
   type BoxProps,
 } from '@chakra-ui/react'
 import { useEffect, useState, type ReactNode } from 'react'
-import { Link as RouterLink } from 'react-router-dom'
+import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { parseNum } from '../lib/calc'
 import { Crescent, Leaf, Sparkle } from './Magic'
 
@@ -357,7 +357,10 @@ export function Modal({
   )
 }
 
+/** `back` is the default; a list that opened this page can pass its own address (with its tab) in `state.back`. */
 export function PageHeader({ title, children, back }: { title: ReactNode; children?: ReactNode; back?: string }) {
+  const from = (useLocation().state as { back?: string } | null)?.back
+  if (back && from) back = from
   return (
     <Flex align="center" justify="space-between" gap="3" mb="4" wrap="wrap">
       <HStack gap="3">

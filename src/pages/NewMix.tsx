@@ -116,12 +116,15 @@ export default function NewMix() {
               onChange={(v) => setKind((v as typeof kind) ?? 'all')}
               options={[
                 { value: 'all', label: 'Все' },
-                ...plasterPurposes
-                  .filter((p) => molds.some((m) => m.purpose === p))
-                  .map((p) => ({ value: p, label: plasterPurposePlural[p] })),
+                ...plasterPurposes.map((p) => ({ value: p, label: plasterPurposePlural[p] })),
               ]}
             />
           </Box>
+        )}
+        {molds.length > 0 && kind !== 'all' && !molds.some((m) => m.purpose === kind) && (
+          <Text color="fg.muted" fontSize="sm" mb="2">
+            Нет форм типа «{moldPurposeLabel[kind]}» в работе. Поменять тип или вернуть форму из архива можно в разделе «Формы».
+          </Text>
         )}
         <Stack gap="1">
           {molds
