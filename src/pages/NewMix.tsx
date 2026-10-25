@@ -27,7 +27,9 @@ export default function NewMix() {
   const s = d.settings
   const molds = sortMolds(
     d,
-    Object.values(d.molds).filter((m) => m.status === 'active' && (m.purpose === 'holder' || m.purpose === 'lid')),
+    Object.values(d.molds).filter(
+      (m) => m.status === 'active' && !m.archived && (m.purpose === 'holder' || m.purpose === 'lid'),
+    ),
   )
   const uses = moldUses(d)
   // Molds with a lid make candle holders; molds without one are decorative.

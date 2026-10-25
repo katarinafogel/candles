@@ -1,8 +1,8 @@
 import { Badge, Box, Button, Flex, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
-import { LuPlus } from 'react-icons/lu'
+import { LuArchive, LuArchiveRestore, LuPencil, LuPlus } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
-import { Check, Chips, Empty, Field, Modal, NumInput, PageHeader, Select, TextArea, TextInput } from '../components/ui'
+import { Check, Chips, Empty, Field, Modal, notify, NumInput, PageHeader, Select, StarRating, TextArea, TextInput } from '../components/ui'
 import { fmt } from '../lib/calc'
 import { moldPurposeLabel, moldStatusLabel, wickSchemeLabel } from '../lib/labels'
 import { moldStats, sortMolds } from '../lib/selectors'
@@ -90,12 +90,11 @@ export function MoldDialog({ mold, onClose }: { mold: Omit<Mold, 'id'> & { id?: 
           />
         </Field>
         <Field label="Оценка" helper="чем больше звёзд, тем выше форма в списках">
-          <Chips
-            value={m.rating ? String(m.rating) : undefined}
-            onChange={(v) => set('rating', v ? Number(v) : undefined)}
-            options={[1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: '★'.repeat(n) }))}
-          />
+          <StarRating value={m.rating} onChange={(v) => set('rating', v)} />
         </Field>
+        <Check checked={!!m.archived} onChange={(v) => set('archived', v || undefined)}>
+          В архиве — не показывать в новом замесе
+        </Check>
         <Field label="Статус">
           <Select
             value={m.status}
@@ -111,15 +110,36 @@ export function MoldDialog({ mold, onClose }: { mold: Omit<Mold, 'id'> & { id?: 
   )
 }
 
+export function ArchiveButton({ mold, size = 'xs' }: { mold: Mold; size?: 'xs' | 'sm' }) {
+  const dispatch = useAppDispatch()
+  return (
+    <Button
+      size={size}
+      variant={size === 'xs' ? 'ghost' : 'outline'}
+      onClick={(e) => {
+        e.stopPropagation()
+        dispatch(actions.upsertMold({ ...mold, archived: mold.archived ? undefined : true }))
+        notify(mold.archived ? `«${mold.name}» снова в работе` : `«${mold.name}» в архиве`)
+      }}
+    >
+      {mold.archived ? <LuArchiveRestore /> : <LuArchive />} {mold.archived ? 'Из архива' : 'В архив'}
+    </Button>
+  )
+}
+
 export default function Molds() {
   const d = useData()
   const nav = useNavigate()
   const [edit, setEdit] = useState<(Omit<Mold, 'id'> & { id?: string }) | null>(null)
-  const [showRetired, setShowRetired] = useState(false)
+  const dispatch = useAppDispatch()
+  const [showArchive, setShowArchive] = useState(false)
+  const hidden = (m: Mold) => !!m.archived || m.status !== 'active'
+  const all = Object.values(d.molds)
   const list = sortMolds(
     d,
-    Object.values(d.molds).filter((m) => showRetired || m.status === 'active'),
+    all.filter((m) => showArchive || !hidden(m)),
   )
+  const hiddenCount = all.filter(hidden).length
 
   return (
     <>
@@ -129,8 +149,8 @@ export default function Molds() {
         </Button>
       </PageHeader>
       <Box mb="3">
-        <Check checked={showRetired} onChange={setShowRetired}>
-          <Text fontSize="sm">Показать порванные и списанные</Text>
+        <Check checked={showArchive} onChange={setShowArchive}>
+          <Text fontSize="sm">Показать архив, порванные и списанные · {hiddenCount}</Text>
         </Check>
       </Box>
       {!list.length && <Empty>Форм пока нет. Добавьте вручную или импортируйте из таблицы в настройках.</Empty>}
@@ -150,18 +170,12 @@ export default function Molds() {
               onClick={() => nav(`/molds/${m.id}`)}
             >
               <Flex justify="space-between" gap="2">
-                <HStack gap="2" minW="0">
-                  <Text fontWeight="semibold" truncate>
-                    {m.name}
-                  </Text>
-                  {m.rating && (
-                    <Text fontSize="xs" color="emerald.300" whiteSpace="nowrap">
-                      {'★'.repeat(m.rating)}
-                    </Text>
-                  )}
-                </HStack>
+                <Text fontWeight="semibold" truncate minW="0">
+                  {m.name}
+                </Text>
                 <HStack gap="1">
                   <Badge variant="subtle">{moldPurposeLabel[m.purpose]}</Badge>
+                  {m.archived && <Badge colorPalette="gray">в архиве</Badge>}
                   {m.status !== 'active' && <Badge colorPalette="red">{moldStatusLabel[m.status]}</Badge>}
                 </HStack>
               </Flex>
@@ -173,6 +187,22 @@ export default function Molds() {
                 отлито {st.holders.length} · брак {st.defectPct != null ? `${fmt(st.defectPct, 0)}%` : '—'} · оценка{' '}
                 {st.avgOverall != null ? fmt(st.avgOverall, 1) : '—'}
               </Text>
+              <Flex mt="2" align="center" justify="space-between" gap="2" wrap="wrap">
+                <StarRating size="sm" value={m.rating} onChange={(v) => dispatch(actions.upsertMold({ ...m, rating: v }))} />
+                <HStack gap="1">
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setEdit(m)
+                    }}
+                  >
+                    <LuPencil /> Изменить
+                  </Button>
+                  <ArchiveButton mold={m} />
+                </HStack>
+              </Flex>
             </Box>
           )
         })}
