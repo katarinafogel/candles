@@ -7,6 +7,7 @@ import { notify, NumInput } from '../components/ui'
 import { fmt, round2 } from '../lib/calc'
 import { supabase } from '../lib/supabase'
 import type { ReviewAnswers } from '../types'
+import { MoonSlice } from '../components/Magic'
 
 interface Session {
   start: number
@@ -74,6 +75,8 @@ function BurnTracker({ id, sessions, setSessions }: { id: string; sessions: Sess
           borderRadius="full"
           fontSize="xl"
           variant={open ? 'outline' : 'solid'}
+          colorPalette="ember"
+          boxShadow={open ? undefined : '0 0 32px -6px rgba(224,164,85,.55)'}
           onClick={() => (open ? setAskOut(true) : save([...sessions, { start: Date.now() }]))}
         >
           {open ? <LuWind /> : <LuFlame />} {open ? 'Потушить' : 'Зажечь'}
@@ -196,13 +199,13 @@ export default function PublicCandle() {
     <Container maxW="560px" px="4" py="8" pb="16">
       <Stack gap="8">
         <Box textAlign="center">
-          <Flex justify="center" color="emerald.400" fontSize="4xl" mb="2">
-            <LuFlame />
+          <Flex justify="center" mb="3">
+            <MoonSlice size={64} />
           </Flex>
           {loading ? (
-            <Spinner color="emerald.400" />
+            <Spinner color="ember.300" />
           ) : (
-            <Heading size="2xl" letterSpacing="-0.01em">
+            <Heading size="4xl" fontWeight="semibold" color="ember.50">
               {info?.name || 'Свеча'}
             </Heading>
           )}

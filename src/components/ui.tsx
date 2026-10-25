@@ -27,6 +27,7 @@ import {
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 import { parseNum } from '../lib/calc'
+import { Crescent, Sparkle } from './Magic'
 
 export const toaster = createToaster({ placement: 'top', pauseOnPageIdle: true })
 
@@ -238,8 +239,9 @@ export function StarRating({
             aria-label={`${n} из 5`}
             p="0.5"
             lineHeight="0"
-            color={on ? 'emerald.300' : 'fg.subtle'}
-            _hover={{ color: 'emerald.200' }}
+            color={on ? 'ember.300' : 'fg.subtle'}
+            filter={on ? 'drop-shadow(0 0 4px rgba(224,164,85,.45))' : undefined}
+            _hover={{ color: 'ember.200' }}
             cursor="pointer"
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation()
@@ -288,9 +290,11 @@ export function Modal({
       <Portal>
         <Dialog.Backdrop />
         <Dialog.Positioner>
-          <Dialog.Content bg="bg.panel">
+          <Dialog.Content bg="bg.panel" borderWidth="1px" borderColor="border" backgroundImage="radial-gradient(30rem 16rem at 100% 0%, rgba(224,164,85,.07), transparent 70%)">
             <Dialog.Header>
-              <Dialog.Title>{title}</Dialog.Title>
+              <Dialog.Title fontFamily="heading" fontSize="2xl" fontWeight="semibold" color="ember.100">
+                {title}
+              </Dialog.Title>
             </Dialog.Header>
             <Dialog.Body>{children}</Dialog.Body>
             {footer && <Dialog.Footer>{footer}</Dialog.Footer>}
@@ -313,9 +317,16 @@ export function PageHeader({ title, children, back }: { title: ReactNode; childr
             <RouterLink to={back}>←</RouterLink>
           </Button>
         )}
-        <Heading size={{ base: 'xl', md: '2xl' }} letterSpacing="-0.01em">
-          {title}
-        </Heading>
+        <HStack gap="2.5" align="center">
+          {!back && (
+            <Box color="ember.300" flexShrink={0}>
+              <Sparkle size={14} />
+            </Box>
+          )}
+          <Heading size={{ base: '2xl', md: '4xl' }} fontWeight="semibold" color="ember.50" lineHeight="1.1">
+            {title}
+          </Heading>
+        </HStack>
       </HStack>
       {children && <HStack gap="2" wrap="wrap">{children}</HStack>}
     </Flex>
@@ -324,11 +335,23 @@ export function PageHeader({ title, children, back }: { title: ReactNode; childr
 
 export function Section({ title, children, actions }: { title?: ReactNode; children: ReactNode; actions?: ReactNode }) {
   return (
-    <Card.Root variant="outline" bg="bg.subtle" borderColor="border" mb="4">
+    <Card.Root
+      variant="outline"
+      bg="bg.subtle"
+      borderColor="border"
+      borderRadius="l3"
+      mb="4"
+      backdropFilter="blur(2px)"
+      boxShadow="0 1px 0 rgba(255,240,215,.03) inset, 0 8px 24px -16px rgba(0,0,0,.6)"
+    >
       {(title || actions) && (
         <Card.Header pb="0">
           <Flex justify="space-between" align="center" gap="2" wrap="wrap">
-            {title && <Heading size="md">{title}</Heading>}
+            {title && (
+              <Heading size="xl" fontWeight="semibold" color="ember.100">
+                {title}
+              </Heading>
+            )}
             {actions && <HStack gap="2">{actions}</HStack>}
           </Flex>
         </Card.Header>
@@ -360,10 +383,11 @@ export function Stat({ label, value, to, tone }: { label: string; value: ReactNo
       borderWidth="1px"
       borderColor={tone === 'warn' ? 'orange.700' : 'border'}
       bg="bg.subtle"
-      _hover={to ? { borderColor: 'emerald.600' } : undefined}
+      backgroundImage="radial-gradient(12rem 6rem at 0% 0%, rgba(224,164,85,.07), transparent 70%)"
+      _hover={to ? { borderColor: 'ember.600' } : undefined}
       height="100%"
     >
-      <Text fontSize="2xl" fontWeight="semibold" color={tone === 'warn' ? 'orange.300' : 'emerald.300'}>
+      <Text fontFamily="heading" fontSize="3xl" lineHeight="1.1" fontWeight="semibold" color={tone === 'warn' ? 'orange.300' : 'ember.200'}>
         {value}
       </Text>
       <Text fontSize="xs" color="fg.muted" lineHeight="short">
@@ -385,9 +409,12 @@ export function IdBadge({ id, to }: { id: string; to?: string }) {
 
 export function Empty({ children }: { children: ReactNode }) {
   return (
-    <Box py="10" textAlign="center" color="fg.muted" fontSize="sm">
+    <Stack py="10" align="center" gap="3" textAlign="center" color="fg.muted" fontSize="sm">
+      <Box color="ember.300" opacity=".6">
+        <Crescent size={28} />
+      </Box>
       {children}
-    </Box>
+    </Stack>
   )
 }
 
