@@ -1,0 +1,55 @@
+import { describe, expect, it } from 'vitest'
+import reducer, { actions, initialData, type HolderStepParams } from '../../store/dataSlice'
+import { migrate } from '../migrate'
+import type { DataState } from '../../types'
+
+const base = { copies: 1, waterVolumeMl: 100, waterPct: 25, waxCapacityG: 50, fragrancePct: 7, comment: '' }
+
+describe('v2 migration', () => {
+  it('turns lids, lidless holders and torn molds into the new types and the archive', () => {
+    const old = {
+      molds: {
+        a: { ...base, id: 'a', name: 'Шкатулка', purpose: 'holder', hasLid: true, status: 'active' },
+        b: { ...base, id: 'b', name: 'Ваза', purpose: 'holder', hasLid: false, status: 'active' },
+        c: { ...base, id: 'c', name: 'Крышка', purpose: 'lid', hasLid: false, status: 'torn' },
+        d: { ...base, id: 'd', name: 'Тыква', purpose: 'candle', hasLid: false, status: 'retired' },
+      },
+      holders: {
+        p: { id: 'p', moldId: 'c', isLid: true, pairId: 'q', stage: 'lidDone', history: [{ stage: 'drying' }, { stage: 'lidDone' }] },
+        q: { id: 'q', moldId: 'a', isLid: false, pairId: 'p', stage: 'drying', history: [{ stage: 'drying' }] },
+      },
+    } as unknown as Partial<DataState>
+    const d = migrate(old)
+    expect(d.molds.a).toEqual({ ...base, id: 'a', name: 'Шкатулка', purpose: 'holder' })
+    expect(d.molds.b.purpose).toBe('figurine')
+    expect(d.molds.c).toMatchObject({ purpose: 'figurine', archived: true })
+    expect(d.molds.d).toMatchObject({ purpose: 'candle', archived: true })
+    expect(d.holders.p).toMatchObject({ purpose: 'figurine', stage: 'done' })
+    expect(d.holders.p.history.map((e) => e.stage)).toEqual(['drying', 'done'])
+    expect(d.holders.q).toMatchObject({ purpose: 'holder' })
+    expect('pairId' in d.holders.q).toBe(false)
+    // Server rows carry no version, so migrating twice must change nothing.
+    expect(migrate({ ...d, schemaVersion: 1 })).toEqual(d)
+  })
+})
+
+describe('dishes and figurines', () => {
+  it('are cast in a mix and finish after the outer varnish', () => {
+    let s = reducer(initialData, actions.upsertMold({ ...base, name: 'Тарелка лист', purpose: 'dish' }))
+    const part = { pct: 0, calcG: 0, factG: 0 }
+    const mix = { plaster: part, water: part, plasticizer: part, defoamer: part, dye: part, density: 1.82, comment: '' }
+    s = reducer(s, actions.createMix({ date: '2026-10-25T10:00:00.000Z', moldIds: ['M-001'], mix }))
+    const id = Object.keys(s.holders)[0]
+    expect(s.holders[id].purpose).toBe('dish')
+    const date = '2026-10-26T10:00:00.000Z'
+    for (const params of [
+      { step: 'dried', dryEnd: date },
+      { step: 'varnishIn', layers: 1 },
+      { step: 'painted', skip: true, description: '', paints: [] as { materialId: string; qty: number }[] },
+      { step: 'varnishOut', kind: 'gloss', layers: 1 },
+      { step: 'done' },
+    ] as HolderStepParams[])
+      s = reducer(s, actions.advanceHolders({ ids: [id], date, params }))
+    expect(s.holders[id].stage).toBe('done')
+  })
+})

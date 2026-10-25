@@ -39,15 +39,13 @@ export function parseMolds(text: string, d: DataState, fragrancePct: number): Mo
     const waterPct = num(r[c.water])
     out.push({
       ...(existing ?? {
-        purpose: /крышк/i.test(name) && !/с\s+.*крышк/i.test(name) ? 'lid' : 'holder',
+        purpose: guessPurpose(name, c.lid >= 0 ? bool(r[c.lid]) : undefined),
         waxCapacityG: 0,
         fragrancePct,
-        status: 'active',
         comment: '',
       }),
       id: existing?.id,
       name,
-      hasLid: c.lid >= 0 ? bool(r[c.lid]) : existing?.hasLid ?? false,
       copies: Math.max(1, Math.round(num(r[c.copies]) ?? existing?.copies ?? 1)),
       waterVolumeMl: num(r[c.volume]) ?? existing?.waterVolumeMl ?? 0,
       // A share like 0,35 is read as 35%.
@@ -57,6 +55,15 @@ export function parseMolds(text: string, d: DataState, fragrancePct: number): Mo
     } as MoldDraft)
   }
   return out
+}
+
+/**
+ * Type of a new plaster mold: dishes go by name; a mold without a lid cannot hold a candle
+ * (the scent would fade), so it is a figurine.
+ */
+function guessPurpose(name: string, hasLid: boolean | undefined): Mold['purpose'] {
+  if (/тарел|миск|блюд|поднос/i.test(name)) return 'dish'
+  return hasLid === false ? 'figurine' : 'holder'
 }
 
 export function parseCandles(text: string): CandleRow[] {

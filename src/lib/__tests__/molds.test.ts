@@ -3,7 +3,7 @@ import reducer, { actions, initialData } from '../../store/dataSlice'
 import { sortMolds } from '../selectors'
 
 const mold = (name: string, rating?: number) =>
-  actions.upsertMold({ name, rating, purpose: 'holder', hasLid: false, copies: 1, waterVolumeMl: 100, waterPct: 25, waxCapacityG: 50, fragrancePct: 7, status: 'active', comment: '' })
+  actions.upsertMold({ name, rating, purpose: 'holder', copies: 1, waterVolumeMl: 100, waterPct: 25, waxCapacityG: 50, fragrancePct: 7, comment: '' })
 
 describe('sortMolds', () => {
   it('puts more stars first, then the most used, then by name', () => {

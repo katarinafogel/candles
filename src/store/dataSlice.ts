@@ -21,8 +21,9 @@ import type {
   VarnishKind,
   Wick,
 } from '../types'
+import { isPlaster } from '../lib/labels'
 
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 export const defaultSettings: Settings = {
   plasterDensity: 1.82,
@@ -120,7 +121,7 @@ export type HolderStepParams =
   | { step: 'painted'; skip: boolean; description: string; paints: { materialId: string; qty: number }[] }
   | { step: 'varnishOut'; kind: VarnishKind; materialId?: string; layers: number }
   | { step: 'dampers'; materialId?: string; count: number }
-  | { step: 'lidDone' }
+  | { step: 'done' }
   | {
       step: 'wicked'
       wick: Wick
@@ -149,9 +150,9 @@ const nextHolderStage = (h: Holder): HolderStage | undefined => {
     case 'painted':
       return 'varnishOut'
     case 'varnishOut':
-      return h.isLid ? 'lidDone' : 'dampers'
+      return h.purpose === 'holder' ? 'dampers' : 'done'
     case 'dampers':
-      return h.isLid ? undefined : 'wicked'
+      return h.purpose === 'holder' ? 'wicked' : undefined
     default:
       return undefined
   }
@@ -196,6 +197,12 @@ const slice = createSlice({
     upsertMold(s, a: PayloadAction<Omit<Mold, 'id'> & { id?: string }>) {
       const id = a.payload.id ?? nextId(s, 'M')
       s.molds[id] = { ...a.payload, id }
+      // A corrected type also applies to casts that have not passed the outer varnish yet.
+      const p = a.payload.purpose
+      if (isPlaster(p))
+        for (const h of Object.values(s.holders))
+          if (h.moldId === id && h.purpose !== p && ['drying', 'dried', 'varnishIn', 'painted', 'varnishOut'].includes(h.stage))
+            h.purpose = p
     },
 
     // ----- materials -----
@@ -288,7 +295,7 @@ const slice = createSlice({
           id: hid,
           moldId,
           mixId: id,
-          isLid: mold.purpose === 'lid',
+          purpose: isPlaster(mold.purpose) ? mold.purpose : 'holder',
           mix,
           dryStart: date,
           stage: 'drying',
@@ -332,7 +339,7 @@ const slice = createSlice({
             h.dampers = { materialId: params.materialId, count: params.count }
             consumption = take(s, params.materialId, params.count, date, eventId, hid)
             break
-          case 'lidDone':
+          case 'done':
             break
           case 'wicked': {
             const c = newCandle(s, {
@@ -391,14 +398,6 @@ const slice = createSlice({
         e.history.push({ stage: 'defect', date, params: { ...defect }, comment, consumption: [] })
         e.stage = 'defect'
       }
-    },
-
-    pairHolders(s, a: PayloadAction<{ id: string; pairId?: string }>) {
-      const h = s.holders[a.payload.id]
-      if (!h) return
-      if (h.pairId && s.holders[h.pairId]) s.holders[h.pairId].pairId = undefined
-      h.pairId = a.payload.pairId
-      if (a.payload.pairId && s.holders[a.payload.pairId]) s.holders[a.payload.pairId].pairId = h.id
     },
 
     // ----- candles -----

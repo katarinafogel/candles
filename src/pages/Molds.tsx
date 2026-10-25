@@ -2,24 +2,22 @@ import { Badge, Box, Button, Flex, HStack, SimpleGrid, Stack, Text } from '@chak
 import { useState } from 'react'
 import { LuArchive, LuArchiveRestore, LuPencil, LuPlus } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
-import { Check, Chips, Empty, Field, Modal, notify, NumInput, PageHeader, Select, StarRating, TextArea, TextInput } from '../components/ui'
+import { Check, Chips, Empty, Field, Modal, notify, NumInput, PageHeader, StarRating, TextArea, TextInput } from '../components/ui'
 import { fmt } from '../lib/calc'
-import { moldPurposeLabel, moldStatusLabel, wickSchemeLabel } from '../lib/labels'
+import { isPlaster, moldPurposeLabel, wickSchemeLabel } from '../lib/labels'
 import { moldStats, sortMolds } from '../lib/selectors'
 import { useAppDispatch, useData } from '../store'
 import { actions } from '../store/dataSlice'
-import type { Mold, MoldPurpose, MoldStatus, WickScheme } from '../types'
+import type { Mold, MoldPurpose, WickScheme } from '../types'
 
 export const blankMold = (fragrancePct: number): Omit<Mold, 'id'> => ({
   name: '',
   purpose: 'holder',
-  hasLid: false,
   copies: 1,
   waterVolumeMl: 0,
   waterPct: 25,
   waxCapacityG: 0,
   fragrancePct,
-  status: 'active',
   comment: '',
 })
 
@@ -48,16 +46,16 @@ export function MoldDialog({ mold, onClose }: { mold: Omit<Mold, 'id'> & { id?: 
         <Field label="Название">
           <TextInput value={m.name} onChange={(v) => set('name', v)} />
         </Field>
-        <Field label="Назначение">
+        <Field
+          label="Что отливаем"
+          helper={isPlaster(m.purpose) ? 'из гипса · в новом замесе' : 'из воска · в свечах и декоре'}
+        >
           <Chips
             value={m.purpose}
             onChange={(v) => v && set('purpose', v as MoldPurpose)}
             options={Object.entries(moldPurposeLabel).map(([value, label]) => ({ value: value as MoldPurpose, label }))}
           />
         </Field>
-        <Check checked={m.hasLid} onChange={(v) => set('hasLid', v)}>
-          Есть крышка (льётся отдельно)
-        </Check>
         <SimpleGrid columns={2} gap="3">
           <Field label="Число копий">
             <NumInput value={m.copies} onChange={(v) => set('copies', Math.max(1, v ?? 1))} />
@@ -93,15 +91,8 @@ export function MoldDialog({ mold, onClose }: { mold: Omit<Mold, 'id'> & { id?: 
           <StarRating value={m.rating} onChange={(v) => set('rating', v)} />
         </Field>
         <Check checked={!!m.archived} onChange={(v) => set('archived', v || undefined)}>
-          В архиве — не показывать в новом замесе
+          В архиве — порвалась или больше не нужна, не показывать при заливке
         </Check>
-        <Field label="Статус">
-          <Select
-            value={m.status}
-            onChange={(v) => set('status', v as MoldStatus)}
-            options={Object.entries(moldStatusLabel).map(([value, label]) => ({ value, label }))}
-          />
-        </Field>
         <Field label="Комментарий">
           <TextArea value={m.comment} onChange={(v) => set('comment', v)} />
         </Field>
@@ -119,7 +110,12 @@ export function ArchiveButton({ mold, size = 'xs' }: { mold: Mold; size?: 'xs' |
       onClick={(e) => {
         e.stopPropagation()
         dispatch(actions.upsertMold({ ...mold, archived: mold.archived ? undefined : true }))
-        notify(mold.archived ? `«${mold.name}» снова в работе` : `«${mold.name}» в архиве`)
+        if (mold.archived) notify(`«${mold.name}» снова в работе`)
+        else
+          notify(`«${mold.name}» в архиве`, 'success', undefined, {
+            label: 'Вернуть',
+            onClick: () => dispatch(actions.upsertMold(mold)),
+          })
       }}
     >
       {mold.archived ? <LuArchiveRestore /> : <LuArchive />} {mold.archived ? 'Из архива' : 'В архив'}
@@ -132,14 +128,13 @@ export default function Molds() {
   const nav = useNavigate()
   const [edit, setEdit] = useState<(Omit<Mold, 'id'> & { id?: string }) | null>(null)
   const dispatch = useAppDispatch()
-  const [showArchive, setShowArchive] = useState(false)
-  const hidden = (m: Mold) => !!m.archived || m.status !== 'active'
+  const [show, setShow] = useState<'active' | 'archive' | 'all'>('active')
   const all = Object.values(d.molds)
+  const archived = all.filter((m) => m.archived).length
   const list = sortMolds(
     d,
-    all.filter((m) => showArchive || !hidden(m)),
+    all.filter((m) => show === 'all' || (show === 'archive') === !!m.archived),
   )
-  const hiddenCount = all.filter(hidden).length
 
   return (
     <>
@@ -149,11 +144,25 @@ export default function Molds() {
         </Button>
       </PageHeader>
       <Box mb="3">
-        <Check checked={showArchive} onChange={setShowArchive}>
-          <Text fontSize="sm">Показать архив, порванные и списанные · {hiddenCount}</Text>
-        </Check>
+        <Chips
+          value={show}
+          onChange={(v) => setShow((v as typeof show) ?? 'active')}
+          options={[
+            { value: 'active', label: `Активные · ${all.length - archived}` },
+            { value: 'archive', label: `Архив · ${archived}` },
+            { value: 'all', label: `Все · ${all.length}` },
+          ]}
+        />
       </Box>
-      {!list.length && <Empty>Форм пока нет. Добавьте вручную или импортируйте из таблицы в настройках.</Empty>}
+      {!list.length && (
+        <Empty>
+          {all.length
+            ? show === 'archive'
+              ? 'В архиве пусто.'
+              : 'Все формы в архиве.'
+            : 'Форм пока нет. Добавьте вручную или импортируйте из таблицы в настройках.'}
+        </Empty>
+      )}
       <SimpleGrid columns={{ base: 1, md: 2 }} gap="3">
         {list.map((m) => {
           const st = moldStats(d, m.id)
@@ -176,11 +185,12 @@ export default function Molds() {
                 <HStack gap="1">
                   <Badge variant="subtle">{moldPurposeLabel[m.purpose]}</Badge>
                   {m.archived && <Badge colorPalette="gray">в архиве</Badge>}
-                  {m.status !== 'active' && <Badge colorPalette="red">{moldStatusLabel[m.status]}</Badge>}
                 </HStack>
               </Flex>
               <Text fontSize="xs" color="fg.muted" mt="1">
-                {m.id} · {m.waterVolumeMl} мл · {m.waterPct}% воды · воск {m.waxCapacityG} г
+                {m.id}
+                {isPlaster(m.purpose) && ` · ${m.waterVolumeMl} мл · ${m.waterPct}% воды`}
+                {m.waxCapacityG ? ` · воск ${m.waxCapacityG} г` : ''}
                 {m.defaultWick ? ` · ${wickSchemeLabel[m.defaultWick.scheme]} ${fmt(m.defaultWick.lengthCm)} см` : ''}
               </Text>
               <Text fontSize="xs" color="fg.muted">

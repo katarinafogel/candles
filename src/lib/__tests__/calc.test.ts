@@ -35,8 +35,8 @@ describe('csv', () => {
 
 describe('workflow', () => {
   it('mix on two molds creates two holders, stages advance and undo returns materials', () => {
-    let s = reducer(initialData, actions.upsertMold({ name: 'Книжка', purpose: 'holder', hasLid: false, copies: 1, waterVolumeMl: 250, waterPct: 35, waxCapacityG: 90, fragrancePct: 7, status: 'active', comment: '' }))
-    s = reducer(s, actions.upsertMold({ name: 'Кит', purpose: 'holder', hasLid: false, copies: 1, waterVolumeMl: 100, waterPct: 25, waxCapacityG: 50, fragrancePct: 7, status: 'active', comment: '' }))
+    let s = reducer(initialData, actions.upsertMold({ name: 'Книжка', purpose: 'holder', copies: 1, waterVolumeMl: 250, waterPct: 35, waxCapacityG: 90, fragrancePct: 7, comment: '' }))
+    s = reducer(s, actions.upsertMold({ name: 'Кит', purpose: 'holder', copies: 1, waterVolumeMl: 100, waterPct: 25, waxCapacityG: 50, fragrancePct: 7, comment: '' }))
     s = reducer(s, actions.upsertMaterial({ id: 'g', category: 'plaster', name: 'Гипс', maker: '', unit: 'g', review: '', initialQty: 1000 }))
     s = reducer(s, actions.upsertMaterial({ id: 'v', category: 'varnishIn', name: 'Лак', maker: '', unit: 'ml', review: '', initialQty: 100 }))
     const part = (factG: number, materialId?: string) => ({ materialId, pct: 0, calcG: factG, factG })

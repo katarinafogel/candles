@@ -21,6 +21,7 @@ import { useAppDispatch, useAppSelector, useData } from '../store'
 import { actions } from '../store/dataSlice'
 import { localActions } from '../store/localSlice'
 import type { DataState, Settings as S } from '../types'
+import { moldPurposeLabel } from '../lib/labels'
 
 const readFile = (f: File) => f.text()
 
@@ -195,7 +196,7 @@ function SheetImport() {
                   <Table.ColumnHeader>Объём</Table.ColumnHeader>
                   <Table.ColumnHeader>% воды</Table.ColumnHeader>
                   <Table.ColumnHeader>Копий</Table.ColumnHeader>
-                  <Table.ColumnHeader>Крышка</Table.ColumnHeader>
+                  <Table.ColumnHeader>Тип</Table.ColumnHeader>
                 </Table.Row>
               </Table.Header>
               <Table.Body>
@@ -205,7 +206,7 @@ function SheetImport() {
                     <Table.Cell>{m.waterVolumeMl}</Table.Cell>
                     <Table.Cell>{m.waterPct}</Table.Cell>
                     <Table.Cell>{m.copies}</Table.Cell>
-                    <Table.Cell>{m.hasLid ? 'да' : 'нет'}</Table.Cell>
+                    <Table.Cell>{moldPurposeLabel[m.purpose]}</Table.Cell>
                   </Table.Row>
                 ))}
               </Table.Body>

@@ -8,7 +8,7 @@ const { default: reducer, actions, initialData } = await import('../../store/dat
 
 describe('sync diff', () => {
   it('sends only the entities a step touched, in one batch', () => {
-    let s = reducer(initialData, actions.upsertMold({ name: 'Книжка', purpose: 'holder', hasLid: false, copies: 1, waterVolumeMl: 250, waterPct: 35, waxCapacityG: 90, fragrancePct: 7, status: 'active', comment: '' }))
+    let s = reducer(initialData, actions.upsertMold({ name: 'Книжка', purpose: 'holder', copies: 1, waterVolumeMl: 250, waterPct: 35, waxCapacityG: 90, fragrancePct: 7, comment: '' }))
     s = reducer(s, actions.upsertMaterial({ id: 'g', category: 'plaster', name: 'Гипс', maker: '', unit: 'g', review: '', initialQty: 1000 }))
     const before = s
     const part = (factG: number, materialId?: string) => ({ materialId, pct: 0, calcG: factG, factG })
