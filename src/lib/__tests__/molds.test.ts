@@ -16,3 +16,16 @@ describe('sortMolds', () => {
     expect(sortMolds(s, Object.values(s.molds)).map((m) => m.name)).toEqual(['Шкатулка', 'Книжка', 'Кит', 'Абрикос', 'Вишня'])
   })
 })
+
+describe('lowMaterials', () => {
+  it('lists only materials marked to buy that ran out or are below threshold', async () => {
+    const { lowMaterials } = await import('../selectors')
+    let s = initialData
+    const add = (id: string, toBuy: boolean, qty: number) =>
+      (s = reducer(s, actions.upsertMaterial({ id, category: 'fragrance', name: id, maker: '', unit: 'g', review: '', toBuy, initialQty: qty })))
+    add('liked-empty', true, 0)
+    add('liked-full', true, 500)
+    add('disliked-empty', false, 0)
+    expect(lowMaterials(s).map((m) => m.id)).toEqual(['liked-empty'])
+  })
+})

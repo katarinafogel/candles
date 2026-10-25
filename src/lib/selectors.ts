@@ -83,8 +83,14 @@ export function fallbackUse(d: DataState, m: Material): number | undefined {
   return undefined
 }
 
-export const lowMaterials = (d: DataState) =>
-  Object.values(d.materials).filter((m) => !m.archived && isLow(m, fallbackUse(d, m)))
+/**
+ * Running out matters only for what the master buys again: a material marked «купить»
+ * that is used up or below its threshold. Tried-and-dropped materials never nag.
+ */
+export const needsRestock = (d: DataState, m: Material) =>
+  !!m.toBuy && !m.archived && (stockOf(m) <= 0 || isLow(m, fallbackUse(d, m)))
+
+export const lowMaterials = (d: DataState) => Object.values(d.materials).filter((m) => needsRestock(d, m))
 
 export const materialsOf = (d: DataState, ...cats: MaterialCategory[]) =>
   Object.values(d.materials)
