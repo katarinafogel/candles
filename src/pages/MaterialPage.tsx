@@ -2,7 +2,7 @@ import { Button, Flex, IconButton, SimpleGrid, Stack, Text } from '@chakra-ui/re
 import { useState } from 'react'
 import { LuArchive, LuPencil, LuShoppingCart, LuTrash2, LuClipboardCheck } from 'react-icons/lu'
 import { useParams } from 'react-router-dom'
-import { confirmAction, Empty, IdBadge, PageHeader, Row, Section, Stat } from '../components/ui'
+import { confirmAction, Empty, notify, IdBadge, PageHeader, Row, Section, Stat } from '../components/ui'
 import { fmt, fmtDateTime, stockOf, thresholdOf, unitPrice } from '../lib/calc'
 import { categoryLabel, unitLabel } from '../lib/labels'
 import { fallbackUse } from '../lib/selectors'
@@ -40,7 +40,17 @@ export default function MaterialPage() {
         <Button
           size="sm"
           variant="ghost"
-          onClick={() => confirmAction('Убрать материал в архив? История сохранится.') && dispatch(actions.upsertMaterial({ ...m, archived: !m.archived }))}
+          onClick={() => {
+            const { movements, ...rest } = m
+            void movements
+            dispatch(actions.upsertMaterial({ ...rest, archived: !m.archived || undefined }))
+            if (m.archived) notify(`«${m.name}» снова на складе`)
+            else
+              notify(`«${m.name}» в архиве`, 'success', 'История сохранится.', {
+                label: 'Вернуть',
+                onClick: () => dispatch(actions.upsertMaterial({ ...rest, archived: undefined })),
+              })
+          }}
         >
           <LuArchive /> {m.archived ? 'Из архива' : 'В архив'}
         </Button>

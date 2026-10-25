@@ -43,7 +43,7 @@ function ReadyDialog({ ids, onClose }: { ids: string[]; onClose: () => void }) {
 function MoldedCandleDialog({ onClose }: { onClose: () => void }) {
   const d = useData()
   const dispatch = useAppDispatch()
-  const molds = sortMolds(d, Object.values(d.molds).filter((m) => m.purpose === 'candle' && m.status === 'active' && !m.archived))
+  const molds = sortMolds(d, Object.values(d.molds).filter((m) => m.purpose === 'candle' && !m.archived))
   const [moldId, setMoldId] = useState(molds[0]?.id ?? '')
   const mold = d.molds[moldId]
   const [name, setName] = useState(mold?.name ?? '')
@@ -172,7 +172,7 @@ export default function Candles() {
         </Button>
         <Button asChild size="sm">
           <RouterLink to="/pour/new">
-            <LuDroplets /> Новая заливка
+            <LuDroplets /> Создать свечи
           </RouterLink>
         </Button>
       </PageHeader>

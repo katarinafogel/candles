@@ -27,7 +27,7 @@ import {
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 import { parseNum } from '../lib/calc'
-import { Crescent, Sparkle } from './Magic'
+import { Crescent, Leaf, Sparkle } from './Magic'
 
 export const toaster = createToaster({ placement: 'top', pauseOnPageIdle: true })
 
@@ -36,12 +36,31 @@ export function Toaster() {
     <Portal>
       <CToaster toaster={toaster} insetInline={{ mdDown: '4' }}>
         {(t) => (
-          <Toast.Root width={{ md: 'sm' }}>
-            {t.type === 'loading' ? <Spinner size="sm" color="emerald.400" /> : <Toast.Indicator />}
+          <Toast.Root
+            width={{ md: 'sm' }}
+            bg="bg.panel"
+            color="fg"
+            borderWidth="1px"
+            borderColor={t.type === 'error' ? 'red.700' : t.type === 'warning' ? 'orange.700' : 'border.emphasized'}
+            boxShadow="0 10px 30px -10px rgba(0,0,0,.7), 0 0 24px -12px rgba(224,164,85,.35)"
+            css={{ '--toast-trigger-bg': 'transparent' }}
+          >
+            {t.type === 'loading' ? (
+              <Spinner size="sm" color="ember.300" />
+            ) : (
+              <Box color={t.type === 'error' ? 'red.400' : t.type === 'warning' ? 'orange.300' : 'ember.300'} display="flex">
+                <Toast.Indicator />
+              </Box>
+            )}
             <Stack gap="1" flex="1" maxWidth="100%">
               {t.title && <Toast.Title>{t.title}</Toast.Title>}
               {t.description && <Toast.Description>{t.description}</Toast.Description>}
             </Stack>
+            {t.action && (
+              <Toast.ActionTrigger color="ember.200" borderColor="ember.700" _hover={{ bg: 'ember.subtle' }}>
+                {t.action.label}
+              </Toast.ActionTrigger>
+            )}
             <Toast.CloseTrigger />
           </Toast.Root>
         )}
@@ -50,8 +69,13 @@ export function Toaster() {
   )
 }
 
-export const notify = (title: string, type: 'success' | 'error' | 'info' | 'warning' = 'success', description?: string) =>
-  toaster.create({ title, type, description, duration: type === 'error' ? 6000 : 3000 })
+/** A toast; with `action` it shows a button (like «Вернуть») and stays a little longer. */
+export const notify = (
+  title: string,
+  type: 'success' | 'error' | 'info' | 'warning' = 'success',
+  description?: string,
+  action?: { label: string; onClick: () => void },
+) => toaster.create({ title, type, description, action, duration: action ? 6000 : type === 'error' ? 6000 : 3000 })
 
 export function Field({
   label,
@@ -144,6 +168,22 @@ export function Select({
   )
 }
 
+/** A gold leaf in place of a checkbox square. */
+export function LeafMark({ on, size = 22 }: { on: boolean; size?: number }) {
+  return (
+    <Box
+      as="span"
+      display="inline-flex"
+      flexShrink={0}
+      color={on ? 'ember.300' : 'ember.700'}
+      filter={on ? 'drop-shadow(0 0 4px rgba(224,164,85,.45))' : undefined}
+      transition="color .15s, filter .15s"
+    >
+      <Leaf on={on} size={size} />
+    </Box>
+  )
+}
+
 export function Check({
   checked,
   onChange,
@@ -154,9 +194,18 @@ export function Check({
   children?: ReactNode
 }) {
   return (
-    <Checkbox.Root checked={checked} onCheckedChange={(e) => onChange(!!e.checked)} colorPalette="emerald">
+    <Checkbox.Root
+      checked={checked}
+      onCheckedChange={(e) => onChange(!!e.checked)}
+      colorPalette="ember"
+      cursor="pointer"
+      alignItems="center"
+      _hover={{ '& .leaf': { color: checked ? 'ember.200' : 'ember.500' } }}
+    >
       <Checkbox.HiddenInput />
-      <Checkbox.Control />
+      <Box className="leaf" display="inline-flex">
+        <LeafMark on={checked} />
+      </Box>
       {children && <Checkbox.Label>{children}</Checkbox.Label>}
     </Checkbox.Root>
   )

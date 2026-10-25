@@ -5,7 +5,7 @@ import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-d
 import { DefectDialog, HolderStepDialog } from '../components/StepDialogs'
 import { Check, Empty, IdBadge, PageHeader, Select } from '../components/ui'
 import { daysBetween, fmtDate } from '../lib/calc'
-import { holderNextLabel, holderStageLabel, holderStageOrder, holderStageShort } from '../lib/labels'
+import { holderNextTitle, holderStageLabel, moldPurposeLabel, holderStageOrder, holderStageShort } from '../lib/labels'
 import { byId } from '../lib/selectors'
 import { useData } from '../store'
 import { nextHolderStage } from '../store/dataSlice'
@@ -22,7 +22,7 @@ export default function Holders() {
 
   const all = byId(d.holders)
   const list = all.filter(
-    (h) => (stage ? h.stage === stage : h.stage !== 'wicked' && h.stage !== 'defect' && h.stage !== 'lidDone') && (!moldId || h.moldId === moldId),
+    (h) => (stage ? h.stage === stage : h.stage !== 'wicked' && h.stage !== 'defect' && h.stage !== 'done') && (!moldId || h.moldId === moldId),
   )
   const setFilter = (k: string, v: string) => {
     const n = new URLSearchParams(sp)
@@ -42,7 +42,7 @@ export default function Holders() {
       <PageHeader title="Подсвечники">
         <Button asChild size="sm">
           <RouterLink to="/mix/new">
-            <LuFlaskConical /> Новый замес
+            <LuFlaskConical /> Создать подсвечники
           </RouterLink>
         </Button>
       </PageHeader>
@@ -107,9 +107,9 @@ export default function Holders() {
                   <Text fontWeight="medium" truncate>
                     {mold?.name ?? '—'}
                   </Text>
-                  {h.isLid && (
+                  {h.purpose !== 'holder' && (
                     <Text fontSize="xs" color="fg.muted">
-                      крышка
+                      {moldPurposeLabel[h.purpose]}
                     </Text>
                   )}
                 </HStack>
@@ -127,7 +127,7 @@ export default function Holders() {
                     setDialog('next')
                   }}
                 >
-                  {holderNextLabel[h.stage] ?? 'Готово'} <LuArrowRight />
+                  {holderNextTitle(h) ?? 'Готово'} <LuArrowRight />
                 </Button>
               )}
             </Flex>
@@ -156,7 +156,7 @@ export default function Holders() {
             mx="auto"
           >
             <Button onClick={() => setDialog('next')} disabled={!canNext}>
-              {canNext ? holderNextLabel[d.holders[selected[0]].stage] ?? 'Дальше' : 'Разные этапы'} · {selected.length}
+              {canNext ? holderNextTitle(d.holders[selected[0]]) ?? 'Дальше' : 'Разные этапы'} · {selected.length}
             </Button>
             <Button variant="outline" colorPalette="red" onClick={() => setDialog('defect')}>
               <LuTriangleAlert /> Брак

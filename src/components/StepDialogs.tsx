@@ -2,7 +2,7 @@ import { Button, HStack, IconButton, Input, Stack, Text } from '@chakra-ui/react
 import { useEffect, useState } from 'react'
 import { LuPlus, LuTrash2 } from 'react-icons/lu'
 import { nowLocal, toIso } from '../lib/dates'
-import { decorKindLabel, defectReasonLabel, holderNextLabel, varnishKindLabel, wickSchemeLabel } from '../lib/labels'
+import { decorKindLabel, defectReasonLabel, holderNextTitle, varnishKindLabel, wickSchemeLabel } from '../lib/labels'
 import { materialOptions } from '../lib/selectors'
 import { nextHolderStage, actions, type HolderStepParams } from '../store/dataSlice'
 import { useAppDispatch, useData } from '../store'
@@ -62,7 +62,7 @@ export function HolderStepDialog({ ids, onClose }: { ids: string[]; onClose: () 
       case 'dampers':
         params = { step, materialId, count: count ?? 0 }
         break
-      case 'lidDone':
+      case 'done':
         params = { step }
         break
       case 'wicked':
@@ -73,7 +73,7 @@ export function HolderStepDialog({ ids, onClose }: { ids: string[]; onClose: () 
         return
     }
     dispatch(actions.advanceHolders({ ids, date: toIso(date), params, comment }))
-    notify(`${holderNextLabel[holders[0].stage] ?? 'Готово'}: ${n} шт.`)
+    notify(`${holderNextTitle(holders[0]) ?? 'Готово'}: ${n} шт.`)
     onClose()
   }
 
@@ -81,7 +81,7 @@ export function HolderStepDialog({ ids, onClose }: { ids: string[]; onClose: () 
     <Modal
       open
       onClose={onClose}
-      title={`${step === 'lidDone' ? 'Крышка готова' : holderNextLabel[holders[0].stage]} · ${n} шт.`}
+      title={`${holderNextTitle(holders[0])} · ${n} шт.`}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>

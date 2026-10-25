@@ -2,10 +2,11 @@ import type {
   CandleStage,
   DecorKind,
   DefectReason,
+  Holder,
   HolderStage,
   MaterialCategory,
   MoldPurpose,
-  MoldStatus,
+  PlasterPurpose,
   Unit,
   VarnishKind,
   WickScheme,
@@ -13,15 +14,21 @@ import type {
 
 export const moldPurposeLabel: Record<MoldPurpose, string> = {
   holder: 'подсвечник',
-  lid: 'крышка',
-  decor: 'декор',
+  dish: 'тарелка',
+  figurine: 'фигурка',
   candle: 'формовая свеча',
+  decor: 'декор',
 }
 
-export const moldStatusLabel: Record<MoldStatus, string> = {
-  active: 'в работе',
-  torn: 'порвалась',
-  retired: 'списана',
+/** Purposes cast from plaster in a mix. */
+export const plasterPurposes: PlasterPurpose[] = ['holder', 'dish', 'figurine']
+export const isPlaster = (p: MoldPurpose): p is PlasterPurpose => (plasterPurposes as MoldPurpose[]).includes(p)
+
+/** Plural labels for filters. */
+export const plasterPurposePlural: Record<PlasterPurpose, string> = {
+  holder: 'Подсвечники',
+  dish: 'Тарелки',
+  figurine: 'Фигурки',
 }
 
 export const wickSchemeLabel: Record<WickScheme, string> = {
@@ -74,7 +81,7 @@ export const holderStageLabel: Record<HolderStage, string> = {
   varnishOut: 'Лак снаружи · ждёт демпферов',
   dampers: 'Демпферы · ждёт фитиля',
   wicked: 'Фитиль приклеен',
-  lidDone: 'Крышка готова',
+  done: 'Готово',
   defect: 'Брак',
 }
 
@@ -86,7 +93,7 @@ export const holderStageShort: Record<HolderStage, string> = {
   varnishOut: 'Ждёт демпферов',
   dampers: 'Ждёт фитиля',
   wicked: 'Стал свечой',
-  lidDone: 'Крышка готова',
+  done: 'Готово',
   defect: 'Брак',
 }
 
@@ -100,6 +107,10 @@ export const holderNextLabel: Partial<Record<HolderStage, string>> = {
   dampers: 'Приклеить фитиль',
 }
 
+/** Title of the next step for this item: dishes and figurines are finished after the outer varnish. */
+export const holderNextTitle = (h: Pick<Holder, 'stage' | 'purpose'>) =>
+  h.stage === 'varnishOut' && h.purpose !== 'holder' ? 'Готово' : holderNextLabel[h.stage]
+
 export const holderStageOrder: HolderStage[] = [
   'drying',
   'dried',
@@ -108,7 +119,7 @@ export const holderStageOrder: HolderStage[] = [
   'varnishOut',
   'dampers',
   'wicked',
-  'lidDone',
+  'done',
   'defect',
 ]
 

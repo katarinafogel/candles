@@ -2,8 +2,9 @@
 
 export type ISODate = string
 
-export type MoldPurpose = 'holder' | 'lid' | 'decor' | 'candle'
-export type MoldStatus = 'active' | 'torn' | 'retired'
+/** Holders, dishes and figurines are cast from plaster; molded candles and decor from wax. */
+export type PlasterPurpose = 'holder' | 'dish' | 'figurine'
+export type MoldPurpose = PlasterPurpose | 'candle' | 'decor'
 export type WickScheme = 'double05' | 'mixed' | 'double1'
 
 export interface Wick {
@@ -15,7 +16,6 @@ export interface Mold {
   id: string // M-012
   name: string
   purpose: MoldPurpose
-  hasLid: boolean
   copies: number
   waterVolumeMl: number
   waterPct: number
@@ -24,10 +24,9 @@ export interface Mold {
   fragrancePct: number
   dyePct?: number
   plasticizerPct?: number
-  status: MoldStatus
   /** 1–5 stars; higher-rated molds come first in lists. */
   rating?: number
-  /** Archived molds are hidden from new mixes and molded candles. */
+  /** Archived molds (torn, retired or just not used) are hidden from new mixes and molded candles. */
   archived?: boolean
   comment: string
 }
@@ -141,7 +140,7 @@ export type HolderStage =
   | 'varnishOut'
   | 'dampers'
   | 'wicked'
-  | 'lidDone'
+  | 'done'
   | 'defect'
 
 export type VarnishKind = 'gloss' | 'liquidGlass' | 'matte' | 'wax'
@@ -150,8 +149,8 @@ export interface Holder {
   id: string // P-0042
   moldId: string
   mixId: string
-  isLid: boolean
-  pairId?: string
+  /** What the mold makes, copied at casting: only holders go on to dampers and a wick, the rest end at «done». */
+  purpose: PlasterPurpose
   mix: Omit<PlasterMix, 'holderIds' | 'moldIds' | 'id' | 'date'> // recipe snapshot
   dryStart: ISODate
   dryEnd?: ISODate

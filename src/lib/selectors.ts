@@ -54,7 +54,7 @@ const waxCats: MaterialCategory[] = ['wax', 'fragrance', 'waxDye']
 export function fallbackUse(d: DataState, m: Material): number | undefined {
   const counts = new Map<string, number>()
   for (const h of Object.values(d.holders)) counts.set(h.moldId, (counts.get(h.moldId) ?? 0) + 1)
-  const molds = Object.values(d.molds).filter((x) => x.status === 'active')
+  const molds = Object.values(d.molds).filter((x) => !x.archived)
   const top =
     [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => d.molds[id])[0] ??
     molds.find((x) => x.purpose === 'holder') ??
@@ -100,7 +100,7 @@ export const materialsOf = (d: DataState, ...cats: MaterialCategory[]) =>
 export const materialOptions = (d: DataState, ...cats: MaterialCategory[]) =>
   materialsOf(d, ...cats).map((m) => ({ value: m.id, label: `${m.name}${m.maker ? ` · ${m.maker}` : ''} (ост. ${stockOf(m)})` }))
 
-export const holderTitle = (d: DataState, h: Holder) => `${h.id} · ${d.molds[h.moldId]?.name ?? 'форма?'}${h.isLid ? ' (крышка)' : ''}`
+export const holderTitle = (d: DataState, h: Holder) => `${h.id} · ${d.molds[h.moldId]?.name ?? 'форма?'}`
 
 export const unreadReviews = (d: DataState) => Object.values(d.reviews).filter((r) => !r.read)
 

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { LuPencil } from 'react-icons/lu'
 import { Empty, IdBadge, PageHeader, Row, Section, Stat, StarRating } from '../components/ui'
 import { fmt } from '../lib/calc'
-import { candleStageLabel, holderStageLabel, moldPurposeLabel, moldStatusLabel, wickSchemeLabel } from '../lib/labels'
+import { candleStageLabel, holderStageLabel, moldPurposeLabel, wickSchemeLabel } from '../lib/labels'
 import { candleRating, moldStats } from '../lib/selectors'
 import { useAppDispatch, useData } from '../store'
 import { actions } from '../store/dataSlice'
@@ -29,7 +29,7 @@ export default function MoldPage() {
       </PageHeader>
       <HStack mb="4" gap="3">
         <StarRating value={m.rating} onChange={(v) => dispatch(actions.upsertMold({ ...m, rating: v }))} />
-        {m.archived && <Badge colorPalette="gray">в архиве — не показывается в новом замесе</Badge>}
+        {m.archived && <Badge colorPalette="gray">в архиве — не показывается при заливке</Badge>}
       </HStack>
       <SimpleGrid columns={{ base: 2, md: 4 }} gap="3" mb="4">
         <Stat label="подсвечников отлито" value={st.holders.length} />
@@ -40,14 +40,13 @@ export default function MoldPage() {
       <Section title="Параметры">
         <Row label="ИД">{m.id}</Row>
         <Row label="Назначение">{moldPurposeLabel[m.purpose]}</Row>
-        <Row label="Крышка">{m.hasLid ? 'есть, льётся отдельно' : 'нет'}</Row>
         <Row label="Копий">{m.copies}</Row>
         <Row label="Объём по воде">{fmt(m.waterVolumeMl)} мл</Row>
         <Row label="% воды">{fmt(m.waterPct)}%</Row>
         <Row label="Ёмкость под воск">{fmt(m.waxCapacityG)} г</Row>
         <Row label="Фитиль">{m.defaultWick ? `${wickSchemeLabel[m.defaultWick.scheme]}, ${fmt(m.defaultWick.lengthCm)} см` : '—'}</Row>
         <Row label="% отдушки">{fmt(m.fragrancePct)}%</Row>
-        <Row label="Статус">{moldStatusLabel[m.status]}</Row>
+        <Row label="Статус">{m.archived ? 'в архиве' : 'в работе'}</Row>
         {m.comment && <Row label="Комментарий">{m.comment}</Row>}
       </Section>
       <Section title="Отлитые подсвечники">

@@ -24,7 +24,9 @@ describe('sheet import', () => {
   it('reads molds, skipping service rows, with decimal commas and TRUE/FALSE', () => {
     const m = parseMolds(forms, initialData, 7)
     expect(m.map((x) => x.name)).toEqual(['Книжка', 'Шкатулка с цветочной крышкой', 'Кит'])
-    expect(m[1]).toMatchObject({ hasLid: true, copies: 2, waterVolumeMl: 180.5, waterPct: 25, purpose: 'holder' })
+    expect(m[1]).toMatchObject({ copies: 2, waterVolumeMl: 180.5, waterPct: 25, purpose: 'holder' })
+    // No lid: a candle would lose its scent there, so it is a figurine.
+    expect(m[0].purpose).toBe('figurine')
   })
   it('matches «Свечи» by name and leaves mismatches for manual mapping', () => {
     const m = parseMolds(forms, initialData, 7)

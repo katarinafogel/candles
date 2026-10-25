@@ -6,7 +6,7 @@ import { History } from '../components/History'
 import { DefectDialog, HolderStepDialog } from '../components/StepDialogs'
 import { confirmAction, Empty, IdBadge, Link, notify, PageHeader, Row, Section, Select } from '../components/ui'
 import { daysBetween, fmt, fmtDateTime } from '../lib/calc'
-import { candleStageLabel, defectReasonLabel, holderNextLabel, holderStageLabel, varnishKindLabel } from '../lib/labels'
+import { candleStageLabel, defectReasonLabel, holderNextTitle, holderStageLabel, varnishKindLabel } from '../lib/labels'
 import { holderTitle } from '../lib/selectors'
 import { useAppDispatch, useData } from '../store'
 import { actions, nextHolderStage } from '../store/dataSlice'
@@ -62,7 +62,7 @@ export default function HolderPage() {
       <PageHeader title={holderTitle(d, h)} back="/holders">
         {next && (
           <Button size="sm" onClick={() => setDialog('next')}>
-            {next === 'lidDone' ? 'Крышка готова' : holderNextLabel[h.stage]} <LuArrowRight />
+            {holderNextTitle(h)} <LuArrowRight />
           </Button>
         )}
         {canUndo && (
@@ -127,19 +127,6 @@ export default function HolderPage() {
             </Text>
           </Row>
         )}
-        <Row label={h.isLid ? 'Подсвечник-пара' : 'Крышка'}>
-          <Box maxW="xs">
-            <Select
-              size="sm"
-              value={h.pairId}
-              onChange={(v) => dispatch(actions.pairHolders({ id, pairId: v || undefined }))}
-              placeholder="— нет —"
-              options={Object.values(d.holders)
-                .filter((x) => x.isLid !== h.isLid && x.stage !== 'defect' && (!x.pairId || x.pairId === h.id))
-                .map((x) => ({ value: x.id, label: holderTitle(d, x) }))}
-            />
-          </Box>
-        </Row>
         <Row label="Свеча">
           {candle ? (
             <HStack>

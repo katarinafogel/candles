@@ -117,3 +117,26 @@ export function Divider(props: FlexProps) {
     </Flex>
   )
 }
+
+/** A gold leaf: an outline when off, filled and glowing when on. Used instead of checkbox squares. */
+export function Leaf({ on, size = 22 }: { on: boolean; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M4.5 19.5C3.6 11.2 9.3 4.6 19.8 4.2c.4 10.4-6.2 16.1-14.5 15.3z"
+        fill={on ? 'currentColor' : 'none'}
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M3.2 20.8 6 18m0 0c3.4-3.6 7-7.2 10.6-10.4M6 18c2.8-.1 5.4-.7 7.4-2M10.2 13.8c-.2-2 .1-3.9 1-5.6"
+        fill="none"
+        stroke={on ? 'var(--chakra-colors-bg)' : 'currentColor'}
+        strokeOpacity={on ? 0.75 : 0.6}
+        strokeWidth="1.1"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}

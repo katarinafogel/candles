@@ -78,7 +78,7 @@ export default function NewPour() {
 
   return (
     <>
-      <PageHeader title="Новая заливка" back="/" />
+      <PageHeader title="Создать свечи" back="/" />
       <Section title="Свечи с приклеенным фитилём">
         {!candidates.length && <Empty>Нет свечей с фитилём. Приклейте фитиль на подсвечниках с демпферами.</Empty>}
         <Stack gap="1">
