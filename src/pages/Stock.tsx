@@ -3,10 +3,10 @@ import { useState } from 'react'
 import { LuPlus, LuShoppingCart, LuTriangleAlert } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
 import { Check, Chips, Empty, Field, Modal, notify, NumInput, PageHeader, Section, Select, TextArea, TextInput } from '../components/ui'
-import { fmt, isLow, stockOf } from '../lib/calc'
+import { fmt, stockOf } from '../lib/calc'
 import { nowLocal, toIso } from '../lib/dates'
 import { categoryLabel, categoryUnit, scentNotes, seasons, unitLabel } from '../lib/labels'
-import { fallbackUse } from '../lib/selectors'
+import { needsRestock } from '../lib/selectors'
 import { useAppDispatch, useData } from '../store'
 import { actions } from '../store/dataSlice'
 import type { Material, MaterialCategory, Unit } from '../types'
@@ -230,7 +230,7 @@ export default function Stock() {
   const filtered = all.filter(
     (m) =>
       (!q || `${m.name} ${m.maker} ${(m.notes ?? []).join(' ')} ${(m.seasons ?? []).join(' ')}`.toLowerCase().includes(q.toLowerCase())) &&
-      (!onlyLow || isLow(m, fallbackUse(d, m))) &&
+      (!onlyLow || needsRestock(d, m)) &&
       (!onlyBuy || !!m.toBuy),
   )
   const cats = (Object.keys(categoryLabel) as MaterialCategory[]).filter((c) => filtered.some((m) => m.category === c))
@@ -260,7 +260,7 @@ export default function Stock() {
               .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
               .map((m) => {
                 const st = stockOf(m)
-                const low = isLow(m, fallbackUse(d, m))
+                const low = needsRestock(d, m)
                 return (
                   <Flex key={m.id} align="center" gap="2" py="2" borderBottomWidth="1px" borderColor="border.muted" _last={{ borderBottomWidth: 0 }}>
                     <Box flex="1" minW="0" cursor="pointer" onClick={() => nav(`/stock/${m.id}`)}>

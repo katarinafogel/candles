@@ -72,15 +72,17 @@ export default function Home() {
               {low.map((m) => (
                 <Flex key={m.id} justify="space-between" gap="2">
                   <Link to={`/stock/${m.id}`}>{m.name}</Link>
-                  <Text color={stockOf(m) < 0 ? 'red.400' : 'orange.300'} fontSize="sm" whiteSpace="nowrap">
-                    {fmt(stockOf(m))} из {fmt(thresholdOf(m, fallbackUse(d, m)))} {unitLabel[m.unit]}
+                  <Text color={stockOf(m) <= 0 ? 'red.400' : 'orange.300'} fontSize="sm" whiteSpace="nowrap">
+                    {stockOf(m) <= 0
+                      ? 'закончилось'
+                      : `${fmt(stockOf(m))} из ${fmt(thresholdOf(m, fallbackUse(d, m)))} ${unitLabel[m.unit]}`}
                   </Text>
                 </Flex>
               ))}
             </Stack>
           ) : (
             <Text color="fg.muted" fontSize="sm">
-              Всего хватает.
+              Из того, что отмечено «купить», всего хватает.
             </Text>
           )}
         </Section>
