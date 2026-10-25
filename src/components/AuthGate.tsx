@@ -28,6 +28,11 @@ function Shell({ children }: { children: ReactNode }) {
         <Box p="6" borderWidth="1px" borderColor="border" bg="bg.subtle" borderRadius="l3">
           {children}
         </Box>
+        <Text textAlign="center" mt="4" fontSize="xs">
+          <Box as="a" color="fg.subtle" textDecoration="underline" {...{ href: './privacy.html' }}>
+            Политика конфиденциальности
+          </Box>
+        </Text>
       </Container>
     </Center>
   )
@@ -84,7 +89,7 @@ function Login() {
               <Input type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             </Field>
             <Button onClick={sendCode} disabled={!/^\S+@\S+\.\S+$/.test(email.trim())} loading={busy}>
-              <LuMail /> Получить код
+              <LuMail /> Получить письмо
             </Button>
           </>
         ) : (
