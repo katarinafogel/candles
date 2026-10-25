@@ -153,8 +153,8 @@ export const decorKindLabel: Record<DecorKind, string> = {
   other: 'другое',
 }
 
-export const seasons = ['зима', 'весна', 'лето', 'осень']
-export const scentNotes = ['цветочные', 'фруктовые', 'цитрусовые', 'древесные', 'пряные', 'сладкие', 'свежие', 'травяные', 'гурманские', 'мускусные']
+export const seasons = ['зима', 'весна', 'лето', 'осень', 'универсальный']
+export const scentNotes = ['цветочный', 'ягодный/фруктовый', 'древесный', 'пряный', 'сладкий', 'гурманский', 'парфюм', 'озон/свежесть', 'зеленый', 'пудровый']
 
 export const reviewQuestions = {
   scentCold: { label: 'Аромат холодной свечи', options: { none: 'не чувствуется', weak: 'слабый', nice: 'приятный', strong: 'слишком сильный' } },

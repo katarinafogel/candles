@@ -1,8 +1,8 @@
 import { Badge, Box, Button, Flex, HStack, Input, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
-import { LuPlus, LuTriangleAlert } from 'react-icons/lu'
+import { LuPlus, LuShoppingCart, LuTriangleAlert } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
-import { Chips, Empty, Field, Modal, notify, NumInput, PageHeader, Section, Select, TextArea, TextInput } from '../components/ui'
+import { Check, Chips, Empty, Field, Modal, notify, NumInput, PageHeader, Section, Select, TextArea, TextInput } from '../components/ui'
 import { fmt, isLow, stockOf } from '../lib/calc'
 import { nowLocal, toIso } from '../lib/dates'
 import { categoryLabel, categoryUnit, scentNotes, seasons, unitLabel } from '../lib/labels'
@@ -109,6 +109,9 @@ export function MaterialDialog({ material, onClose }: { material: Draft; onClose
             </Field>
           </>
         )}
+        <Check checked={!!m.toBuy} onChange={(v) => set('toBuy', v || undefined)}>
+          Нужно докупить
+        </Check>
         <Field label="Оценка">
           <Chips
             value={m.rating ? String(m.rating) : undefined}
@@ -218,6 +221,7 @@ export default function Stock() {
   const nav = useNavigate()
   const [q, setQ] = useState('')
   const [onlyLow, setOnlyLow] = useState(false)
+  const [onlyBuy, setOnlyBuy] = useState(false)
   const [add, setAdd] = useState(false)
   const [buy, setBuy] = useState<string>()
   const [inv, setInv] = useState<string>()
@@ -226,7 +230,8 @@ export default function Stock() {
   const filtered = all.filter(
     (m) =>
       (!q || `${m.name} ${m.maker} ${(m.notes ?? []).join(' ')} ${(m.seasons ?? []).join(' ')}`.toLowerCase().includes(q.toLowerCase())) &&
-      (!onlyLow || isLow(m, fallbackUse(d, m))),
+      (!onlyLow || isLow(m, fallbackUse(d, m))) &&
+      (!onlyBuy || !!m.toBuy),
   )
   const cats = (Object.keys(categoryLabel) as MaterialCategory[]).filter((c) => filtered.some((m) => m.category === c))
 
@@ -237,10 +242,13 @@ export default function Stock() {
           <LuPlus /> Материал
         </Button>
       </PageHeader>
-      <Flex gap="2" mb="4">
-        <Input placeholder="Поиск: название, нота, сезон" value={q} onChange={(e) => setQ(e.target.value)} />
+      <Flex gap="2" mb="4" wrap="wrap">
+        <Input flex="1" minW="220px" placeholder="Поиск: название, нота, сезон" value={q} onChange={(e) => setQ(e.target.value)} />
         <Button variant={onlyLow ? 'solid' : 'outline'} onClick={() => setOnlyLow(!onlyLow)} flexShrink={0}>
           <LuTriangleAlert /> На исходе
+        </Button>
+        <Button variant={onlyBuy ? 'solid' : 'outline'} onClick={() => setOnlyBuy(!onlyBuy)} flexShrink={0}>
+          <LuShoppingCart /> Купить · {all.filter((m) => m.toBuy).length}
         </Button>
       </Flex>
       {!filtered.length && <Empty>Материалов пока нет.</Empty>}
@@ -271,6 +279,7 @@ export default function Stock() {
                       </Text>
                     </Box>
                     <HStack gap="1">
+                      {m.toBuy && <Badge colorPalette="blue">купить</Badge>}
                       {low && <Badge colorPalette={st < 0 ? 'red' : 'orange'}>мало</Badge>}
                       <Text fontSize="sm" color={st < 0 ? 'red.400' : undefined} whiteSpace="nowrap">
                         {fmt(st)} {unitLabel[m.unit]}
