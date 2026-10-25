@@ -33,7 +33,6 @@ export const defaultSettings: Settings = {
   fragrancePct: 7,
   waxDyePct: 0,
   varnishMlPerLayer: 5,
-  appsScriptUrl: '',
   publicUrl: '',
 }
 
@@ -534,19 +533,6 @@ const slice = createSlice({
     deleteReview(s, a: PayloadAction<string>) {
       delete s.reviews[a.payload]
     },
-  },
-  extraReducers: (b) => {
-    // Any change to the data (except bookkeeping) counts toward the "make a backup" reminder.
-    b.addMatcher(
-      (act) =>
-        act.type.startsWith('data/') &&
-        act.type !== 'data/markBackup' &&
-        act.type !== 'data/replaceAll' &&
-        act.type !== 'data/updateSettings',
-      (s) => {
-        s.settings.lastChangeAt = new Date().toISOString()
-      },
-    )
   },
 })
 

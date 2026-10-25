@@ -1,10 +1,12 @@
 import { Box, Button, Flex, HStack, Input, SimpleGrid, Stack, Table, Text } from '@chakra-ui/react'
 import { useRef, useState } from 'react'
-import { LuDownload, LuFileUp, LuUpload } from 'react-icons/lu'
+import { LuDownload, LuFileUp, LuLogOut, LuUpload } from 'react-icons/lu'
 import { Field, Modal, notify, NumInput, PageHeader, Row, Section, Select, TextInput } from '../components/ui'
 import { downloadBackup, readBackup, type BackupSummary } from '../lib/backup'
 import { fmtDateTime } from '../lib/calc'
-import { BUILD_APPS_SCRIPT_URL, publicBase } from '../lib/config'
+import { publicBase } from '../lib/config'
+import { supabase } from '../lib/supabase'
+import { pendingCount, stopSync } from '../lib/sync'
 import {
   applyCandleRows,
   matchCandles,
@@ -59,8 +61,7 @@ function BackupRestore() {
         />
       </HStack>
       <Text fontSize="xs" color="fg.muted" mt="2">
-        Последний бэкап: {d.settings.lastBackupAt ? fmtDateTime(d.settings.lastBackupAt) : 'ещё не было'}. Токен Apps Script в файл не
-        попадает.
+        Данные хранятся на сервере; бэкап — копия на всякий случай. Последний: {d.settings.lastBackupAt ? fmtDateTime(d.settings.lastBackupAt) : 'ещё не было'}.
       </Text>
       {pending && (
         <Modal
@@ -95,7 +96,7 @@ function BackupRestore() {
               {pending.summary.molds}, отзывов {pending.summary.reviews}.
             </Text>
             <Text color="orange.300" mt="2">
-              Текущие данные на этом устройстве будут заменены. Перед заменой приложение скачает их бэкап.
+              Данные вашего аккаунта будут заменены содержимым файла. Перед заменой приложение скачает их бэкап.
             </Text>
           </Stack>
         </Modal>
@@ -258,7 +259,9 @@ function SheetImport() {
 export default function Settings() {
   const d = useData()
   const dispatch = useAppDispatch()
-  const token = useAppSelector((s) => s.local.appsScriptToken)
+  const profile = useAppSelector((s) => s.local.profile)
+  const email = useAppSelector((s) => s.local.email)
+  const [name, setName] = useState(profile?.name ?? '')
   const persisted = useAppSelector((s) => s.local.persistGranted)
   const s = d.settings
   const set = (patch: Partial<S>) => dispatch(actions.updateSettings(patch))
@@ -296,20 +299,48 @@ export default function Settings() {
         </SimpleGrid>
       </Section>
 
-      <Section title="Отзывы и QR">
+      <Section title="Аккаунт">
         <Stack gap="4">
-          <Field
-            label="Адрес Apps Script (веб-приложение)"
-            helper={BUILD_APPS_SCRIPT_URL ? `В сборке уже указан адрес: ${BUILD_APPS_SCRIPT_URL}` : 'Инструкция по установке — apps-script/README.md в репозитории'}
-          >
-            <TextInput value={s.appsScriptUrl} onChange={(v) => set({ appsScriptUrl: v.trim() })} placeholder="https://script.google.com/macros/s/…/exec" />
+          <Row label="Почта">{email ?? '—'}</Row>
+          <Row label="Адрес в ссылках">
+            <Text fontFamily="mono" fontSize="sm">
+              {profile?.slug}
+            </Text>
+          </Row>
+          <Field label="Имя мастера или мастерской" helper="видно получателям на странице свечи">
+            <HStack>
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
+              <Button
+                variant="outline"
+                disabled={!name.trim() || name.trim() === profile?.name}
+                onClick={async () => {
+                  const { error } = await supabase.from('profiles').update({ name: name.trim() }).eq('slug', profile!.slug)
+                  if (error) return notify('Не удалось сохранить', 'error', error.message)
+                  dispatch(localActions.setProfile({ ...profile!, name: name.trim() }))
+                  notify('Сохранено')
+                }}
+              >
+                Сохранить
+              </Button>
+            </HStack>
           </Field>
-          <Field label="Секретный токен" helper="Хранится только на этом устройстве и не попадает в бэкап">
-            <TextInput type="password" value={token} onChange={(v) => dispatch(localActions.setToken(v.trim()))} />
-          </Field>
-          <Field label="Адрес приложения для QR" helper={`Сейчас ссылки ведут на ${publicBase(s)}#/c/S-0001`}>
+          <Field label="Адрес приложения для QR" helper={`Сейчас ссылки ведут на ${publicBase(s)}#/c/${profile?.slug}/S-0001`}>
             <Input value={s.publicUrl} onChange={(e) => set({ publicUrl: e.target.value.trim() })} placeholder="https://<логин>.github.io/<репозиторий>/" />
           </Field>
+          <Box>
+            <Button
+              variant="outline"
+              colorPalette="red"
+              onClick={async () => {
+                const n = pendingCount()
+                if (n && !window.confirm(`${n} изменений ещё не отправлены на сервер и пропадут. Всё равно выйти?`)) return
+                await stopSync()
+                await supabase.auth.signOut()
+              }}
+            >
+              <LuLogOut /> Выйти
+            </Button>
+          </Box>
         </Stack>
       </Section>
 
@@ -322,8 +353,8 @@ export default function Settings() {
       </Section>
 
       <Section title="Хранилище">
-        <Row label="Постоянное хранилище">
-          {persisted ? 'разрешено — браузер не удалит данные при нехватке места' : 'не разрешено браузером — делайте бэкапы чаще'}
+        <Row label="Копия на устройстве">
+          {persisted ? 'браузер не удалит её при нехватке места' : 'браузер может очистить её — данные останутся на сервере'}
         </Row>
         <Row label="Версия схемы данных">{d.schemaVersion}</Row>
       </Section>

@@ -5,10 +5,21 @@ import { useSearchParams } from 'react-router-dom'
 import { ReviewCard } from '../components/ReviewForm'
 import { confirmAction, Empty, Field, IdBadge, Modal, notify, PageHeader, Select, TextArea } from '../components/ui'
 import { fmtDateTime } from '../lib/calc'
-import { parsePastedReview, pullAll } from '../lib/publish'
+import { load } from '../lib/sync'
+import type { Review } from '../types'
 import { byId } from '../lib/selectors'
-import { store, useAppDispatch, useData } from '../store'
+import { store, useAppDispatch, useAppSelector, useData } from '../store'
 import { actions } from '../store/dataSlice'
+
+/** The recipient's «Скопировать ответ» text is the review JSON; it is imported the same way. */
+function parsePastedReview(text: string): Review {
+  const start = text.indexOf('{')
+  const end = text.lastIndexOf('}')
+  if (start < 0 || end < start) throw new Error('В тексте нет ответа')
+  const r = JSON.parse(text.slice(start, end + 1))
+  if (!r.id || !r.candleId) throw new Error('В ответе нет ИД свечи')
+  return { ...r, source: 'qr', read: false }
+}
 
 function PasteDialog({ onClose }: { onClose: () => void }) {
   const dispatch = useAppDispatch()
@@ -51,6 +62,7 @@ export default function Reviews() {
   const [sp, setSp] = useSearchParams()
   const f = (sp.get('f') ?? 'all') as Filter
   const [pulling, setPulling] = useState(false)
+  const loadedAt = useAppSelector((s) => s.local.sync.loadedAt)
   const [paste, setPaste] = useState(false)
   const all = Object.values(d.reviews).sort((a, b) => b.date.localeCompare(a.date))
   const list = all.filter((r) => (f === 'unread' ? !r.read : f === 'orphan' ? !d.candles[r.candleId] : true))
@@ -58,21 +70,18 @@ export default function Reviews() {
 
   async function pull() {
     setPulling(true)
-    try {
-      const n = await pullAll(store.getState, dispatch)
-      notify(n ? `Новых отзывов: ${n}` : 'Новых отзывов нет')
-    } catch (e) {
-      notify('Не удалось подтянуть отзывы', 'error', (e as Error).message)
-    } finally {
-      setPulling(false)
-    }
+    await load()
+    setPulling(false)
+    const err = store.getState().local.sync.error
+    if (err) notify('Не удалось обновить', 'error', err)
+    else notify('Обновлено')
   }
 
   return (
     <>
       <PageHeader title="Отзывы" back="/more">
         <Button size="sm" onClick={pull} loading={pulling}>
-          <LuRefreshCw /> Подтянуть
+          <LuRefreshCw /> Обновить
         </Button>
         <Button size="sm" variant="outline" onClick={() => setPaste(true)}>
           <LuClipboardPaste /> Вставить ответ
@@ -96,7 +105,7 @@ export default function Reviews() {
           </Button>
         )}
         <Text fontSize="xs" color="fg.muted" ml="auto">
-          Подтягивание: {d.settings.lastPullAt ? fmtDateTime(d.settings.lastPullAt) : 'ещё не было'}
+          Обновлено: {loadedAt ? fmtDateTime(loadedAt) : '—'}
         </Text>
       </Flex>
       {!list.length && <Empty>Отзывов нет.</Empty>}

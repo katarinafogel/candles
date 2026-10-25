@@ -4,10 +4,8 @@ import { LuCopy, LuFlame, LuSend, LuWind } from 'react-icons/lu'
 import { useParams } from 'react-router-dom'
 import { ReviewForm } from '../components/ReviewForm'
 import { notify, NumInput } from '../components/ui'
-import { fetchCandle, sendFeedback } from '../lib/appsScript'
 import { fmt, round2 } from '../lib/calc'
-import { appsScriptUrl } from '../lib/config'
-import { useAppSelector } from '../store'
+import { supabase } from '../lib/supabase'
 import type { ReviewAnswers } from '../types'
 
 interface Session {
@@ -135,12 +133,11 @@ function BurnTracker({ id, sessions, setSessions }: { id: string; sessions: Sess
 }
 
 export default function PublicCandle() {
-  const { id = '' } = useParams()
-  const settings = useAppSelector((s) => s.data.settings)
-  const url = appsScriptUrl(settings)
-  const [info, setInfo] = useState<{ name?: string; instruction?: string } | null>(null)
-  const [loading, setLoading] = useState(!!url)
-  const [sessions, setSessions] = useState<Session[]>(() => load(id))
+  const { slug = '', id = '' } = useParams()
+  const trackerKey = `${slug}/${id}`
+  const [info, setInfo] = useState<{ name?: string; instruction?: string; master?: string } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [sessions, setSessions] = useState<Session[]>(() => load(trackerKey))
   const [answers, setAnswers] = useState<ReviewAnswers>({})
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(0)
@@ -148,12 +145,12 @@ export default function PublicCandle() {
   const [failed, setFailed] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!url) return
-    fetchCandle(url, id)
-      .then((r) => setInfo(r.found ? r : null))
-      .catch(() => setInfo(null))
-      .finally(() => setLoading(false))
-  }, [url, id])
+    // Only the name, the instruction and the master's name are public.
+    supabase
+      .rpc('candle_public', { p_slug: slug, p_id: id })
+      .then(({ data }) => setInfo(data?.found ? data : data?.master ? { master: data.master } : null))
+      .then(() => setLoading(false), () => setLoading(false))
+  }, [slug, id])
 
   const outCount = sessions.filter((s) => s.selfOut).length
   // The tracker pre-fills «Тухла ли в процессе?» unless the person answered it.
@@ -182,8 +179,8 @@ export default function PublicCandle() {
     setSending(true)
     setFailed(null)
     try {
-      if (!url) throw new Error('no url')
-      await sendFeedback(url, p)
+      const { error } = await supabase.rpc('submit_review', { p_slug: slug, p_review: p })
+      if (error) throw new Error(error.message)
       setSent((n) => n + 1)
       setSentFinal(p.finished === 'yes')
       notify('Спасибо! Отзыв отправлен')
@@ -212,6 +209,11 @@ export default function PublicCandle() {
           <Text color="fg.muted" fontFamily="mono" fontSize="sm" mt="1">
             {id}
           </Text>
+          {info?.master && (
+            <Text color="fg.muted" fontSize="sm">
+              {info.master}
+            </Text>
+          )}
           {sent > 0 && (
             <Text color="emerald.300" mt="3">
               {sentFinal
@@ -236,7 +238,7 @@ export default function PublicCandle() {
           <Heading size="md" mb="4" textAlign="center">
             Трекер горения
           </Heading>
-          <BurnTracker id={id} sessions={sessions} setSessions={setSessions} />
+          <BurnTracker id={trackerKey} sessions={sessions} setSessions={setSessions} />
           <Text fontSize="xs" color="fg.subtle" textAlign="center" mt="3">
             История хранится в этом браузере: при смене телефона или очистке браузера она потеряется.
           </Text>
@@ -265,7 +267,7 @@ export default function PublicCandle() {
                 variant="outline"
                 w="100%"
                 onClick={async () => {
-                  await navigator.clipboard.writeText(`Отзыв на свечу ${id}:\n${failed}`)
+                  await navigator.clipboard.writeText(`Отзыв на свечу ${slug}/${id}:\n${failed}`)
                   notify('Ответ скопирован')
                 }}
               >

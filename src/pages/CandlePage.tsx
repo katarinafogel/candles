@@ -11,9 +11,8 @@ import { Check, confirmAction, Empty, Field, Link, Modal, notify, PageHeader, Ro
 import { candleCost, daysBetween, fmt, fmtDate, fmtDateTime } from '../lib/calc'
 import { nowLocal, toIso } from '../lib/dates'
 import { candleStageLabel, decorKindLabel, defectReasonLabel, holderStageLabel, wickSchemeLabel } from '../lib/labels'
-import { publishCandle } from '../lib/publish'
 import { moldOfCandle, reviewsOf } from '../lib/selectors'
-import { store, useAppDispatch, useAppSelector, useData } from '../store'
+import { useAppDispatch, useData } from '../store'
 import { actions } from '../store/dataSlice'
 import type { ReviewAnswers } from '../types'
 import { MixRecipe } from './HolderPage'
@@ -26,7 +25,6 @@ function GiveDialog({ id, onClose, onDone }: { id: string; onClose: () => void; 
   const [newName, setNewName] = useState('')
   const [self, setSelf] = useState(false)
   const [date, setDate] = useState(nowLocal())
-  const hasToken = useAppSelector((s) => !!s.local.appsScriptToken)
   return (
     <Modal
       open
@@ -35,7 +33,7 @@ function GiveDialog({ id, onClose, onDone }: { id: string; onClose: () => void; 
       footer={
         <Button
           disabled={!self && !personId && !newName.trim()}
-          onClick={async () => {
+          onClick={() => {
             let pid = personId || undefined
             if (!self && !pid && newName.trim()) {
               pid = nanoid(8)
@@ -50,12 +48,7 @@ function GiveDialog({ id, onClose, onDone }: { id: string; onClose: () => void; 
               }),
             )
             onDone()
-            if (!hasToken) {
-              notify('Свеча выдана', 'info', 'Apps Script не настроен — страница отзыва покажет только ИД и форму.')
-              return
-            }
-            const ok = await publishCandle(store.getState, dispatch, id)
-            notify(ok ? 'Свеча выдана и опубликована' : 'Свеча выдана, публикация повторится позже', ok ? 'success' : 'warning')
+            notify('Свеча выдана — распечатайте QR')
           }}
         >
           Подарить
@@ -187,7 +180,7 @@ export default function CandlePage() {
         </Row>
         <Row label="Название / дизайн">
           <Box maxW="sm">
-            <TextInput value={c.name} onChange={(v) => dispatch(actions.updateCandle({ id, name: v, published: false }))} />
+            <TextInput value={c.name} onChange={(v) => dispatch(actions.updateCandle({ id, name: v }))} />
           </Box>
         </Row>
         <Row label="Инструкция">
@@ -195,7 +188,7 @@ export default function CandlePage() {
             <Select
               size="sm"
               value={c.instructionId}
-              onChange={(v) => dispatch(actions.updateCandle({ id, instructionId: v || undefined, published: false }))}
+              onChange={(v) => dispatch(actions.updateCandle({ id, instructionId: v || undefined }))}
               placeholder="— без инструкции —"
               options={Object.values(d.instructions).map((i) => ({ value: i.id, label: i.title }))}
             />
@@ -231,12 +224,6 @@ export default function CandlePage() {
         <Row label="Кому">
           {c.burnedBySelf ? 'сожгла сама' : person ? <Link to={`/people?p=${person.id}`}>{person.name}</Link> : '—'}
           {c.givenAt && ` · ${fmtDate(c.givenAt)}`}
-          {c.stage === 'given' && !c.burnedBySelf && (
-            <Text as="span" fontSize="xs" color={c.published ? 'fg.muted' : 'orange.300'}>
-              {' '}
-              · {c.published ? 'опубликована' : 'не опубликована'}
-            </Text>
-          )}
         </Row>
         {c.defect && (
           <Row label="Брак">

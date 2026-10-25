@@ -1,20 +1,41 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 
+export interface Profile {
+  slug: string
+  name: string
+}
+
 /** Device-only state that never goes into a backup file. */
 export interface LocalState {
-  appsScriptToken: string
   persistGranted?: boolean
+  /** User whose data is cached on this device. */
+  ownerId?: string | null
+  email?: string
+  profile?: Profile | null
+  sync: {
+    pending: number
+    syncing: boolean
+    error?: string
+    loadedAt?: string
+  }
 }
 
 const slice = createSlice({
   name: 'local',
-  initialState: { appsScriptToken: '' } as LocalState,
+  initialState: { sync: { pending: 0, syncing: false } } as LocalState,
   reducers: {
-    setToken(s, a: PayloadAction<string>) {
-      s.appsScriptToken = a.payload
-    },
     setPersistGranted(s, a: PayloadAction<boolean>) {
       s.persistGranted = a.payload
+    },
+    setAccount(s, a: PayloadAction<{ ownerId: string | null; email?: string }>) {
+      s.ownerId = a.payload.ownerId
+      s.email = a.payload.email
+    },
+    setProfile(s, a: PayloadAction<Profile | null>) {
+      s.profile = a.payload
+    },
+    setSync(s, a: PayloadAction<Partial<LocalState['sync']>>) {
+      s.sync = { ...(s.sync ?? { pending: 0, syncing: false }), ...a.payload }
     },
   },
 })

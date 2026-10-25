@@ -185,8 +185,6 @@ export interface Candle {
   burnedBySelf?: boolean
   givenAt?: ISODate
   defect?: Defect
-  /** Name/instruction successfully registered in Apps Script. */
-  published?: boolean
 }
 
 export interface WaxPart {
@@ -280,12 +278,9 @@ export interface Settings {
   fragrancePct: number
   waxDyePct: number
   varnishMlPerLayer: number
-  appsScriptUrl: string
   /** Address of the published app, used in QR links. Empty = the current address. */
   publicUrl: string
-  lastPullAt?: ISODate
   lastBackupAt?: ISODate
-  lastChangeAt?: ISODate
 }
 
 export interface Counters {
