@@ -13,6 +13,7 @@ import {
   parseCandles,
   parseFragrances,
   parseMolds,
+  FRAGRANCE_IN_STOCK_G,
   type ImportPlan,
   type MoldDraft,
 } from '../lib/importSheets'
@@ -146,7 +147,14 @@ function SheetImport() {
   function apply() {
     const finalMolds = candleRows ? applyCandleRows(baseMolds, candleRows) : baseMolds
     if (molds || candleRows) for (const m of finalMolds) dispatch(actions.upsertMold(m))
-    if (frags) for (const f of frags) dispatch(actions.upsertMaterial(f))
+    if (frags) {
+      const date = new Date().toISOString()
+      for (const f of frags) {
+        dispatch(actions.upsertMaterial(f.material))
+        if (f.stockG != null)
+          dispatch(actions.inventory({ materialId: f.material.id, date, actual: f.stockG, comment: 'инвентаризация из таблицы' }))
+      }
+    }
     notify(`Импорт готов: форм ${molds || candleRows ? finalMolds.length : 0}, отдушек ${frags?.length ?? 0}`)
     setMolds(null)
     setCandleRows(null)
@@ -243,7 +251,9 @@ function SheetImport() {
 
       {frags && (
         <Text fontWeight="medium">
-          Отдушки: {frags.length} (новых {frags.filter((f) => !f.id).length}). Остатки придут пустыми — внесите их инвентаризацией.
+          Отдушки: {frags.length} (новых {frags.filter((f) => f.isNew).length}) · в наличии{' '}
+          {frags.filter((f) => f.stockG).length} — им будет поставлен остаток {FRAGRANCE_IN_STOCK_G} г, остальным 0 · докупить{' '}
+          {frags.filter((f) => f.material.toBuy).length}
         </Text>
       )}
 

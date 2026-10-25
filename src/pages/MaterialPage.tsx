@@ -58,6 +58,7 @@ export default function MaterialPage() {
         {!!m.seasons?.length && <Row label="Сезоны">{m.seasons.join(', ')}</Row>}
         {!!m.notes?.length && <Row label="Ноты">{m.notes.join(', ')}</Row>}
         <Row label="Оценка">{m.rating ? '★'.repeat(m.rating) : '—'}</Row>
+        <Row label="Докупить">{m.toBuy ? 'да' : 'нет'}</Row>
         <Row label="Отзыв">{m.review || '—'}</Row>
       </Section>
       <Section title="Движения">

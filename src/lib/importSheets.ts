@@ -1,6 +1,7 @@
 // One-off import of the old Google Sheets tabs (spec 8.2).
+import { nanoid } from '@reduxjs/toolkit'
 import type { DataState, Material, Mold } from '../types'
-import { bool, isServiceRow, num, sameName, splitList, stars, table } from './csv'
+import { bool, isServiceRow, num, sameName, stars, table } from './csv'
 
 export type MoldDraft = Omit<Mold, 'id'> & { id?: string }
 
@@ -15,7 +16,7 @@ export interface CandleRow {
 export interface ImportPlan {
   molds: MoldDraft[]
   candleRows: { row: CandleRow; moldIndex: number | null }[]
-  fragrances: (Omit<Material, 'id' | 'movements'> & { id?: string })[]
+  fragrances: FragranceRow[]
 }
 
 export function parseMolds(text: string, d: DataState, fragrancePct: number): MoldDraft[] {
@@ -78,36 +79,58 @@ export function parseCandles(text: string): CandleRow[] {
     .filter((r) => !isServiceRow(r.name))
 }
 
-export function parseFragrances(text: string, d: DataState): ImportPlan['fragrances'] {
+/** A fragrance in the sheet: «Наличие» TRUE means 10 g on the shelf, «Купить еще» marks it to be bought. */
+export const FRAGRANCE_IN_STOCK_G = 10
+
+export interface FragranceRow {
+  material: Omit<Material, 'movements'>
+  isNew: boolean
+  /** Stock to set by inventory; undefined when the sheet has no «Наличие» column. */
+  stockG?: number
+}
+
+export function parseFragrances(text: string, d: DataState): FragranceRow[] {
   const t = table(text)
   const c = {
     name: t.col('Название'),
-    maker: t.col('Производитель'),
+    maker: t.col('Производитель', 'Прозводитель', 'Бренд'),
     season: t.col('Сезон', 'Сезоны'),
     notes: t.col('Ноты'),
     rating: t.col('Оценка'),
-    stock: t.col('Наличие'),
+    stock: t.col('Наличие', 'В наличии'),
+    toBuy: t.col('Купить еще', 'Купить ещё', 'Купить', 'Докупить'),
     review: t.col('Отзывы', 'Отзыв'),
   }
+  // Notes like «Ягодный/Фруктовый» are one note, so only commas and semicolons separate them.
+  const list = (v?: string) =>
+    (v ?? '')
+      .split(/[,;]+/)
+      .map((x) => x.trim().toLowerCase())
+      .filter(Boolean)
   return t.rows
     .filter((r) => (r[c.name] ?? '').trim())
     .map((r) => {
       const name = r[c.name].trim()
       const existing = Object.values(d.materials).find((m) => m.category === 'fragrance' && sameName(m.name, name))
-      const inStock = c.stock >= 0 ? (r[c.stock] ?? '').trim() : ''
-      const review = [(r[c.review] ?? '').trim(), inStock && !bool(inStock) && !num(inStock) ? `наличие: ${inStock}` : '']
-        .filter(Boolean)
-        .join('\n')
+      const { movements, ...prev } = existing ?? ({} as Partial<Material>)
+      void movements
+      const review = (r[c.review] ?? '').trim()
       return {
-        id: existing?.id,
-        category: 'fragrance' as const,
-        name,
-        maker: (r[c.maker] ?? '').trim(),
-        unit: 'g' as const,
-        seasons: splitList(r[c.season]),
-        notes: splitList(r[c.notes]),
-        rating: stars(r[c.rating]),
-        review,
+        isNew: !existing,
+        stockG: c.stock >= 0 ? (bool(r[c.stock]) ? FRAGRANCE_IN_STOCK_G : 0) : undefined,
+        material: {
+          ...prev,
+          id: existing?.id ?? nanoid(8),
+          category: 'fragrance' as const,
+          name,
+          maker: (r[c.maker] ?? '').trim() || prev.maker || '',
+          unit: 'g' as const,
+          seasons: list(r[c.season]),
+          notes: list(r[c.notes]),
+          rating: stars(r[c.rating]),
+          review: review || prev.review || '',
+          toBuy: c.toBuy >= 0 ? bool(r[c.toBuy]) || undefined : prev.toBuy,
+        },
       }
     })
 }

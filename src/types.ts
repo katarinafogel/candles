@@ -82,6 +82,8 @@ export interface Material {
   color?: string
   dyeForm?: 'liquid' | 'solid'
   archived?: boolean
+  /** Marked to be bought again («Купить еще»). */
+  toBuy?: boolean
 }
 
 /** A material amount taken from stock by some step; kept so a step can be undone and costed. */
