@@ -2,25 +2,26 @@ import { Box, Button, Center, Container, Flex, Heading, Input, Spinner, Stack, T
 import type { Session } from '@supabase/supabase-js'
 import { useEffect, useState, type ReactNode } from 'react'
 import { FcGoogle } from 'react-icons/fc'
-import { LuFlame } from 'react-icons/lu'
 import { publicBase } from '../lib/config'
 import { authRedirect, supabase, supabaseConfigured } from '../lib/supabase'
 import { startSync } from '../lib/sync'
 import { useAppDispatch, useAppSelector, useData } from '../store'
 import { localActions } from '../store/localSlice'
+import { Eucalyptus, MoonPhases, MoonSlice } from './Magic'
 import { Field, notify } from './ui'
 
 function Shell({ children }: { children: ReactNode }) {
   return (
     <Center minH="100dvh" px="4" py="10">
       <Container maxW="400px" p="0">
-        <Flex direction="column" align="center" mb="8" gap="2">
-          <Box color="emerald.400" fontSize="5xl">
-            <LuFlame />
-          </Box>
-          <Heading size="2xl" letterSpacing="-0.01em">
+        <Flex direction="column" align="center" mb="8" gap="3" position="relative">
+          <Eucalyptus width={110} position="absolute" top="-70px" left="-30px" opacity={0.5} />
+          <Eucalyptus width={80} flip position="absolute" top="-60px" right="-10px" opacity={0.35} />
+          <MoonSlice size={72} />
+          <Heading size="4xl" fontWeight="semibold" color="ember.50">
             Мастерская свечей
           </Heading>
+          <MoonPhases size={12} gap="2.5" color="ember.200" />
           <Text color="fg.muted" fontSize="sm" textAlign="center">
             Производственный журнал: замесы, заливки, склад и отзывы
           </Text>

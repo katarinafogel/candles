@@ -2,6 +2,7 @@ import { Box, Flex, Stack, Text } from '@chakra-ui/react'
 import { useEffect, type ReactNode } from 'react'
 import { LuBox, LuEllipsis, LuFlame, LuHouse, LuLayers, LuMessageSquare, LuScrollText, LuSettings, LuSparkles, LuUsers, LuWarehouse } from 'react-icons/lu'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Eucalyptus, MoonPhases, MoonSlice, Sparkle } from './Magic'
 import { SyncBadge } from './SyncBadge'
 import { useAppDispatch, useAppSelector } from '../store'
 import { localActions } from '../store/localSlice'
@@ -40,15 +41,16 @@ function SideLink({ item, badge }: { item: NavItem; badge?: number }) {
           px="3"
           py="2"
           borderRadius="l2"
-          color={isActive ? 'emerald.300' : 'fg.muted'}
-          bg={isActive ? 'emerald.subtle' : 'transparent'}
+          color={isActive ? 'ember.200' : 'fg.muted'}
+          bg={isActive ? 'ember.subtle' : 'transparent'}
+          boxShadow={isActive ? 'inset 2px 0 0 {colors.ember.400}' : undefined}
           _hover={{ bg: 'bg.muted', color: 'fg' }}
           fontWeight={isActive ? 'semibold' : 'normal'}
         >
           <Box fontSize="lg">{item.icon}</Box>
           <Text flex="1">{item.label}</Text>
           {!!badge && (
-            <Box bg="emerald.solid" color="emerald.contrast" borderRadius="full" px="2" fontSize="xs" fontWeight="bold">
+            <Box bg="ember.solid" color="ember.contrast" borderRadius="full" px="2" fontSize="xs" fontWeight="bold">
               {badge}
             </Box>
           )}
@@ -70,7 +72,7 @@ function BottomLink({ item }: { item: NavItem }) {
           align="center"
           gap="0.5"
           py="2"
-          color={isActive || isMore ? 'emerald.300' : 'fg.subtle'}
+          color={isActive || isMore ? 'ember.300' : 'fg.subtle'}
           fontSize="2xs"
           fontWeight="medium"
         >
@@ -105,21 +107,20 @@ export default function Layout() {
         flexShrink={0}
         borderRightWidth="1px"
         borderColor="border"
-        bg="bg.subtle"
+        bg="rgba(24, 21, 18, 0.92)"
         position="sticky"
         top="0"
         h="100dvh"
         overflowY="auto"
         p="4"
       >
-        <Flex align="center" gap="2" mb="6" px="2">
-          <Box color="emerald.400" fontSize="2xl">
-            <LuFlame />
-          </Box>
-          <Text fontWeight="bold" fontSize="lg" letterSpacing="-0.01em">
+        <Flex align="center" gap="3" mb="3" px="1">
+          <MoonSlice size={38} />
+          <Text fontFamily="heading" fontWeight="semibold" fontSize="2xl" lineHeight="1" color="ember.100">
             Мастерская свечей
           </Text>
         </Flex>
+        <MoonPhases size={12} gap="2.5" color="ember.200" px="2" mb="5" />
         <Box mb="4" px="2">
           <SyncBadge />
         </Box>
@@ -132,13 +133,32 @@ export default function Layout() {
             <SideLink key={i.to} item={i} badge={i.to === '/reviews' ? unread : undefined} />
           ))}
         </Stack>
+        <Flex justify="center" gap="3" mt="8" color="ember.300" opacity=".5">
+          <Sparkle size={8} />
+          <Sparkle size={12} />
+          <Sparkle size={8} />
+        </Flex>
+        <Eucalyptus width={120} mx="auto" mt="4" opacity={0.45} />
       </Box>
 
-      <Box flex="1" minW="0" px={{ base: '4', md: '8' }} pt={{ base: '4', md: '8' }} pb={{ base: '24', md: '10' }} maxW="1200px">
-        <Box display={{ base: 'flex', md: 'none' }} justifyContent="flex-end" mb="2">
-          <SyncBadge />
+      <Box flex="1" minW="0" position="relative" overflowX="clip">
+        {/* Dried eucalyptus rising from the bottom corner, behind the content. */}
+        <Box position="fixed" right="-30px" bottom="-20px" display={{ base: 'none', md: 'flex' }} alignItems="flex-end" opacity={0.35} pointerEvents="none">
+          <Eucalyptus width={110} transform="scaleY(-1) rotate(-14deg)" mr="-40px" />
+          <Eucalyptus width={170} transform="scaleY(-1) rotate(8deg)" />
         </Box>
-        <Outlet />
+        <Box position="relative" zIndex="1" px={{ base: '4', md: '8' }} pt={{ base: '4', md: '8' }} pb={{ base: '24', md: '10' }} maxW="1200px">
+          <Flex display={{ base: 'flex', md: 'none' }} justify="space-between" align="center" mb="3">
+            <Flex align="center" gap="2">
+              <MoonSlice size={26} />
+              <Text fontFamily="heading" fontWeight="semibold" fontSize="lg" color="ember.100">
+                Мастерская свечей
+              </Text>
+            </Flex>
+            <SyncBadge />
+          </Flex>
+          <Outlet />
+        </Box>
       </Box>
 
       <Flex
@@ -148,7 +168,8 @@ export default function Layout() {
         bottom="0"
         left="0"
         right="0"
-        bg="bg.panel"
+        bg="rgba(24, 21, 18, 0.94)"
+        backdropFilter="blur(8px)"
         borderTopWidth="1px"
         borderColor="border"
         pb="env(safe-area-inset-bottom)"
