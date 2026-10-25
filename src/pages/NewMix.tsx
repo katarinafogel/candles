@@ -6,21 +6,32 @@ import { Chips, Field, notify, NumInput, PageHeader, Section, Select, TextArea, 
 import { StockHint } from '../components/StockHint'
 import { calcPlaster, fmt, round2 } from '../lib/calc'
 import { nowLocal, toIso } from '../lib/dates'
-import { materialOptions } from '../lib/selectors'
+import { materialOptions, moldUses, sortMolds } from '../lib/selectors'
 import { useAppDispatch, useData } from '../store'
 import { actions } from '../store/dataSlice'
 import type { MixPart } from '../types'
 
 type PartKey = 'water' | 'plaster' | 'plasticizer' | 'defoamer' | 'dye'
+type LidFilter = 'all' | 'lid' | 'noLid'
+
+const lidFilterOptions: { value: LidFilter; label: string }[] = [
+  { value: 'all', label: 'Все' },
+  { value: 'lid', label: 'С крышкой · для свечей' },
+  { value: 'noLid', label: 'Без крышки · декоративные' },
+]
 
 export default function NewMix() {
   const d = useData()
   const dispatch = useAppDispatch()
   const nav = useNavigate()
   const s = d.settings
-  const molds = Object.values(d.molds)
-    .filter((m) => m.status === 'active' && (m.purpose === 'holder' || m.purpose === 'lid'))
-    .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+  const molds = sortMolds(
+    d,
+    Object.values(d.molds).filter((m) => m.status === 'active' && (m.purpose === 'holder' || m.purpose === 'lid')),
+  )
+  const uses = moldUses(d)
+  // Molds with a lid make candle holders; molds without one are decorative.
+  const [lidFilter, setLidFilter] = useState<LidFilter>('all')
 
   const [counts, setCounts] = useState<Record<string, number>>({})
   const [date, setDate] = useState(nowLocal())
@@ -105,8 +116,19 @@ export default function NewMix() {
             Сначала добавьте силиконовые формы в разделе «Формы».
           </Text>
         )}
+        {molds.length > 0 && (
+          <Box mb="3">
+            <Chips
+              value={lidFilter}
+              onChange={(v) => setLidFilter((v as LidFilter) ?? 'all')}
+              options={lidFilterOptions}
+            />
+          </Box>
+        )}
         <Stack gap="1">
-          {molds.map((m) => {
+          {molds
+            .filter((m) => lidFilter === 'all' || counts[m.id] || (lidFilter === 'lid' ? m.hasLid : !m.hasLid && m.purpose !== 'lid'))
+            .map((m) => {
             const n = counts[m.id] ?? 0
             const set = (v: number) => setCounts({ ...counts, [m.id]: Math.max(0, Math.min(m.copies, v)) })
             return (
@@ -121,10 +143,19 @@ export default function NewMix() {
                 onClick={() => set(n ? 0 : 1)}
               >
                 <Box flex="1">
-                  <Text fontWeight={n ? 'semibold' : 'normal'}>{m.name}</Text>
+                  <HStack gap="2">
+                    <Text fontWeight={n ? 'semibold' : 'normal'}>{m.name}</Text>
+                    {m.rating && (
+                      <Text fontSize="xs" color="emerald.300">
+                        {'★'.repeat(m.rating)}
+                      </Text>
+                    )}
+                  </HStack>
                   <Text fontSize="xs" color="fg.muted">
-                    {m.waterVolumeMl} мл · {m.waterPct}% воды{m.purpose === 'lid' ? ' · крышка' : ''}
+                    {m.waterVolumeMl} мл · {m.waterPct}% воды
+                    {m.hasLid ? ' · с крышкой' : m.purpose === 'lid' ? ' · крышка' : ''}
                     {m.copies > 1 ? ` · копий: ${m.copies}` : ''}
+                    {uses.get(m.id) ? ` · отлито ${uses.get(m.id)}` : ''}
                   </Text>
                 </Box>
                 {m.copies > 1 && n > 0 ? (

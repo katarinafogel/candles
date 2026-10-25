@@ -99,3 +99,23 @@ export const holderTitle = (d: DataState, h: Holder) => `${h.id} · ${d.molds[h.
 export const unreadReviews = (d: DataState) => Object.values(d.reviews).filter((r) => !r.read)
 
 export const orphanReviews = (d: DataState) => Object.values(d.reviews).filter((r) => !d.candles[r.candleId])
+
+/** How many times a mold was used: cast holders plus molded candles. */
+export function moldUses(d: DataState): Map<string, number> {
+  const uses = new Map<string, number>()
+  const bump = (id?: string) => id && uses.set(id, (uses.get(id) ?? 0) + 1)
+  for (const h of Object.values(d.holders)) bump(h.moldId)
+  for (const c of Object.values(d.candles)) if (!c.holderId) bump(c.moldId)
+  return uses
+}
+
+/** More stars first, then the most used, then by name. */
+export function sortMolds(d: DataState, molds: Mold[]): Mold[] {
+  const uses = moldUses(d)
+  return [...molds].sort(
+    (a, b) =>
+      (b.rating ?? 0) - (a.rating ?? 0) ||
+      (uses.get(b.id) ?? 0) - (uses.get(a.id) ?? 0) ||
+      a.name.localeCompare(b.name, 'ru'),
+  )
+}
