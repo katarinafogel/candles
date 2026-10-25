@@ -163,10 +163,10 @@ export const reviewQuestions = {
   wentOut: { label: 'Тухла ли в процессе?', options: { no: 'нет', sometimes: 'иногда', often: 'часто' } },
   soot: { label: 'Коптила?', options: { no: 'нет', little: 'немного', strong: 'сильно' } },
   heat: { label: 'Сильно ли грелся подсвечник?', options: { cool: 'почти не грелся', warm: 'тёплый', hot: 'горячий, страшно трогать' } },
-  crack: { label: 'Треснул ли подсвечник?', options: { no: 'нет', crack: 'появилась трещина', broken: 'раскололся' } },
+  crack: { label: 'Треснул ли подсвечник?', options: { no: 'нет', crack: 'да' } },
   leak: { label: 'Протекал ли воск?', options: { no: 'нет', yes: 'да, были пятна' } },
   instructionClear: { label: 'Понятна ли инструкция?', options: { yes: 'да', notReally: 'не очень', didntRead: 'не читал(а)' } },
-  finished: { label: 'Свеча догорела?', options: { yes: 'да', burning: 'ещё горю' } },
+  finished: { label: 'Свеча догорела?', options: { yes: 'да', burning: 'нет' } },
 } as const
 
 export type ChoiceQuestion = keyof typeof reviewQuestions
