@@ -493,6 +493,8 @@ const slice = createSlice({
         case 'curing':
           if (c.pourId && s.pours[c.pourId]) {
             s.pours[c.pourId].candleIds = s.pours[c.pourId].candleIds.filter((x) => x !== c.id)
+            // A pour with every candle taken back did not happen.
+            if (!s.pours[c.pourId].candleIds.length) delete s.pours[c.pourId]
           }
           c.pourId = undefined
           c.pouredAt = undefined

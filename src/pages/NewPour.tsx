@@ -11,6 +11,7 @@ import { capacityOf, materialOptions, moldOfCandle } from '../lib/selectors'
 import { useAppDispatch, useData } from '../store'
 import { actions } from '../store/dataSlice'
 import type { WaxPart } from '../types'
+import { withUndo } from '../lib/undo'
 
 export default function NewPour() {
   const d = useData()
@@ -54,25 +55,26 @@ export default function NewPour() {
   function save() {
     if (!sel.length) return notify('Отметьте свечи', 'warning')
     if (Math.abs(shareSum - 100) > 0.01) return notify('Доли воска должны давать 100%', 'warning')
-    dispatch(
-      actions.createPour({
-        pour: {
-          date: toIso(date),
-          candleIds: sel,
-          waxes,
-          lossPct: lossPct ?? 0,
-          fragrance: { materialId: fragranceId, pct: fPct },
-          dye: { materialId: dyeId, pct: dyePct ?? 0, color: dyeColor, form: dyeForm },
-          tempFragranceC: tFrag,
-          tempPourC: tPour,
-          tempMoldC: noHeat ? 'none' : tMold,
-          calc: { totalG: calc.totalG, waxG: calc.waxG, fragranceG: calc.fragranceG, dyeG: calc.dyeG },
-          fact: { waxG: waxFact.map((x) => round2(x ?? 0)), fragranceG: round2(fragFact), dyeG: round2(dyeFact) },
-          comment,
-        },
-      }),
-    )
-    notify(`Заливка сохранена: свечей ${sel.length}, дозревают`)
+    const pour = () =>
+      dispatch(
+        actions.createPour({
+          pour: {
+            date: toIso(date),
+            candleIds: sel,
+            waxes,
+            lossPct: lossPct ?? 0,
+            fragrance: { materialId: fragranceId, pct: fPct },
+            dye: { materialId: dyeId, pct: dyePct ?? 0, color: dyeColor, form: dyeForm },
+            tempFragranceC: tFrag,
+            tempPourC: tPour,
+            tempMoldC: noHeat ? 'none' : tMold,
+            calc: { totalG: calc.totalG, waxG: calc.waxG, fragranceG: calc.fragranceG, dyeG: calc.dyeG },
+            fact: { waxG: waxFact.map((x) => round2(x ?? 0)), fragranceG: round2(fragFact), dyeG: round2(dyeFact) },
+            comment,
+          },
+        }),
+      )
+    withUndo('candle', sel, pour, `Заливка сохранена: свечей ${sel.length}, дозревают`)
     nav('/candles?stage=curing')
   }
 

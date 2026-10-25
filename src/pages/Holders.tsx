@@ -101,7 +101,7 @@ export default function Holders() {
               borderRadius="l3"
             >
               <Check checked={on} onChange={(v) => setSel(v ? [...sel, h.id] : sel.filter((x) => x !== h.id))} />
-              <Box flex="1" minW="0" cursor="pointer" onClick={() => nav(`/holders/${h.id}`)}>
+              <Box flex="1" minW="0" cursor="pointer" onClick={() => nav(`/holders/${h.id}`, { state: { back: `/holders${sp.size ? `?${sp}` : ''}` } })}>
                 <HStack gap="2" wrap="wrap">
                   <IdBadge id={h.id} />
                   <Text fontWeight="medium" truncate>

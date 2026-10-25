@@ -33,6 +33,8 @@ export function migrateMold(old: Mold): Mold {
   if (hasLid === undefined && status === undefined && m.purpose !== 'lid') return old
   let purpose = m.purpose
   if (purpose === 'lid') purpose = 'figurine'
+  // Plaster dishes used to be filed as «decor»; decor is wax now.
+  else if ((purpose === 'decor' || purpose === 'holder') && /тарел|миск|блюд|поднос/i.test(m.name)) purpose = 'dish'
   else if (purpose === 'holder' && hasLid === false) purpose = 'figurine'
   return { ...m, purpose, ...(status && status !== 'active' ? { archived: true } : {}) } as Mold
 }

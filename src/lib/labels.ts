@@ -140,6 +140,10 @@ export const candleNextLabel: Partial<Record<CandleStage, string>> = {
 
 export const candleStageOrder: CandleStage[] = ['wicked', 'curing', 'decorated', 'ready', 'given', 'defect']
 
+/** A holder is not a candle yet: it can only crack or chip. */
+export const holderDefectReasons: DefectReason[] = ['crack', 'chip', 'other']
+export const candleDefectReasons: DefectReason[] = ['crack', 'leak', 'noLight', 'tooStrong', 'chip', 'other']
+
 export const defectReasonLabel: Record<DefectReason, string> = {
   crack: 'трещина',
   leak: 'протёк воск',

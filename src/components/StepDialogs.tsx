@@ -2,13 +2,14 @@ import { Button, HStack, IconButton, Input, Stack, Text } from '@chakra-ui/react
 import { useEffect, useState } from 'react'
 import { LuPlus, LuTrash2 } from 'react-icons/lu'
 import { nowLocal, toIso } from '../lib/dates'
-import { decorKindLabel, defectReasonLabel, holderNextTitle, varnishKindLabel, wickSchemeLabel } from '../lib/labels'
+import { candleDefectReasons, decorKindLabel, defectReasonLabel, holderDefectReasons, holderNextTitle, varnishKindLabel, wickSchemeLabel } from '../lib/labels'
 import { materialOptions } from '../lib/selectors'
 import { nextHolderStage, actions, type HolderStepParams } from '../store/dataSlice'
 import { useAppDispatch, useData } from '../store'
 import type { DecorUse, DefectReason, VarnishKind, WickScheme } from '../types'
 import { StockHint } from './StockHint'
 import { Check, Chips, Field, Modal, notify, NumInput, Select, TextArea, TextInput } from './ui'
+import { withUndo } from '../lib/undo'
 
 /** Bulk "Дальше" for holders: parameters are entered once for all selected items. */
 export function HolderStepDialog({ ids, onClose }: { ids: string[]; onClose: () => void }) {
@@ -72,8 +73,12 @@ export function HolderStepDialog({ ids, onClose }: { ids: string[]; onClose: () 
       default:
         return
     }
-    dispatch(actions.advanceHolders({ ids, date: toIso(date), params, comment }))
-    notify(`${holderNextTitle(holders[0]) ?? 'Готово'}: ${n} шт.`)
+    withUndo(
+      'holder',
+      ids,
+      () => dispatch(actions.advanceHolders({ ids, date: toIso(date), params, comment })),
+      `${holderNextTitle(holders[0]) ?? 'Готово'}: ${n} шт.`,
+    )
     onClose()
   }
 
@@ -260,8 +265,13 @@ export function DefectDialog({
             colorPalette="red"
             disabled={!reason}
             onClick={() => {
-              dispatch(actions.markDefect({ kind, ids, reason: reason!, comment, date: toIso(date) }))
-              notify('Отмечено как брак. Материалы не возвращаются.', 'info')
+              withUndo(
+                kind,
+                ids,
+                () => dispatch(actions.markDefect({ kind, ids, reason: reason!, comment, date: toIso(date) })),
+                'Отмечено как брак. Материалы не возвращаются.',
+                'info',
+              )
               onClose()
             }}
           >
@@ -278,7 +288,7 @@ export function DefectDialog({
           <Chips
             value={reason}
             onChange={(v) => setReason(v as DefectReason)}
-            options={Object.entries(defectReasonLabel).map(([value, label]) => ({ value: value as DefectReason, label }))}
+            options={(kind === 'holder' ? holderDefectReasons : candleDefectReasons).map((value) => ({ value, label: defectReasonLabel[value] }))}
           />
         </Field>
         <Field label="Дата">
@@ -324,8 +334,12 @@ export function DecorateDialog({ ids, onClose }: { ids: string[]; onClose: () =>
                   qty: i.qty,
                   dyed: i.dyed,
                 }))
-              dispatch(actions.advanceCandles({ ids, date: toIso(date), params: { step: 'decorated', decor } }))
-              notify('Свечи украшены')
+              withUndo(
+                'candle',
+                ids,
+                () => dispatch(actions.advanceCandles({ ids, date: toIso(date), params: { step: 'decorated', decor } })),
+                'Свечи украшены',
+              )
               onClose()
             }}
           >

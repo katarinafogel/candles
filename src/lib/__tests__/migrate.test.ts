@@ -53,3 +53,19 @@ describe('dishes and figurines', () => {
     expect(s.holders[id].stage).toBe('done')
   })
 })
+
+describe('undo after a stage change', () => {
+  it('maps old decor dishes, and undoing a pour removes the emptied pour', () => {
+    let s = reducer(initialData, actions.upsertMold({ ...base, name: 'Пень', purpose: 'figurine' }))
+    s = migrate({ ...s, schemaVersion: 1, molds: { ...s.molds, x: { ...base, id: 'x', name: 'Тарелка сердечко', purpose: 'decor', hasLid: false } as never } })
+    expect(s.molds.x.purpose).toBe('dish')
+    s = reducer(s, actions.createMoldedCandle({ moldId: 'M-001', name: 'Тест', wick: { scheme: 'double05', lengthCm: 10 }, date: '2026-10-26T10:00:00.000Z' }))
+    const cid = Object.keys(s.candles)[0]
+    const pour = { date: '2026-10-26T11:00:00.000Z', candleIds: [cid], waxes: [], lossPct: 0, fragrance: { pct: 0 }, dye: { pct: 0 }, calc: { totalG: 0, waxG: 0, fragranceG: 0, dyeG: 0 }, fact: { waxG: [], fragranceG: 0, dyeG: 0 }, comment: '' }
+    s = reducer(s, actions.createPour({ pour: pour as never }))
+    expect(Object.keys(s.pours)).toHaveLength(1)
+    s = reducer(s, actions.undoCandle({ id: cid, date: '2026-10-26T12:00:00.000Z' }))
+    expect(s.candles[cid].stage).toBe('wicked')
+    expect(s.pours).toEqual({})
+  })
+})

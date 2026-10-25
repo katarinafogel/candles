@@ -17,6 +17,7 @@ import { actions } from '../store/dataSlice'
 import type { ReviewAnswers } from '../types'
 import { MixRecipe } from './HolderPage'
 import { ReadyDialog } from './Candles'
+import { withUndo } from '../lib/undo'
 
 function GiveDialog({ id, onClose, onDone }: { id: string; onClose: () => void; onDone: () => void }) {
   const d = useData()
@@ -40,15 +41,20 @@ function GiveDialog({ id, onClose, onDone }: { id: string; onClose: () => void; 
               dispatch(actions.upsertPerson({ id: pid, name: newName.trim(), contact: '', notes: '' }))
             }
             const iso = toIso(date)
-            dispatch(
-              actions.advanceCandles({
-                ids: [id],
-                date: iso,
-                params: { step: 'given', personId: self ? undefined : pid, burnedBySelf: self, givenAt: iso },
-              }),
+            withUndo(
+              'candle',
+              [id],
+              () =>
+                dispatch(
+                  actions.advanceCandles({
+                    ids: [id],
+                    date: iso,
+                    params: { step: 'given', personId: self ? undefined : pid, burnedBySelf: self, givenAt: iso },
+                  }),
+                ),
+              'Свеча выдана — распечатайте QR',
             )
             onDone()
-            notify('Свеча выдана — распечатайте QR')
           }}
         >
           Подарить
