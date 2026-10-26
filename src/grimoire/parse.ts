@@ -58,7 +58,7 @@ export function parseQuickAdd(line: string, today: DayKey): ParsedTask {
   let stars = 0
   let dread = 0
   // Stars and skulls may be glued together and to words: «**☠☠».
-  const tokens = line.replace(/️/g, '').trim().split(/\s+/).filter(Boolean)
+  const tokens = line.replace(/\uFE0F/g, '').trim().split(/\s+/).filter(Boolean)
   for (const raw of tokens) {
     let tok = raw
     const marks = /^([*☠]+)(.*)$/.exec(tok) ?? /^(.*?)([*☠]+)$/.exec(tok)
