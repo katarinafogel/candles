@@ -3,6 +3,7 @@ import { Box, Button, Flex, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/r
 import { LuChevronRight } from 'react-icons/lu'
 import { Link as RouterLink } from 'react-router-dom'
 import { useState } from 'react'
+import { AgentKeys } from '../../components/grimoire/AgentKeys'
 import { Check, Chips, confirmAction, Field, NumInput, PageHeader, Section, Stat, TextInput } from '../../components/ui'
 import { useBalance, useToday } from '../../grimoire/act'
 import { dayCoins } from '../../grimoire/coins'
@@ -105,6 +106,10 @@ export default function GrimoireMore() {
             Показать ещё
           </Button>
         )}
+      </Section>
+
+      <Section title="Доступ для агента">
+        <AgentKeys />
       </Section>
 
       <Section title="Настройки гримуара">
