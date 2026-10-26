@@ -13,7 +13,8 @@ const moodNames = ['тьма', 'тускло', 'ровно', 'светло', 'с
 
 /** A moon lit by the mood: 1 is a thin sliver, 5 the full moon. */
 function Moon({ level, size = 22 }: { level: number; size?: number }) {
-  const shift = [17, 11, 6, 2, 0][level - 1] ?? 17
+  // How far the shadow disc slides off the moon: the further, the more of it is lit.
+  const shift = [3, 6, 9, 13, 0][level - 1] ?? 3
   const id = `m${level}`
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true">
@@ -113,25 +114,38 @@ function Chart({ entries, today }: { entries: JournalEntry[]; today: string }) {
   }
   const W = 300
   const H = 80
+  // Inset from the edges so the dots of the first and last day are not cut in half.
+  const px = (i: number) => 4 + (i / 29) * (W - 8)
+  const py = (v: number) => H - ((v - 1) / 4) * (H - 8) - 4
   const path = (k: 'mood' | 'energy') => {
     let d = ''
     let pen = false
     days.forEach((day, i) => {
       const v = avg(day, k)
       if (v == null) return void (pen = false)
-      const x = (i / 29) * W
-      const y = H - ((v - 1) / 4) * (H - 8) - 4
-      d += `${pen ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`
+      d += `${pen ? 'L' : 'M'}${px(i).toFixed(1)} ${py(v).toFixed(1)}`
       pen = true
     })
     return d
   }
+  // Dots are HTML, not SVG: the chart stretches to the width and would squash circles into ovals.
+  const dots = (k: 'mood' | 'energy', color: string) =>
+    days.map((day, i) => {
+      const v = avg(day, k)
+      return v == null ? null : (
+        <Box key={k + day} position="absolute" left={`${(px(i) / W) * 100}%`} top={`${py(v)}px`} w="5px" h="5px" ml="-2.5px" mt="-2.5px" borderRadius="full" bg={color} />
+      )
+    })
   return (
     <Box>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none" aria-label="Настроение и энергия за 30 дней">
-        <path d={path('mood')} fill="none" stroke="var(--chakra-colors-ember-300)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-        <path d={path('energy')} fill="none" stroke="var(--chakra-colors-emerald-400)" strokeWidth="1.5" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />
-      </svg>
+      <Box position="relative" h={`${H}px`}>
+        <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none" aria-label="Настроение и энергия за 30 дней">
+          <path d={path('mood')} fill="none" stroke="var(--chakra-colors-ember-300)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+          <path d={path('energy')} fill="none" stroke="var(--chakra-colors-emerald-400)" strokeWidth="1.5" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />
+        </svg>
+        {dots('energy', 'emerald.400')}
+        {dots('mood', 'ember.300')}
+      </Box>
       <HStack gap="4" fontSize="xs" color="fg.muted">
         <Text>
           <Text as="span" color="ember.300">

@@ -133,7 +133,7 @@ function HabitDialog({ habit, onClose }: { habit: Draft; onClose: () => void }) 
   )
 }
 
-/** A year of moons: lit — done, ring — skipped, faint — in навь, nothing — not scheduled. */
+/** A year of moons: lit — done, ring — skipped, faint — in навь, dim dot — not scheduled or ahead. */
 function YearOfMoons({ h, today, inNav }: { h: Habit; today: DayKey; inNav: (d: DayKey) => boolean }) {
   const logs = useAppSelector((s) => s.grimoire.habitLogs)
   const first = weekStart(addDays(today, -7 * 25))
@@ -157,10 +157,10 @@ function YearOfMoons({ h, today, inNav }: { h: Habit; today: DayKey; inNav: (d: 
                   h="9px"
                   borderRadius="full"
                   title={d}
-                  bg={done ? 'ember.300' : 'transparent'}
+                  bg={done ? 'ember.300' : sched && !future ? 'transparent' : 'border'}
                   borderWidth={!done && sched && !future ? '1px' : 0}
                   borderColor={log?.skipped ? 'fg.subtle' : 'border.emphasized'}
-                  opacity={future ? 0.15 : nav ? 0.3 : 1}
+                  opacity={nav ? 0.3 : sched && !future ? 1 : 0.35}
                   boxShadow={done ? '0 0 4px rgba(224,164,85,.5)' : undefined}
                 />
               )

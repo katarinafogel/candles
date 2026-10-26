@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Chips, Empty, Field, Modal, notify, PageHeader, Section, TextArea, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
-import { addDays, days, humanDay } from '../../grimoire/days'
+import { addDays, days, humanDay, plainDay } from '../../grimoire/days'
 import type { Sabbat, WheelPractice } from '../../grimoire/types'
 import { moonPhase, sabbatOrder, sabbats, segmentOf, wheelNow } from '../../grimoire/wheel'
 import { useAppDispatch, useAppSelector } from '../../store'
@@ -156,10 +156,10 @@ function PracticeDialog({ sabbat, onClose }: { sabbat: Sabbat; onClose: () => vo
             { value: 'once', label: 'однажды за отрезок' },
           ]} />
         </Field>
-        <Field label="Это бытовое сезонное дело">
+        <Field label="Что это">
           <Chips value={p.seasonal ? 'yes' : 'no'} onChange={(v) => setP({ ...p, seasonal: v === 'yes' })} options={[
             { value: 'no', label: 'практика' },
-            { value: 'yes', label: 'бытовое' },
+            { value: 'yes', label: 'бытовое сезонное дело' },
           ]} />
         </Field>
         <Field label="Ритуал по шагам" helper="по шагу на строку">
@@ -188,6 +188,8 @@ export default function Wheel() {
   const year = today.slice(0, 4)
 
   const wanted = useMemo(() => new Set(Object.values(g.wishes).filter((w) => w.practiceId && (w.status === 'dream' || w.status === 'inProgress')).map((w) => w.practiceId!)), [g.wishes])
+  // Practices already sitting in the book as open deeds: «В дела» again would only make a twin.
+  const inBook = useMemo(() => new Set(Object.values(g.tasks).filter((t) => t.practiceId && t.status !== 'done' && t.status !== 'cancelled').map((t) => t.practiceId!)), [g.tasks])
   const lived = useMemo(() => {
     const out = new Map<string, number>()
     for (const t of Object.values(g.tasks)) if (t.practiceId && t.status === 'done' && (t.doneDay ?? '').startsWith(year)) out.set(t.practiceId, (out.get(t.practiceId) ?? 0) + 1)
@@ -224,7 +226,7 @@ export default function Wheel() {
         }
       >
         <Text fontSize="sm" color="fg.muted">
-          {humanDay(seg.from, today)} — {humanDay(seg.to, today)} · {info.theme}
+          {plainDay(seg.from)} — {plainDay(seg.to)} · {info.theme}
         </Text>
         {editNotes ? (
           <Box mt="3">
@@ -267,17 +269,23 @@ export default function Wheel() {
                     <Button size="xs" variant={want ? 'solid' : 'outline'} colorPalette="ember" onClick={() => dispatch(want ? A.unwantPractice(p.id) : A.wantPractice({ practiceId: p.id }))}>
                       Хочу
                     </Button>
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      onClick={() => {
-                        const doOn = p.mode === 'day' && seg.from >= today ? seg.from : undefined
-                        dispatch(A.practiceToTask({ practiceId: p.id, doOn }))
-                        notify(doOn ? `В делах на ${humanDay(doOn, today)}` : 'В бэклоге')
-                      }}
-                    >
-                      В дела
-                    </Button>
+                    {inBook.has(p.id) ? (
+                      <Text fontSize="xs" color="fg.subtle" px="2">
+                        в делах
+                      </Text>
+                    ) : (
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        onClick={() => {
+                          const doOn = p.mode === 'day' && seg.from >= today ? seg.from : undefined
+                          dispatch(A.practiceToTask({ practiceId: p.id, doOn }))
+                          notify(doOn ? `В делах на ${humanDay(doOn, today)}` : 'В бэклоге')
+                        }}
+                      >
+                        В дела
+                      </Button>
+                    )}
                     <Button
                       size="xs"
                       variant="ghost"

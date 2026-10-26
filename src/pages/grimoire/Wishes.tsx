@@ -11,7 +11,7 @@ import { sabbats } from '../../grimoire/wheel'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 
-/** «1 год 2 месяца 5 дней». */
+/** «1 год 2 месяца 5 дней»; empty within the same day. */
 export function span(fromIso: string, toIso: string) {
   const a = new Date(fromIso)
   const b = new Date(toIso)
@@ -27,7 +27,7 @@ export function span(fromIso: string, toIso: string) {
     m += 12
   }
   const parts = [y && plural(y, 'год', 'года', 'лет'), m && plural(m, 'месяц', 'месяца', 'месяцев'), d && plural(d, 'день', 'дня', 'дней')].filter(Boolean)
-  return parts.length ? parts.join(' ') : 'в тот же день'
+  return parts.join(' ')
 }
 
 type Draft = Partial<Wish> & { title: string }
@@ -110,7 +110,7 @@ function WishCard({ w, onEdit }: { w: Wish; onEdit: () => void }) {
           <Text fontSize="xs" color="fg.subtle" mt="1">
             {w.price ? `≈ ${w.price.toLocaleString('ru')} ₽ · ` : ''}
             {w.sabbat ? `к ${sabbats[w.sabbat].dative} · ` : ''}
-            мечтаю {span(w.createdAt, new Date().toISOString())}
+            {`мечтаю ${span(w.createdAt, new Date().toISOString()) || 'с сегодняшнего дня'}`}
           </Text>
         </Box>
       </Flex>
@@ -191,7 +191,7 @@ export default function Wishes() {
                     </Text>
                   </HStack>
                   <Text fontSize="xs" color="fg.muted" mt="1">
-                    {new Date(w.createdAt).toLocaleDateString('ru')} → {w.fulfilledAt ? new Date(w.fulfilledAt).toLocaleDateString('ru') : '—'} · {w.fulfilledAt ? span(w.createdAt, w.fulfilledAt) : ''}
+                    {new Date(w.createdAt).toLocaleDateString('ru')} → {w.fulfilledAt ? new Date(w.fulfilledAt).toLocaleDateString('ru') : '—'} · {w.fulfilledAt ? span(w.createdAt, w.fulfilledAt) || 'в тот же день' : ''}
                   </Text>
                   {w.fulfilledNote && (
                     <Text fontSize="sm" mt="2">

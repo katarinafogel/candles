@@ -54,6 +54,12 @@ export const dueDay = (dueAt?: string): DayKey | undefined => (dueAt ? dueAt.sli
 const weekdayShort = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс']
 const monthsGen = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
 
+/** «30 октября», without «сегодня» or the weekday: for ranges. */
+export function plainDay(day: DayKey): string {
+  const [, m, d] = day.split('-').map(Number)
+  return `${d} ${monthsGen[m - 1]}`
+}
+
 /** «сегодня», «завтра», «до четверга»-style human day, relative to `today`. */
 export function humanDay(day: DayKey, today: DayKey): string {
   const n = daysBetween(today, day)
@@ -61,8 +67,7 @@ export function humanDay(day: DayKey, today: DayKey): string {
   if (n === 1) return 'завтра'
   if (n === -1) return 'вчера'
   if (n === 2) return 'послезавтра'
-  const [, m, d] = day.split('-').map(Number)
-  const date = `${d} ${monthsGen[m - 1]}`
+  const date = plainDay(day)
   if (n > 2 && n < 7) return `${weekdayShort[weekday(day) - 1]}, ${date}`
   return date
 }
