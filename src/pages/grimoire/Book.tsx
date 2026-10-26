@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { QuickAdd } from '../../components/grimoire/QuickAdd'
 import { useTaskDialog } from '../../components/grimoire/TaskDialog'
-import { TaskCard } from '../../components/grimoire/TaskCard'
+import { cardColumns, TaskCard } from '../../components/grimoire/TaskCard'
 import { Chips, Empty, PageHeader, Section, Select } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
 import { allTags, backlog, isBlocked, isOpenTask, isStuck, isWaiting, words } from '../../grimoire/selectors'
@@ -115,7 +115,7 @@ export default function Book() {
         )}
       </Stack>
       {list.length ? (
-        <SimpleGrid columns={{ base: 2, sm: 3, lg: 4 }} gap={{ base: '3', md: '4' }} gridAutoRows="1fr">
+        <SimpleGrid gridTemplateColumns={cardColumns} gap={{ base: '3', md: '4' }}>
           {list.map((t) => (
             <TaskCard key={t.id} t={t} today={today} onOpen={open} />
           ))}

@@ -7,7 +7,7 @@ import { Crescent, Divider } from '../../components/Magic'
 import { QuickAdd } from '../../components/grimoire/QuickAdd'
 import { usePlanGuard } from '../../components/grimoire/PlanGuard'
 import { useTaskDialog } from '../../components/grimoire/TaskDialog'
-import { TaskCard } from '../../components/grimoire/TaskCard'
+import { cardColumns, TaskCard } from '../../components/grimoire/TaskCard'
 import { Empty, Modal, PageHeader, Section } from '../../components/ui'
 import { cancel, toBacklog, useToday, withUndo } from '../../grimoire/act'
 import { dayCoins } from '../../grimoire/coins'
@@ -130,7 +130,7 @@ function PlanSection({ title, slot, tasks, today, open, pick }: { title: string;
         </Button>
       </Flex>
       {tasks.length ? (
-        <SimpleGrid columns={{ base: 2, sm: 3, lg: 4 }} gap={{ base: '3', md: '4' }} gridAutoRows="1fr">
+        <SimpleGrid gridTemplateColumns={cardColumns} gap={{ base: '3', md: '4' }}>
           {tasks.map((t) => (
             <TaskCard key={t.id} t={t} today={today} onOpen={open} />
           ))}
@@ -187,7 +187,7 @@ export default function Scroll() {
         </Section>
         {soon.length > 0 && (
           <Section title="Реальные сроки">
-            <SimpleGrid columns={{ base: 2, sm: 3, lg: 4 }} gap={{ base: '3', md: '4' }} gridAutoRows="1fr">
+            <SimpleGrid gridTemplateColumns={cardColumns} gap={{ base: '3', md: '4' }}>
               {soon.map((t) => (
                 <TaskCard key={t.id} t={t} today={today} onOpen={open} compact />
               ))}
@@ -268,7 +268,7 @@ export default function Scroll() {
             <Text fontFamily="heading" fontSize="xl" color="ember.100" fontWeight="semibold" mb="1.5">
               {w.rituals}
             </Text>
-            <SimpleGrid columns={{ base: 2, sm: 3, lg: 4 }} gap={{ base: '3', md: '4' }} gridAutoRows="1fr">
+            <SimpleGrid gridTemplateColumns={cardColumns} gap={{ base: '3', md: '4' }}>
               {plan.habits.map((t) => (
                 <TaskCard key={t.id} t={t} today={today} onOpen={open} compact />
               ))}
@@ -288,7 +288,7 @@ export default function Scroll() {
 
       {soon.length > 0 && (
         <Section title="Сроки рядом">
-          <SimpleGrid columns={{ base: 2, sm: 3, lg: 4 }} gap={{ base: '3', md: '4' }} gridAutoRows="1fr">
+          <SimpleGrid gridTemplateColumns={cardColumns} gap={{ base: '3', md: '4' }}>
             {soon.map((t) => (
               <TaskCard key={t.id} t={t} today={today} onOpen={open} compact />
             ))}

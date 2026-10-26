@@ -8,7 +8,7 @@ import { LuGripHorizontal, LuPencil } from 'react-icons/lu'
 import { Navigate, useParams } from 'react-router-dom'
 import { BookCover, bookColor } from '../../components/grimoire/BookCover'
 import { QuickAdd } from '../../components/grimoire/QuickAdd'
-import { TaskCard } from '../../components/grimoire/TaskCard'
+import { cardColumns, TaskCard } from '../../components/grimoire/TaskCard'
 import { useTaskDialog } from '../../components/grimoire/TaskDialog'
 import { Sparkle } from '../../components/Magic'
 import { PageHeader } from '../../components/ui'
@@ -20,7 +20,7 @@ import { useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 import { ProjectDialog } from './Projects'
 
-const PER_PAGE = 4
+const PER_PAGE = 6
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 /** Dragging a card by its grip: the order changes live under the finger and is saved on release. */
@@ -226,7 +226,7 @@ export default function ProjectBook() {
                       Открыть
                     </Button>
                   </Flex>
-                  <SimpleGrid columns={2} gap="3" gridAutoRows="1fr">
+                  <SimpleGrid gridTemplateColumns={cardColumns} gap="3">
                     {sh.tasks.map((t) => (
                       <TaskCard key={t.id} t={t} today={today} onOpen={open} compact inBook />
                     ))}
@@ -235,7 +235,7 @@ export default function ProjectBook() {
               </Page>
             ) : (
               <Page key={sh.key} n={i + 2}>
-                <SimpleGrid columns={2} gap="3">
+                <SimpleGrid gridTemplateColumns={cardColumns} gap="3">
                   {sh.tasks.map((t) => {
                     const movable = t.status !== 'done'
                     return (

@@ -13,8 +13,13 @@ import { useAppSelector } from '../../store'
 import { ArcanaCard } from '../ArcanaCard'
 import { Sparkle } from '../Magic'
 import { LeafMark } from '../ui'
-import { tagPalette } from '../../grimoire/tags'
-import { Deadline, Stars } from './Marks'
+import { Deadline, Stars, Tag } from './Marks'
+
+/**
+ * Card grid: two columns on a phone; wider, as many as fit at about the tablet size, so on a big
+ * screen the cards stay small instead of stretching.
+ */
+export const cardColumns = { base: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(auto-fill, minmax(140px, 1fr))', lg: 'repeat(auto-fill, minmax(150px, 1fr))' }
 
 const sourceIcon = { habit: <LuMoon />, wheel: <LuSun />, workshop: <LuFlame /> } as Record<string, JSX.Element>
 
@@ -141,15 +146,12 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
         )}
         {(t.personIds ?? []).length > 0 && <Text lineClamp={1}>{(t.personIds ?? []).map((id) => people[id] && `@${people[id].name}`).filter(Boolean).join(' ')}</Text>}
         {!compact && t.tags.length > 0 && (
-          // One line of tag-coloured words: a narrow card cuts it with «…» instead of growing.
-          <Text lineClamp={1} fontSize="2xs">
-            {t.tags.slice(0, 3).map((x, i) => (
-              <Text as="span" key={x} color={`${tagPalette(x, g.meta.tagColors)}.${tone === 'nacre' ? '700' : '300'}`}>
-                {i ? ' ' : ''}#{x}
-              </Text>
+          <HStack gap="1" justify="center" wrap="wrap" mt="1">
+            {t.tags.slice(0, 3).map((x) => (
+              <Tag key={x} name={x} />
             ))}
-            {t.tags.length > 3 && ` +${t.tags.length - 3}`}
-          </Text>
+            {t.tags.length > 3 && <Text as="span" fontSize="2xs">+{t.tags.length - 3}</Text>}
+          </HStack>
         )}
         {steps.length > 0 && (
           <HStack gap="2" mt="1.5" fontSize="2xs">
