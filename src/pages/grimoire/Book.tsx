@@ -71,7 +71,8 @@ export default function Book() {
         tags.every((x) => t.tags.includes(x)) &&
         (!zone || t.zone === zone),
     )
-    return view === 'done' ? xs : [...xs].sort(sorters[sort])
+    // Done deeds go to the end of the list; the chosen order holds inside each part.
+    return view === 'done' ? xs : [...xs].sort((a, b) => Number(a.status === 'done') - Number(b.status === 'done') || sorters[sort](a, b))
   }, [g, view, q, tags, zone, sort, today])
 
   const tagList = allTags(g)

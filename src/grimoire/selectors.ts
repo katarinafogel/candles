@@ -20,13 +20,15 @@ export const byPlanOrder = (a: Task, b: Task) =>
 /** Tasks chosen for a day (open and done that day), habits apart. */
 export function dayPlan(g: GrimoireState, day: DayKey) {
   const all = Object.values(g.tasks).filter((t) => t.doOn === day && t.status !== 'cancelled')
+  // Done ones go to the end of their part of the plan.
+  const doneLast = (a: Task, b: Task) => Number(a.status === 'done') - Number(b.status === 'done')
   const habits = all.filter((t) => t.habitId)
-  const deeds = all.filter((t) => !t.habitId).sort(byPlanOrder)
+  const deeds = all.filter((t) => !t.habitId).sort((a, b) => doneLast(a, b) || byPlanOrder(a, b))
   return {
     main: deeds.filter((t) => (t.slot ?? 'extra') === 'main'),
     extra: deeds.filter((t) => (t.slot ?? 'extra') === 'extra'),
     optional: deeds.filter((t) => t.slot === 'optional'),
-    habits: habits.sort((a, b) => a.title.localeCompare(b.title)),
+    habits: habits.sort((a, b) => doneLast(a, b) || a.title.localeCompare(b.title)),
     all: deeds,
   }
 }

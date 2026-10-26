@@ -91,8 +91,8 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
         }
         corner={
           coins > 0 ? (
-            // A pill like the tags, in the card's star colour.
-            <HStack gap="0.5" title="награда" px="1.5" py="0.5" borderRadius="full" fontSize="2xs" lineHeight="1" bg="color-mix(in srgb, var(--star-on) 20%, transparent)">
+            // A solid pill like the tags, in the card's star colour, so it never melts into the vines.
+            <HStack gap="0.5" title="награда" px="1.5" py="0.5" borderRadius="full" fontSize="2xs" lineHeight="1" bg="color-mix(in srgb, var(--star-on) 28%, var(--card-solid))" borderWidth="1px" borderColor="color-mix(in srgb, var(--star-on) 45%, transparent)">
               <Sparkle size={7} />
               <Text as="span">{coins}</Text>
             </HStack>
