@@ -1,0 +1,52 @@
+name: CI
+
+# Checks every branch except main (main is checked by the deploy workflow before publishing).
+on:
+  push:
+    branches-ignore: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run --reporter=default --reporter=github-actions
+      - run: npm run build
+
+  database:
+    # Applies the migrations to an empty Postgres with a stand-in for Supabase auth and checks the access rules.
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 2s --health-timeout 5s --health-retries 20
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Supabase stand-in (auth schema, roles)
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/supabase_stub.sql
+      - name: 0001_init
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/0001_init.sql -f supabase/tests/seed_after_0001.sql
+      - name: 0002_grimoire
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/0002_grimoire.sql
+      - name: 0002_grimoire again (must be safe to re-run)
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/0002_grimoire.sql
+      - name: Access rules
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/grimoire_rls.sql
