@@ -1,6 +1,7 @@
 import { Box, Button, Flex, HStack, Input, SimpleGrid, Stack, Table, Text } from '@chakra-ui/react'
 import { useRef, useState } from 'react'
 import { LuDownload, LuFileUp, LuLogOut, LuUpload } from 'react-icons/lu'
+import { RolesAdmin } from '../components/RolesAdmin'
 import { Field, Modal, notify, NumInput, PageHeader, Row, Section, Select, TextInput } from '../components/ui'
 import { downloadBackup, readBackup, type BackupSummary } from '../lib/backup'
 import { fmtDateTime } from '../lib/calc'
@@ -17,7 +18,7 @@ import {
   type ImportPlan,
   type MoldDraft,
 } from '../lib/importSheets'
-import { useAppDispatch, useAppSelector, useData } from '../store'
+import { useAppDispatch, useAppSelector, useData, useIsAdmin } from '../store'
 import { actions } from '../store/dataSlice'
 import { localActions } from '../store/localSlice'
 import type { DataState, Settings as S } from '../types'
@@ -268,6 +269,7 @@ function SheetImport() {
 }
 
 export default function Settings() {
+  const isAdmin = useIsAdmin()
   const d = useData()
   const dispatch = useAppDispatch()
   const profile = useAppSelector((s) => s.local.profile)
@@ -354,6 +356,12 @@ export default function Settings() {
           </Box>
         </Stack>
       </Section>
+
+      {isAdmin && (
+        <Section title="Роли мастеров">
+          <RolesAdmin />
+        </Section>
+      )}
 
       <Section title="Бэкап">
         <BackupRestore />
