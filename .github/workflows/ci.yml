@@ -1,9 +1,9 @@
 name: CI
 
-# Checks every branch except main (main is checked by the deploy workflow before publishing).
+# Checks every push, main included: commits now go straight to main, and the deploy workflow only
+# runs the app's tests and build, not the database and agent checks.
 on:
   push:
-    branches-ignore: [main]
   pull_request:
 
 permissions:
@@ -54,8 +54,8 @@ jobs:
         run: psql -q -v ON_ERROR_STOP=1 -f supabase/migrations/0002_grimoire.sql 2>&1 | tee out.txt || { grep -m3 -E 'ERROR|FATAL|assert' out.txt | sed 's/^/::error::/'; exit 1; }
       - name: Access rules
         run: psql -q -v ON_ERROR_STOP=1 -f supabase/tests/grimoire_rls.sql 2>&1 | tee out.txt || { grep -m3 -E 'ERROR|FATAL|assert' out.txt | sed 's/^/::error::/'; exit 1; }
-      - name: 0003_agent (twice), 0004
-        run: psql -q -v ON_ERROR_STOP=1 -f supabase/migrations/0003_agent.sql -f supabase/migrations/0003_agent.sql -f supabase/migrations/0004_search_path.sql 2>&1 | tee out.txt || { grep -m3 -E 'ERROR|FATAL|assert' out.txt | sed 's/^/::error::/'; exit 1; }
+      - name: 0003_agent (twice), 0004, 0005
+        run: psql -q -v ON_ERROR_STOP=1 -f supabase/migrations/0003_agent.sql -f supabase/migrations/0003_agent.sql -f supabase/migrations/0004_search_path.sql -f supabase/migrations/0005_agent_read.sql 2>&1 | tee out.txt || { grep -m3 -E 'ERROR|FATAL|assert' out.txt | sed 's/^/::error::/'; exit 1; }
       - name: Agent keys
         run: psql -q -v ON_ERROR_STOP=1 -f supabase/tests/agent_keys.sql 2>&1 | tee out.txt || { grep -m3 -E 'ERROR|FATAL|assert' out.txt | sed 's/^/::error::/'; exit 1; }
 

@@ -13,8 +13,8 @@ language sql stable
 as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
 
 grant usage on schema public to anon, authenticated, service_role;
--- In Supabase the server role can read and write every table the migrations create.
-alter default privileges in schema public grant all on tables to service_role;
+-- Like the live project: service_role has no privileges on the tables; the agent server goes
+-- through security definer functions only.
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-00000000000a'),  -- the witch, the only master when 0002 runs

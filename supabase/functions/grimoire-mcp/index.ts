@@ -3,7 +3,6 @@
 //   supabase functions deploy grimoire-mcp --no-verify-jwt
 // Connector URL: https://<project>.functions.supabase.co/grimoire-mcp/<agent key> (not .supabase.co/functions/v1:
 // claude.ai probes /.well-known/oauth-protected-resource at the site root, and the main domain answers 401)
-import { grimoireKinds } from './core/grimoire/rows.ts'
 import { handle, type Row, type Storage } from './server.ts'
 
 const url = Deno.env.get('SUPABASE_URL')!
@@ -20,19 +19,8 @@ async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
 
 const storage: Storage = {
   ownerByKeyHash: (hash) => rpc<string | null>('agent_owner', { p_hash: hash }),
-  async loadRows(owner) {
-    const kinds = [...grimoireKinds, 'person'].join(',')
-    const filter = `owner_id=eq.${owner}&or=(kind.in.(${kinds}),and(kind.eq.meta,id.eq.grimoire))&select=kind,id,data&order=kind,id`
-    const rows: Row[] = []
-    for (let from = 0; ; from += 1000) {
-      const res = await fetch(`${url}/rest/v1/entities?${filter}`, { headers: { ...headers, Range: `${from}-${from + 999}` } })
-      if (!res.ok) throw new Error(`load: ${res.status} ${await res.text()}`)
-      const page = (await res.json()) as Row[]
-      rows.push(...page)
-      if (page.length < 1000) break
-    }
-    return rows
-  },
+  // Through a database function: the server has no rights on the tables themselves.
+  loadRows: (owner) => rpc<Row[]>('grimoire_rows_as', { p_owner: owner }),
   apply: (owner, changes) => rpc<void>('grimoire_apply_as', { p_owner: owner, p_changes: changes }),
 }
 

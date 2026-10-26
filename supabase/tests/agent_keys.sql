@@ -53,7 +53,14 @@ begin
   assert v = '00000000-0000-0000-0000-00000000000a', 'key resolves to its owner';
   assert agent_owner(repeat('c', 64)) is null, 'unknown key resolves to nobody';
   perform grimoire_apply_as(v, '[{"op": "upsert", "kind": "task", "id": "agent1", "data": {"id": "agent1", "title": "от агента"}}]');
-  assert (select data->>'title' from entities where owner_id = v and kind = 'task' and id = 'agent1') = 'от агента', 'agent writes grimoire rows';
+  assert (select data->>'title' from grimoire_rows_as(v) where kind = 'task' and id = 'agent1') = 'от агента', 'agent writes and reads grimoire rows';
+  assert not exists (select 1 from grimoire_rows_as(v) where kind = 'mold'), 'workshop rows are not read';
+  -- No direct access to the table, like in the live project.
+  begin
+    perform 1 from entities;
+    raise exception 'service_role must not read entities directly';
+  exception when insufficient_privilege then null;
+  end;
   begin
     perform grimoire_apply_as(v, '[{"op": "upsert", "kind": "mold", "id": "M-009", "data": {}}]');
     raise exception 'workshop rows must be refused';
