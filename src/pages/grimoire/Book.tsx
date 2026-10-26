@@ -115,7 +115,7 @@ export default function Book() {
         )}
       </Stack>
       {list.length ? (
-        <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap="2.5">
+        <SimpleGrid columns={{ base: 2, sm: 3, lg: 4 }} gap={{ base: '3', md: '4' }} gridAutoRows="1fr">
           {list.map((t) => (
             <TaskCard key={t.id} t={t} today={today} onOpen={open} />
           ))}

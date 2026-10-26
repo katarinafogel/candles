@@ -150,8 +150,58 @@ export function Vine({ color, transform }: { color: string; transform?: string }
   )
 }
 
-/** The emblem in the middle of a card: a crescent for molds, a sun for holders, a flame for candles. */
+/**
+ * The emblem in the middle of a card: a crescent for molds, a sun for holders, a flame for candles;
+ * for deeds a frog, a shell of nacre, three stars in a crown and a quill.
+ */
 function Emblem({ tone, p }: { tone: ArcanaTone; p: Palette }) {
+  if (tone === 'swamp')
+    return (
+      <svg width="50" height="46" viewBox="0 0 50 46" fill="none" aria-hidden="true">
+        <g stroke={p.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="17" cy="13" r="6" fill={p.accent} fillOpacity=".2" />
+          <circle cx="33" cy="13" r="6" fill={p.accent} fillOpacity=".2" />
+          <path d="M11.5 17C7 21 5.6 26 7 31c2 7 9.4 10 18 10s16-3 18-10c1.4-5 0-10-4.5-14" fill={p.accent} fillOpacity=".25" />
+          <path d="M19 30c3.6 2.4 8.4 2.4 12 0" />
+          <path d="M8 38l-5 4M42 38l5 4" />
+        </g>
+        <circle cx="17" cy="13" r="2" fill={p.star} />
+        <circle cx="33" cy="13" r="2" fill={p.star} />
+      </svg>
+    )
+  if (tone === 'nacre')
+    return (
+      <svg width="50" height="46" viewBox="0 0 50 46" aria-hidden="true">
+        <g stroke={p.accent} strokeWidth="1.3" strokeLinecap="round" fill="none">
+          <path d="M25 40L6 18C10 9 17 5 25 5s15 4 19 13z" fill={p.accent} fillOpacity=".18" />
+          <path d="M25 40L13 10M25 40L19 6M25 40V5M25 40l6-34M25 40l12-30" />
+          <path d="M20 40h10l-2 4h-6z" fill={p.accent} fillOpacity=".4" />
+        </g>
+        <path d="M41 4c.3 1.8 1 2.5 2.8 2.8-1.8.3-2.5 1-2.8 2.8-.3-1.8-1-2.5-2.8-2.8 1.8-.3 2.5-1 2.8-2.8z" fill={p.star} />
+      </svg>
+    )
+  if (tone === 'wine')
+    return (
+      <svg width="52" height="46" viewBox="0 0 52 46" aria-hidden="true">
+        <path d="M8 34l4-18 8 9 6-15 6 15 8-9 4 18z" fill="none" stroke={p.accent} strokeWidth="1.4" strokeLinejoin="round" />
+        <path d="M8 38h36" stroke={p.accent} strokeWidth="1.4" strokeLinecap="round" />
+        {[
+          [12, 12],
+          [26, 6],
+          [40, 12],
+        ].map(([x, y]) => (
+          <path key={x} d={`M${x} ${y - 4}l1.2 2.8 3 .3-2.3 2 .7 3-2.6-1.6-2.6 1.6.7-3-2.3-2 3-.3z`} fill={p.star} />
+        ))}
+      </svg>
+    )
+  if (tone === 'silver')
+    return (
+      <svg width="46" height="46" viewBox="0 0 46 46" fill="none" aria-hidden="true">
+        <path d="M36 4C24 8 15 18 11 34l3 1C20 22 28 13 36 4z" fill={p.accent} fillOpacity=".3" stroke={p.accent} strokeWidth="1.3" strokeLinejoin="round" />
+        <path d="M30 10c-2 4-5 7-9 9M25 16c-1.6 3-4 5.4-7 7" stroke={p.accent} strokeWidth="1" strokeLinecap="round" />
+        <path d="M11 34l-2 8M7 42h12" stroke={p.star} strokeWidth="1.3" strokeLinecap="round" />
+      </svg>
+    )
   if (tone === 'indigo')
     return (
       <svg width="46" height="46" viewBox="0 0 48 48" aria-hidden="true">

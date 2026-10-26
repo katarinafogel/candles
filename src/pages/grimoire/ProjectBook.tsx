@@ -2,9 +2,9 @@
 // (swiped), a spread of two on a wide screen. The first page holds the description, the target date and
 // «добавить дело в книгу»; the next ones hold the deeds as cards, done ones on the last pages.
 // A quest opens its steps on the page next to it. Open deeds are dragged by their grip to reorder.
-import { Box, Button, Flex, HStack, Stack, Text } from '@chakra-ui/react'
+import { Box, Button, Flex, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { LuGripVertical, LuPencil } from 'react-icons/lu'
+import { LuGripHorizontal, LuPencil } from 'react-icons/lu'
 import { Navigate, useParams } from 'react-router-dom'
 import { BookCover, bookColor } from '../../components/grimoire/BookCover'
 import { QuickAdd } from '../../components/grimoire/QuickAdd'
@@ -226,39 +226,40 @@ export default function ProjectBook() {
                       Открыть
                     </Button>
                   </Flex>
-                  {sh.tasks.map((t) => (
-                    <TaskCard key={t.id} t={t} today={today} onOpen={open} compact inBook />
-                  ))}
+                  <SimpleGrid columns={2} gap="3" gridAutoRows="1fr">
+                    {sh.tasks.map((t) => (
+                      <TaskCard key={t.id} t={t} today={today} onOpen={open} compact inBook />
+                    ))}
+                  </SimpleGrid>
                 </Stack>
               </Page>
             ) : (
               <Page key={sh.key} n={i + 2}>
-                <Stack gap="3">
+                <SimpleGrid columns={2} gap="3">
                   {sh.tasks.map((t) => {
                     const movable = t.status !== 'done'
                     return (
-                      <Flex key={t.id} data-reorder={movable ? t.id : undefined} align="stretch" gap="1" opacity={reorder.dragging === t.id ? 0.55 : 1} transition="opacity .15s">
-                        {movable && (
-                          <Flex
-                            as="button"
-                            aria-label="Перетащить"
-                            align="center"
-                            px="0.5"
-                            color="#8a7356"
-                            cursor="grab"
-                            touchAction="none"
-                            onPointerDown={(e: React.PointerEvent) => reorder.onPointerDown(t.id, e)}
-                          >
-                            <LuGripVertical />
-                          </Flex>
-                        )}
-                        <Box flex="1" minW="0" outline={quest === t.id ? '2px solid #a0703a' : undefined} borderRadius="10px">
+                      <Stack key={t.id} data-reorder={movable ? t.id : undefined} gap="1" opacity={reorder.dragging === t.id ? 0.55 : 1} transition="opacity .15s">
+                        {/* The grip above the card: dragged sideways or down it moves the card through the book. */}
+                        <Flex
+                          as="button"
+                          aria-label="Перетащить"
+                          justify="center"
+                          color="#8a7356"
+                          cursor="grab"
+                          touchAction="none"
+                          visibility={movable ? 'visible' : 'hidden'}
+                          onPointerDown={(e: React.PointerEvent) => movable && reorder.onPointerDown(t.id, e)}
+                        >
+                          <LuGripHorizontal />
+                        </Flex>
+                        <Box flex="1" outline={quest === t.id ? '2px solid #a0703a' : undefined} outlineOffset="2px" borderRadius="10px">
                           <TaskCard t={t} today={today} onOpen={openCard} inBook />
                         </Box>
-                      </Flex>
+                      </Stack>
                     )
                   })}
-                </Stack>
+                </SimpleGrid>
               </Page>
             ),
           )}
@@ -270,7 +271,7 @@ export default function ProjectBook() {
           )}
         </Flex>
         <Text fontSize="xs" color="fg.subtle" mt="2" textAlign="center">
-          {sheets.length > 0 ? 'листай страницы в сторону · карточки двигаются за ⋮⋮' : ''}
+          {sheets.length > 0 ? 'листай страницы в сторону · карточки двигаются за ⋯ над ними' : ''}
         </Text>
       </Box>
 
