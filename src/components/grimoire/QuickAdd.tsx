@@ -1,18 +1,19 @@
 // One field for a new deed: «помыть окна **☠☠ #дом !пт», «кино с @аня +радость».
 // What the line will become is shown under it while typing.
 import { Box, Button, HStack, IconButton, Input, Stack, Text } from '@chakra-ui/react'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { LuCornerDownLeft, LuPlus } from 'react-icons/lu'
 import { useToday } from '../../grimoire/act'
 import { humanDay } from '../../grimoire/days'
 import { slotLabel } from '../../grimoire/labels'
 import { parseQuickAdd } from '../../grimoire/parse'
-import { overLimit, slotCounts } from '../../grimoire/selectors'
+import { completeTag, suggestTags, tagsByUse, typingTag } from '../../grimoire/tags'
 import type { TaskSlot } from '../../grimoire/types'
 import { store, useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
-import { Modal, notify } from '../ui'
+import { Modal } from '../ui'
 import { Dread, Stars, Tag } from './Marks'
+import { usePlanGuard } from './PlanGuard'
 
 /** Finds workshop people by the name typed after @ (the bestiary shares them). */
 export function matchPeople(names: string[]) {
@@ -26,10 +27,20 @@ export function matchPeople(names: string[]) {
 export function QuickAdd({ planToday, autoFocus, onAdded }: { planToday?: boolean; autoFocus?: boolean; onAdded?: () => void }) {
   const dispatch = useAppDispatch()
   const today = useToday()
-  const meta = useAppSelector((s) => s.grimoire.meta)
+  const tasks = useAppSelector((s) => s.grimoire.tasks)
   const [line, setLine] = useState('')
+  const input = useRef<HTMLInputElement>(null)
   const p = useMemo(() => parseQuickAdd(line, today), [line, today])
   const people = useMemo(() => matchPeople(p.people), [p.people])
+  const known = useMemo(() => tagsByUse({ tasks }), [tasks])
+  const typing = typingTag(line)
+  const hints = typing == null ? [] : suggestTags(typing, known, p.tags)
+  const [guard, guardDialog] = usePlanGuard()
+
+  function pickTag(tag: string) {
+    setLine(completeTag(line, tag))
+    input.current?.focus()
+  }
 
   function add() {
     if (!p.title) return
@@ -39,25 +50,23 @@ export function QuickAdd({ planToday, autoFocus, onAdded }: { planToday?: boolea
     })
     const doOn = p.doOn ?? (planToday ? today : undefined)
     const slot: TaskSlot | undefined = doOn ? (p.slot ?? (planToday ? 'extra' : undefined)) : undefined
-    if (doOn === today && slot && overLimit(meta, slotCounts(store.getState().grimoire, today), slot))
-      notify(`На сегодня уже есть ${slotLabel[slot]}`, 'warning', 'План не запрещён, просто больше задуманного. Можно что-то убрать или сдвинуть.')
-    dispatch(
-      A.addTask({
-        fields: {
-          title,
-          stars: p.stars,
-          dread: p.dread,
-          tags: p.tags,
-          type: p.type,
-          dueAt: p.dueAt,
-          doOn,
-          slot,
-          personIds: people.filter(Boolean).map((x) => x!.id),
-        },
-      }),
-    )
-    setLine('')
-    onAdded?.()
+    const fields = {
+      title,
+      stars: p.stars,
+      dread: p.dread,
+      tags: p.tags,
+      type: p.type,
+      dueAt: p.dueAt,
+      doOn,
+      slot,
+      personIds: people.filter(Boolean).map((x) => x!.id),
+    }
+    // A full plan asks what to move first; the line stays until the deed is really added.
+    guard(doOn === today ? slot : undefined, () => {
+      dispatch(A.addTask({ fields }))
+      setLine('')
+      onAdded?.()
+    })
   }
 
   const shown = line.trim().length > 0
@@ -65,10 +74,18 @@ export function QuickAdd({ planToday, autoFocus, onAdded }: { planToday?: boolea
     <Stack gap="2">
       <HStack gap="2">
         <Input
+          ref={input}
           value={line}
           autoFocus={autoFocus}
           onChange={(e) => setLine(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && add()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') add()
+            // Tab takes the first suggested tag, the way a phone keyboard would.
+            if (e.key === 'Tab' && hints.length) {
+              e.preventDefault()
+              pickTag(hints[0])
+            }
+          }}
           placeholder="помыть окна **☠☠ #дом !пт"
           enterKeyHint="done"
         />
@@ -76,6 +93,15 @@ export function QuickAdd({ planToday, autoFocus, onAdded }: { planToday?: boolea
           <LuCornerDownLeft />
         </IconButton>
       </HStack>
+      {hints.length > 0 && (
+        <HStack gap="1.5" wrap="wrap" px="1">
+          {hints.map((t) => (
+            <Box as="button" key={t} onClick={() => pickTag(t)} onMouseDown={(e) => e.preventDefault()} cursor="pointer">
+              <Tag name={t} />
+            </Box>
+          ))}
+        </HStack>
+      )}
       {shown && (
         <HStack gap="2" wrap="wrap" fontSize="xs" color="fg.muted" px="1">
           <Text color="fg">{p.title || '…'}</Text>
@@ -100,6 +126,7 @@ export function QuickAdd({ planToday, autoFocus, onAdded }: { planToday?: boolea
           * сложность · ☠ нехотение · #тег · !пт срок · @имя · +радость · +главное / +доп / +необяз
         </Text>
       )}
+      {guardDialog}
     </Stack>
   )
 }

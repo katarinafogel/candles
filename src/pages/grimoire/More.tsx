@@ -9,9 +9,54 @@ import { useBalance, useToday } from '../../grimoire/act'
 import { dayCoins } from '../../grimoire/coins'
 import { addDays, humanDay } from '../../grimoire/days'
 import { words } from '../../grimoire/selectors'
+import { tagPalette, tagPalettes, tagsByUse } from '../../grimoire/tags'
+import { Tag } from '../../components/grimoire/Marks'
 import { isTouchDevice, saveFile } from '../../lib/download'
 import { store, useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
+
+/** A colour for each tag: the swatches under it; until one is chosen the name picks it. */
+function TagColors() {
+  const dispatch = useAppDispatch()
+  const tasks = useAppSelector((s) => s.grimoire.tasks)
+  const colors = useAppSelector((s) => s.grimoire.meta.tagColors)
+  const tags = tagsByUse({ tasks })
+  if (!tags.length) return null
+  return (
+    <Field label="Цвета тегов">
+      <Stack gap="2">
+        {tags.map((t) => {
+          const on = tagPalette(t, colors)
+          return (
+            <Flex key={t} align="center" gap="3" wrap="wrap">
+              <Box minW="110px">
+                <Tag name={t} />
+              </Box>
+              <HStack gap="1.5" wrap="wrap">
+                {tagPalettes.map((p) => (
+                  <Box
+                    as="button"
+                    key={p}
+                    aria-label={p}
+                    aria-pressed={p === on}
+                    onClick={() => dispatch(A.updateMeta({ tagColors: { ...colors, [t]: p } }))}
+                    w="5"
+                    h="5"
+                    borderRadius="full"
+                    bg={`${p}.400`}
+                    borderWidth="2px"
+                    borderColor={p === on ? 'fg' : 'transparent'}
+                    cursor="pointer"
+                  />
+                ))}
+              </HStack>
+            </Flex>
+          )
+        })}
+      </Stack>
+    </Field>
+  )
+}
 
 export default function GrimoireMore() {
   const dispatch = useAppDispatch()
@@ -123,7 +168,7 @@ export default function GrimoireMore() {
               { value: 'south', label: 'южное' },
             ]} />
           </Field>
-          <Field label="Лимит плана на день" helper="при превышении — мягкое предупреждение, не запрет; 0 — без лимита">
+          <Field label="Лимит плана на день" helper="при превышении гримуар спросит, что сдвинуть; 0 — без лимита">
             <HStack gap="3" wrap="wrap">
               <NumInput value={meta.planLimit.main} onChange={(v) => dispatch(A.updateMeta({ planLimit: { ...meta.planLimit, main: Math.max(0, Math.round(v ?? 0)) } }))} suffix="главное" width="160px" />
               <NumInput value={meta.planLimit.extra} onChange={(v) => dispatch(A.updateMeta({ planLimit: { ...meta.planLimit, extra: Math.max(0, Math.round(v ?? 0)) } }))} suffix="доп." width="140px" />
@@ -139,6 +184,7 @@ export default function GrimoireMore() {
           <Field label="Зоны дома" helper="через запятую">
             <TextInput value={meta.zones.join(', ')} onChange={(v) => dispatch(A.updateMeta({ zones: v.split(',').map((x) => x.trim()).filter(Boolean) }))} />
           </Field>
+          <TagColors />
           <Box>
             <Text fontSize="sm" color="fg.muted" mb="2">
               Формула: монеты = {meta.coins.base} · сложность · (1 + {meta.coins.dreadFactor} · нехотение) + бонусы

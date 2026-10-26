@@ -4,6 +4,8 @@ import { Badge, Box, HStack, Text } from '@chakra-ui/react'
 import { LuSkull } from 'react-icons/lu'
 import { dueDay, humanDay } from '../../grimoire/days'
 import { dreadLabel } from '../../grimoire/labels'
+import { tagPalette } from '../../grimoire/tags'
+import { useAppSelector } from '../../store'
 import type { DayKey } from '../../grimoire/types'
 
 const star = (on: boolean, px: string) => (
@@ -93,8 +95,9 @@ export function Deadline({ dueAt, today }: { dueAt?: string; today: DayKey }) {
 }
 
 export function Tag({ name }: { name: string }) {
+  const colors = useAppSelector((s) => s.grimoire.meta.tagColors)
   return (
-    <Badge variant="subtle" colorPalette="emerald" fontSize="2xs" borderRadius="full" px="2">
+    <Badge variant="subtle" colorPalette={tagPalette(name, colors)} fontSize="2xs" borderRadius="full" px="2">
       #{name}
     </Badge>
   )

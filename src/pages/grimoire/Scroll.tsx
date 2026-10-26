@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 import { Crescent, Divider } from '../../components/Magic'
 import { QuickAdd } from '../../components/grimoire/QuickAdd'
+import { usePlanGuard } from '../../components/grimoire/PlanGuard'
 import { useTaskDialog } from '../../components/grimoire/TaskDialog'
 import { TaskRow } from '../../components/grimoire/TaskRow'
 import { Empty, Modal, PageHeader, Section } from '../../components/ui'
@@ -12,7 +13,7 @@ import { cancel, toBacklog, useToday, withUndo } from '../../grimoire/act'
 import { dayCoins } from '../../grimoire/coins'
 import { addDays, days, humanDay } from '../../grimoire/days'
 import { slotLabel } from '../../grimoire/labels'
-import { backlog, dayPlan, deadlinesSoon, isBlocked, joysAhead, overLimit, slotCounts, toReview, words } from '../../grimoire/selectors'
+import { backlog, dayPlan, deadlinesSoon, isBlocked, joysAhead, toReview, words } from '../../grimoire/selectors'
 import type { Task, TaskSlot } from '../../grimoire/types'
 import { moonPhase, moonPhaseNames, sabbats, wheelNow } from '../../grimoire/wheel'
 import { useAppDispatch, useAppSelector } from '../../store'
@@ -78,7 +79,6 @@ function MorningReview({ items, today, open }: { items: Task[]; today: string; o
 function PickFromBacklog({ onClose, today, slot }: { onClose: () => void; today: string; slot: TaskSlot }) {
   const dispatch = useAppDispatch()
   const g = useAppSelector((s) => s.grimoire)
-  const meta = g.meta
   const list = useMemo(
     () =>
       backlog(g, today)
@@ -86,20 +86,18 @@ function PickFromBacklog({ onClose, today, slot }: { onClose: () => void; today:
         .sort((a, b) => (a.dueAt ?? '9999').localeCompare(b.dueAt ?? '9999') || a.dread - b.dread || a.createdAt.localeCompare(b.createdAt)),
     [g, today],
   )
-  const counts = slotCounts(g, today)
+  const [guard, guardDialog] = usePlanGuard()
   return (
     <Modal open onClose={onClose} title={`В план: ${slotLabel[slot]}`}>
-      {overLimit(meta, counts, slot) && (
-        <Text fontSize="sm" color="orange.300" mb="3">
-          На сегодня уже есть {slotLabel[slot]}. Можно, но, может, что-то убрать?
-        </Text>
-      )}
+      {guardDialog}
       {list.length ? (
         <Stack gap="1">
           {list.map((t) => (
             <Flex key={t.id} align="center" gap="3" py="2" px="2" borderRadius="l2" _hover={{ bg: 'bg.muted' }} cursor="pointer" onClick={() => {
-              dispatch(A.planTask({ id: t.id, day: today, slot }))
-              onClose()
+              guard(slot, () => {
+                dispatch(A.planTask({ id: t.id, day: today, slot }))
+                onClose()
+              })
             }}>
               <Box flex="1">
                 <Text fontSize="sm">{t.title}</Text>

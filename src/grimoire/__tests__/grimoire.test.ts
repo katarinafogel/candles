@@ -270,3 +270,33 @@ describe('wheel of the year', () => {
     expect(moonPhase('2024-01-11')).toBe(0)
   })
 })
+
+describe('tags', async () => {
+  const { tagPalette, tagPalettes, tagsByUse, suggestTags, typingTag, completeTag } = await import('../tags')
+  const g = {
+    tasks: {
+      a: { tags: ['дом', 'бумаги'] },
+      b: { tags: ['дом'] },
+      c: { tags: ['дача', 'дом'] },
+    },
+  } as unknown as GS
+
+  it('keeps a steady colour per name until one is chosen', () => {
+    expect(tagPalette('дом', {})).toBe(tagPalette('дом', {}))
+    expect(tagPalettes).toContain(tagPalette('дом', {}))
+    expect(tagPalette('дом', { дом: 'purple' })).toBe('purple')
+    expect(tagPalette('дом', { дом: 'nonsense' })).toBe(tagPalette('дом', {}))
+  })
+  it('suggests the most used tags first, without those already on the deed', () => {
+    expect(tagsByUse(g)).toEqual(['дом', 'бумаги', 'дача'])
+    expect(suggestTags('д', tagsByUse(g))).toEqual(['дом', 'дача'])
+    expect(suggestTags('#Д', tagsByUse(g), ['дом'])).toEqual(['дача'])
+    expect(suggestTags('дом', tagsByUse(g))).toEqual([])
+  })
+  it('finds and completes the tag being typed at the end of the line', () => {
+    expect(typingTag('помыть окна #до')).toBe('до')
+    expect(typingTag('помыть #')).toBe('')
+    expect(typingTag('помыть #дом окна')).toBeUndefined()
+    expect(completeTag('помыть окна #до', 'дом')).toBe('помыть окна #дом ')
+  })
+})

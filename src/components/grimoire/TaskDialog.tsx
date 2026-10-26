@@ -24,6 +24,8 @@ import { store, useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 import { Chips, confirmAction, Field, Modal, NumInput, TextArea, TextInput } from '../ui'
 import { MarkPicker, Tag } from './Marks'
+import { usePlanGuard } from './PlanGuard'
+import { TagInput } from './TagInput'
 
 type Mode = 'edit' | 'postpone' | 'spawn' | 'split' | 'partial' | 'wait'
 
@@ -54,6 +56,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
     dispatch(A.updateTask({ ...t, title: t.title.trim() || live.title }))
     onClose()
   }
+  const [guard, guardDialog] = usePlanGuard()
   const act = (f: () => void) => {
     // Unsaved edits go in first, so «Сделано» pays by the stars just set.
     if (JSON.stringify(t) !== JSON.stringify(live)) dispatch(A.updateTask(t))
@@ -89,6 +92,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
 
   return (
     <Modal open onClose={onClose} title={live.type === 'joy' ? 'Радость' : steps.length ? w.quest[0].toUpperCase() + w.quest.slice(1) : 'Дело'} footer={footer} size="lg">
+      {guardDialog}
       {mode === 'postpone' && (
         <Stack gap="4">
           <Text fontSize="sm" color="fg.muted">
@@ -179,7 +183,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
                 </Button>
               )}
               {live.doOn !== today && (
-                <Button size="sm" variant="outline" onClick={() => act(() => withUndo('В плане на сегодня', () => dispatch(A.planTask({ id: live.id, day: today, slot: t.slot }))))}>
+                <Button size="sm" variant="outline" onClick={() => guard(t.slot ?? 'extra', () => act(() => withUndo('В плане на сегодня', () => dispatch(A.planTask({ id: live.id, day: today, slot: t.slot })))))}>
                   На сегодня
                 </Button>
               )}
@@ -261,8 +265,8 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
               <Input type="time" value={t.dueAt?.slice(11, 16) ?? ''} disabled={!t.dueAt} onChange={(e) => set({ dueAt: t.dueAt!.slice(0, 10) + (e.target.value ? `T${e.target.value}` : '') })} />
             </Field>
           </HStack>
-          <Field label="Теги" helper="через запятую">
-            <TextInput value={t.tags.join(', ')} onChange={(v) => set({ tags: v.split(',').map((x) => x.trim().replace(/^#/, '').toLowerCase()).filter(Boolean) })} />
+          <Field label="Теги" helper="Enter или запятая добавляет, тап по тегу убирает">
+            <TagInput value={t.tags} onChange={(tags) => set({ tags })} />
           </Field>
           {Object.keys(people).length > 0 && (
             <Field label="Люди">
