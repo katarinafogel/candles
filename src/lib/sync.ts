@@ -8,12 +8,16 @@
 import type { Middleware, UnknownAction } from '@reduxjs/toolkit'
 import localforage from 'localforage'
 import { actions, initialData } from '../store/dataSlice'
+import { grimoireActions, initialGrimoire, migrateGrimoire } from '../store/grimoireSlice'
 import { localActions } from '../store/localSlice'
+import { diffGrimoire, grimoireCollections, isGrimoireRow, rowsToGrimoire, type GrimoireKind } from '../grimoire/rows'
+import type { GrimoireState } from '../grimoire/types'
 import type { DataState, Review } from '../types'
 import { migrate } from './migrate'
 import { supabase } from './supabase'
 
-type Kind = 'mold' | 'material' | 'mix' | 'holder' | 'candle' | 'pour' | 'decor' | 'person' | 'instruction' | 'meta' | 'review'
+type WorkshopKind = 'mold' | 'material' | 'mix' | 'holder' | 'candle' | 'pour' | 'decor' | 'person' | 'instruction' | 'meta' | 'review'
+type Kind = WorkshopKind | GrimoireKind
 
 export interface Change {
   op: 'upsert' | 'delete'
@@ -35,6 +39,8 @@ const collections: [keyof DataState, Kind][] = [
   ['reviews', 'review'],
 ]
 
+export { diffGrimoire, grimoireCollections, isGrimoireRow }
+
 export function diff(prev: DataState, next: DataState): Change[] {
   const out: Change[] = []
   for (const [key, kind] of collections) {
@@ -55,7 +61,7 @@ export const fromServer = <A extends UnknownAction>(a: A) => ({ ...a, meta: { fr
 // ---------- queue ----------
 
 interface StoreLike {
-  getState: () => { data: DataState; local: { ownerId?: string | null } }
+  getState: () => { data: DataState; grimoire: GrimoireState; local: { ownerId?: string | null; roles?: string[] } }
   dispatch: (a: UnknownAction) => unknown
 }
 
@@ -111,20 +117,25 @@ export function flush(): Promise<void> {
   return flushing
 }
 
+type SyncedState = { data: DataState; grimoire: GrimoireState; local: { ownerId?: string | null; roles?: string[] } }
+
 export const syncMiddleware: Middleware = (api) => (next) => (action) => {
-  const before = (api.getState() as { data: DataState }).data
+  const before = api.getState() as SyncedState
   const result = next(action)
   const a = action as UnknownAction & { meta?: { fromServer?: boolean } }
-  if (typeof a.type === 'string' && a.type.startsWith('data/') && !a.meta?.fromServer) {
-    const state = api.getState() as { data: DataState; local: { ownerId?: string | null } }
-    if (state.local.ownerId && state.data !== before) enqueue(diff(before, state.data))
-  }
+  if (typeof a.type !== 'string' || a.meta?.fromServer) return result
+  const state = api.getState() as SyncedState
+  if (!state.local.ownerId) return result
+  if (a.type.startsWith('data/') && state.data !== before.data) enqueue(diff(before.data, state.data))
+  // Without the witch role the server refuses grimoire rows, and one refused row would fail the whole batch.
+  if (a.type.startsWith('grimoire/') && state.grimoire !== before.grimoire && state.local.roles?.includes('witch'))
+    enqueue(diffGrimoire(before.grimoire, state.grimoire))
   return result
 }
 
 // ---------- loading ----------
 
-async function fetchAll(): Promise<{ data: DataState; empty: boolean }> {
+async function fetchAll(): Promise<{ data: DataState; grimoire: GrimoireState; empty: boolean }> {
   const rows: { kind: Kind; id: string; data: unknown }[] = []
   for (let from = 0; ; from += 1000) {
     const { data, error } = await supabase.from('entities').select('kind,id,data').order('kind').order('id').range(from, from + 999)
@@ -152,14 +163,18 @@ async function fetchAll(): Promise<{ data: DataState; empty: boolean }> {
     instructions: {},
     reviews: {},
   }
-  const byKind = Object.fromEntries(collections.map(([key, kind]) => [kind, key]))
+  const byKind: Record<string, string> = Object.fromEntries(collections.map(([key, kind]) => [kind, key]))
+  let workshopRows = 0
   for (const r of rows) {
     if (r.kind === 'meta') {
       if (r.id === 'counters') d.counters = r.data as DataState['counters']
       if (r.id === 'settings') d.settings = r.data as DataState['settings']
-    } else {
+      if (r.id !== 'grimoire') workshopRows++
+    } else if (byKind[r.kind]) {
       ;(d[byKind[r.kind]] as Record<string, unknown>)[r.id] = r.data
+      workshopRows++
     }
+    // Grimoire rows are collected below; kinds this version doesn't know (from a newer app) are left alone.
   }
   for (const r of reviews) {
     d.reviews![r.id] = {
@@ -171,23 +186,49 @@ async function fetchAll(): Promise<{ data: DataState; empty: boolean }> {
       date: (r.data.date as string) ?? r.created_at,
     } as Review
   }
-  const empty = !rows.length && !reviews.length
+  const empty = !workshopRows && !reviews.length
   // A brand-new account starts with the default instruction template.
   if (empty) d.instructions = initialData.instructions
-  return { data: migrate(d), empty }
+  return { data: migrate(d), grimoire: migrateGrimoire(rowsToGrimoire(rows)), empty }
 }
 
 const hasLocalData = (d: DataState) =>
   Object.keys(d.molds).length + Object.keys(d.materials).length + Object.keys(d.candles).length + Object.keys(d.holders).length > 0
 
+/**
+ * Roles of the signed-in master. A database without migration 0002 has no user_roles table yet:
+ * that means no roles. Any other failure (offline) keeps the cached roles.
+ */
+async function fetchRoles(userId: string): Promise<string[] | undefined> {
+  const { data, error } = await supabase.from('user_roles').select('role').eq('user_id', userId)
+  if (error) return error.code === '42P01' || error.code === 'PGRST205' ? [] : undefined
+  return (data as { role: string }[]).map((r) => r.role).sort()
+}
+
+const grimoireIsEmpty = (g: GrimoireState) => grimoireCollections.every(([key]) => !Object.keys(g[key] ?? {}).length)
+
 /** Loads the account. Local changes are sent first so the server copy is complete. */
 export async function load(): Promise<void> {
   if (!store) return
+  const ownerId = store.getState().local.ownerId
+  if (ownerId) {
+    const roles = await fetchRoles(ownerId).catch(() => undefined)
+    if (roles) store.dispatch(localActions.setRoles(roles))
+  }
+  const witch = !!store.getState().local.roles?.includes('witch')
+  if (!witch) {
+    // The role went away: grimoire changes can't be sent any more, and the device copy is cleared.
+    for (const [k, c] of pending) if (isGrimoireRow(c.kind, c.id)) pending.delete(k)
+    report({})
+    void saveQueue()
+    if (!grimoireIsEmpty(store.getState().grimoire)) store.dispatch(fromServer(grimoireActions.replaceAll(initialGrimoire)))
+  }
   await flush()
   if (pending.size) return // offline or failing: keep working on the local copy
   report({ syncing: true })
   try {
-    const { data, empty } = await fetchAll()
+    const { data, grimoire, empty } = await fetchAll()
+    if (witch) store.dispatch(fromServer(grimoireActions.replaceAll(grimoire)))
     const local = store.getState().data
     if (empty) {
       // First sign-in: data made on this device before accounts existed moves into the account.
@@ -210,6 +251,8 @@ export async function startSync(userId: string, email?: string) {
   if (prevOwner && prevOwner !== userId) {
     // Someone else used this device before: their cached data must not leak into this account.
     store.dispatch(fromServer(actions.replaceAll(initialData)))
+    store.dispatch(fromServer(grimoireActions.replaceAll(initialGrimoire)))
+    store.dispatch(localActions.setRoles([]))
   }
   store.dispatch(localActions.setAccount({ ownerId: userId, email }))
   pending.clear()
@@ -224,7 +267,9 @@ export async function stopSync() {
   pending.clear()
   store.dispatch(localActions.setAccount({ ownerId: null }))
   store.dispatch(localActions.setProfile(null))
+  store.dispatch(localActions.setRoles([]))
   store.dispatch(fromServer(actions.replaceAll(initialData)))
+  store.dispatch(fromServer(grimoireActions.replaceAll(initialGrimoire)))
   report({ error: undefined })
 }
 

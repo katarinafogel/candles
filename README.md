@@ -14,7 +14,7 @@
 ```bash
 npm install
 npm run dev      # http://localhost:5173
-npm test         # расчёты, этапы, импорт таблиц
+npm test         # расчёты, этапы, импорт таблиц, гримуар
 npm run build
 ```
 
@@ -33,6 +33,32 @@ npm run build
 2. **Authentication → URL Configuration:** Site URL — адрес сайта, в Redirect URLs — `https://<логин>.github.io/<репозиторий>/**`.
 3. **Authentication → Sign In / Providers → Google:** Client ID и Client Secret из OAuth-клиента Google Cloud (тип Web application, redirect URI — `https://<проект>.supabase.co/auth/v1/callback`).
 
+## Гримуар дел
+
+Личный планировщик внутри мастерской (адреса `/g/...`): свиток дня, книга дел, монеты, ритуалы, колесо года, зеркало, сундук желаний. Открывается только мастерам с ролью `witch`; роль `admin` раздаёт роли в настройках.
+
+1. Выполнить [`supabase/migrations/0002_grimoire.sql`](supabase/migrations/0002_grimoire.sql) в SQL Editor. Если мастер в проекте один, он сразу получает обе роли; иначе — `insert` из комментария в миграции.
+2. Перезайти в приложение: роли загружаются вместе с аккаунтом, появится переключатель «Мастерская / Гримуар».
+
+Без роли строки гримуара в базе не видны и не пишутся (RLS), но не удаляются: роль вернули — всё на месте.
+
+Быстрое добавление одной строкой: `помыть окна **☠☠ #дом !пт` — 2 звезды, нехотение 2, тег, срок в пятницу; `кино с @аня +радость`; `+главное`, `+доп`, `+необяз`, `+завтра`.
+
+Монеты: `10 · сложность · (1 + 0,5 · нехотение) + бонусы`, баланс — сумма журнала `coin_tx`. Формула настраивается в «Ещё».
+
+Для ассистента в базе есть сводки (только чтение, только для `witch`): `grimoire_plan(day)`, `grimoire_day_summary(day)`, `grimoire_backlog()`, `grimoire_stuck()`, `grimoire_joys(day)`, `grimoire_balance()`, `grimoire_nav()`.
+
+### Агент (MCP)
+
+Ассистент Claude может читать и менять гримуар через свой коннектор — сервер MCP на Supabase Edge Function `grimoire-mcp`. Он выполняет те же правила, что и приложение (код ядра копируется из `src/grimoire` скриптом `node scripts/sync-agent-core.mjs`), и видит только гримуар.
+
+1. Выполнить [`supabase/migrations/0003_agent.sql`](supabase/migrations/0003_agent.sql).
+2. Развернуть функцию: `supabase functions deploy grimoire-mcp --no-verify-jwt` (или через коннектор Supabase).
+3. В гримуаре: «Ещё» → «Доступ для агента» → «Выпустить ключ». Адрес вида `https://<проект>.supabase.co/functions/v1/grimoire-mcp/gk_…` показывается один раз.
+4. В claude.ai: Settings → Connectors → добавить свой коннектор с этим адресом.
+
+Инструменты: `grimoire_today`, `grimoire_day_summary`, `grimoire_list_tasks`, `grimoire_get_task`, `grimoire_add_task`, `grimoire_update_task`, `grimoire_complete_task`, `grimoire_reopen_task`, `grimoire_start_task`, `grimoire_plan_task`, `grimoire_postpone_task`, `grimoire_to_backlog`, `grimoire_finish_morning_review`, `grimoire_cancel_task`, `grimoire_set_waiting`, `grimoire_spawn_task`, `grimoire_split_task`, `grimoire_habits`, `grimoire_mark_habit`, `grimoire_add_journal`, `grimoire_set_nav`, `grimoire_wheel`, `grimoire_practice_to_task`.
+
 ## Где что
 
 | Путь | Что |
@@ -45,5 +71,11 @@ npm run build
 | `supabase/migrations/0001_init.sql` | схема базы, правила доступа, функции `apply_changes`, `candle_public`, `submit_review` |
 | `src/lib/sync.ts` | синхронизация с сервером: очередь изменений, загрузка аккаунта |
 | `public/privacy.html` | политика конфиденциальности (нужна Google для входа) |
+| `src/grimoire/` | модель гримуара, монеты, разбор строки, даты, привычки, колесо года |
+| `src/store/grimoireSlice.ts` | все операции гримуара |
+| `src/pages/grimoire/` | свиток, книга дел, ритуалы, колесо, зеркало, хотелки, «ещё» |
+| `supabase/tests/` | проверка миграций и правил доступа на чистом Postgres (CI) |
+| `src/grimoire/agent.ts` | инструменты агента поверх логики гримуара |
+| `supabase/functions/grimoire-mcp/` | MCP-сервер агента (Deno), `core/` — копия ядра |
 
 Проверка расчётов: «Книжка» (250 мл, 35% воды) → вода 159,25 г, гипс 295,75 г; «Шкатулка овал горшочек» (90 г, 7%) → воск 83,7 г, отдушка 6,3 г.

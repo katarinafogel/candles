@@ -1,0 +1,8 @@
+{
+  "imports": {
+    "@reduxjs/toolkit": "npm:@reduxjs/toolkit@2.3.0"
+  },
+  "compilerOptions": {
+    "strict": true
+  }
+}
