@@ -198,6 +198,27 @@ describe('grimoire reducer', () => {
     expect(balance(s.coinTxs)).toBe(7 * 10 + 15)
   })
 
+  it('pays +2 for the first mirror entry of the day and +1 for each feedback', () => {
+    let s = initialGrimoire
+    for (const type of ['entry', 'evening', 'taskFeedback', 'taskFeedback'] as const)
+      s = reducer(s, { type: A.addJournal.type, payload: { entry: { id: `${type}${Object.keys(s.journal).length}`, type, mood: 4 }, ...w(MON) } })
+    expect(Object.keys(s.journal)).toHaveLength(4)
+    expect(balance(s.coinTxs)).toBe(2 + 1 + 1)
+  })
+
+  it('fulfils a wish once: by its deed or by hand', () => {
+    let s = reducer(initialGrimoire, { type: A.upsertWish.type, payload: { wish: { id: 'baikal', title: 'Байкал', tags: [] }, ...w(MON) } })
+    s = reducer(s, { type: A.wishToTask.type, payload: { wishId: 'baikal', taskId: 'go', fields: {}, ...w(MON) } })
+    expect(s.wishes.baikal.status).toBe('inProgress')
+    s = reducer(s, { type: A.completeTask.type, payload: { id: 'go', ...w(MON) } })
+    expect(s.wishes.baikal.status).toBe('fulfilled')
+    s = reducer(s, { type: A.fulfillWish.type, payload: { id: 'baikal', ...w(MON) } })
+    expect(balance(s.coinTxs)).toBe(10 + 30)
+    s = reducer(s, { type: A.reopenTask.type, payload: { id: 'go', ...w(MON) } })
+    expect(s.wishes.baikal.status).toBe('inProgress')
+    expect(balance(s.coinTxs)).toBe(0)
+  })
+
   it('syncs grimoire rows as their own kinds with the settings under meta/grimoire', () => {
     const s = add(initialGrimoire, 't')
     const ch = diffGrimoire(initialGrimoire, reducer(s, A.updateMeta({ streaksOn: false })))

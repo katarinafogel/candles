@@ -6,10 +6,12 @@ import CandlePage from './pages/CandlePage'
 import Candles from './pages/Candles'
 import Decor from './pages/Decor'
 import Book from './pages/grimoire/Book'
+import Mirror from './pages/grimoire/Mirror'
 import GrimoireMore from './pages/grimoire/More'
 import Rituals from './pages/grimoire/Rituals'
 import Scroll from './pages/grimoire/Scroll'
 import Wheel from './pages/grimoire/Wheel'
+import Wishes from './pages/grimoire/Wishes'
 import HolderPage from './pages/HolderPage'
 import Holders from './pages/Holders'
 import Home from './pages/Home'
@@ -46,6 +48,8 @@ export default function App() {
         <Route path="book" element={<Book />} />
         <Route path="rituals" element={<Rituals />} />
         <Route path="wheel" element={<Wheel />} />
+        <Route path="mirror" element={<Mirror />} />
+        <Route path="wishes" element={<Wishes />} />
         <Route path="more" element={<GrimoireMore />} />
         <Route path="*" element={<Scroll />} />
       </Route>

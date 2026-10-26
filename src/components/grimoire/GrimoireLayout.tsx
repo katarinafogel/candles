@@ -2,7 +2,7 @@
 // a «Мастерская / Гримуар» switch, coins in the header and the floating «+».
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
 import { useEffect, type ReactNode } from 'react'
-import { LuBookOpen, LuEllipsis, LuFlame, LuMoon, LuScrollText, LuSun } from 'react-icons/lu'
+import { LuBookOpen, LuEllipsis, LuFlame, LuGem, LuMoon, LuScrollText, LuSparkles, LuSun } from 'react-icons/lu'
 import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useBalance, useToday } from '../../grimoire/act'
 import { words } from '../../grimoire/selectors'
@@ -11,6 +11,7 @@ import { useAppDispatch, useAppSelector, useIsWitch } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 import { Eucalyptus, MoonPhases, MoonSlice, Sparkle } from '../Magic'
 import { SyncBadge } from '../SyncBadge'
+import { FeedbackPrompt } from './Feedback'
 import { QuickAddButton } from './QuickAdd'
 
 interface NavItem {
@@ -99,6 +100,11 @@ export default function GrimoireLayout() {
     { to: '/g/wheel', label: 'Колесо', icon: <LuSun /> },
   ]
   const more: NavItem = { to: '/g/more', label: 'Ещё', icon: <LuEllipsis /> }
+  // On a phone these live under «Ещё»; the side menu shows them all.
+  const extra: NavItem[] = [
+    { to: '/g/mirror', label: 'Зеркало', icon: <LuGem /> },
+    { to: '/g/wishes', label: 'Сундук желаний', icon: <LuSparkles /> },
+  ]
 
   return (
     <Flex minH="100dvh">
@@ -118,7 +124,7 @@ export default function GrimoireLayout() {
           <Coins />
         </Flex>
         <Stack gap="1">
-          {[...items, { ...more, label: 'Ещё: монеты, навь, настройки' }].map((i) => (
+          {[...items, ...extra, { ...more, label: 'Ещё: монеты, навь, настройки' }].map((i) => (
             <NavLink key={i.to} to={i.to} end={i.to === '/g'}>
               {({ isActive }) => (
                 <Flex
@@ -162,16 +168,20 @@ export default function GrimoireLayout() {
       </Box>
 
       <QuickAddButton />
+      <FeedbackPrompt />
 
       <Flex as="nav" display={{ base: 'flex', md: 'none' }} position="fixed" bottom="0" left="0" right="0" bg="rgba(24, 21, 18, 0.94)" backdropFilter="blur(8px)" borderTopWidth="1px" borderColor="border" pb="env(safe-area-inset-bottom)" zIndex="sticky">
         {[...items, more].map((i) => (
           <NavLink key={i.to} to={i.to} end={i.to === '/g'} style={{ flex: 1 }}>
-            {({ isActive }) => (
+            {({ isActive: active }) => {
+              const isActive = active || (i === more && extra.some((x) => loc.pathname.startsWith(x.to)))
+              return (
               <Stack align="center" gap="0.5" py="2" color={isActive ? 'ember.300' : 'fg.subtle'} fontSize="2xs" fontWeight="medium">
                 <Box fontSize="xl">{i.icon}</Box>
                 {i.label}
               </Stack>
-            )}
+              )
+            }}
           </NavLink>
         ))}
       </Flex>

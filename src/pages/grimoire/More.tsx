@@ -1,12 +1,15 @@
 // «Ещё»: the coin journal (the balance is its sum), «уйти в навь», and the grimoire's settings.
 import { Box, Button, Flex, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/react'
+import { LuChevronRight } from 'react-icons/lu'
+import { Link as RouterLink } from 'react-router-dom'
 import { useState } from 'react'
 import { Check, Chips, confirmAction, Field, NumInput, PageHeader, Section, Stat, TextInput } from '../../components/ui'
 import { useBalance, useToday } from '../../grimoire/act'
 import { dayCoins } from '../../grimoire/coins'
 import { addDays, humanDay } from '../../grimoire/days'
 import { words } from '../../grimoire/selectors'
-import { useAppDispatch, useAppSelector } from '../../store'
+import { isTouchDevice, saveFile } from '../../lib/download'
+import { store, useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 
 export default function GrimoireMore() {
@@ -25,6 +28,21 @@ export default function GrimoireMore() {
   return (
     <>
       <PageHeader title="Ещё" />
+      <Stack gap="0" borderWidth="1px" borderColor="border" borderRadius="l3" bg="bg.subtle" overflow="hidden" mb="4">
+        {[
+          { to: '/g/mirror', label: 'Зеркало: дневник и настроение' },
+          { to: '/g/wishes', label: 'Сундук желаний и зал славы' },
+        ].map((i) => (
+          <RouterLink key={i.to} to={i.to}>
+            <Flex align="center" gap="3" px="4" py="3" borderBottomWidth="1px" borderColor="border.muted" _hover={{ bg: 'bg.muted' }}>
+              <Text flex="1">{i.label}</Text>
+              <Box color="fg.subtle">
+                <LuChevronRight />
+              </Box>
+            </Flex>
+          </RouterLink>
+        ))}
+      </Stack>
 
       <Section title="Навь">
         <Text fontSize="sm" color="fg.muted" mb="3">
@@ -141,6 +159,20 @@ export default function GrimoireMore() {
               </Field>
             </SimpleGrid>
           </Box>
+          <Button
+            size="sm"
+            variant="outline"
+            alignSelf="flex-start"
+            onClick={async () => {
+              // Everything with dates in one JSON: a backup and the file to hand over for analysis.
+              const { _persist, ...grimoire } = store.getState().grimoire as typeof g & { _persist?: unknown }
+              void _persist
+              const file = { app: 'candle-tracker/grimoire', exportedAt: new Date().toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, grimoire }
+              await saveFile(new Blob([JSON.stringify(file, null, 1)], { type: 'application/json' }), `grimoire-${today}.json`, isTouchDevice())
+            }}
+          >
+            Выгрузить гримуар (JSON)
+          </Button>
           <Button
             size="xs"
             variant="ghost"

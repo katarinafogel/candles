@@ -11,6 +11,8 @@ import type {
   GrimoireMeta,
   GrimoireState,
   Habit,
+  JournalEntry,
+  Wish,
   PostponeReason,
   Project,
   Task,
@@ -522,6 +524,78 @@ const slice = createSlice({
       prepare: (p: { project: Omit<Project, 'id' | 'createdAt'> & { id?: string } }) => ({
         payload: when({ ...p, project: { ...p.project, id: p.project.id ?? nanoid() } }),
       }),
+    },
+
+    // ----- journal («Зеркало») -----
+    /**
+     * A journal entry: a mood mark, a text, or both. +2 coins for the day's first entry, +1 for a
+     * «как далось?» feedback. The marks themselves never pay, so there is no reason to prettify them.
+     */
+    addJournal: {
+      reducer(s, a: PayloadAction<{ entry: Omit<JournalEntry, 'at' | 'day'> } & When>) {
+        const { entry, at, day } = a.payload
+        const e: JournalEntry = { ...entry, at, day }
+        s.journal[e.id] = e
+        if (e.type === 'taskFeedback') {
+          pay(s, at, day, 1, { reason: 'отклик на дело', tag: 'journal', refKind: 'journal', refId: e.id })
+        } else if (!Object.values(s.coinTxs).some((x) => x.tag === 'journal' && x.day === day && x.reason === 'запись в зеркале')) {
+          pay(s, at, day, 2, { reason: 'запись в зеркале', tag: 'journal', refKind: 'journal', refId: e.id })
+        }
+      },
+      prepare: (p: { entry: Omit<JournalEntry, 'at' | 'day' | 'id'> & { id?: string }; at?: string }) => ({
+        payload: when({ ...p, entry: { ...p.entry, id: p.entry.id ?? nanoid() } }),
+      }),
+    },
+    updateJournal(s, a: PayloadAction<Partial<JournalEntry> & { id: string }>) {
+      const e = s.journal[a.payload.id]
+      if (e) Object.assign(e, a.payload)
+    },
+    deleteJournal(s, a: PayloadAction<string>) {
+      delete s.journal[a.payload]
+    },
+
+    // ----- wishes -----
+    upsertWish: {
+      reducer(s, a: PayloadAction<{ wish: Omit<Wish, 'createdAt' | 'status'> & Partial<Pick<Wish, 'createdAt' | 'status'>> } & When>) {
+        const w = a.payload.wish
+        const prev = s.wishes[w.id]
+        s.wishes[w.id] = { status: 'dream', ...prev, ...w, createdAt: prev?.createdAt ?? w.createdAt ?? a.payload.at }
+      },
+      prepare: (p: { wish: Omit<Wish, 'id' | 'createdAt' | 'status'> & Partial<Pick<Wish, 'id' | 'createdAt' | 'status'>> }) => ({
+        payload: when({ ...p, wish: { ...p.wish, id: p.wish.id ?? nanoid() } }),
+      }),
+    },
+    deleteWish(s, a: PayloadAction<string>) {
+      delete s.wishes[a.payload]
+      for (const t of Object.values(s.tasks)) if (t.wishId === a.payload) delete t.wishId
+    },
+    /** «Воплотить»: the wish becomes a deed; when the deed is done the wish goes to the hall of fame. */
+    wishToTask: {
+      reducer(s, a: PayloadAction<{ wishId: string; taskId: string; fields: Partial<Task> } & When>) {
+        const w = s.wishes[a.payload.wishId]
+        if (!w) return
+        const t = newTask({ title: w.title, tags: [...w.tags], source: 'wish', want: 'want', ...a.payload.fields, id: a.payload.taskId, wishId: w.id }, a.payload.at)
+        s.tasks[t.id] = t
+        w.status = 'inProgress'
+        w.taskId = t.id
+      },
+      prepare: (p: { wishId: string; fields?: Partial<Task> }) => ({ payload: when({ ...p, fields: p.fields ?? {}, taskId: nanoid() }) }),
+    },
+    /** Came true by itself, or by hand: into the hall of fame with a photo-less note. */
+    fulfillWish: {
+      reducer(s, a: PayloadAction<{ id: string; note?: string } & When>) {
+        const w = s.wishes[a.payload.id]
+        if (!w || w.status === 'fulfilled') return
+        w.status = 'fulfilled'
+        w.fulfilledAt = a.payload.at
+        if (a.payload.note) w.fulfilledNote = a.payload.note
+        pay(s, a.payload.at, a.payload.day, s.meta.coins.wishBonus, { reason: `мечта сбылась: ${w.title}`, tag: 'wish', refKind: 'wish', refId: w.id })
+      },
+      prepare: (p: { id: string; note?: string }) => ({ payload: when(p) }),
+    },
+    releaseWish(s, a: PayloadAction<string>) {
+      const w = s.wishes[a.payload]
+      if (w && w.status !== 'fulfilled') w.status = 'released'
     },
 
     // ----- wheel of the year -----

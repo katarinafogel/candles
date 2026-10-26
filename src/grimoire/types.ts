@@ -189,6 +189,13 @@ export interface JournalEntry {
   tags?: string[]
   type: 'entry' | 'taskFeedback' | 'evening'
   taskId?: string
+  /** «Как далось?»: real difficulty and dread, compared with what was set when the task was made. */
+  realStars?: number
+  realDread?: number
+  /** Evening page answers. */
+  wentWell?: string
+  putOff?: string
+  grateful?: string
 }
 
 export interface Jar {
