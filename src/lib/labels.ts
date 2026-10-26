@@ -20,16 +20,20 @@ export const moldPurposeLabel: Record<MoldPurpose, string> = {
   decor: 'декор',
 }
 
+/** Group headings on the molds page. */
+export const moldPurposePlural: Record<MoldPurpose, string> = {
+  holder: 'Подсвечники',
+  dish: 'Тарелки',
+  figurine: 'Фигурки',
+  candle: 'Формовые свечи',
+  decor: 'Декор',
+}
+
 /** Purposes cast from plaster in a mix. */
 export const plasterPurposes: PlasterPurpose[] = ['holder', 'dish', 'figurine']
 export const isPlaster = (p: MoldPurpose): p is PlasterPurpose => (plasterPurposes as MoldPurpose[]).includes(p)
 
-/** Plural labels for filters. */
-export const plasterPurposePlural: Record<PlasterPurpose, string> = {
-  holder: 'Подсвечники',
-  dish: 'Тарелки',
-  figurine: 'Фигурки',
-}
+export const plasterPurposePlural: Record<PlasterPurpose, string> = moldPurposePlural
 
 export const wickSchemeLabel: Record<WickScheme, string> = {
   double05: 'двойной 0,5 см',

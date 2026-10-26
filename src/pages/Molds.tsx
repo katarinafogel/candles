@@ -1,10 +1,10 @@
-import { Badge, Box, Button, Flex, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/react'
+import { Badge, Box, Button, CloseButton, Flex, Heading, HStack, Input, InputGroup, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
-import { LuArchive, LuArchiveRestore, LuPencil, LuPlus } from 'react-icons/lu'
+import { LuArchive, LuArchiveRestore, LuPencil, LuPlus, LuSearch } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
 import { Check, Chips, Empty, Field, Modal, notify, NumInput, PageHeader, StarRating, TextArea, TextInput } from '../components/ui'
 import { fmt } from '../lib/calc'
-import { isPlaster, moldPurposeLabel, wickSchemeLabel } from '../lib/labels'
+import { isPlaster, moldPurposeLabel, moldPurposePlural, wickSchemeLabel } from '../lib/labels'
 import { moldStats, sortMolds } from '../lib/selectors'
 import { useAppDispatch, useData } from '../store'
 import { actions } from '../store/dataSlice'
@@ -123,6 +123,8 @@ export function ArchiveButton({ mold, size = 'xs' }: { mold: Mold; size?: 'xs' |
   )
 }
 
+const normalize = (s: string) => s.toLowerCase().replace(/ё/g, 'е')
+
 export default function Molds() {
   const d = useData()
   const nav = useNavigate()
@@ -131,10 +133,16 @@ export default function Molds() {
   const [show, setShow] = useState<'active' | 'archive' | 'all'>('active')
   const all = Object.values(d.molds)
   const archived = all.filter((m) => m.archived).length
+  const [query, setQuery] = useState('')
+  const q = normalize(query.trim())
   const list = sortMolds(
     d,
-    all.filter((m) => show === 'all' || (show === 'archive') === !!m.archived),
+    all.filter((m) => (show === 'all' || (show === 'archive') === !!m.archived) && (!q || normalize(m.name).includes(q))),
   )
+  // Grouped by type in a fixed order; inside a group the best-rated and most used come first.
+  const groups = (Object.keys(moldPurposeLabel) as MoldPurpose[])
+    .map((p) => ({ purpose: p, molds: list.filter((m) => m.purpose === p) }))
+    .filter((g) => g.molds.length)
 
   return (
     <>
@@ -143,7 +151,10 @@ export default function Molds() {
           <LuPlus /> Форма
         </Button>
       </PageHeader>
-      <Box mb="3">
+      <InputGroup mb="3" startElement={<LuSearch />} endElement={query && <CloseButton size="xs" onClick={() => setQuery('')} aria-label="Очистить" />}>
+        <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Поиск по названию" />
+      </InputGroup>
+      <Box mb="4">
         <Chips
           value={show}
           onChange={(v) => setShow((v as typeof show) ?? 'active')}
@@ -156,67 +167,75 @@ export default function Molds() {
       </Box>
       {!list.length && (
         <Empty>
-          {all.length
+          {q
+            ? `Не нашлось форм с «${query.trim()}» в названии.`
+            : all.length
             ? show === 'archive'
               ? 'В архиве пусто.'
               : 'Все формы в архиве.'
             : 'Форм пока нет. Добавьте вручную или импортируйте из таблицы в настройках.'}
         </Empty>
       )}
-      <SimpleGrid columns={{ base: 1, md: 2 }} gap="3">
-        {list.map((m) => {
-          const st = moldStats(d, m.id)
-          return (
-            <Box
-              key={m.id}
-              p="3"
-              borderWidth="1px"
-              borderColor="border"
-              bg="bg.subtle"
-              borderRadius="l3"
-              cursor="pointer"
-              _hover={{ borderColor: 'emerald.700' }}
-              onClick={() => nav(`/molds/${m.id}`)}
-            >
-              <Flex justify="space-between" gap="2">
-                <Text fontWeight="semibold" truncate minW="0">
-                  {m.name}
-                </Text>
-                <HStack gap="1">
-                  <Badge variant="subtle">{moldPurposeLabel[m.purpose]}</Badge>
-                  {m.archived && <Badge colorPalette="gray">в архиве</Badge>}
-                </HStack>
-              </Flex>
-              <Text fontSize="xs" color="fg.muted" mt="1">
-                {m.id}
-                {isPlaster(m.purpose) && ` · ${m.waterVolumeMl} мл · ${m.waterPct}% воды`}
-                {m.waxCapacityG ? ` · воск ${m.waxCapacityG} г` : ''}
-                {m.defaultWick ? ` · ${wickSchemeLabel[m.defaultWick.scheme]} ${fmt(m.defaultWick.lengthCm)} см` : ''}
-              </Text>
-              <Text fontSize="xs" color="fg.muted">
-                отлито {st.holders.length} · брак {st.defectPct != null ? `${fmt(st.defectPct, 0)}%` : '—'} · оценка{' '}
-                {st.avgOverall != null ? fmt(st.avgOverall, 1) : '—'}
-              </Text>
-              <Flex mt="2" align="center" justify="space-between" gap="2" wrap="wrap">
-                <StarRating size="sm" value={m.rating} onChange={(v) => dispatch(actions.upsertMold({ ...m, rating: v }))} />
-                <HStack gap="1">
-                  <Button
-                    size="xs"
-                    variant="ghost"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setEdit(m)
-                    }}
-                  >
-                    <LuPencil /> Изменить
-                  </Button>
-                  <ArchiveButton mold={m} />
-                </HStack>
-              </Flex>
-            </Box>
-          )
-        })}
-      </SimpleGrid>
+      {groups.map((g) => (
+        <Box key={g.purpose} mb="6">
+          <Heading size="lg" fontWeight="semibold" color="ember.100" mb="2">
+            {moldPurposePlural[g.purpose]} · {g.molds.length}
+          </Heading>
+          <SimpleGrid columns={{ base: 1, md: 2 }} gap="3">
+            {g.molds.map((m) => {
+              const st = moldStats(d, m.id)
+              return (
+                <Box
+                  key={m.id}
+                  p="3"
+                  borderWidth="1px"
+                  borderColor="border"
+                  bg="bg.subtle"
+                  borderRadius="l3"
+                  cursor="pointer"
+                  _hover={{ borderColor: 'emerald.700' }}
+                  onClick={() => nav(`/molds/${m.id}`)}
+                >
+                  <Flex justify="space-between" gap="2">
+                    <Text fontWeight="semibold" truncate minW="0">
+                      {m.name}
+                    </Text>
+                    <HStack gap="1">
+                      {m.archived && <Badge colorPalette="gray">в архиве</Badge>}
+                    </HStack>
+                  </Flex>
+                  <Text fontSize="xs" color="fg.muted" mt="1">
+                    {m.id}
+                    {isPlaster(m.purpose) && ` · ${m.waterVolumeMl} мл · ${m.waterPct}% воды`}
+                    {m.waxCapacityG ? ` · воск ${m.waxCapacityG} г` : ''}
+                    {m.defaultWick ? ` · ${wickSchemeLabel[m.defaultWick.scheme]} ${fmt(m.defaultWick.lengthCm)} см` : ''}
+                  </Text>
+                  <Text fontSize="xs" color="fg.muted">
+                    отлито {st.holders.length} · брак {st.defectPct != null ? `${fmt(st.defectPct, 0)}%` : '—'} · оценка{' '}
+                    {st.avgOverall != null ? fmt(st.avgOverall, 1) : '—'}
+                  </Text>
+                  <Flex mt="2" align="center" justify="space-between" gap="2" wrap="wrap">
+                    <StarRating size="sm" value={m.rating} onChange={(v) => dispatch(actions.upsertMold({ ...m, rating: v }))} />
+                    <HStack gap="1">
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setEdit(m)
+                        }}
+                      >
+                        <LuPencil /> Изменить
+                      </Button>
+                      <ArchiveButton mold={m} />
+                    </HStack>
+                  </Flex>
+                </Box>
+              )
+            })}
+          </SimpleGrid>
+        </Box>
+      ))}
       {edit && <MoldDialog mold={edit} onClose={() => setEdit(null)} />}
     </>
   )
