@@ -12,7 +12,9 @@ create function auth.uid() returns uuid
 language sql stable
 as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
 
-grant usage on schema public to anon, authenticated;
+grant usage on schema public to anon, authenticated, service_role;
+-- In Supabase the server role can read and write every table the migrations create.
+alter default privileges in schema public grant all on tables to service_role;
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-00000000000a'),  -- the witch, the only master when 0002 runs

@@ -48,6 +48,17 @@ npm run build
 
 Для ассистента в базе есть сводки (только чтение, только для `witch`): `grimoire_plan(day)`, `grimoire_day_summary(day)`, `grimoire_backlog()`, `grimoire_stuck()`, `grimoire_joys(day)`, `grimoire_balance()`, `grimoire_nav()`.
 
+### Агент (MCP)
+
+Ассистент Claude может читать и менять гримуар через свой коннектор — сервер MCP на Supabase Edge Function `grimoire-mcp`. Он выполняет те же правила, что и приложение (код ядра копируется из `src/grimoire` скриптом `node scripts/sync-agent-core.mjs`), и видит только гримуар.
+
+1. Выполнить [`supabase/migrations/0003_agent.sql`](supabase/migrations/0003_agent.sql).
+2. Развернуть функцию: `supabase functions deploy grimoire-mcp --no-verify-jwt` (или через коннектор Supabase).
+3. В гримуаре: «Ещё» → «Доступ для агента» → «Выпустить ключ». Адрес вида `https://<проект>.supabase.co/functions/v1/grimoire-mcp/gk_…` показывается один раз.
+4. В claude.ai: Settings → Connectors → добавить свой коннектор с этим адресом.
+
+Инструменты: `grimoire_today`, `grimoire_day_summary`, `grimoire_list_tasks`, `grimoire_get_task`, `grimoire_add_task`, `grimoire_update_task`, `grimoire_complete_task`, `grimoire_reopen_task`, `grimoire_start_task`, `grimoire_plan_task`, `grimoire_postpone_task`, `grimoire_to_backlog`, `grimoire_finish_morning_review`, `grimoire_cancel_task`, `grimoire_set_waiting`, `grimoire_spawn_task`, `grimoire_split_task`, `grimoire_habits`, `grimoire_mark_habit`, `grimoire_add_journal`, `grimoire_set_nav`, `grimoire_wheel`, `grimoire_practice_to_task`.
+
 ## Где что
 
 | Путь | Что |
@@ -64,5 +75,7 @@ npm run build
 | `src/store/grimoireSlice.ts` | все операции гримуара |
 | `src/pages/grimoire/` | свиток, книга дел, ритуалы, колесо, зеркало, хотелки, «ещё» |
 | `supabase/tests/` | проверка миграций и правил доступа на чистом Postgres (CI) |
+| `src/grimoire/agent.ts` | инструменты агента поверх логики гримуара |
+| `supabase/functions/grimoire-mcp/` | MCP-сервер агента (Deno), `core/` — копия ядра |
 
 Проверка расчётов: «Книжка» (250 мл, 35% воды) → вода 159,25 г, гипс 295,75 г; «Шкатулка овал горшочек» (90 г, 7%) → воск 83,7 г, отдушка 6,3 г.
