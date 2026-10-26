@@ -214,7 +214,7 @@ export default function Molds() {
           <Heading size="lg" fontWeight="semibold" color="ember.100" mb="2">
             {moldPurposePlural[g.purpose]} · {g.molds.length}
           </Heading>
-          <SimpleGrid columns={{ base: 2, sm: 3, lg: 4, xl: 5 }} gap={{ base: '3', md: '4' }}>
+          <SimpleGrid columns={{ base: 2, sm: 3, lg: 4, xl: 5 }} gap={{ base: '3', md: '4' }} gridAutoRows="1fr">
             {g.molds.map((m) => {
               const st = moldStats(d, m.id)
               return (

@@ -17,6 +17,7 @@ export function migrate(input: Partial<DataState> & { schemaVersion?: number }):
     out.molds = mapValues(out.molds, migrateMold)
     out.holders = mapValues(out.holders, (h) => migrateHolder(h, out.molds))
   }
+  if (v < 3) out.holders = mapValues(out.holders, (h) => pouredHolder(h, out.candles))
   return out
 }
 
@@ -58,4 +59,11 @@ export function migrateHolder(old: Holder, molds: Record<string, Mold>): Holder 
     history: h.history.map((e) => (e.stage === 'lidDone' ? { ...e, stage: 'done' } : e)),
     ...(h.defect && h.defect.stage === ('lidDone' as HolderStage) ? { defect: { ...h.defect, stage: 'done' as HolderStage } } : {}),
   }
+}
+
+/** v3: a holder whose candle is already poured is «стал свечой»; with only a wick it still waits for the pour. */
+export function pouredHolder(h: Holder, candles: DataState['candles']): Holder {
+  const c = h.candleId ? candles[h.candleId] : undefined
+  if (h.stage !== 'wicked' || !c?.pouredAt) return h
+  return { ...h, stage: 'candle', history: [...h.history, { stage: 'candle', date: c.pouredAt, consumption: [], params: { candleId: c.id, pourId: c.pourId } }] }
 }

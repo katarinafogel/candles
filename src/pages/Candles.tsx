@@ -132,7 +132,8 @@ export default function Candles() {
   const [sel, setSel] = useState<string[]>([])
   const [dialog, setDialog] = useState<'decor' | 'ready' | 'defect' | 'molded' | null>(null)
 
-  const all = byId(d.candles)
+  // A holder with a wick is still a holder until it is poured; molded candles have no holder to wait on.
+  const all = byId(d.candles).filter((c) => !(c.holderId && c.stage === 'wicked'))
   const list = useMemo(() => {
     const out = all.filter((c) => {
       const pour = c.pourId ? d.pours[c.pourId] : undefined
@@ -245,7 +246,7 @@ export default function Candles() {
       )}
       {!list.length && <Empty>Свечей с такими условиями нет.</Empty>}
 
-      <SimpleGrid columns={{ base: 2, sm: 3, lg: 4, xl: 5 }} gap={{ base: '3', md: '4' }}>
+      <SimpleGrid columns={{ base: 2, sm: 3, lg: 4, xl: 5 }} gap={{ base: '3', md: '4' }} gridAutoRows="1fr">
         {list.map((c) => {
           const on = sel.includes(c.id)
           const pour = c.pourId ? d.pours[c.pourId] : undefined

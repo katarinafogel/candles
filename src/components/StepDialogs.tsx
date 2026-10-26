@@ -4,7 +4,7 @@ import { LuPlus, LuTrash2 } from 'react-icons/lu'
 import { nowLocal, toIso } from '../lib/dates'
 import { candleDefectReasons, decorKindLabel, defectReasonLabel, holderDefectReasons, holderNextTitle, varnishKindLabel, wickSchemeLabel } from '../lib/labels'
 import { materialOptions } from '../lib/selectors'
-import { nextHolderStage, actions, type HolderStepParams } from '../store/dataSlice'
+import { nextHolderStage, actions, varnishTarget, type HolderStepParams } from '../store/dataSlice'
 import { useAppDispatch, useData } from '../store'
 import type { DecorUse, DefectReason, VarnishKind, WickScheme } from '../types'
 import { StockHint } from './StockHint'
@@ -23,7 +23,9 @@ export function HolderStepDialog({ ids, onClose }: { ids: string[]; onClose: () 
 
   const [date, setDate] = useState(nowLocal())
   const [materialId, setMaterialId] = useState<string>()
-  const [layers, setLayers] = useState<number | undefined>(2)
+  const [layers, setLayers] = useState<number | undefined>(() =>
+    step === 'varnishIn' || step === 'varnishOut' ? varnishTarget(d, step) : 2,
+  )
   const [kind, setKind] = useState<VarnishKind>('gloss')
   const [count, setCount] = useState<number | undefined>(3)
   const [skip, setSkip] = useState(false)

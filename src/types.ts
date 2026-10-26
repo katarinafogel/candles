@@ -168,6 +168,7 @@ export type HolderStage =
   | 'varnishOut'
   | 'dampers'
   | 'wicked'
+  | 'candle'
   | 'done'
   | 'defect'
 
@@ -186,6 +187,8 @@ export interface Holder {
   painting?: { done: boolean; description: string; paintIds: string[] }
   varnishOut?: { kind: VarnishKind; materialId?: string; layers: number }
   dampers?: { materialId?: string; count: number }
+  /** Varnish layers already put on at the current varnish stage (the leaves on the card). */
+  layersDone?: number
   stage: HolderStage
   history: StageEntry[]
   defect?: Defect
@@ -311,6 +314,9 @@ export interface Settings {
   fragrancePct: number
   waxDyePct: number
   varnishMlPerLayer: number
+  /** Layers of the inner and outer varnish: the leaves to tick on a card before it moves on. */
+  varnishInLayers: number
+  varnishOutLayers: number
   /** Address of the published app, used in QR links. Empty = the current address. */
   publicUrl: string
   lastBackupAt?: ISODate

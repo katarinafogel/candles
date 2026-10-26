@@ -45,19 +45,20 @@ export default function Home() {
 
 
       <Section title="Подсвечники">
-        <SimpleGrid columns={{ base: 2, sm: 3, lg: 6 }} gap="3">
+        <SimpleGrid columns={{ base: 2, sm: 3, lg: 7 }} gap="3">
           <Stat label="сохнут" value={hCount('drying')} to="/holders?stage=drying" />
           <Stat label="ждут лака внутри" value={hCount('dried')} to="/holders?stage=dried" />
           <Stat label="ждут росписи" value={hCount('varnishIn')} to="/holders?stage=varnishIn" />
           <Stat label="ждут лака снаружи" value={hCount('painted')} to="/holders?stage=painted" />
           <Stat label="ждут демпферов" value={hCount('varnishOut')} to="/holders?stage=varnishOut" />
           <Stat label="готовы под фитиль" value={hCount('dampers')} to="/holders?stage=dampers" />
+          <Stat label="с фитилём, ждут заливки" value={hCount('wicked')} to="/holders?stage=wicked" />
         </SimpleGrid>
       </Section>
 
       <Section title="Свечи">
         <SimpleGrid columns={{ base: 2, sm: 3, lg: 5 }} gap="3">
-          <Stat label="с фитилём, ждут заливки" value={cCount('wicked')} to="/candles?stage=wicked" />
+          <Stat label="формовые, ждут заливки" value={candles.filter((c) => !c.holderId && c.stage === 'wicked').length} to="/candles?stage=wicked" />
           <Stat label="дозревают" value={cCount('curing', 'decorated')} to="/candles?stage=curing" />
           <Stat label="готовы" value={cCount('ready')} to="/candles?stage=ready" />
           <Stat label="подарены / сожжены" value={cCount('given')} to="/candles?stage=given" />

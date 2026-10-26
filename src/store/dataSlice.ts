@@ -23,7 +23,7 @@ import type {
 } from '../types'
 import { isPlaster } from '../lib/labels'
 
-export const SCHEMA_VERSION = 2
+export const SCHEMA_VERSION = 3
 
 export const defaultSettings: Settings = {
   plasterDensity: 1.82,
@@ -34,6 +34,8 @@ export const defaultSettings: Settings = {
   fragrancePct: 7,
   waxDyePct: 0,
   varnishMlPerLayer: 5,
+  varnishInLayers: 5,
+  varnishOutLayers: 3,
   publicUrl: '',
 }
 
@@ -180,6 +182,75 @@ function newCandle(
   return c
 }
 
+function advanceHolder(s: DataState, h: Holder, params: HolderStepParams, date: string, eventId: string, comment?: string) {
+  const hid = h.id
+  let consumption: Consumption[] = []
+  const stored: Record<string, unknown> = {}
+  switch (params.step) {
+    case 'dried':
+      h.dryEnd = params.dryEnd
+      break
+    case 'varnishIn':
+      h.varnishIn = { materialId: params.materialId, layers: params.layers }
+      consumption = take(s, params.materialId, params.layers * s.settings.varnishMlPerLayer, date, eventId, hid)
+      break
+    case 'painted':
+      h.painting = {
+        done: !params.skip,
+        description: params.skip ? '' : params.description,
+        paintIds: params.skip ? [] : params.paints.map((p) => p.materialId),
+      }
+      if (!params.skip) consumption = params.paints.flatMap((p) => take(s, p.materialId, p.qty, date, eventId, hid))
+      break
+    case 'varnishOut':
+      h.varnishOut = { kind: params.kind, materialId: params.materialId, layers: params.layers }
+      consumption = take(s, params.materialId, params.layers * s.settings.varnishMlPerLayer, date, eventId, hid)
+      break
+    case 'dampers':
+      h.dampers = { materialId: params.materialId, count: params.count }
+      consumption = take(s, params.materialId, params.count, date, eventId, hid)
+      break
+    case 'done':
+      break
+    case 'wicked': {
+      const c = newCandle(s, {
+        holderId: hid,
+        name: params.name,
+        wick: params.wick,
+        instructionId: params.instructionId,
+      })
+      c.history.push({
+        stage: 'wicked',
+        date,
+        consumption: take(s, params.materialId, params.wick.lengthCm * 2, date, eventId, c.id),
+        params: { wick: params.wick },
+      })
+      h.candleId = c.id
+      stored.candleId = c.id
+      break
+    }
+  }
+  h.layersDone = undefined
+  h.stage = params.step
+  h.history.push({ stage: params.step, date, params: { ...params, ...stored }, comment, consumption })
+}
+
+/** How many varnish layers a stage takes. */
+export const varnishTarget = (s: Pick<DataState, 'settings'>, step: 'varnishIn' | 'varnishOut') =>
+  Math.max(1, (step === 'varnishIn' ? s.settings.varnishInLayers : s.settings.varnishOutLayers) || (step === 'varnishIn' ? 5 : 3))
+
+/** The varnish put on most recently at this stage, to reuse when a card's leaves finish the stage. */
+function lastVarnish(s: DataState, step: 'varnishIn' | 'varnishOut') {
+  let best: { date: string; materialId?: string; kind?: VarnishKind } | undefined
+  for (const h of Object.values(s.holders))
+    for (const e of h.history)
+      if (e.stage === step && (!best || e.date > best.date)) {
+        const p = e.params as { materialId?: string; kind?: VarnishKind } | undefined
+        best = { date: e.date, materialId: p?.materialId, kind: p?.kind }
+      }
+  return best
+}
+
 const slice = createSlice({
   name: 'data',
   initialState: initialData,
@@ -311,63 +382,36 @@ const slice = createSlice({
       const eventId = nanoid()
       for (const hid of ids) {
         const h = s.holders[hid]
-        if (!h || nextHolderStage(h) !== params.step) continue
-        let consumption: Consumption[] = []
-        const stored: Record<string, unknown> = {}
-        switch (params.step) {
-          case 'dried':
-            h.dryEnd = params.dryEnd
-            break
-          case 'varnishIn':
-            h.varnishIn = { materialId: params.materialId, layers: params.layers }
-            consumption = take(s, params.materialId, params.layers * s.settings.varnishMlPerLayer, date, eventId, hid)
-            break
-          case 'painted':
-            h.painting = {
-              done: !params.skip,
-              description: params.skip ? '' : params.description,
-              paintIds: params.skip ? [] : params.paints.map((p) => p.materialId),
-            }
-            if (!params.skip)
-              consumption = params.paints.flatMap((p) => take(s, p.materialId, p.qty, date, eventId, hid))
-            break
-          case 'varnishOut':
-            h.varnishOut = { kind: params.kind, materialId: params.materialId, layers: params.layers }
-            consumption = take(s, params.materialId, params.layers * s.settings.varnishMlPerLayer, date, eventId, hid)
-            break
-          case 'dampers':
-            h.dampers = { materialId: params.materialId, count: params.count }
-            consumption = take(s, params.materialId, params.count, date, eventId, hid)
-            break
-          case 'done':
-            break
-          case 'wicked': {
-            const c = newCandle(s, {
-              holderId: hid,
-              name: params.name,
-              wick: params.wick,
-              instructionId: params.instructionId,
-            })
-            c.history.push({
-              stage: 'wicked',
-              date,
-              consumption: take(s, params.materialId, params.wick.lengthCm * 2, date, eventId, c.id),
-              params: { wick: params.wick },
-            })
-            h.candleId = c.id
-            stored.candleId = c.id
-            break
-          }
-        }
-        h.stage = params.step
-        h.history.push({ stage: params.step, date, params: { ...params, ...stored }, comment, consumption })
+        if (h && nextHolderStage(h) === params.step) advanceHolder(s, h, params, date, eventId, comment)
       }
+    },
+
+    /** Ticks varnish layers on a card; the last leaf finishes the stage with the varnish used last time. */
+    setVarnishLayers(s, a: PayloadAction<{ id: string; done: number; date: string }>) {
+      const h = s.holders[a.payload.id]
+      const step = h && nextHolderStage(h)
+      if (!h || (step !== 'varnishIn' && step !== 'varnishOut')) return
+      const target = varnishTarget(s, step)
+      h.layersDone = Math.max(0, Math.min(target, a.payload.done))
+      if (h.layersDone < target) return
+      const last = lastVarnish(s, step)
+      advanceHolder(
+        s,
+        h,
+        step === 'varnishIn'
+          ? { step, materialId: last?.materialId, layers: target }
+          : { step, kind: last?.kind ?? 'gloss', materialId: last?.materialId, layers: target },
+        a.payload.date,
+        nanoid(),
+      )
     },
 
     undoHolder(s, a: PayloadAction<{ id: string; date: string }>) {
       const h = s.holders[a.payload.id]
       if (!h || h.history.length < 2) return
       const last = h.history[h.history.length - 1]
+      // A poured holder is undone through its candle.
+      if (last.stage === 'candle') return
       if (last.stage === 'wicked' && h.candleId) {
         const c = s.candles[h.candleId]
         // Only an unpoured candle can be turned back into a holder.
@@ -380,6 +424,13 @@ const slice = createSlice({
       }
       if (last.stage === 'defect') h.defect = undefined
       if (last.stage === 'dried') h.dryEnd = undefined
+      // Undoing a varnish stage takes off its last layer only, so the leaves show one short.
+      if (last.stage === 'varnishIn' || last.stage === 'varnishOut') {
+        const layers = (last.params as { layers?: number } | undefined)?.layers ?? 1
+        h.layersDone = Math.max(0, layers - 1)
+        if (last.stage === 'varnishIn') h.varnishIn = undefined
+        else h.varnishOut = undefined
+      }
       giveBack(s, last.consumption, a.payload.date, h.id)
       h.history.pop()
       h.stage = h.history[h.history.length - 1].stage as HolderStage
@@ -442,6 +493,11 @@ const slice = createSlice({
         c.pouredAt = p.date
         c.stage = 'curing'
         c.history.push({ stage: 'curing', date: p.date, consumption, params: { pourId: id } })
+        const h = c.holderId ? s.holders[c.holderId] : undefined
+        if (h?.stage === 'wicked') {
+          h.stage = 'candle'
+          h.history.push({ stage: 'candle', date: p.date, consumption: [], params: { candleId: cid, pourId: id } })
+        }
       }
       s.pours[id] = { ...p, id }
     },
@@ -498,6 +554,13 @@ const slice = createSlice({
           }
           c.pourId = undefined
           c.pouredAt = undefined
+          if (c.holderId) {
+            const h = s.holders[c.holderId]
+            if (h?.stage === 'candle') {
+              h.history.pop()
+              h.stage = 'wicked'
+            }
+          }
           break
         case 'decorated':
           c.decor = []

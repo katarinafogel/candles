@@ -84,7 +84,8 @@ export const holderStageLabel: Record<HolderStage, string> = {
   painted: 'Роспись · ждёт лака снаружи',
   varnishOut: 'Лак снаружи · ждёт демпферов',
   dampers: 'Демпферы · ждёт фитиля',
-  wicked: 'Фитиль приклеен',
+  wicked: 'Фитиль приклеен · ждёт заливки',
+  candle: 'Стал свечой',
   done: 'Готово',
   defect: 'Брак',
 }
@@ -96,7 +97,8 @@ export const holderStageShort: Record<HolderStage, string> = {
   painted: 'Ждёт лака снаружи',
   varnishOut: 'Ждёт демпферов',
   dampers: 'Ждёт фитиля',
-  wicked: 'Стал свечой',
+  wicked: 'Ждёт заливки',
+  candle: 'Стал свечой',
   done: 'Готово',
   defect: 'Брак',
 }
@@ -109,6 +111,7 @@ export const holderNextLabel: Partial<Record<HolderStage, string>> = {
   painted: 'Лак снаружи',
   varnishOut: 'Демпферы',
   dampers: 'Приклеить фитиль',
+  wicked: 'Залить',
 }
 
 /** Title of the next step for this item: dishes and figurines are finished after the outer varnish. */
@@ -123,6 +126,7 @@ export const holderStageOrder: HolderStage[] = [
   'varnishOut',
   'dampers',
   'wicked',
+  'candle',
   'done',
   'defect',
 ]

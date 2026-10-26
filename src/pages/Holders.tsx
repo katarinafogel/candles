@@ -1,17 +1,55 @@
 import { Box, Button, Flex, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
-import { LuArrowRight, LuFlaskConical, LuTriangleAlert } from 'react-icons/lu'
+import { LuArrowRight, LuDroplets, LuFlaskConical, LuTriangleAlert } from 'react-icons/lu'
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { DefectDialog, HolderStepDialog } from '../components/StepDialogs'
 import { ArcanaCard, arcanaButton } from '../components/ArcanaCard'
-import { Check, Empty, PageHeader, Select } from '../components/ui'
+import { Check, Empty, LeafMark, PageHeader, Select } from '../components/ui'
 import { daysBetween, fmtDate } from '../lib/calc'
 import { holderNextTitle, holderStageLabel, moldPurposeLabel, holderStageOrder, holderStageShort } from '../lib/labels'
 import { byId } from '../lib/selectors'
-import { useData } from '../store'
-import { nextHolderStage } from '../store/dataSlice'
-import type { HolderStage } from '../types'
+import { useAppDispatch, useData } from '../store'
+import { actions, nextHolderStage, varnishTarget } from '../store/dataSlice'
+import type { Holder, HolderStage } from '../types'
+import { withUndo } from '../lib/undo'
 import { figureOf } from '../components/MoldIcons'
+
+/** One leaf per varnish layer; ticking the last one moves the item to the next stage. */
+function VarnishLeaves({ h }: { h: Holder }) {
+  const d = useData()
+  const dispatch = useAppDispatch()
+  const step = nextHolderStage(h)
+  if (step !== 'varnishIn' && step !== 'varnishOut') return null
+  const target = varnishTarget(d, step)
+  const done = h.layersDone ?? 0
+  const set = (n: number) => {
+    const change = () => dispatch(actions.setVarnishLayers({ id: h.id, done: n, date: new Date().toISOString() }))
+    if (n >= target) withUndo('holder', [h.id], change, `${step === 'varnishIn' ? 'Лак внутри' : 'Лак снаружи'}: все ${target} слоёв`)
+    else change()
+  }
+  return (
+    <Stack gap="0.5" align="center" w="100%">
+      <Text fontSize="2xs" color="fg.muted">
+        {step === 'varnishIn' ? 'слои лака внутри' : 'слои лака снаружи'} · {done}/{target}
+      </Text>
+      <Flex gap="0" justify="center" wrap="wrap">
+        {Array.from({ length: target }, (_, i) => (
+          <Box
+            as="button"
+            key={i}
+            p="0.5"
+            cursor="pointer"
+            aria-label={`Слой ${i + 1}`}
+            // A tap on the last ticked leaf takes that layer back.
+            onClick={() => set(i + 1 === done ? i : i + 1)}
+          >
+            <LeafMark on={i < done} size={18} />
+          </Box>
+        ))}
+      </Flex>
+    </Stack>
+  )
+}
 
 export default function Holders() {
   const d = useData()
@@ -24,7 +62,7 @@ export default function Holders() {
 
   const all = byId(d.holders)
   const list = all.filter(
-    (h) => (stage ? h.stage === stage : h.stage !== 'wicked' && h.stage !== 'defect' && h.stage !== 'done') && (!moldId || h.moldId === moldId),
+    (h) => (stage ? h.stage === stage : h.stage !== 'candle' && h.stage !== 'defect' && h.stage !== 'done') && (!moldId || h.moldId === moldId),
   )
   const setFilter = (k: string, v: string) => {
     const n = new URLSearchParams(sp)
@@ -38,6 +76,8 @@ export default function Holders() {
   const selStage = selected.length ? nextHolderStage(d.holders[selected[0]]) : undefined
   const sameStage = selected.every((i) => d.holders[i].stage === d.holders[selected[0]]?.stage)
   const canNext = selected.length > 0 && sameStage && !!selStage
+  const allWicked = selected.length > 0 && selected.every((i) => d.holders[i].stage === 'wicked' && d.holders[i].candleId)
+  const pour = (ids: string[]) => nav(`/pour/new?ids=${ids.map((i) => d.holders[i].candleId).join(',')}`)
 
   return (
     <>
@@ -86,7 +126,7 @@ export default function Holders() {
 
       {!list.length && <Empty>Здесь пока пусто.</Empty>}
 
-      <SimpleGrid columns={{ base: 2, sm: 3, lg: 4, xl: 5 }} gap={{ base: '3', md: '4' }}>
+      <SimpleGrid columns={{ base: 2, sm: 3, lg: 4, xl: 5 }} gap={{ base: '3', md: '4' }} gridAutoRows="1fr">
         {list.map((h) => {
           const mold = d.molds[h.moldId]
           const on = sel.includes(h.id)
@@ -104,16 +144,25 @@ export default function Holders() {
               select={<Check checked={on} onChange={(v) => setSel(v ? [...sel, h.id] : sel.filter((x) => x !== h.id))} />}
               onClick={() => nav(`/holders/${h.id}`, { state: { back: `/holders${sp.size ? `?${sp}` : ''}` } })}
               footer={
-                nextHolderStage(h) && (
-                  <Button
-                    {...arcanaButton}
-                    onClick={() => {
-                      setSel([h.id])
-                      setDialog('next')
-                    }}
-                  >
-                    {holderNextTitle(h) ?? 'Готово'} <LuArrowRight />
+                h.stage === 'wicked' && h.candleId ? (
+                  <Button {...arcanaButton} onClick={() => pour([h.id])}>
+                    <LuDroplets /> Залить
                   </Button>
+                ) : (
+                  nextHolderStage(h) && (
+                    <>
+                      <VarnishLeaves h={h} />
+                      <Button
+                        {...arcanaButton}
+                        onClick={() => {
+                          setSel([h.id])
+                          setDialog('next')
+                        }}
+                      >
+                        {holderNextTitle(h) ?? 'Готово'} <LuArrowRight />
+                      </Button>
+                    </>
+                  )
                 )
               }
             >
@@ -151,9 +200,15 @@ export default function Holders() {
             maxW="560px"
             mx="auto"
           >
-            <Button onClick={() => setDialog('next')} disabled={!canNext}>
-              {canNext ? holderNextTitle(d.holders[selected[0]]) ?? 'Дальше' : 'Разные этапы'} · {selected.length}
-            </Button>
+            {allWicked ? (
+              <Button onClick={() => pour(selected)}>
+                <LuDroplets /> Залить · {selected.length}
+              </Button>
+            ) : (
+              <Button onClick={() => setDialog('next')} disabled={!canNext}>
+                {canNext ? holderNextTitle(d.holders[selected[0]]) ?? 'Дальше' : 'Разные этапы'} · {selected.length}
+              </Button>
+            )}
             <Button variant="outline" colorPalette="red" onClick={() => setDialog('defect')}>
               <LuTriangleAlert /> Брак
             </Button>

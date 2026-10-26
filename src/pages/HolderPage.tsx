@@ -1,7 +1,7 @@
 import { Box, Button, HStack, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
-import { LuArrowRight, LuUndo2, LuTriangleAlert } from 'react-icons/lu'
-import { useParams } from 'react-router-dom'
+import { LuArrowRight, LuDroplets, LuUndo2, LuTriangleAlert } from 'react-icons/lu'
+import { useNavigate, useParams } from 'react-router-dom'
 import { History } from '../components/History'
 import { DefectDialog, HolderStepDialog } from '../components/StepDialogs'
 import { confirmAction, Empty, IdBadge, Link, notify, PageHeader, Row, Section, Select } from '../components/ui'
@@ -47,6 +47,7 @@ export default function HolderPage() {
   const { id = '' } = useParams()
   const d = useData()
   const dispatch = useAppDispatch()
+  const nav = useNavigate()
   const [dialog, setDialog] = useState<'next' | 'defect' | null>(null)
   const h = d.holders[id]
   if (!h) return <Empty>Изделие {id} не найдено</Empty>
@@ -55,11 +56,16 @@ export default function HolderPage() {
   const mat = (mid?: string) => (mid ? d.materials[mid]?.name ?? '—' : '—')
   const next = nextHolderStage(h)
   const lastStage = h.history[h.history.length - 1]?.stage
-  const canUndo = h.history.length > 1 && !(lastStage === 'wicked' && candle && candle.stage !== 'wicked')
+  const canUndo = h.history.length > 1 && lastStage !== 'candle' && !(lastStage === 'wicked' && candle && candle.stage !== 'wicked')
 
   return (
     <>
       <PageHeader title={holderTitle(d, h)} back="/holders">
+        {h.stage === 'wicked' && candle?.stage === 'wicked' && (
+          <Button size="sm" onClick={() => nav(`/pour/new?ids=${candle.id}`)}>
+            <LuDroplets /> Залить
+          </Button>
+        )}
         {next && (
           <Button size="sm" onClick={() => setDialog('next')}>
             {holderNextTitle(h)} <LuArrowRight />

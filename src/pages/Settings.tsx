@@ -307,6 +307,12 @@ export default function Settings() {
           <Field label="Лак на подсвечник">
             <NumInput value={s.varnishMlPerLayer} onChange={(v) => set({ varnishMlPerLayer: v ?? 0 })} suffix="мл/слой" />
           </Field>
+          <Field label="Слоёв лака внутри">
+            <NumInput value={s.varnishInLayers} onChange={(v) => set({ varnishInLayers: v ?? 5 })} suffix="слоёв" />
+          </Field>
+          <Field label="Слоёв лака снаружи">
+            <NumInput value={s.varnishOutLayers} onChange={(v) => set({ varnishOutLayers: v ?? 3 })} suffix="слоёв" />
+          </Field>
         </SimpleGrid>
       </Section>
 
