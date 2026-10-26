@@ -26,6 +26,11 @@ export type MoldIcon =
   | 'apple'
   | 'nightLight'
   | 'heartBox'
+  | 'stump'
+  | 'tallPumpkin'
+  | 'pumpkin'
+  | 'book'
+  | 'potBelly'
 export type WickScheme = 'double05' | 'mixed' | 'double1'
 
 export interface Wick {

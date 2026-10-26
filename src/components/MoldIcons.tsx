@@ -295,6 +295,81 @@ function HeartBox() {
   )
 }
 
+function Stump() {
+  // «Пень»: a ribbed cup on a stump with roots spreading over a round base.
+  return (
+    <>
+      <path d="M6 37c0-2.5 8-4 18-4s18 1.5 18 4v1.5c0 2.5-8 4-18 4s-18-1.5-18-4z" />
+      <path d="M13.5 36.6c2.5-3 4.5-4.6 5.5-7.6h10c1 3 3 4.6 5.5 7.6-3.5-.4-5.5-1.4-7-2.4l-1.5 2.7-2-2.4-2.5 2.7-1.5-2.9c-1.5 1-3.5 2-6.5 2.3z" />
+      <path d="M12 13c0-2 5.5-3.2 12-3.2S36 11 36 13v1.2c-.5 7.8-5 15.3-12 15.8-7-.5-11.5-8-12-15.8z" />
+      <g className="mi-d">
+        <ellipse cx="24" cy="13" rx="9.5" ry="2" />
+        <path d="M12 13.6c0 2 5.5 3.2 12 3.2s12-1.2 12-3.2" />
+        <path d="M18.5 16.5c0 5.5 1.5 10.5 3 13M29.5 16.5c0 5.5-1.5 10.5-3 13" />
+      </g>
+    </>
+  )
+}
+
+function TallPumpkin() {
+  // «Шкатулка тыква вытянутая»: a tall ribbed pumpkin with a ribbed lid and a curved stem.
+  return (
+    <>
+      <path d="M13 17h22c3.5 4 4.5 9 4 14-.5 6-5 10-15 10S9.5 37 9 31c-.5-5 .5-10 4-14z" />
+      <path d="M14 17c0-5 4.5-8 10-8s10 3 10 8z" />
+      <path d="M23 9.5c0-3.5 1.5-5.7 4.6-6.5l.9 1.6c-2.1.8-3 2.6-3 4.9z" />
+      <g className="mi-d">
+        <path d="M19 17c-2 7-2 17 .5 23.5M29 17c2 7 2 17-.5 23.5M24 17v24" />
+        <path d="M20 10.6c-1 2.4-1 4.4-.5 6.4M28 10.6c1 2.4 1 4.4.5 6.4" />
+      </g>
+    </>
+  )
+}
+
+function Pumpkin() {
+  // «Тыква»: a squat ribbed pumpkin with the lid seam near the top and a short stem.
+  return (
+    <>
+      <path d="M24 12c-8-1-18 2-18 13 0 9 7 14 18 14s18-5 18-14c0-11-10-14-18-13z" />
+      <path d="M22.4 12.4V6.6c0-1 .7-1.6 1.6-1.6h1.6v7.4z" />
+      <g className="mi-d">
+        <path d="M11 15.8c6 2.2 20 2.2 26 0" />
+        <path d="M17 13c-4 7-4 19 .5 25.5M31 13c4 7 4 19-.5 25.5M24 12.5V39" />
+        <path d="M10.4 16.5c-2.2 5.5-1.8 14.5.8 19M37.6 16.5c2.2 5.5 1.8 14.5-.8 19" />
+      </g>
+    </>
+  )
+}
+
+function Book() {
+  // «Книжка»: a thick book box: overhanging covers, an ornamented spine and the page edges.
+  return (
+    <>
+      <path d="M36.5 17H40v19l-3.5 1.5z" />
+      <path d="M7.5 17h29v20.5h-29z" />
+      <path d="M6.5 13h32c1.5 0 2.5 1 2.5 2.5V17H6.5z" />
+      <path d="M6.5 37.5h30v2.3h-30z" />
+      <g className="mi-d">
+        <path d="M37 21h2.5M37 25h2.5M37 29h2.5M37 33h2.5" />
+        <path d="M11 17v20.5M33 17v20.5" />
+        <path d="M18 21.5c2 0 2 2.5 0 2.5s-2 2.5 0 2.5 2 2.5 0 2.5-2 2.5 0 2.5M26 21.5c2 0 2 2.5 0 2.5s-2 2.5 0 2.5 2 2.5 0 2.5-2 2.5 0 2.5" />
+      </g>
+    </>
+  )
+}
+
+function PotBelly() {
+  // «Горшочек»: a round-bellied pot with a flared collar and a lid with a ball knob.
+  return (
+    <>
+      <path d="M15 17c-6 3-7.5 9-6 14 1.5 6 7 9.5 15 9.5S37.5 37 39 31c1.5-5 0-11-6-14z" />
+      <path d="M13 13.5c0-1.5 5-2.5 11-2.5s11 1 11 2.5l-1.5 4c-3.5 1-15.5 1-19 0z" />
+      <ellipse className="mi-d" cx="24" cy="13.8" rx="8.6" ry="1.7" />
+      <circle cx="24" cy="9.4" r="2.4" />
+    </>
+  )
+}
+
 const shapes: Record<MoldIcon, () => JSX.Element> = {
   pot: Pot,
   lantern: Lantern,
@@ -315,6 +390,11 @@ const shapes: Record<MoldIcon, () => JSX.Element> = {
   apple: Apple,
   nightLight: NightLight,
   heartBox: HeartBox,
+  stump: Stump,
+  tallPumpkin: TallPumpkin,
+  pumpkin: Pumpkin,
+  book: Book,
+  potBelly: PotBelly,
 }
 
 export const moldIconLabel: Record<MoldIcon, string> = {
@@ -337,6 +417,11 @@ export const moldIconLabel: Record<MoldIcon, string> = {
   apple: 'яблоко',
   nightLight: 'ночник',
   heartBox: 'сердце',
+  stump: 'пень',
+  tallPumpkin: 'тыква вытянутая',
+  pumpkin: 'тыква',
+  book: 'книжка',
+  potBelly: 'горшочек с ручкой',
 }
 
 /** The icon chosen for a mold, or one guessed from its name. */
@@ -360,7 +445,12 @@ export function moldIconOf(m: Pick<Mold, 'name' | 'icon'> | undefined): MoldIcon
   if (/сердц|сердечк/.test(n)) return 'heartBox'
   if (/омел|ёлочн|елочн/.test(n)) return 'ornament'
   if (/звезд|звёзд/.test(n)) return 'starJar'
-  if (/горшоч|овал/.test(n)) return 'pot'
+  if (/овал/.test(n)) return 'pot'
+  if (/горшоч/.test(n)) return 'potBelly'
+  if (/(^|\s)пень(\s|$)/.test(n)) return 'stump'
+  if (/тыкв.*вытян/.test(n)) return 'tallPumpkin'
+  if (/тыкв/.test(n)) return 'pumpkin'
+  if (/книг|книжк/.test(n)) return 'book'
   if (/ламп|фонар/.test(n)) return 'lantern'
   if (/птич|птиц/.test(n)) return 'bird'
   if (/колонн|окн/.test(n)) return 'windows'
