@@ -49,6 +49,9 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
     <Box
       position="relative"
       h="100%"
+      // Done: not crossed out, just paler (on top of the card's own dim).
+      opacity={done ? 0.7 : 1}
+      filter={done ? 'saturate(.55)' : undefined}
       transform={`translateX(${dx}px)`}
       transition={dx ? undefined : 'transform .2s'}
       onTouchStart={(e) => (start.current = inBook ? null : { x: e.touches[0].clientX, y: e.touches[0].clientY })}
@@ -88,8 +91,9 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
         }
         corner={
           coins > 0 ? (
-            <HStack gap="0.5" title="награда">
-              <Sparkle size={8} />
+            // A pill like the tags, in the card's star colour.
+            <HStack gap="0.5" title="награда" px="1.5" py="0.5" borderRadius="full" fontSize="2xs" lineHeight="1" bg="color-mix(in srgb, var(--star-on) 20%, transparent)">
+              <Sparkle size={7} />
               <Text as="span">{coins}</Text>
             </HStack>
           ) : undefined
@@ -106,9 +110,7 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
                 {project.sigil || '🌿'}
               </Box>
             )}
-            <Box as="span" textDecoration={done ? 'line-through' : undefined}>
-              {t.title}
-            </Box>
+            <Box as="span">{t.title}</Box>
           </>
         }
         fixed
