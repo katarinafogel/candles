@@ -21,6 +21,11 @@ export type MoldIcon =
   | 'heartDish'
   | 'ornament'
   | 'starJar'
+  | 'whale'
+  | 'squareBox'
+  | 'apple'
+  | 'nightLight'
+  | 'heartBox'
 export type WickScheme = 'double05' | 'mixed' | 'double1'
 
 export interface Wick {

@@ -226,6 +226,75 @@ function StarJar() {
   )
 }
 
+function Whale() {
+  // «Кит»: a humpback whale box with a raised tail, a long fin and golden mountains on the lid.
+  return (
+    <>
+      <path d="M44.5 28.5c0-4.5-5-7.5-12.5-7.5-7 0-12.5.5-17.5-1.5-3-1.2-5-3.5-6.5-6L3 12c1.5-.6 3-.5 4 .2 0-1.8 1-3.2 2.5-3.8.2 2 .1 3.6-.5 5 1.5 3.5 4 8.5 8 12.6 4 4 11 7.5 18 7.5 5 0 9.5-1.5 9.5-5z" />
+      <path d="M30 32.2c.5 4 2.5 7 6.5 9-1-3.5-1.5-6-2-8.3z" />
+      <path d="M18.5 21.6 21.5 15l2.2 2.6 3.3-7 3.6 6.8 1.6-2.2 3 6.6c-4.4.5-11 .4-16.7-.2z" />
+      <g className="mi-d">
+        <path d="M23.7 17.6l.6 4.3M27 10.6l.6 11.4M30.6 17.4l.3 4.6" />
+        <path d="M38.5 30.3c2 .4 4.2 0 5.8-1.3M33.5 31.5c3 .4 6 .2 8.5-.6" />
+      </g>
+      <circle className="mi-f" cx="38.6" cy="26.8" r=".95" />
+    </>
+  )
+}
+
+function SquareBox() {
+  // «Квадратная шкатулка»: a soft-cornered square box with a flat lid.
+  return (
+    <>
+      <path d="M10 19h28v14c0 4-2 6-6 6H16c-4 0-6-2-6-6z" />
+      <path d="M9 16c0-2.5 1.5-4 4-4h22c2.5 0 4 1.5 4 4v3H9z" />
+      <path className="mi-d" d="M10.5 21.5h27" />
+    </>
+  )
+}
+
+function Apple() {
+  // «Яблоко»: a round apple box with a lid, a stem and a leaf.
+  return (
+    <>
+      <path d="M24 15c-5-2.5-15-2-15.5 8-.5 9 5.5 16 11.5 16.5 2 .1 3-.5 4-.7 1 .2 2 .8 4 .7 6-.5 12-7.5 11.5-16.5-.5-10-10.5-10.5-15.5-8z" />
+      <ellipse className="mi-d" cx="24" cy="17" rx="8.5" ry="2.6" />
+      <path d="M23 16c0-3.5 1-6.5 3.5-8.5l1.6 1.2c-2.1 2-2.8 4.5-2.8 7.3z" />
+      <path d="M24.4 14.8c-4.4.3-7-1-8-3 3-.6 6 .4 8 3z" />
+    </>
+  )
+}
+
+function NightLight() {
+  // «Ночник»: a pyramid of two panels on a tray, with a crescent and stars cut out.
+  return (
+    <>
+      <path d="M24 4.5 7.5 37.5h33z" />
+      <path d="M4.5 37.5h39l-2 4.5h-35z" />
+      <path className="mi-d" d="M24 4.5 25.2 37.5" />
+      <path className="mi-f" d="M17.6 21.4a5 5 0 1 0 3.2 8.4 4 4 0 0 1-3.2-8.4z" />
+      <path className="mi-f" d="M31.6 21.4a5 5 0 1 0 3.2 8.4 4 4 0 0 1-3.2-8.4z" />
+      {star(14, 33, 1.6)}
+      {star(20.5, 17, 1.2)}
+      {star(29, 16, 1.2)}
+      {star(36.5, 33, 1.6)}
+      <circle className="mi-f" cx="22.5" cy="11.5" r=".7" />
+      <circle className="mi-f" cx="27" cy="11" r=".7" />
+      <circle className="mi-f" cx="31" cy="30.5" r=".7" />
+    </>
+  )
+}
+
+function HeartBox() {
+  // «Сердце»: a plump heart box split by the lid seam.
+  return (
+    <>
+      <path d="M24 13c-3-5-9-6-12.5-4C6.5 12 6 19 9 25c3 6 9 11 15 16 6-5 12-10 15-16 3-6 2.5-13-2.5-16-3.5-2-9.5-1-12.5 4z" />
+      <path className="mi-d" d="M7.6 21.5c6.4 2 26.4 2 32.8 0" />
+    </>
+  )
+}
+
 const shapes: Record<MoldIcon, () => JSX.Element> = {
   pot: Pot,
   lantern: Lantern,
@@ -241,6 +310,11 @@ const shapes: Record<MoldIcon, () => JSX.Element> = {
   heartDish: HeartDish,
   ornament: Ornament,
   starJar: StarJar,
+  whale: Whale,
+  squareBox: SquareBox,
+  apple: Apple,
+  nightLight: NightLight,
+  heartBox: HeartBox,
 }
 
 export const moldIconLabel: Record<MoldIcon, string> = {
@@ -258,6 +332,11 @@ export const moldIconLabel: Record<MoldIcon, string> = {
   heartDish: 'сердечко',
   ornament: 'шар',
   starJar: 'банка со звёздами',
+  whale: 'кит',
+  squareBox: 'квадратная шкатулка',
+  apple: 'яблоко',
+  nightLight: 'ночник',
+  heartBox: 'сердце',
 }
 
 /** The icon chosen for a mold, or one guessed from its name. */
@@ -274,6 +353,11 @@ export function moldIconOf(m: Pick<Mold, 'name' | 'icon'> | undefined): MoldIcon
   if (/тарел.*серд|серд.*тарел/.test(n)) return 'heartDish'
   if (/сундук/.test(n)) return 'chest'
   if (/кругл.*шкатулк/.test(n)) return 'roundBox'
+  if (/квадратн.*шкатулк/.test(n)) return 'squareBox'
+  if (/(^|\s)кит(\s|$)/.test(n)) return 'whale'
+  if (/яблок/.test(n)) return 'apple'
+  if (/ночник/.test(n)) return 'nightLight'
+  if (/сердц|сердечк/.test(n)) return 'heartBox'
   if (/омел|ёлочн|елочн/.test(n)) return 'ornament'
   if (/звезд|звёзд/.test(n)) return 'starJar'
   if (/горшоч|овал/.test(n)) return 'pot'
