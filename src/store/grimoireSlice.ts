@@ -25,6 +25,7 @@ export const defaultMeta: GrimoireMeta = {
   dayBoundaryHour: 4,
   hemisphere: 'north',
   planLimit: { main: 1, extra: 0, optional: 1 },
+  dayStars: 6,
   streaksOn: true,
   timersOn: false,
   gameWords: true,

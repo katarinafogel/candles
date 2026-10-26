@@ -10,7 +10,7 @@ const { sabbatDays, wheelNow, moonPhase, seasonMoment } = await import('../wheel
 const { streak, habitLogId, habitTaskId } = await import('../habits')
 const { default: reducer, grimoireActions: A, initialGrimoire, migrateGrimoire } = await import('../../store/grimoireSlice')
 const { diffGrimoire, isGrimoireRow } = await import('../../lib/sync')
-const { dayPlan, isBlocked, isStuck, toReview, chainOf, cardTone, projectProgress, projectTasks } = await import('../selectors')
+const { dayPlan, dayStars, isBlocked, isStuck, toReview, chainOf, cardTone, projectProgress, projectTasks } = await import('../selectors')
 type GS = typeof initialGrimoire
 type Habit = import('../types').Habit
 
@@ -160,6 +160,16 @@ describe('grimoire reducer', () => {
     s = reducer(s, { type: A.reorderTasks.type, payload: ['c', 'a', 'b'] })
     s = reducer(s, { type: A.completeTask.type, payload: { id: 'c', ...w(MON) } })
     expect(projectTasks(s, 'p').map((t) => t.id)).toEqual(['a', 'b', 'c'])
+  })
+
+  it('counts the day stars: joys apart, done deeds too, rituals out, past the limit is over', () => {
+    let s = add(initialGrimoire, 'j', { type: 'joy', stars: 2, doOn: MON })
+    s = add(s, 'a', { stars: 3, doOn: MON })
+    s = add(s, 'b', { stars: 3, doOn: MON })
+    s = add(s, 'h', { stars: 3, doOn: MON, habitId: 'x' })
+    s = add(s, 'later', { stars: 3, doOn: addDays(MON, 1) })
+    s = reducer(s, { type: A.completeTask.type, payload: { id: 'a', ...w(MON) } })
+    expect(dayStars(s, MON)).toEqual({ joy: 2, deed: 6, total: 8, limit: 6, over: 2 })
   })
 
   it('colours a card: frog, then joy, then three stars, then silver', () => {

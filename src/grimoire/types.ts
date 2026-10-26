@@ -250,6 +250,8 @@ export interface GrimoireMeta {
   timeZone?: string
   hemisphere: 'north' | 'south'
   planLimit: { main: number; extra: number; optional: number }
+  /** How many stars of difficulty a day's plan holds comfortably (0 — no limit shown). */
+  dayStars: number
   streaksOn: boolean
   timersOn: boolean
   /** Game words (свиток, квест, ритуал) or plain ones. */

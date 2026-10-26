@@ -33,6 +33,18 @@ export function dayPlan(g: GrimoireState, day: DayKey) {
   }
 }
 
+/**
+ * The day's stars against the limit: joys first (they count, but are drawn apart), then the deeds,
+ * done or not; rituals stay out. `over` — stars past the limit.
+ */
+export function dayStars(g: GrimoireState, day: DayKey) {
+  const deeds = dayPlan(g, day).all
+  const joy = deeds.filter((t) => t.type === 'joy').reduce((n, t) => n + t.stars, 0)
+  const deed = deeds.filter((t) => t.type !== 'joy').reduce((n, t) => n + t.stars, 0)
+  const limit = g.meta.dayStars
+  return { joy, deed, total: joy + deed, limit, over: limit > 0 ? Math.max(0, joy + deed - limit) : 0 }
+}
+
 /** How many open deeds of each slot a day already has, for the soft plan limit. */
 export function slotCounts(g: GrimoireState, day: DayKey) {
   const c: Record<TaskSlot, number> = { main: 0, extra: 0, optional: 0 }

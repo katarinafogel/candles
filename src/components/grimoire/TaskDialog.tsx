@@ -23,7 +23,7 @@ import type { PostponeReason, Task, TaskOwnerKind, TaskSlot, Want } from '../../
 import { store, useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 import { Chips, confirmAction, Field, Modal, NumInput, Select, TextArea, TextInput } from '../ui'
-import { FrogIcon, MarkPicker, Tag } from './Marks'
+import { FrogIcon, MarkPicker } from './Marks'
 import { usePlanGuard } from './PlanGuard'
 import { TagInput } from './TagInput'
 
@@ -459,13 +459,6 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
               <Text>
                 Переносы: {live.postponements.map((p) => `${p.day.slice(8, 10)}.${p.day.slice(5, 7)}${p.reason ? ` (${postponeReasonLabel[p.reason]})` : ''}`).join(', ')}
               </Text>
-            )}
-            {live.tags.length > 0 && (
-              <HStack gap="1" mt="1" wrap="wrap">
-                {live.tags.map((x) => (
-                  <Tag key={x} name={x} />
-                ))}
-              </HStack>
             )}
           </Box>
         </Stack>

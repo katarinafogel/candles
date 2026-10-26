@@ -20,6 +20,15 @@ const star = (on: boolean, px: string) => (
   </svg>
 )
 
+/** One star in a given colour, filled or as an outline. */
+export function StarMark({ filled = true, color, size = 14 }: { filled?: boolean; color: string; size?: number }) {
+  return (
+    <Box display="inline-flex" color={color}>
+      {star(filled, `${size}px`)}
+    </Box>
+  )
+}
+
 export function Stars({ n, size = 12 }: { n: number; size?: number }) {
   return (
     // Cards of other colors set --star-on so the stars stay readable on them.

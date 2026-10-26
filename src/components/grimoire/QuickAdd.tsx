@@ -3,6 +3,7 @@
 import { Box, Button, HStack, IconButton, Input, Stack, Text } from '@chakra-ui/react'
 import { useMemo, useRef, useState } from 'react'
 import { LuCornerDownLeft, LuPlus } from 'react-icons/lu'
+import { useLocation } from 'react-router-dom'
 import { useToday } from '../../grimoire/act'
 import { humanDay } from '../../grimoire/days'
 import { slotLabel } from '../../grimoire/labels'
@@ -133,9 +134,10 @@ export function QuickAdd({ planToday, autoFocus, onAdded, fields: extra }: { pla
   )
 }
 
-/** The floating «+» on every grimoire screen: a deed in two taps. */
+/** The floating «+» on every grimoire screen: a deed in two taps. On the day scroll it goes into today's plan. */
 export function QuickAddButton() {
   const [open, setOpen] = useState(false)
+  const onScroll = useLocation().pathname === '/g'
   return (
     <>
       <Box position="fixed" right={{ base: '4', md: '8' }} bottom={{ base: 'calc(76px + env(safe-area-inset-bottom))', md: '8' }} zIndex="sticky">
@@ -154,7 +156,7 @@ export function QuickAddButton() {
       </Box>
       {open && (
         <Modal open onClose={() => setOpen(false)} title="Новое дело">
-          <QuickAdd autoFocus onAdded={() => setOpen(false)} />
+          <QuickAdd autoFocus planToday={onScroll} onAdded={() => setOpen(false)} />
         </Modal>
       )}
     </>

@@ -3,8 +3,7 @@
 import { Box, Button, Flex, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
-import { Crescent, Divider } from '../../components/Magic'
-import { QuickAdd } from '../../components/grimoire/QuickAdd'
+import { Crescent } from '../../components/Magic'
 import { usePlanGuard } from '../../components/grimoire/PlanGuard'
 import { useTaskDialog } from '../../components/grimoire/TaskDialog'
 import { cardColumns, TaskCard } from '../../components/grimoire/TaskCard'
@@ -13,12 +12,12 @@ import { cancel, toBacklog, useToday, withUndo } from '../../grimoire/act'
 import { dayCoins } from '../../grimoire/coins'
 import { addDays, days, humanDay } from '../../grimoire/days'
 import { slotLabel } from '../../grimoire/labels'
-import { backlog, dayPlan, deadlinesSoon, isBlocked, joysAhead, toReview, words } from '../../grimoire/selectors'
+import { backlog, dayPlan, dayStars, deadlinesSoon, isBlocked, joysAhead, toReview, words } from '../../grimoire/selectors'
 import type { Task, TaskSlot } from '../../grimoire/types'
 import { moonPhase, moonPhaseNames, sabbats, wheelNow } from '../../grimoire/wheel'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
-import { Dread, Stars } from '../../components/grimoire/Marks'
+import { Dread, StarMark, Stars } from '../../components/grimoire/Marks'
 
 const weekdayLong = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота']
 
@@ -115,6 +114,32 @@ function PickFromBacklog({ onClose, today, slot }: { onClose: () => void; today:
         <Empty>Бэклог пуст.</Empty>
       )}
     </Modal>
+  )
+}
+
+/**
+ * The day's stars against the limit: white for joys, first; gold for deeds; pale outlines for what is
+ * still free; red for what goes past the limit.
+ */
+function DayStars({ today }: { today: string }) {
+  const g = useAppSelector((s) => s.grimoire)
+  const st = dayStars(g, today)
+  if (!st.limit && !st.total) return null
+  const marks: { color: string; filled: boolean }[] = []
+  for (let i = 0; i < st.joy; i++) marks.push({ color: '#f4efe6', filled: true })
+  for (let i = 0; i < st.deed; i++) marks.push({ color: st.limit && marks.length >= st.limit ? 'red.400' : 'ember.300', filled: true })
+  while (marks.length < st.limit) marks.push({ color: 'ember.700', filled: false })
+  return (
+    <Box mt="1.5">
+      <Flex gap="0.5" wrap="wrap" aria-label={`звёзд в плане ${st.total} из ${st.limit}`}>
+        {marks.map((m, i) => (
+          <StarMark key={i} filled={m.filled} color={m.color} size={15} />
+        ))}
+      </Flex>
+      <Text fontSize="xs" color={st.over ? 'red.300' : 'fg.subtle'} mt="0.5">
+        {st.limit ? `звёзд в плане ${st.total} из ${st.limit}${st.over ? ` · сверх нормы ${st.over}` : ''}` : `звёзд в плане ${st.total}`}
+      </Text>
+    </Box>
   )
 }
 
@@ -251,6 +276,7 @@ export default function Scroll() {
           <Text fontSize="sm" color="fg.muted">
             Сделано {plan.all.filter((t) => t.status === 'done').length + plan.habits.filter((t) => t.status === 'done').length} · монет за день {coinsToday > 0 ? `+${coinsToday}` : coinsToday}
           </Text>
+          <DayStars today={today} />
           {wheel.daysToNext <= 7 && (
             <Button asChild size="xs" variant="outline" mt="2">
               <RouterLink to={`/g/wheel?s=${wheel.next.sabbat}`}>Подготовиться к {sabbats[wheel.next.sabbat].dative} →</RouterLink>
@@ -275,8 +301,6 @@ export default function Scroll() {
             </SimpleGrid>
           </Box>
         )}
-        <Divider my="4" />
-        <QuickAdd planToday />
         {openToday.length > 0 && (
           <Flex justify="flex-end" mt="4">
             <Button size="sm" variant="ghost" onClick={() => toBacklog(openToday.map((t) => t.id), 'На сегодня всё. Остальное в бэклоге')}>

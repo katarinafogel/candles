@@ -176,6 +176,9 @@ export default function GrimoireMore() {
               <NumInput value={meta.planLimit.optional} onChange={(v) => dispatch(A.updateMeta({ planLimit: { ...meta.planLimit, optional: Math.max(0, Math.round(v ?? 0)) } }))} suffix="необяз." width="160px" />
             </HStack>
           </Field>
+          <Field label="Звёзд на день" helper="сколько сложности план дня держит спокойно; сверх — красные звёзды в свитке; 0 — не показывать">
+            <NumInput value={meta.dayStars} onChange={(v) => dispatch(A.updateMeta({ dayStars: Math.max(0, Math.round(v ?? 0)) }))} suffix="★" width="140px" />
+          </Field>
           <Field label="Жабы" helper="дело с нехотением 3 или отложенное столько раз становится жабой и платит больше">
             <HStack gap="3" wrap="wrap">
               <NumInput value={meta.frogPostpones} onChange={(v) => dispatch(A.updateMeta({ frogPostpones: Math.max(1, Math.round(v ?? 3)) }))} suffix="переносов" width="170px" />
