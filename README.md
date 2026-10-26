@@ -54,7 +54,7 @@ npm run build
 
 1. Выполнить [`supabase/migrations/0003_agent.sql`](supabase/migrations/0003_agent.sql).
 2. Развернуть функцию: `supabase functions deploy grimoire-mcp --no-verify-jwt` (или через коннектор Supabase).
-3. В гримуаре: «Ещё» → «Доступ для агента» → «Выпустить ключ». Адрес вида `https://<проект>.supabase.co/functions/v1/grimoire-mcp/gk_…` показывается один раз.
+3. В гримуаре: «Ещё» → «Доступ для агента» → «Выпустить ключ». Адрес вида `https://<проект>.functions.supabase.co/grimoire-mcp/gk_…` показывается один раз.
 4. В claude.ai: Settings → Connectors → добавить свой коннектор с этим адресом.
 
 Инструменты: `grimoire_today`, `grimoire_day_summary`, `grimoire_list_tasks`, `grimoire_get_task`, `grimoire_add_task`, `grimoire_update_task`, `grimoire_complete_task`, `grimoire_reopen_task`, `grimoire_start_task`, `grimoire_plan_task`, `grimoire_postpone_task`, `grimoire_to_backlog`, `grimoire_finish_morning_review`, `grimoire_cancel_task`, `grimoire_set_waiting`, `grimoire_spawn_task`, `grimoire_split_task`, `grimoire_habits`, `grimoire_mark_habit`, `grimoire_add_journal`, `grimoire_set_nav`, `grimoire_wheel`, `grimoire_practice_to_task`.

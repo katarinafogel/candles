@@ -1,7 +1,8 @@
 // Grimoire agent server: an MCP connector for an assistant to read and change the grimoire by the
 // app's own rules. Deploy with JWT verification off (the agent key is checked here instead):
 //   supabase functions deploy grimoire-mcp --no-verify-jwt
-// Connector URL: https://<project>.supabase.co/functions/v1/grimoire-mcp/<agent key>
+// Connector URL: https://<project>.functions.supabase.co/grimoire-mcp/<agent key> (not .supabase.co/functions/v1:
+// claude.ai probes /.well-known/oauth-protected-resource at the site root, and the main domain answers 401)
 import { grimoireKinds } from './core/grimoire/rows.ts'
 import { handle, type Row, type Storage } from './server.ts'
 

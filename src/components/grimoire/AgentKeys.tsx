@@ -18,7 +18,14 @@ const newKey = () => {
   const bytes = crypto.getRandomValues(new Uint8Array(24))
   return 'gk_' + btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
-const connectorUrl = (key: string) => `${import.meta.env.VITE_SUPABASE_URL ?? ''}/functions/v1/grimoire-mcp/${key}`
+// The functions domain, not <ref>.supabase.co/functions/v1: claude.ai first asks the site root
+// whether the connector needs OAuth, and the main domain answers that with 401 (so it looks like
+// sign-in is required), while the functions domain answers 404 — no sign-in, the key is enough.
+const connectorUrl = (key: string) => {
+  const base = String(import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/+$/, '')
+  const fnBase = /^https:\/\/[a-z0-9]+\.supabase\.co$/.test(base) ? base.replace('.supabase.co', '.functions.supabase.co') : `${base}/functions/v1`
+  return `${fnBase}/grimoire-mcp/${key}`
+}
 const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString('ru', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'ещё не было')
 
 export function AgentKeys() {
