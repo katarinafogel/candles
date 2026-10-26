@@ -175,8 +175,9 @@ export function LeafMark({ on, size = 22 }: { on: boolean; size?: number }) {
       as="span"
       display="inline-flex"
       flexShrink={0}
-      color={on ? 'ember.300' : 'ember.700'}
-      filter={on ? 'drop-shadow(0 0 4px rgba(224,164,85,.45))' : undefined}
+      // Cards of other colors set --leaf-on / --leaf-off so the leaf stays readable on them.
+      color={on ? 'var(--leaf-on, var(--chakra-colors-ember-300))' : 'var(--leaf-off, var(--chakra-colors-ember-700))'}
+      filter={on ? 'drop-shadow(0 0 4px var(--leaf-glow, rgba(224,164,85,.45)))' : undefined}
       transition="color .15s, filter .15s"
     >
       <Leaf on={on} size={size} />
@@ -288,7 +289,7 @@ export function StarRating({
             aria-label={`${n} из 5`}
             p="0.5"
             lineHeight="0"
-            color={on ? 'ember.300' : 'fg.subtle'}
+            color={on ? 'var(--star-on, var(--chakra-colors-ember-300))' : 'fg.subtle'}
             filter={on ? 'drop-shadow(0 0 4px rgba(224,164,85,.45))' : undefined}
             _hover={{ color: 'ember.200' }}
             cursor="pointer"
