@@ -6,7 +6,21 @@ export type ISODate = string
 export type PlasterPurpose = 'holder' | 'dish' | 'figurine'
 export type MoldPurpose = PlasterPurpose | 'candle' | 'decor'
 /** Shape icon on the cards, drawn from photos of the castings. */
-export type MoldIcon = 'pot' | 'lantern' | 'bird' | 'windows'
+export type MoldIcon =
+  | 'pot'
+  | 'lantern'
+  | 'bird'
+  | 'windows'
+  | 'cathedral'
+  | 'shell'
+  | 'bowl'
+  | 'monstera'
+  | 'leafDish'
+  | 'chest'
+  | 'roundBox'
+  | 'heartDish'
+  | 'ornament'
+  | 'starJar'
 export type WickScheme = 'double05' | 'mixed' | 'double1'
 
 export interface Wick {
