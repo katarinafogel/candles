@@ -13,6 +13,7 @@ import { useAppDispatch, useData } from '../store'
 import { actions } from '../store/dataSlice'
 import type { CandleStage, WickScheme } from '../types'
 import { withUndo } from '../lib/undo'
+import { figureOf } from '../components/MoldIcons'
 
 function ReadyDialog({ ids, onClose }: { ids: string[]; onClose: () => void }) {
   const dispatch = useAppDispatch()
@@ -255,6 +256,7 @@ export default function Candles() {
             <ArcanaCard
               key={c.id}
               tone="olive"
+              figure={figureOf(moldOfCandle(d, c))}
               title={c.name || moldOfCandle(d, c)?.name}
               sub={c.id}
               selected={on}

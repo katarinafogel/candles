@@ -17,6 +17,8 @@ interface Palette {
   hover: string
   leafOff: string
   glow: string
+  /** Lines of the shape icons. */
+  ink: string
 }
 
 const palettes: Record<ArcanaTone, Palette> = {
@@ -31,6 +33,7 @@ const palettes: Record<ArcanaTone, Palette> = {
     hover: 'rgba(214, 205, 244, .12)',
     leafOff: '#9d95cc',
     glow: 'rgba(244, 228, 193, .5)',
+    ink: '#8f86c9',
   },
   pearl: {
     bg: 'radial-gradient(90% 55% at 15% 10%, rgba(255,228,236,.75), transparent 60%), radial-gradient(80% 60% at 90% 85%, rgba(214,232,240,.8), transparent 60%), linear-gradient(160deg, #f6f1ea 0%, #ece6ee 45%, #f3ebe1 75%, #e5ebee 100%)',
@@ -43,6 +46,7 @@ const palettes: Record<ArcanaTone, Palette> = {
     hover: 'rgba(150, 126, 100, .12)',
     leafOff: '#b9a68e',
     glow: 'rgba(180, 138, 92, .45)',
+    ink: '#a88d70',
   },
   olive: {
     bg: 'radial-gradient(110% 65% at 50% 0%, rgba(240,214,140,.22), transparent 60%), linear-gradient(165deg, #7c7a43 0%, #656637 55%, #51552e 100%)',
@@ -55,6 +59,7 @@ const palettes: Record<ArcanaTone, Palette> = {
     hover: 'rgba(240, 220, 160, .14)',
     leafOff: '#d8c88e',
     glow: 'rgba(247, 230, 176, .55)',
+    ink: '#b7a35d',
   },
 }
 
@@ -177,6 +182,7 @@ export function ArcanaCard({
   select,
   selected,
   dim,
+  figure,
   onClick,
   children,
   footer,
@@ -192,6 +198,8 @@ export function ArcanaCard({
   selected?: boolean
   /** Archived or defective: shown faded. */
   dim?: boolean
+  /** Shape icon of the casting, between the emblem and the title. */
+  figure?: ReactNode
   onClick?: () => void
   children?: ReactNode
   footer?: ReactNode
@@ -200,7 +208,10 @@ export function ArcanaCard({
   return (
     <Box
       position="relative"
-      aspectRatio="5 / 8"
+      // At least 5:8 tall via an invisible spacer; taller when the text needs it,
+      // and a grid row stretches every card to its tallest one.
+      display="flex"
+      _before={{ content: '""', w: '0', pt: '160%' }}
       borderRadius="10px"
       background={p.bg}
       color={p.fg}
@@ -214,12 +225,12 @@ export function ArcanaCard({
       }
       transition="transform .18s ease, box-shadow .18s ease"
       _hover={onClick ? { transform: 'translateY(-2px)' } : undefined}
-      // No overflow clipping: with aspect-ratio that lets a card grow taller when its text needs room.
       css={{
         '--card-fg': p.fg,
         '--card-line': p.line,
         '--card-hover': p.hover,
         '--card-solid': solidOf[tone],
+        '--card-ink': p.ink,
         '--leaf-on': p.star,
         '--leaf-off': p.leafOff,
         '--leaf-glow': p.glow,
@@ -248,7 +259,7 @@ export function ArcanaCard({
         </Box>
       </Box>
 
-      <Stack position="relative" minH="100%" gap="0" px="5" pt="5" pb="6" align="center" textAlign="center" css={{ '& > *': { flexShrink: 0 } }}>
+      <Stack position="relative" flex="1" minW="0" gap="0" px="5" pt="5" pb="6" align="center" textAlign="center" css={{ '& > *': { flexShrink: 0 } }}>
         <Flex w="100%" justify="space-between" align="flex-start" minH="26px">
           <Box onClick={(e) => e.stopPropagation()}>{select}</Box>
           <Box fontSize="xs" color={p.star} fontWeight="semibold">
@@ -258,6 +269,11 @@ export function ArcanaCard({
         <Box mt="1" mb="2" filter={`drop-shadow(0 0 10px ${p.glow})`}>
           <Emblem tone={tone} p={p} />
         </Box>
+        {figure && (
+          <Box mb="2" lineHeight="0" filter="drop-shadow(0 2px 4px rgba(0,0,0,.18))">
+            {figure}
+          </Box>
+        )}
         <Text fontFamily="heading" fontWeight="semibold" fontSize={{ base: 'lg', md: 'xl' }} lineHeight="1.15" lineClamp={2} wordBreak="break-word">
           {title}
         </Text>

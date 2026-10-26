@@ -5,6 +5,8 @@ export type ISODate = string
 /** Holders, dishes and figurines are cast from plaster; molded candles and decor from wax. */
 export type PlasterPurpose = 'holder' | 'dish' | 'figurine'
 export type MoldPurpose = PlasterPurpose | 'candle' | 'decor'
+/** Shape icon on the cards, drawn from photos of the castings. */
+export type MoldIcon = 'pot' | 'lantern' | 'bird' | 'windows'
 export type WickScheme = 'double05' | 'mixed' | 'double1'
 
 export interface Wick {
@@ -24,6 +26,8 @@ export interface Mold {
   fragrancePct: number
   dyePct?: number
   plasticizerPct?: number
+  /** Shape icon; without it the icon is guessed from the name. */
+  icon?: MoldIcon
   /** 1–5 stars; higher-rated molds come first in lists. */
   rating?: number
   /** Archived molds (torn, retired or just not used) are hidden from new mixes and molded candles. */
