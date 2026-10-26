@@ -114,6 +114,7 @@ export default function Layout() {
         top="0"
         h="100dvh"
         overflowY="auto"
+        className="quiet-scroll"
         p="4"
       >
         <Flex align="center" gap="3" mb="3" px="1">

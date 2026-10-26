@@ -112,7 +112,7 @@ export default function GrimoireLayout() {
 
   return (
     <Flex minH="100dvh">
-      <Box as="nav" display={{ base: 'none', md: 'block' }} w="240px" flexShrink={0} borderRightWidth="1px" borderColor="border" bg="rgba(24, 21, 18, 0.92)" position="sticky" top="0" h="100dvh" overflowY="auto" p="4">
+      <Box as="nav" display={{ base: 'none', md: 'block' }} w="240px" flexShrink={0} borderRightWidth="1px" borderColor="border" bg="rgba(24, 21, 18, 0.92)" position="sticky" top="0" h="100dvh" overflowY="auto" className="quiet-scroll" p="4">
         <Flex align="center" gap="3" mb="3" px="1">
           <MoonSlice size={38} tone="stone" />
           <Text fontFamily="heading" fontWeight="semibold" fontSize="2xl" lineHeight="1" color="ember.100">

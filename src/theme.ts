@@ -25,6 +25,18 @@ const config = defineConfig({
       backgroundAttachment: 'fixed',
     },
     '::selection': { bg: 'rgba(224,164,85,.35)' },
+    // Thin dark-wood scrollbars instead of the system's light ones.
+    '*': { scrollbarWidth: 'thin', scrollbarColor: '#4a3e32 transparent' },
+    '*::-webkit-scrollbar': { width: '8px', height: '8px' },
+    '*::-webkit-scrollbar-track': { background: 'transparent' },
+    '*::-webkit-scrollbar-thumb': { background: '#4a3e32', borderRadius: '8px', border: '2px solid transparent', backgroundClip: 'padding-box' },
+    '*::-webkit-scrollbar-thumb:hover': { background: '#6a5743', backgroundClip: 'padding-box' },
+    // Side menus: the scrollbar hides until the pointer is over the menu, and its place is kept
+    // so the items don't shift when it appears.
+    '.quiet-scroll': { scrollbarGutter: 'stable', scrollbarColor: 'transparent transparent', transition: 'scrollbar-color .2s' },
+    '.quiet-scroll:hover, .quiet-scroll:focus-within': { scrollbarColor: '#4a3e32 transparent' },
+    '.quiet-scroll::-webkit-scrollbar-thumb': { background: 'transparent' },
+    '.quiet-scroll:hover::-webkit-scrollbar-thumb, .quiet-scroll:focus-within::-webkit-scrollbar-thumb': { background: '#4a3e32', backgroundClip: 'padding-box' },
   },
   theme: {
     tokens: {
