@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { LuDroplets, LuPlus, LuPrinter, LuSparkles, LuCheck, LuTriangleAlert } from 'react-icons/lu'
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { DecorateDialog, DefectDialog } from '../components/StepDialogs'
+import { ArcanaCard } from '../components/ArcanaCard'
 import { Check, Empty, Field, IdBadge, Modal, notify, NumInput, PageHeader, Select, TextInput, Chips } from '../components/ui'
 import { fmt } from '../lib/calc'
 import { nowLocal, toIso } from '../lib/dates'
@@ -243,7 +244,7 @@ export default function Candles() {
       )}
       {!list.length && <Empty>Свечей с такими условиями нет.</Empty>}
 
-      <Stack gap="2">
+      <SimpleGrid columns={{ base: 2, sm: 3, lg: 4, xl: 5 }} gap={{ base: '3', md: '4' }}>
         {list.map((c) => {
           const on = sel.includes(c.id)
           const pour = c.pourId ? d.pours[c.pourId] : undefined
@@ -251,38 +252,32 @@ export default function Candles() {
           const soot = sootShare(d, c.id)
           const person = c.personId ? d.people[c.personId]?.name : c.burnedBySelf ? 'сожгла сама' : undefined
           return (
-            <Flex key={c.id} align="center" gap="3" p="3" borderWidth="1px" borderColor={on ? 'emerald.600' : 'border'} bg={on ? 'emerald.subtle' : 'bg.subtle'} borderRadius="l3">
-              <Check checked={on} onChange={(v) => setSel(v ? [...sel, c.id] : sel.filter((x) => x !== c.id))} />
-              <Box flex="1" minW="0" cursor="pointer" onClick={() => nav(`/candles/${c.id}`, { state: { back: `/candles${sp.size ? `?${sp}` : ''}` } })}>
-                <HStack gap="2">
-                  <IdBadge id={c.id} />
-                  <Text fontWeight="medium" truncate>
-                    {c.name || moldOfCandle(d, c)?.name}
-                  </Text>
-                </HStack>
-                <Wrap gap="2" mt="1" fontSize="xs" color="fg.muted">
-                  <Text color={c.stage === 'defect' ? 'red.400' : undefined}>{candleStageLabel[c.stage]}</Text>
-                  <Text>· {wickSchemeLabel[c.wick.scheme]}, {fmt(c.wick.lengthCm)} см</Text>
-                  {pour?.fragrance.materialId && <Text>· {d.materials[pour.fragrance.materialId]?.name}</Text>}
-                  {person && <Text>· {person}</Text>}
-                </Wrap>
-              </Box>
-              <Stack gap="0" align="end" minW="44px">
-                {rating != null && (
-                  <Text fontWeight="semibold" color="emerald.300">
-                    {rating}/10
-                  </Text>
-                )}
-                {soot != null && soot > 0 && (
-                  <Text fontSize="2xs" color="orange.300">
-                    коптила {Math.round(soot * 100)}%
-                  </Text>
-                )}
-              </Stack>
-            </Flex>
+            <ArcanaCard
+              key={c.id}
+              tone="olive"
+              title={c.name || moldOfCandle(d, c)?.name}
+              sub={c.id}
+              selected={on}
+              dim={c.stage === 'defect'}
+              corner={rating != null ? `${rating}/10` : undefined}
+              select={<Check checked={on} onChange={(v) => setSel(v ? [...sel, c.id] : sel.filter((x) => x !== c.id))} />}
+              onClick={() => nav(`/candles/${c.id}`, { state: { back: `/candles${sp.size ? `?${sp}` : ''}` } })}
+            >
+              <Text color={c.stage === 'defect' ? 'red.300' : 'fg'} fontWeight="medium">
+                {candleStageLabel[c.stage]}
+              </Text>
+              <Text>
+                {wickSchemeLabel[c.wick.scheme]}, {fmt(c.wick.lengthCm)} см
+              </Text>
+              {pour?.fragrance.materialId && <Text lineClamp={2}>{d.materials[pour.fragrance.materialId]?.name}</Text>}
+              {person && <Text>{person}</Text>}
+              {soot != null && soot > 0 && <Text color="orange.200">коптила {Math.round(soot * 100)}%</Text>}
+            </ArcanaCard>
           )
         })}
-      </Stack>
+      </SimpleGrid>
+      {/* Room for the action bar so it does not cover the last cards. */}
+      {selected.length > 0 && <Box h="140px" />}
 
       {selected.length > 0 && (
         <Box position="fixed" bottom={{ base: '72px', md: '6' }} left={{ base: '4', md: 'calc(240px + 2rem)' }} right="4" zIndex="docked">

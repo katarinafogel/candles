@@ -3,7 +3,8 @@ import { useState } from 'react'
 import { LuArrowRight, LuFlaskConical, LuTriangleAlert } from 'react-icons/lu'
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { DefectDialog, HolderStepDialog } from '../components/StepDialogs'
-import { Check, Empty, IdBadge, PageHeader, Select } from '../components/ui'
+import { ArcanaCard, arcanaButton } from '../components/ArcanaCard'
+import { Check, Empty, PageHeader, Select } from '../components/ui'
 import { daysBetween, fmtDate } from '../lib/calc'
 import { holderNextTitle, holderStageLabel, moldPurposeLabel, holderStageOrder, holderStageShort } from '../lib/labels'
 import { byId } from '../lib/selectors'
@@ -84,56 +85,49 @@ export default function Holders() {
 
       {!list.length && <Empty>Здесь пока пусто.</Empty>}
 
-      <Stack gap="2">
+      <SimpleGrid columns={{ base: 2, sm: 3, lg: 4, xl: 5 }} gap={{ base: '3', md: '4' }}>
         {list.map((h) => {
           const mold = d.molds[h.moldId]
           const on = sel.includes(h.id)
           const drying = h.stage === 'drying' ? daysBetween(h.dryStart, new Date().toISOString()) : undefined
           return (
-            <Flex
+            <ArcanaCard
               key={h.id}
-              align="center"
-              gap="3"
-              p="3"
-              borderWidth="1px"
-              borderColor={on ? 'emerald.600' : 'border'}
-              bg={on ? 'emerald.subtle' : 'bg.subtle'}
-              borderRadius="l3"
+              tone="pearl"
+              title={mold?.name ?? '—'}
+              sub={h.id}
+              selected={on}
+              dim={h.stage === 'defect'}
+              corner={h.purpose !== 'holder' ? moldPurposeLabel[h.purpose] : undefined}
+              select={<Check checked={on} onChange={(v) => setSel(v ? [...sel, h.id] : sel.filter((x) => x !== h.id))} />}
+              onClick={() => nav(`/holders/${h.id}`, { state: { back: `/holders${sp.size ? `?${sp}` : ''}` } })}
+              footer={
+                nextHolderStage(h) && (
+                  <Button
+                    {...arcanaButton}
+                    onClick={() => {
+                      setSel([h.id])
+                      setDialog('next')
+                    }}
+                  >
+                    {holderNextTitle(h) ?? 'Готово'} <LuArrowRight />
+                  </Button>
+                )
+              }
             >
-              <Check checked={on} onChange={(v) => setSel(v ? [...sel, h.id] : sel.filter((x) => x !== h.id))} />
-              <Box flex="1" minW="0" cursor="pointer" onClick={() => nav(`/holders/${h.id}`, { state: { back: `/holders${sp.size ? `?${sp}` : ''}` } })}>
-                <HStack gap="2" wrap="wrap">
-                  <IdBadge id={h.id} />
-                  <Text fontWeight="medium" truncate>
-                    {mold?.name ?? '—'}
-                  </Text>
-                  {h.purpose !== 'holder' && (
-                    <Text fontSize="xs" color="fg.muted">
-                      {moldPurposeLabel[h.purpose]}
-                    </Text>
-                  )}
-                </HStack>
-                <Text fontSize="xs" color={h.stage === 'defect' ? 'red.400' : 'fg.muted'} mt="1">
-                  {holderStageLabel[h.stage]}
-                  {drying != null && ` · ${Math.floor(drying)} дн.`} · замес {h.mixId} от {fmtDate(h.dryStart)}
-                </Text>
-              </Box>
-              {nextHolderStage(h) && (
-                <Button
-                  size="xs"
-                  variant="outline"
-                  onClick={() => {
-                    setSel([h.id])
-                    setDialog('next')
-                  }}
-                >
-                  {holderNextTitle(h) ?? 'Готово'} <LuArrowRight />
-                </Button>
-              )}
-            </Flex>
+              <Text color={h.stage === 'defect' ? 'red.600' : 'fg'} fontWeight="medium">
+                {holderStageLabel[h.stage]}
+                {drying != null && ` · ${Math.floor(drying)} дн.`}
+              </Text>
+              <Text>
+                замес {h.mixId} · {fmtDate(h.dryStart)}
+              </Text>
+            </ArcanaCard>
           )
         })}
-      </Stack>
+      </SimpleGrid>
+      {/* Room for the action bar so it does not cover the last cards. */}
+      {selected.length > 0 && <Box h="140px" />}
 
       {selected.length > 0 && (
         <Box

@@ -1,7 +1,8 @@
-import { Badge, Box, Button, CloseButton, Flex, Heading, HStack, Input, InputGroup, SimpleGrid, Stack, Text } from '@chakra-ui/react'
+import { Box, Button, CloseButton, Heading, IconButton, Input, InputGroup, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { LuArchive, LuArchiveRestore, LuPencil, LuPlus, LuSearch } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
+import { ArcanaCard, arcanaButton } from '../components/ArcanaCard'
 import { Check, Chips, Empty, Field, Modal, notify, NumInput, PageHeader, StarRating, TextArea, TextInput } from '../components/ui'
 import { fmt } from '../lib/calc'
 import { isPlaster, moldPurposeLabel, moldPurposePlural, wickSchemeLabel } from '../lib/labels'
@@ -101,24 +102,28 @@ export function MoldDialog({ mold, onClose }: { mold: Omit<Mold, 'id'> & { id?: 
   )
 }
 
-export function ArchiveButton({ mold, size = 'xs' }: { mold: Mold; size?: 'xs' | 'sm' }) {
+export function ArchiveButton({ mold, size = 'xs', inCard }: { mold: Mold; size?: 'xs' | 'sm'; inCard?: boolean }) {
   const dispatch = useAppDispatch()
+  const toggle = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    dispatch(actions.upsertMold({ ...mold, archived: mold.archived ? undefined : true }))
+    if (mold.archived) notify(`«${mold.name}» снова в работе`)
+    else
+      notify(`«${mold.name}» в архиве`, 'success', undefined, {
+        label: 'Вернуть',
+        onClick: () => dispatch(actions.upsertMold(mold)),
+      })
+  }
+  const label = mold.archived ? 'Из архива' : 'В архив'
+  if (inCard)
+    return (
+      <IconButton {...arcanaButton} aria-label={label} title={label} onClick={toggle}>
+        {mold.archived ? <LuArchiveRestore /> : <LuArchive />}
+      </IconButton>
+    )
   return (
-    <Button
-      size={size}
-      variant={size === 'xs' ? 'ghost' : 'outline'}
-      onClick={(e) => {
-        e.stopPropagation()
-        dispatch(actions.upsertMold({ ...mold, archived: mold.archived ? undefined : true }))
-        if (mold.archived) notify(`«${mold.name}» снова в работе`)
-        else
-          notify(`«${mold.name}» в архиве`, 'success', undefined, {
-            label: 'Вернуть',
-            onClick: () => dispatch(actions.upsertMold(mold)),
-          })
-      }}
-    >
-      {mold.archived ? <LuArchiveRestore /> : <LuArchive />} {mold.archived ? 'Из архива' : 'В архив'}
+    <Button size={size} variant={size === 'xs' ? 'ghost' : 'outline'} onClick={toggle}>
+      {mold.archived ? <LuArchiveRestore /> : <LuArchive />} {label}
     </Button>
   )
 }
@@ -181,56 +186,47 @@ export default function Molds() {
           <Heading size="lg" fontWeight="semibold" color="ember.100" mb="2">
             {moldPurposePlural[g.purpose]} · {g.molds.length}
           </Heading>
-          <SimpleGrid columns={{ base: 1, md: 2 }} gap="3">
+          <SimpleGrid columns={{ base: 2, sm: 3, lg: 4, xl: 5 }} gap={{ base: '3', md: '4' }}>
             {g.molds.map((m) => {
               const st = moldStats(d, m.id)
               return (
-                <Box
+                <ArcanaCard
                   key={m.id}
-                  p="3"
-                  borderWidth="1px"
-                  borderColor="border"
-                  bg="bg.subtle"
-                  borderRadius="l3"
-                  cursor="pointer"
-                  _hover={{ borderColor: 'emerald.700' }}
+                  tone="indigo"
+                  title={m.name}
+                  sub={m.id}
+                  dim={m.archived}
+                  corner={m.archived ? 'архив' : undefined}
                   onClick={() => nav(`/molds/${m.id}`)}
+                  footer={
+                    <>
+                      <Box w="100%" display="flex" justifyContent="center" mb="1">
+                        <StarRating size="sm" value={m.rating} onChange={(v) => dispatch(actions.upsertMold({ ...m, rating: v }))} />
+                      </Box>
+                      <IconButton {...arcanaButton} aria-label="Изменить" title="Изменить" onClick={() => setEdit(m)}>
+                        <LuPencil />
+                      </IconButton>
+                      <ArchiveButton mold={m} inCard />
+                    </>
+                  }
                 >
-                  <Flex justify="space-between" gap="2">
-                    <Text fontWeight="semibold" truncate minW="0">
-                      {m.name}
+                  {isPlaster(m.purpose) && (
+                    <Text>
+                      {fmt(m.waterVolumeMl)} мл · {fmt(m.waterPct)}% воды
                     </Text>
-                    <HStack gap="1">
-                      {m.archived && <Badge colorPalette="gray">в архиве</Badge>}
-                    </HStack>
-                  </Flex>
-                  <Text fontSize="xs" color="fg.muted" mt="1">
-                    {m.id}
-                    {isPlaster(m.purpose) && ` · ${m.waterVolumeMl} мл · ${m.waterPct}% воды`}
-                    {m.waxCapacityG ? ` · воск ${m.waxCapacityG} г` : ''}
-                    {m.defaultWick ? ` · ${wickSchemeLabel[m.defaultWick.scheme]} ${fmt(m.defaultWick.lengthCm)} см` : ''}
+                  )}
+                  {m.waxCapacityG > 0 && <Text>воск {fmt(m.waxCapacityG)} г</Text>}
+                  {m.defaultWick && (
+                    <Text>
+                      фитиль {fmt(m.defaultWick.lengthCm)} см
+                    </Text>
+                  )}
+                  <Text>
+                    отлито {st.holders.length}
+                    {st.defectPct != null && ` · брак ${fmt(st.defectPct, 0)}%`}
                   </Text>
-                  <Text fontSize="xs" color="fg.muted">
-                    отлито {st.holders.length} · брак {st.defectPct != null ? `${fmt(st.defectPct, 0)}%` : '—'} · оценка{' '}
-                    {st.avgOverall != null ? fmt(st.avgOverall, 1) : '—'}
-                  </Text>
-                  <Flex mt="2" align="center" justify="space-between" gap="2" wrap="wrap">
-                    <StarRating size="sm" value={m.rating} onChange={(v) => dispatch(actions.upsertMold({ ...m, rating: v }))} />
-                    <HStack gap="1">
-                      <Button
-                        size="xs"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setEdit(m)
-                        }}
-                      >
-                        <LuPencil /> Изменить
-                      </Button>
-                      <ArchiveButton mold={m} />
-                    </HStack>
-                  </Flex>
-                </Box>
+                  {st.avgOverall != null && <Text>отзывы {fmt(st.avgOverall, 1)}</Text>}
+                </ArcanaCard>
               )
             })}
           </SimpleGrid>
