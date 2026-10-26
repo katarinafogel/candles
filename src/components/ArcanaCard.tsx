@@ -1,12 +1,14 @@
 // Vertical cards like tarot arcana: a double line frame, stars in the corners, diamonds on the edges,
 // leafy vines and an emblem. Molds are indigo, holders pearl white, candles golden green.
+// The grimoire's deeds wear four tones of their own: swamp (frogs), nacre (joys), wine (the hardest)
+// and silver (everything needed); see TaskCard.
 import { Box, Flex, Stack, Text, type ButtonProps } from '@chakra-ui/react'
 import type { ReactNode } from 'react'
 import { Sparkle } from './Magic'
 
-export type ArcanaTone = 'indigo' | 'pearl' | 'olive'
+export type ArcanaTone = 'indigo' | 'pearl' | 'olive' | 'swamp' | 'nacre' | 'wine' | 'silver'
 
-interface Palette {
+export interface Palette {
   bg: string
   fg: string
   muted: string
@@ -21,7 +23,7 @@ interface Palette {
   ink: string
 }
 
-const palettes: Record<ArcanaTone, Palette> = {
+export const palettes: Record<ArcanaTone, Palette> = {
   indigo: {
     bg: 'radial-gradient(120% 70% at 50% 0%, rgba(160,150,230,.16), transparent 60%), linear-gradient(165deg, #2e3470 0%, #232859 55%, #1b1f47 100%)',
     fg: '#efeafc',
@@ -61,10 +63,66 @@ const palettes: Record<ArcanaTone, Palette> = {
     glow: 'rgba(247, 230, 176, .55)',
     ink: '#b7a35d',
   },
+  // Marsh green with a frog in the corner.
+  swamp: {
+    bg: 'radial-gradient(110% 70% at 20% 0%, rgba(176,214,120,.16), transparent 60%), linear-gradient(165deg, #34502c 0%, #283f23 55%, #1d2f1a 100%)',
+    fg: '#eef5df',
+    muted: '#c2d4a6',
+    subtle: '#a9c091',
+    line: 'rgba(196, 222, 150, .55)',
+    accent: '#b6d77e',
+    star: '#e4efb5',
+    hover: 'rgba(196, 222, 150, .12)',
+    leafOff: '#8fae6f',
+    glow: 'rgba(200, 230, 140, .5)',
+    ink: '#8fb06a',
+  },
+  // Light mother-of-pearl with a soft iridescence; drawn with gradients only.
+  nacre: {
+    bg: 'radial-gradient(70% 60% at 10% 15%, rgba(255,214,232,.85), transparent 65%), radial-gradient(70% 70% at 95% 30%, rgba(206,232,248,.9), transparent 60%), radial-gradient(80% 70% at 60% 100%, rgba(222,246,226,.85), transparent 60%), linear-gradient(160deg, #f7f2ec 0%, #efe9f3 50%, #eef3f1 100%)',
+    fg: '#3a3033',
+    muted: '#6f6168',
+    subtle: '#685a60',
+    line: 'rgba(150, 120, 140, .5)',
+    accent: '#c7879f',
+    star: '#7e4f3e',
+    hover: 'rgba(150, 120, 140, .1)',
+    leafOff: '#8f7b84',
+    glow: 'rgba(199, 135, 159, .4)',
+    ink: '#a78a98',
+  },
+  // Deep bordeaux with gold lines.
+  wine: {
+    bg: 'radial-gradient(110% 65% at 50% 0%, rgba(230,180,110,.14), transparent 60%), linear-gradient(165deg, #5c1b2a 0%, #4a1522 55%, #370f19 100%)',
+    fg: '#fbeee0',
+    muted: '#e2c3ae',
+    subtle: '#b8927e',
+    line: 'rgba(222, 184, 108, .62)',
+    accent: '#e0b86a',
+    star: '#f1d394',
+    hover: 'rgba(222, 184, 108, .12)',
+    leafOff: '#c79a72',
+    glow: 'rgba(241, 211, 148, .5)',
+    ink: '#c9a060',
+  },
+  // Cold silver: the everyday deeds, quiet so the other colours stand out.
+  silver: {
+    bg: 'radial-gradient(110% 65% at 50% 0%, rgba(220,228,238,.12), transparent 60%), linear-gradient(165deg, #474c55 0%, #3a3e46 55%, #2e3138 100%)',
+    fg: '#eef1f5',
+    muted: '#c3c9d2',
+    subtle: '#b9bfc8',
+    line: 'rgba(206, 214, 226, .5)',
+    accent: '#c9d3e0',
+    star: '#e8d6ad',
+    hover: 'rgba(206, 214, 226, .1)',
+    leafOff: '#9aa2ae',
+    glow: 'rgba(232, 214, 173, .4)',
+    ink: '#a3acba',
+  },
 }
 
 /** Line-art vine with pointed leaves, drawn for the top-left corner; mirrored for the others. */
-function Vine({ color, transform }: { color: string; transform?: string }) {
+export function Vine({ color, transform }: { color: string; transform?: string }) {
   const leaf = (x: number, y: number, rot: number, len = 13) => (
     <g transform={`translate(${x} ${y}) rotate(${rot})`}>
       <path d={`M0 0C${len * 0.35} ${-len * 0.32} ${len * 0.75} ${-len * 0.3} ${len} 0C${len * 0.75} ${len * 0.3} ${len * 0.35} ${len * 0.32} 0 0Z`} />
@@ -172,7 +230,7 @@ export const arcanaButton: ButtonProps = {
   _hover: { bg: 'var(--card-solid)', borderColor: 'var(--card-fg)' },
 }
 
-const solidOf: Record<ArcanaTone, string> = { indigo: '#262b5e', pearl: '#efe9e6', olive: '#6a6a3a' }
+export const solidOf: Record<ArcanaTone, string> = { indigo: '#262b5e', pearl: '#efe9e6', olive: '#6a6a3a', swamp: '#2b4325', nacre: '#f1ecef', wine: '#4d1624', silver: '#3c4048' }
 
 export function ArcanaCard({
   tone,

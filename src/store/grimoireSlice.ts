@@ -30,6 +30,7 @@ export const defaultMeta: GrimoireMeta = {
   gameWords: true,
   zones: ['кухня', 'ванная', 'спальня', 'шкаф', 'балкон', 'мастерская'],
   tagColors: {},
+  frogPostpones: 3,
   emotions: ['тревога', 'радость', 'усталость', 'злость', 'спокойствие', 'грусть', 'вдохновение'],
   factors: ['сон', 'работа', 'люди', 'погода', 'тело', 'деньги'],
   sabbatNotes: {},
@@ -53,9 +54,19 @@ export const initialGrimoire: GrimoireState = {
 /** Fills in fields added after the data was saved; safe to run again on fresh data. */
 export function migrateGrimoire(input: Partial<GrimoireState> | undefined): GrimoireState {
   const m = (input?.meta ?? {}) as Partial<GrimoireMeta>
+  const meta0 = { ...defaultMeta, ...m }
+  // Deeds saved before frogs existed become frogs by the same rules, once.
+  const tasks = Object.fromEntries(
+    Object.entries(input?.tasks ?? {}).map(([id, t]) => {
+      if (t.frog !== undefined || !isOpen(t)) return [id, t]
+      const count = t.postponeCount ?? t.postponements?.length ?? 0
+      return [id, { ...t, postponeCount: count, ...(t.dread === 3 || count >= meta0.frogPostpones ? { frog: 'auto' as const } : {}) }]
+    }),
+  )
   return {
     ...initialGrimoire,
     ...input,
+    tasks,
     meta: {
       ...defaultMeta,
       ...m,
@@ -71,6 +82,21 @@ export function migrateGrimoire(input: Partial<GrimoireState> | undefined): Grim
 type S = GrimoireState
 
 const isOpen = (t: Task) => t.status !== 'done' && t.status !== 'cancelled'
+
+/**
+ * Makes a deed a frog when it qualifies: dread 3 (unless the frog was taken off by hand) or enough
+ * postponements (that one wins even over «off»: she put it off again since). Never takes one off.
+ */
+function frogUp(s: S, t: Task) {
+  if (!isOpen(t) || t.frog === 'auto' || t.frog === 'manual') return
+  if ((t.frog !== 'off' && t.dread === 3) || (t.postponeCount ?? 0) >= s.meta.frogPostpones) t.frog = 'auto'
+}
+
+/** One more postponement for the frog count. */
+function countPostpone(s: S, t: Task) {
+  t.postponeCount = (t.postponeCount ?? 0) + 1
+  frogUp(s, t)
+}
 
 function pay(s: S, at: string, day: DayKey, amount: number, tx: Omit<CoinTx, 'id' | 'at' | 'day' | 'amount'>) {
   if (!amount) return
@@ -107,6 +133,27 @@ function syncParent(s: S, parentId: string | undefined, at: string, day: DayKey)
     delete parent.doneAt
     delete parent.doneDay
     settle(s, parent, at, day, 0, 'undo', '')
+  }
+}
+
+/**
+ * A book closes itself when its last deed is done (+projectBonus once) and opens again when a deed is
+ * undone (`undo`: the bonus goes back). A deed added to a read book reopens it but keeps the bonus.
+ */
+function syncProject(s: S, projectId: string | undefined, at: string, day: DayKey, undo = false) {
+  const p = projectId ? s.projects[projectId] : undefined
+  if (!p || p.status === 'archived') return
+  const deeds = Object.values(s.tasks).filter((t) => t.projectId === p.id && !t.parentId && t.status !== 'cancelled')
+  const allDone = deeds.length > 0 && deeds.every((t) => t.status === 'done')
+  const net = Object.values(s.coinTxs).reduce((sum, x) => (x.refKind === 'project' && x.refId === p.id ? sum + x.amount : sum), 0)
+  if (allDone && p.status !== 'done') {
+    p.status = 'done'
+    p.doneAt = at
+    pay(s, at, day, s.meta.coins.projectBonus - net, { reason: `книга прочитана: ${p.title}`, tag: 'project', refKind: 'project', refId: p.id })
+  } else if (!allDone && p.status === 'done') {
+    p.status = 'active'
+    delete p.doneAt
+    if (undo) pay(s, at, day, -net, { reason: `отмена: ${p.title}`, tag: 'undo', refKind: 'project', refId: p.id })
   }
 }
 
@@ -171,9 +218,13 @@ function spawnRepeat(s: S, t: Task, at: string, day: DayKey) {
       partialNote: undefined,
       createdAt: at,
       dueAt: undefined,
+      postponeCount: undefined,
+      frog: undefined,
+      eatOn: undefined,
     },
     at,
   )
+  frogUp(s, s.tasks[id])
 }
 
 function newTask(fields: Partial<Task> & { title: string }, at: string): Task {
@@ -231,6 +282,8 @@ const slice = createSlice({
       reducer(s, a: PayloadAction<{ fields: Partial<Task> & { title: string } } & When>) {
         const t = newTask(a.payload.fields, a.payload.at)
         s.tasks[t.id] = t
+        frogUp(s, t)
+        if (!t.parentId) syncProject(s, t.projectId, a.payload.at, a.payload.day)
       },
       prepare: (p: { fields: Partial<Task> & { title: string }; boundary?: number }) => ({
         payload: when({ ...p, fields: { ...p.fields, id: p.fields.id ?? nanoid() } }),
@@ -239,8 +292,44 @@ const slice = createSlice({
     updateTask(s, a: PayloadAction<Partial<Task> & { id: string }>) {
       const t = s.tasks[a.payload.id]
       if (!t) return
+      const wasIn = t.projectId
       Object.assign(t, a.payload)
       if (t.title) t.title = t.title.trim().slice(0, 200)
+      frogUp(s, t)
+      if (wasIn !== t.projectId && !t.parentId) {
+        // Steps follow their quest into another book.
+        for (const st of Object.values(s.tasks)) if (st.parentId === t.id) st.projectId = t.projectId
+        const at = new Date().toISOString()
+        syncProject(s, wasIn, at, dayKey(new Date(at), s.meta.dayBoundaryHour))
+        syncProject(s, t.projectId, at, dayKey(new Date(at), s.meta.dayBoundaryHour))
+      }
+    },
+    /** The order of deeds inside a book, as dragged. */
+    reorderTasks(s, a: PayloadAction<string[]>) {
+      a.payload.forEach((id, i) => {
+        if (s.tasks[id]) s.tasks[id].order = i
+      })
+    },
+    /** By hand: make a deed a frog, or take the frog off (the postponement count starts over). */
+    setFrog(s, a: PayloadAction<{ id: string; frog: boolean }>) {
+      const t = s.tasks[a.payload.id]
+      if (!t) return
+      if (a.payload.frog) t.frog = 'manual'
+      else {
+        t.frog = 'off'
+        t.postponeCount = 0
+        delete t.eatOn
+      }
+    },
+    /** «Съесть сегодня»: a frog promised for a day (or the promise taken back). */
+    eatFrog(s, a: PayloadAction<{ id: string; day?: DayKey }>) {
+      const t = s.tasks[a.payload.id]
+      if (!t) return
+      if (a.payload.day) {
+        t.eatOn = a.payload.day
+        t.doOn = a.payload.day
+        t.slot = t.slot ?? 'main'
+      } else delete t.eatOn
     },
     deleteTask(s, a: PayloadAction<string>) {
       const t = s.tasks[a.payload]
@@ -270,6 +359,7 @@ const slice = createSlice({
         settle(s, t, at, day, coins.total, 'done', t.title)
         markHabit(s, t, at, day, true)
         syncParent(s, t.parentId, at, day)
+        syncProject(s, t.projectId ?? (t.parentId ? s.tasks[t.parentId]?.projectId : undefined), at, day)
         syncWish(s, t, at, day, true)
         spawnRepeat(s, t, at, day)
       },
@@ -289,6 +379,7 @@ const slice = createSlice({
         if (wasDone) {
           markHabit(s, t, at, day, false)
           syncParent(s, t.parentId, at, day)
+          syncProject(s, t.projectId ?? (t.parentId ? s.tasks[t.parentId]?.projectId : undefined), at, day, true)
           syncWish(s, t, at, day, false)
         }
       },
@@ -308,9 +399,15 @@ const slice = createSlice({
       },
       prepare: (p: { id: string; boundary?: number }) => ({ payload: when(p) }),
     },
-    cancelTask(s, a: PayloadAction<string>) {
-      const t = s.tasks[a.payload]
-      if (t && isOpen(t)) t.status = 'cancelled'
+    cancelTask: {
+      reducer(s, a: PayloadAction<{ id: string } & When>) {
+        const t = s.tasks[a.payload.id]
+        if (!t || !isOpen(t)) return
+        t.status = 'cancelled'
+        // Letting the last open deed go also finishes the book.
+        if (!t.parentId) syncProject(s, t.projectId, a.payload.at, a.payload.day)
+      },
+      prepare: (id: string) => ({ payload: when({ id }) }),
     },
     setWaiting(s, a: PayloadAction<{ id: string; until?: DayKey; note?: string }>) {
       const t = s.tasks[a.payload.id]
@@ -339,7 +436,10 @@ const slice = createSlice({
         const { id, to, reason, at, day } = a.payload
         const t = s.tasks[id]
         if (!t) return
-        t.postponements.push({ at, day: t.doOn ?? day, ...(to ? { to } : {}), ...(reason ? { reason } : {}) })
+        const from = t.doOn ?? day
+        t.postponements.push({ at, day: from, ...(to ? { to } : {}), ...(reason ? { reason } : {}) })
+        // Only putting it off counts for the frog: to a later day or back to the backlog.
+        if (!to || to > from) countPostpone(s, t)
         if (to) t.doOn = to
         else delete t.doOn
       },
@@ -350,6 +450,16 @@ const slice = createSlice({
       for (const id of a.payload) {
         const t = s.tasks[id]
         if (t && isOpen(t)) delete t.doOn
+      }
+    },
+    /** Morning review «всё в бэклог»: the same, but it counts as putting off for the frog. */
+    reviewToBacklog(s, a: PayloadAction<string[]>) {
+      for (const id of a.payload) {
+        const t = s.tasks[id]
+        if (t && isOpen(t)) {
+          delete t.doOn
+          countPostpone(s, t)
+        }
       }
     },
     markReviewed(s, a: PayloadAction<DayKey>) {

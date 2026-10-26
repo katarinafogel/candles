@@ -18,11 +18,17 @@ export const defaultCoinRules: CoinRules = {
   ],
   startedCoins: 2,
   wishBonus: 30,
+  frogFactor: 1.5,
 }
 
-/** The formula part only: base · stars · (1 + dreadFactor · dread). */
-export const baseCoins = (t: Pick<Task, 'stars' | 'dread'>, r: CoinRules = defaultCoinRules) =>
-  Math.round(r.base * t.stars * (1 + r.dreadFactor * t.dread))
+/** A frog is a deed she really does not want to do, or keeps putting off; it stays one until done. */
+export const isFrog = (t: Pick<Task, 'frog'>) => t.frog === 'auto' || t.frog === 'manual'
+
+/** The formula part only: base · stars · (1 + dreadFactor · dread), times frogFactor for a frog (rounded up). */
+export function baseCoins(t: Pick<Task, 'stars' | 'dread' | 'frog'>, r: CoinRules = defaultCoinRules) {
+  const plain = Math.round(r.base * t.stars * (1 + r.dreadFactor * t.dread))
+  return isFrog(t) ? Math.ceil(plain * (r.frogFactor ?? defaultCoinRules.frogFactor)) : plain
+}
 
 /** Done before (or on the day of) a real deadline. */
 export const isOnTime = (t: Pick<Task, 'dueAt'>, day: DayKey) => {

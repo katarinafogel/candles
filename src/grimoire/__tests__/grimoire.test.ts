@@ -8,9 +8,9 @@ const { baseCoins, balance, taskCoins } = await import('../coins')
 const { addDays, dayKey, daysBetween, weekday, humanDay, nextRepeat } = await import('../days')
 const { sabbatDays, wheelNow, moonPhase, seasonMoment } = await import('../wheel')
 const { streak, habitLogId, habitTaskId } = await import('../habits')
-const { default: reducer, grimoireActions: A, initialGrimoire } = await import('../../store/grimoireSlice')
+const { default: reducer, grimoireActions: A, initialGrimoire, migrateGrimoire } = await import('../../store/grimoireSlice')
 const { diffGrimoire, isGrimoireRow } = await import('../../lib/sync')
-const { dayPlan, isBlocked, isStuck, toReview, chainOf } = await import('../selectors')
+const { dayPlan, isBlocked, isStuck, toReview, chainOf, cardTone, projectProgress, projectTasks } = await import('../selectors')
 type GS = typeof initialGrimoire
 type Habit = import('../types').Habit
 
@@ -83,16 +83,91 @@ describe('grimoire reducer', () => {
   const add = (s: GS, id: string, f: object = {}) => reducer(s, { type: A.addTask.type, payload: { fields: { id, title: id, ...f }, ...w(MON) } })
 
   it('pays for a deed, takes the coins back on reopen, pays the rest after a partial', () => {
-    let s = add(initialGrimoire, 't', { stars: 3, dread: 3 })
+    let s = add(initialGrimoire, 't', { stars: 3, dread: 2 })
     s = reducer(s, { type: A.completeTask.type, payload: { id: 't', partial: true, ...w(MON) } })
-    expect(balance(s.coinTxs)).toBe(38)
+    expect(balance(s.coinTxs)).toBe(30)
     s = reducer(s, { type: A.completeTask.type, payload: { id: 't', ...w(MON) } })
-    expect(balance(s.coinTxs)).toBe(75)
+    expect(balance(s.coinTxs)).toBe(60)
     expect(s.tasks.t).toMatchObject({ status: 'done', doneDay: MON })
     s = reducer(s, { type: A.reopenTask.type, payload: { id: 't', ...w(MON) } })
     expect(balance(s.coinTxs)).toBe(0)
-    expect(Object.values(s.coinTxs).some((x) => x.tag === 'undo' && x.amount === -75)).toBe(true)
+    expect(Object.values(s.coinTxs).some((x) => x.tag === 'undo' && x.amount === -60)).toBe(true)
     expect(s.tasks.t.status).toBe('open')
+  })
+
+  it('makes a frog of a monster and pays it one and a half times, rounded up', () => {
+    let s = add(initialGrimoire, 't', { stars: 3, dread: 3 })
+    expect(s.tasks.t.frog).toBe('auto')
+    s = reducer(s, { type: A.completeTask.type, payload: { id: 't', ...w(MON) } })
+    expect(balance(s.coinTxs)).toBe(113) // 75 · 1,5 = 112,5
+  })
+
+  it('makes a frog after three postponements to later days or to the backlog, not earlier', () => {
+    let s = add(initialGrimoire, 't', { doOn: MON })
+    s = reducer(s, { type: A.postponeTask.type, payload: { id: 't', to: addDays(MON, 2), ...w(MON) } })
+    s = reducer(s, { type: A.postponeTask.type, payload: { id: 't', to: addDays(MON, 1), ...w(MON) } }) // earlier: not counted
+    s = reducer(s, { type: A.postponeTask.type, payload: { id: 't', ...w(MON) } })
+    expect(s.tasks.t.postponeCount).toBe(2)
+    expect(s.tasks.t.frog).toBeUndefined()
+    s = reducer(s, { type: A.reviewToBacklog.type, payload: ['t'] })
+    expect(s.tasks.t).toMatchObject({ postponeCount: 3, frog: 'auto' })
+    // Taken off by hand: the count starts over and dread alone does not bring it back.
+    s = reducer(s, { type: A.setFrog.type, payload: { id: 't', frog: false } })
+    s = reducer(s, { type: A.updateTask.type, payload: { id: 't', dread: 3 } })
+    expect(s.tasks.t).toMatchObject({ frog: 'off', postponeCount: 0 })
+    // A plain «в бэклог» is a choice, not a postponement.
+    s = reducer(s, { type: A.toBacklog.type, payload: ['t'] })
+    expect(s.tasks.t.postponeCount).toBe(0)
+  })
+
+  it('turns old deeds into frogs on load by the same rules', () => {
+    const old = { tasks: { a: { id: 'a', title: 'a', status: 'open', dread: 3, postponements: [] }, b: { id: 'b', title: 'b', status: 'open', dread: 0, postponements: [{}, {}, {}] }, c: { id: 'c', title: 'c', status: 'open', dread: 1, postponements: [] } } }
+    const g = migrateGrimoire(old as never)
+    expect([g.tasks.a.frog, g.tasks.b.frog, g.tasks.c.frog]).toEqual(['auto', 'auto', undefined])
+    expect(g.tasks.b.postponeCount).toBe(3)
+  })
+
+  it('closes a book with its last deed, pays the bonus once and takes it back on undo', () => {
+    let s = reducer(initialGrimoire, { type: A.upsertProject.type, payload: { project: { id: 'p', title: 'Ремонт', status: 'active' }, ...w(MON) } })
+    s = add(s, 'a', { projectId: 'p' })
+    s = add(s, 'q', { projectId: 'p' })
+    s = reducer(s, { type: A.splitTask.type, payload: { id: 'q', steps: ['раз', 'два'], ...w(MON) } })
+    const steps = Object.values(s.tasks).filter((t) => t.parentId === 'q')
+    expect(steps.every((t) => t.projectId === 'p')).toBe(true)
+    expect(projectProgress(s, 'p')).toBe(0)
+    s = reducer(s, { type: A.completeTask.type, payload: { id: 'a', ...w(MON) } })
+    for (const st of steps) s = reducer(s, { type: A.completeTask.type, payload: { id: st.id, ...w(MON) } })
+    expect(s.tasks.q.status).toBe('done')
+    expect(s.projects.p.status).toBe('done')
+    expect(projectProgress(s, 'p')).toBe(1)
+    const bonus = () => Object.values(s.coinTxs).filter((x) => x.refId === 'p').reduce((n, x) => n + x.amount, 0)
+    expect(bonus()).toBe(50)
+    // A new deed reopens the book but keeps the bonus; finishing again does not pay twice.
+    s = add(s, 'b', { projectId: 'p' })
+    expect(s.projects.p.status).toBe('active')
+    s = reducer(s, { type: A.cancelTask.type, payload: { id: 'b', ...w(MON) } })
+    expect(s.projects.p.status).toBe('done')
+    expect(bonus()).toBe(50)
+    // Undoing a deed takes the bonus back.
+    s = reducer(s, { type: A.reopenTask.type, payload: { id: 'a', ...w(MON) } })
+    expect(s.projects.p.status).toBe('active')
+    expect(bonus()).toBe(0)
+  })
+
+  it('keeps the book order: dragged order first, done deeds last', () => {
+    let s = reducer(initialGrimoire, { type: A.upsertProject.type, payload: { project: { id: 'p', title: 'p', status: 'active' }, ...w(MON) } })
+    for (const id of ['a', 'b', 'c']) s = add(s, id, { projectId: 'p' })
+    s = reducer(s, { type: A.reorderTasks.type, payload: ['c', 'a', 'b'] })
+    s = reducer(s, { type: A.completeTask.type, payload: { id: 'c', ...w(MON) } })
+    expect(projectTasks(s, 'p').map((t) => t.id)).toEqual(['a', 'b', 'c'])
+  })
+
+  it('colours a card: frog, then joy, then three stars, then silver', () => {
+    const t = (f: object) => ({ type: 'deed', stars: 1, ...f }) as never
+    expect(cardTone(t({ frog: 'auto', type: 'joy', stars: 3 }))).toBe('swamp')
+    expect(cardTone(t({ type: 'joy', stars: 3 }))).toBe('nacre')
+    expect(cardTone(t({ stars: 3, frog: 'off' }))).toBe('wine')
+    expect(cardTone(t({ stars: 2 }))).toBe('silver')
   })
 
   it('pays «начать понемногу» once and keeps it on reopen', () => {

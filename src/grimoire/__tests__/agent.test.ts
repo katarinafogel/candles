@@ -57,7 +57,8 @@ describe('agent tools', () => {
     let { state, result } = run(base, 'grimoire_add_task', { title: 'зуб', stars: 3, dread: 3, dueAt: '2026-10-27' })
     const id = (result as { task: { id: string } }).task.id
     const done = run(state, 'grimoire_complete_task', { id })
-    expect((done.result as { coins: number }).coins).toBe(75 + 5)
+    // A monster is a frog: 75 · 1,5 rounded up, plus 5 on time.
+    expect((done.result as { coins: number }).coins).toBe(113 + 5)
     state = done.state
     expect(state.tasks[id]).toMatchObject({ status: 'done', doneDay: '2026-10-26' })
     ;({ state } = run(state, 'grimoire_reopen_task', { id }))

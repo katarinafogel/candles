@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { notify } from '../components/ui'
 import { store, useAppSelector } from '../store'
 import { grimoireActions as A, today } from '../store/grimoireSlice'
-import { balance, taskCoins } from './coins'
+import { balance, isFrog, taskCoins } from './coins'
 import type { GrimoireState, Task } from './types'
 
 const g = () => store.getState().grimoire
@@ -33,13 +33,16 @@ export function complete(t: Task, partial = false) {
   const coins = taskCoins(t, today(), g().meta.coins, partial).total
   const parts = [t.rewardText && !partial ? `награда: ${t.rewardText}` : '', t.enough && !partial ? `достаточно: ${t.enough}` : ''].filter(Boolean)
   withUndo(
-    partial ? `Часть сделана · ${coinsWord(coins)}` : `${t.type === 'joy' ? 'Радость прожита' : 'Сделано'} · ${coinsWord(coins)}`,
+    partial
+      ? `Часть сделана · ${coinsWord(coins)}`
+      : `${isFrog(t) ? '🐸 Жаба съедена!' : t.type === 'joy' ? 'Радость прожита' : 'Сделано'} · ${coinsWord(coins)}`,
     () => store.dispatch(A.completeTask({ id: t.id, partial })),
     parts.join(' · ') || undefined,
   )
   // Habits are ticked daily; asking each time would be noise.
   if (!partial && !t.habitId) feedback.ask(t.id)
-  if ('vibrate' in navigator && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) navigator.vibrate?.(18)
+  // A frog gets a slightly brighter answer: a double buzz instead of one.
+  if ('vibrate' in navigator && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) navigator.vibrate?.(isFrog(t) && !partial ? [18, 60, 30] : 18)
 }
 
 export const reopen = (t: Task) => withUndo('Вернула в работу', () => store.dispatch(A.reopenTask({ id: t.id })))

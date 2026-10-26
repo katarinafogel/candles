@@ -7,7 +7,7 @@ import { Crescent, Divider } from '../../components/Magic'
 import { QuickAdd } from '../../components/grimoire/QuickAdd'
 import { usePlanGuard } from '../../components/grimoire/PlanGuard'
 import { useTaskDialog } from '../../components/grimoire/TaskDialog'
-import { TaskRow } from '../../components/grimoire/TaskRow'
+import { TaskCard } from '../../components/grimoire/TaskCard'
 import { Empty, Modal, PageHeader, Section } from '../../components/ui'
 import { cancel, toBacklog, useToday, withUndo } from '../../grimoire/act'
 import { dayCoins } from '../../grimoire/coins'
@@ -63,7 +63,7 @@ function MorningReview({ items, today, open }: { items: Task[]; today: string; o
           ml="auto"
           onClick={() =>
             withUndo('Всё в бэклоге', () => {
-              dispatch(A.toBacklog(items.map((x) => x.id)))
+              dispatch(A.reviewToBacklog(items.map((x) => x.id)))
               dispatch(A.markReviewed(today))
             })
           }
@@ -130,11 +130,11 @@ function PlanSection({ title, slot, tasks, today, open, pick }: { title: string;
         </Button>
       </Flex>
       {tasks.length ? (
-        <Stack gap="1">
+        <SimpleGrid columns={{ base: 1, md: 2 }} gap="2.5">
           {tasks.map((t) => (
-            <TaskRow key={t.id} t={t} today={today} onOpen={open} />
+            <TaskCard key={t.id} t={t} today={today} onOpen={open} />
           ))}
-        </Stack>
+        </SimpleGrid>
       ) : (
         <Text fontSize="sm" color="fg.subtle" px="2">
           {slot === 'optional' ? 'Можно ничего.' : 'Пусто.'}
@@ -187,11 +187,11 @@ export default function Scroll() {
         </Section>
         {soon.length > 0 && (
           <Section title="Реальные сроки">
-            <Stack gap="1">
+            <SimpleGrid columns={{ base: 1, md: 2 }} gap="2">
               {soon.map((t) => (
-                <TaskRow key={t.id} t={t} today={today} onOpen={open} compact />
+                <TaskCard key={t.id} t={t} today={today} onOpen={open} compact />
               ))}
-            </Stack>
+            </SimpleGrid>
           </Section>
         )}
         {dialog}
@@ -268,11 +268,11 @@ export default function Scroll() {
             <Text fontFamily="heading" fontSize="xl" color="ember.100" fontWeight="semibold" mb="1.5">
               {w.rituals}
             </Text>
-            <Stack gap="1">
+            <SimpleGrid columns={{ base: 1, md: 2 }} gap="2">
               {plan.habits.map((t) => (
-                <TaskRow key={t.id} t={t} today={today} onOpen={open} compact />
+                <TaskCard key={t.id} t={t} today={today} onOpen={open} compact />
               ))}
-            </Stack>
+            </SimpleGrid>
           </Box>
         )}
         <Divider my="4" />
@@ -288,11 +288,11 @@ export default function Scroll() {
 
       {soon.length > 0 && (
         <Section title="Сроки рядом">
-          <Stack gap="1">
+          <SimpleGrid columns={{ base: 1, md: 2 }} gap="2">
             {soon.map((t) => (
-              <TaskRow key={t.id} t={t} today={today} onOpen={open} compact />
+              <TaskCard key={t.id} t={t} today={today} onOpen={open} compact />
             ))}
-          </Stack>
+          </SimpleGrid>
         </Section>
       )}
 

@@ -76,6 +76,7 @@ export default function GrimoireMore() {
       <PageHeader title="Ещё" />
       <Stack gap="0" borderWidth="1px" borderColor="border" borderRadius="l3" bg="bg.subtle" overflow="hidden" mb="4">
         {[
+          { to: '/g/projects', label: `${words(meta).projects}: полка проектов` },
           { to: '/g/mirror', label: 'Зеркало: дневник и настроение' },
           { to: '/g/wishes', label: 'Сундук желаний и зал славы' },
         ].map((i) => (
@@ -173,6 +174,12 @@ export default function GrimoireMore() {
               <NumInput value={meta.planLimit.main} onChange={(v) => dispatch(A.updateMeta({ planLimit: { ...meta.planLimit, main: Math.max(0, Math.round(v ?? 0)) } }))} suffix="главное" width="160px" />
               <NumInput value={meta.planLimit.extra} onChange={(v) => dispatch(A.updateMeta({ planLimit: { ...meta.planLimit, extra: Math.max(0, Math.round(v ?? 0)) } }))} suffix="доп." width="140px" />
               <NumInput value={meta.planLimit.optional} onChange={(v) => dispatch(A.updateMeta({ planLimit: { ...meta.planLimit, optional: Math.max(0, Math.round(v ?? 0)) } }))} suffix="необяз." width="160px" />
+            </HStack>
+          </Field>
+          <Field label="Жабы" helper="дело с нехотением 3 или отложенное столько раз становится жабой и платит больше">
+            <HStack gap="3" wrap="wrap">
+              <NumInput value={meta.frogPostpones} onChange={(v) => dispatch(A.updateMeta({ frogPostpones: Math.max(1, Math.round(v ?? 3)) }))} suffix="переносов" width="170px" />
+              <NumInput value={meta.coins.frogFactor} onChange={(v) => dispatch(A.updateMeta({ coins: { ...meta.coins, frogFactor: Math.max(1, v ?? 1.5) } }))} suffix="× награда" width="170px" />
             </HStack>
           </Field>
           <Check checked={meta.streaksOn} onChange={(v) => dispatch(A.updateMeta({ streaksOn: v }))}>

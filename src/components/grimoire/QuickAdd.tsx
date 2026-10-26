@@ -8,7 +8,7 @@ import { humanDay } from '../../grimoire/days'
 import { slotLabel } from '../../grimoire/labels'
 import { parseQuickAdd } from '../../grimoire/parse'
 import { completeTag, suggestTags, tagsByUse, typingTag } from '../../grimoire/tags'
-import type { TaskSlot } from '../../grimoire/types'
+import type { Task, TaskSlot } from '../../grimoire/types'
 import { store, useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 import { Modal } from '../ui'
@@ -24,7 +24,8 @@ export function matchPeople(names: string[]) {
   })
 }
 
-export function QuickAdd({ planToday, autoFocus, onAdded }: { planToday?: boolean; autoFocus?: boolean; onAdded?: () => void }) {
+/** `fields` go into every deed added here (a book's deeds carry its projectId). */
+export function QuickAdd({ planToday, autoFocus, onAdded, fields: extra }: { planToday?: boolean; autoFocus?: boolean; onAdded?: () => void; fields?: Partial<Task> }) {
   const dispatch = useAppDispatch()
   const today = useToday()
   const tasks = useAppSelector((s) => s.grimoire.tasks)
@@ -60,6 +61,7 @@ export function QuickAdd({ planToday, autoFocus, onAdded }: { planToday?: boolea
       doOn,
       slot,
       personIds: people.filter(Boolean).map((x) => x!.id),
+      ...extra,
     }
     // A full plan asks what to move first; the line stays until the deed is really added.
     guard(doOn === today ? slot : undefined, () => {

@@ -4,7 +4,7 @@ import { Box, Button, Flex, HStack, Input, Separator, Stack, Text, Wrap } from '
 import { useState } from 'react'
 import { LuChevronDown, LuChevronUp } from 'react-icons/lu'
 import { cancel, complete, reopen, toBacklog, useToday, withUndo } from '../../grimoire/act'
-import { baseCoins, taskCoins } from '../../grimoire/coins'
+import { baseCoins, isFrog, taskCoins } from '../../grimoire/coins'
 import { addDays, daysBetween, humanDay } from '../../grimoire/days'
 import {
   costOptions,
@@ -22,8 +22,8 @@ import { chainOf, isOpenTask, isStuck, stepsOf, words } from '../../grimoire/sel
 import type { PostponeReason, Task, TaskOwnerKind, TaskSlot, Want } from '../../grimoire/types'
 import { store, useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
-import { Chips, confirmAction, Field, Modal, NumInput, TextArea, TextInput } from '../ui'
-import { MarkPicker, Tag } from './Marks'
+import { Chips, confirmAction, Field, Modal, NumInput, Select, TextArea, TextInput } from '../ui'
+import { FrogIcon, MarkPicker, Tag } from './Marks'
 import { usePlanGuard } from './PlanGuard'
 import { TagInput } from './TagInput'
 
@@ -52,14 +52,21 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
   const origin = live.spawnedFrom ? g.tasks[live.spawnedFrom] : undefined
   const coins = taskCoins(t, today, g.meta.coins)
 
+  // The frog fields change through their own buttons while the card is open; the form never writes them back.
+  const edits = () => {
+    const { frog: _f, postponeCount: _c, eatOn: _e, ...rest } = t
+    return rest
+  }
   function save() {
-    dispatch(A.updateTask({ ...t, title: t.title.trim() || live.title }))
+    dispatch(A.updateTask({ ...edits(), title: t.title.trim() || live.title }))
     onClose()
   }
   const [guard, guardDialog] = usePlanGuard()
+  // Books to put the deed in: those being read, and the one it is in already, whatever its state.
+  const books = Object.values(g.projects).filter((p) => p.status === 'active' || p.status === 'paused' || p.id === t.projectId)
   const act = (f: () => void) => {
     // Unsaved edits go in first, so «Сделано» pays by the stars just set.
-    if (JSON.stringify(t) !== JSON.stringify(live)) dispatch(A.updateTask(t))
+    if (JSON.stringify(t) !== JSON.stringify(live)) dispatch(A.updateTask(edits()))
     f()
     onClose()
   }
@@ -234,6 +241,32 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
             </Box>
           )}
 
+          {isFrog(live) && open && (
+            <Box p="3" borderRadius="l2" borderWidth="1px" borderColor="green.800" bg="rgba(74,124,60,.1)">
+              <HStack gap="2" mb="2" color="green.300">
+                <FrogIcon size={18} />
+                <Text fontSize="sm" color="fg">
+                  Жаба: награда в {String(g.meta.coins.frogFactor).replace('.', ',')} раза больше.
+                  {(live.postponeCount ?? 0) > 0 ? ` Откладывалась ${live.postponeCount} раз.` : ''}
+                </Text>
+              </HStack>
+              <Wrap gap="2">
+                {live.eatOn === today ? (
+                  <Button size="xs" variant="outline" onClick={() => dispatch(A.eatFrog({ id: live.id }))}>
+                    Не сегодня
+                  </Button>
+                ) : (
+                  <Button size="xs" colorPalette="green" onClick={() => guard(live.doOn === today ? undefined : (t.slot ?? 'main'), () => act(() => dispatch(A.eatFrog({ id: live.id, day: today }))))}>
+                    Съесть сегодня
+                  </Button>
+                )}
+                <Button size="xs" variant="ghost" onClick={() => dispatch(A.setFrog({ id: live.id, frog: false }))}>
+                  Перестала пугать — снять жабу
+                </Button>
+              </Wrap>
+            </Box>
+          )}
+
           <Field label="Название">
             <TextInput value={t.title} onChange={(v) => set({ title: v.slice(0, 200) })} />
           </Field>
@@ -268,6 +301,16 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
           <Field label="Теги" helper="Enter или запятая добавляет, тап по тегу убирает">
             <TagInput value={t.tags} onChange={(tags) => set({ tags })} />
           </Field>
+          {!t.parentId && (books.length > 0 || t.projectId) && (
+            <Field label="Книга" helper="дело будет жить на её страницах">
+              <Select
+                value={t.projectId}
+                onChange={(v) => set({ projectId: v || undefined })}
+                placeholder="без книги"
+                options={books.map((p) => ({ value: p.id, label: `${p.sigil ?? '🌿'} ${p.title}` }))}
+              />
+            </Field>
+          )}
           {Object.keys(people).length > 0 && (
             <Field label="Люди">
               <Chips multi value={t.personIds ?? []} onChange={(v) => set({ personIds: (v as string[]) ?? [] })} options={Object.values(people).map((p) => ({ value: p.id, label: p.name }))} />
@@ -407,6 +450,11 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
             <Text>
               {sourceLabel[live.source]} · создано {humanDay(live.createdAt.slice(0, 10), today)} · {dreadLabel[live.dread]}
             </Text>
+            {open && !isFrog(live) && (
+              <Button size="2xs" variant="ghost" px="1" ml="-1" color="fg.subtle" onClick={() => dispatch(A.setFrog({ id: live.id, frog: true }))}>
+                <FrogIcon size={12} /> сделать жабой
+              </Button>
+            )}
             {live.postponements.length > 0 && (
               <Text>
                 Переносы: {live.postponements.map((p) => `${p.day.slice(8, 10)}.${p.day.slice(5, 7)}${p.reason ? ` (${postponeReasonLabel[p.reason]})` : ''}`).join(', ')}

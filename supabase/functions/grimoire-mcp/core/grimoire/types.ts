@@ -86,6 +86,12 @@ export interface Task {
   /** «Начать понемногу» was paid for this task already. */
   startedPaid?: boolean
   postponements: Postponement[]
+  /** Postponements that count for the frog: later days and morning-review returns; reset when unfrogged. */
+  postponeCount?: number
+  /** A frog: set by the rules (`auto`), by hand (`manual`), or taken off by hand (`off`). */
+  frog?: 'auto' | 'manual' | 'off'
+  /** «Съесть сегодня»: the day this frog is promised for. */
+  eatOn?: DayKey
   order?: number
 }
 
@@ -99,6 +105,7 @@ export interface Project {
   status: 'active' | 'paused' | 'done' | 'archived'
   jarId?: string
   createdAt: ISODateTime
+  doneAt?: ISODateTime
 }
 
 export type HabitSchedule = { kind: 'daily' } | { kind: 'weekdays'; days: number[] } | { kind: 'timesPerWeek'; n: number }
@@ -227,6 +234,8 @@ export interface CoinRules {
   streakBonus: { days: number; coins: number }[]
   startedCoins: number
   wishBonus: number
+  /** A frog pays the formula times this, rounded up. */
+  frogFactor: number
 }
 
 export interface NavPeriod {
@@ -248,6 +257,8 @@ export interface GrimoireMeta {
   gameWords: boolean
   zones: string[]
   tagColors: Record<string, string>
+  /** This many postponements make a deed a frog. */
+  frogPostpones: number
   emotions: string[]
   factors: string[]
   /** Sabbat cards: the text is the witch's own tradition, so it is editable. */

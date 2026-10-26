@@ -22,7 +22,8 @@ const star = (on: boolean, px: string) => (
 
 export function Stars({ n, size = 12 }: { n: number; size?: number }) {
   return (
-    <HStack gap="0" color="ember.300" aria-label={`сложность ${n} из 3`}>
+    // Cards of other colors set --star-on so the stars stay readable on them.
+    <HStack gap="0" color="var(--star-on, var(--chakra-colors-ember-300))" aria-label={`сложность ${n} из 3`}>
       {Array.from({ length: n }, (_, i) => (
         <Box key={i} display="inline-flex">
           {star(true, `${size}px`)}
@@ -87,7 +88,7 @@ export function Deadline({ dueAt, today }: { dueAt?: string; today: DayKey }) {
   const close = d <= today
   const time = dueAt && dueAt.length > 10 ? ` ${dueAt.slice(11, 16)}` : ''
   return (
-    <Text as="span" fontSize="xs" color={close ? 'ember.200' : 'fg.muted'} whiteSpace="nowrap">
+    <Text as="span" fontSize="xs" color={close ? 'var(--star-on, var(--chakra-colors-ember-200))' : 'fg.muted'} whiteSpace="nowrap">
       до {humanDay(d, today)}
       {time}
     </Text>
@@ -100,5 +101,20 @@ export function Tag({ name }: { name: string }) {
     <Badge variant="subtle" colorPalette={tagPalette(name, colors)} fontSize="2xs" borderRadius="full" px="2">
       #{name}
     </Badge>
+  )
+}
+
+/** A little line-art frog, the mark of a frog deed. */
+export function FrogIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="8" cy="7" r="2.6" />
+      <circle cx="16" cy="7" r="2.6" />
+      <circle cx="8" cy="7" r=".8" fill="currentColor" />
+      <circle cx="16" cy="7" r=".8" fill="currentColor" />
+      <path d="M5.6 8.6C3.6 10.4 3 12.6 3.6 14.8 4.6 18.4 8 20 12 20s7.4-1.6 8.4-5.2c.6-2.2 0-4.4-2-6.2" />
+      <path d="M9 14.2c1.8 1.2 4.2 1.2 6 0" />
+      <path d="M4 18.6l-2 1.6M20 18.6l2 1.6" />
+    </svg>
   )
 }

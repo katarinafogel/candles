@@ -2,7 +2,7 @@
 // a «Мастерская / Гримуар» switch, coins in the header and the floating «+».
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
 import { useEffect, type ReactNode } from 'react'
-import { LuBookOpen, LuEllipsis, LuFlame, LuGem, LuMoon, LuScrollText, LuSparkles, LuSun } from 'react-icons/lu'
+import { LuBookOpen, LuEllipsis, LuFlame, LuGem, LuLibrary, LuMoon, LuScrollText, LuSparkles, LuSun } from 'react-icons/lu'
 import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useBalance, useToday } from '../../grimoire/act'
 import { words } from '../../grimoire/selectors'
@@ -106,6 +106,7 @@ export default function GrimoireLayout() {
   const more: NavItem = { to: '/g/more', label: 'Ещё', icon: <LuEllipsis /> }
   // On a phone these live under «Ещё»; the side menu shows them all.
   const extra: NavItem[] = [
+    { to: '/g/projects', label: w.projects, icon: <LuLibrary /> },
     { to: '/g/mirror', label: 'Зеркало', icon: <LuGem /> },
     { to: '/g/wishes', label: 'Сундук желаний', icon: <LuSparkles /> },
   ]

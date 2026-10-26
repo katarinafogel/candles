@@ -68,6 +68,13 @@ export const deadlinesSoon = (g: GrimoireState, today: DayKey, horizon: DayKey) 
 
 export const allTags = (g: GrimoireState) => [...new Set(Object.values(g.tasks).flatMap((t) => t.tags))].sort()
 
+/**
+ * The colour of a deed's card; the first that fits wins: frog → joy → the hardest (3 stars) → needed.
+ * A hard joy stays nacre (its three stars show on the card).
+ */
+export const cardTone = (t: Task): 'swamp' | 'nacre' | 'wine' | 'silver' =>
+  t.frog === 'auto' || t.frog === 'manual' ? 'swamp' : t.type === 'joy' ? 'nacre' : t.stars === 3 ? 'wine' : 'silver'
+
 /** Steps of a quest, in order. */
 export const stepsOf = (g: GrimoireState, id: string) =>
   Object.values(g.tasks)
@@ -90,6 +97,21 @@ export function chainOf(g: GrimoireState, id: string): Task[] {
 /** Game words or plain ones, as chosen in the settings. */
 export function words(meta: Pick<GrimoireMeta, 'gameWords'>) {
   return meta.gameWords
-    ? { scroll: 'Свиток дня', book: 'Книга дел', rituals: 'Ритуалы', ritual: 'ритуал', quest: 'квест', wheel: 'Колесо года', treasury: 'Сокровищница' }
-    : { scroll: 'Сегодня', book: 'Все дела', rituals: 'Привычки', ritual: 'привычка', quest: 'задача с шагами', wheel: 'Колесо года', treasury: 'Монеты' }
+    ? { scroll: 'Свиток дня', book: 'Книга дел', rituals: 'Ритуалы', ritual: 'ритуал', quest: 'квест', wheel: 'Колесо года', treasury: 'Сокровищница', projects: 'Великие деяния' }
+    : { scroll: 'Сегодня', book: 'Все дела', rituals: 'Привычки', ritual: 'привычка', quest: 'задача с шагами', wheel: 'Колесо года', treasury: 'Монеты', projects: 'Проекты' }
+}
+
+/**
+ * A project's own deeds: simple ones and quests (their steps count inside the quest), not cancelled.
+ * In the book's order; done ones go to the last pages.
+ */
+export const projectTasks = (g: Pick<GrimoireState, 'tasks'>, projectId: string) =>
+  Object.values(g.tasks)
+    .filter((t) => t.projectId === projectId && !t.parentId && t.status !== 'cancelled')
+    .sort((a, b) => Number(a.status === 'done') - Number(b.status === 'done') || (a.order ?? 1e9) - (b.order ?? 1e9) || a.createdAt.localeCompare(b.createdAt))
+
+/** Share of a project's deeds that are done, 0…1 (0 for an empty book). */
+export function projectProgress(g: Pick<GrimoireState, 'tasks'>, projectId: string) {
+  const all = projectTasks(g, projectId)
+  return all.length ? all.filter((t) => t.status === 'done').length / all.length : 0
 }

@@ -1,10 +1,10 @@
 // The book of deeds: every task with filters by state, tags, zone and deadline.
-import { Box, Flex, HStack, Input, Stack, Tabs, Text } from '@chakra-ui/react'
+import { Box, Flex, HStack, Input, SimpleGrid, Stack, Tabs, Text } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { QuickAdd } from '../../components/grimoire/QuickAdd'
 import { useTaskDialog } from '../../components/grimoire/TaskDialog'
-import { TaskRow } from '../../components/grimoire/TaskRow'
+import { TaskCard } from '../../components/grimoire/TaskCard'
 import { Chips, Empty, PageHeader, Section, Select } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
 import { allTags, backlog, isBlocked, isOpenTask, isStuck, isWaiting, words } from '../../grimoire/selectors'
@@ -115,11 +115,11 @@ export default function Book() {
         )}
       </Stack>
       {list.length ? (
-        <Stack gap="1">
+        <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap="2.5">
           {list.map((t) => (
-            <TaskRow key={t.id} t={t} today={today} onOpen={open} />
+            <TaskCard key={t.id} t={t} today={today} onOpen={open} />
           ))}
-        </Stack>
+        </SimpleGrid>
       ) : (
         <Empty>{view === 'backlog' ? 'Бэклог пуст — и это нормально.' : view === 'stuck' ? 'Ничего не буксует.' : 'Здесь пусто.'}</Empty>
       )}

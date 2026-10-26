@@ -5,7 +5,7 @@
 // (supabase/functions/grimoire-mcp) only loads the state, runs a tool and saves what changed.
 import { nanoid } from '@reduxjs/toolkit'
 import reducer, { grimoireActions as A } from '../store/grimoireSlice.ts'
-import { balance, dayCoins, taskCoins } from './coins.ts'
+import { balance, dayCoins, isFrog, taskCoins } from './coins.ts'
 import { addDays, dayKeyIn, isDayKey } from './days.ts'
 import { habitLogId, habitTaskId, isDone, isScheduled, navTest, streak } from './habits.ts'
 import { parseQuickAdd } from './parse.ts'
@@ -136,6 +136,9 @@ function view(t: Task, c: Ctx, full = false) {
     ...(t.status === 'waiting' && t.waitUntil ? { waitUntil: t.waitUntil } : {}),
     ...(t.postponements.length ? { postponed: t.postponements.length } : {}),
     ...(isStuck(t) ? { stuck: true } : {}),
+    ...(isFrog(t) ? { frog: true } : {}),
+    ...(t.eatOn ? { eatOn: t.eatOn } : {}),
+    ...(t.projectId && g.projects[t.projectId] ? { project: g.projects[t.projectId].title } : {}),
     ...(t.personIds?.length && c.people ? { people: t.personIds.map((id) => c.people![id]?.name).filter(Boolean) } : {}),
     ...(isOpenTask(t) ? { coins: taskCoins(t, c.today, g.meta.coins).total } : {}),
   }
@@ -445,7 +448,7 @@ const tools: (ToolDef & { run: Run })[] = [
     writes: true,
     run: (a, c) => {
       const left = toReview(c.get(), c.today)
-      if (a.allToBacklog) c.apply(A.toBacklog.type, left.map((t) => t.id))
+      if (a.allToBacklog) c.apply(A.reviewToBacklog.type, left.map((t) => t.id))
       c.apply(A.markReviewed.type, c.today)
       return { reviewed: c.today, movedToBacklog: a.allToBacklog ? left.length : 0 }
     },
@@ -458,7 +461,7 @@ const tools: (ToolDef & { run: Run })[] = [
     destructive: true,
     run: (a, c) => {
       const t = task(c, a.id)
-      c.apply(A.cancelTask.type, t.id)
+      c.apply(A.cancelTask.type, { id: t.id, at: c.at, day: c.today })
       return view(c.get().tasks[t.id], c)
     },
   },
@@ -666,5 +669,6 @@ export const agentInstructions = `Это «Гримуар дел» — личн�
 - Меняй дела только по словам хозяйки: «сделала», «перенеси», «добавь». Не отмечай выполненным то, о чём она не сказала.
 - Буксующее дело (stuck) — повод расколоть, уменьшить, отпустить или свериться с «хочу / надо» и «чья обязанность», а не напомнить ещё раз.
 - Чудовища (dread 3) сами в план не лезут: предлагай их только когда хозяйка готова.
+- Жаба (frog) — дело, которое очень не хочется или которое откладывали 3+ раза; платит в полтора раза больше. Когда энергии хватает, можно предложить одну жабу на день, без стыда и без списка «позора».
 - Монеты начисляются сами по формуле; руками их не считай.`
 
