@@ -1,4 +1,4 @@
-import { Box, Button, CloseButton, Heading, IconButton, Input, InputGroup, SimpleGrid, Stack, Text } from '@chakra-ui/react'
+import { Box, Button, CloseButton, Heading, HStack, IconButton, Input, InputGroup, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { LuArchive, LuArchiveRestore, LuPencil, LuPlus, LuSearch } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
@@ -9,7 +9,8 @@ import { isPlaster, moldPurposeLabel, moldPurposePlural, wickSchemeLabel } from 
 import { moldStats, sortMolds } from '../lib/selectors'
 import { useAppDispatch, useData } from '../store'
 import { actions } from '../store/dataSlice'
-import type { Mold, MoldPurpose, WickScheme } from '../types'
+import type { Mold, MoldIcon, MoldPurpose, WickScheme } from '../types'
+import { figureOf, MoldFigure, moldIconLabel, moldIconOf } from '../components/MoldIcons'
 
 export const blankMold = (fragrancePct: number): Omit<Mold, 'id'> => ({
   name: '',
@@ -87,6 +88,33 @@ export function MoldDialog({ mold, onClose }: { mold: Omit<Mold, 'id'> & { id?: 
             onChange={(v) => v && set('defaultWick', { scheme: v as WickScheme, lengthCm: m.defaultWick?.lengthCm ?? 0 })}
             options={Object.entries(wickSchemeLabel).map(([value, label]) => ({ value: value as WickScheme, label }))}
           />
+        </Field>
+        <Field label="Иконка на карточках" helper={m.icon ? undefined : 'без выбора угадывается по названию'}>
+          <HStack gap="2" wrap="wrap">
+            {(Object.keys(moldIconLabel) as MoldIcon[]).map((ic) => {
+              const on = moldIconOf(m) === ic
+              return (
+                <Button
+                  key={ic}
+                  variant="outline"
+                  h="auto"
+                  py="1.5"
+                  px="2"
+                  flexDirection="column"
+                  gap="0.5"
+                  borderColor={on ? 'ember.400' : 'border'}
+                  bg={on ? 'ember.subtle' : undefined}
+                  onClick={() => set('icon', m.icon === ic ? undefined : ic)}
+                  css={{ '--card-ink': 'var(--chakra-colors-ember-600)' }}
+                >
+                  <MoldFigure icon={ic} size={34} />
+                  <Text fontSize="2xs" color="fg.muted">
+                    {moldIconLabel[ic]}
+                  </Text>
+                </Button>
+              )
+            })}
+          </HStack>
         </Field>
         <Field label="Оценка" helper="чем больше звёзд, тем выше форма в списках">
           <StarRating value={m.rating} onChange={(v) => set('rating', v)} />
@@ -193,6 +221,7 @@ export default function Molds() {
                 <ArcanaCard
                   key={m.id}
                   tone="indigo"
+                  figure={figureOf(m)}
                   title={m.name}
                   sub={m.id}
                   dim={m.archived}

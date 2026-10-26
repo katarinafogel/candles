@@ -11,6 +11,7 @@ import { byId } from '../lib/selectors'
 import { useData } from '../store'
 import { nextHolderStage } from '../store/dataSlice'
 import type { HolderStage } from '../types'
+import { figureOf } from '../components/MoldIcons'
 
 export default function Holders() {
   const d = useData()
@@ -94,6 +95,7 @@ export default function Holders() {
             <ArcanaCard
               key={h.id}
               tone="pearl"
+              figure={figureOf(mold)}
               title={mold?.name ?? '—'}
               sub={h.id}
               selected={on}
@@ -117,7 +119,7 @@ export default function Holders() {
             >
               <Text color={h.stage === 'defect' ? 'red.600' : 'fg'} fontWeight="medium">
                 {holderStageLabel[h.stage]}
-                {drying != null && ` · ${Math.floor(drying)} дн.`}
+                {drying != null && ` · ${Math.max(0, Math.floor(drying))} дн.`}
               </Text>
               <Text>
                 замес {h.mixId} · {fmtDate(h.dryStart)}
