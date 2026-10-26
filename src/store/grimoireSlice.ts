@@ -559,7 +559,7 @@ const slice = createSlice({
       reducer(s, a: PayloadAction<{ wish: Omit<Wish, 'createdAt' | 'status'> & Partial<Pick<Wish, 'createdAt' | 'status'>> } & When>) {
         const w = a.payload.wish
         const prev = s.wishes[w.id]
-        s.wishes[w.id] = { status: 'dream', ...prev, ...w, createdAt: prev?.createdAt ?? w.createdAt ?? a.payload.at }
+        s.wishes[w.id] = { ...prev, ...w, status: w.status ?? prev?.status ?? 'dream', createdAt: prev?.createdAt ?? w.createdAt ?? a.payload.at }
       },
       prepare: (p: { wish: Omit<Wish, 'id' | 'createdAt' | 'status'> & Partial<Pick<Wish, 'id' | 'createdAt' | 'status'>> }) => ({
         payload: when({ ...p, wish: { ...p.wish, id: p.wish.id ?? nanoid() } }),
