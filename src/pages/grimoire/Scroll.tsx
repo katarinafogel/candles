@@ -259,7 +259,7 @@ export default function Scroll() {
         </Box>
       </SimpleGrid>
 
-      <Section>
+      <Section dense>
         <PlanSection title="Главное" slot="main" tasks={plan.main} today={today} open={open} pick={setPick} />
         <PlanSection title="Дополнительное" slot="extra" tasks={plan.extra} today={today} open={open} pick={setPick} />
         <PlanSection title="Необязательное" slot="optional" tasks={plan.optional} today={today} open={open} pick={setPick} />

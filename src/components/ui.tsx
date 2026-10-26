@@ -386,7 +386,8 @@ export function PageHeader({ title, children, back }: { title: ReactNode; childr
   )
 }
 
-export function Section({ title, children, actions }: { title?: ReactNode; children: ReactNode; actions?: ReactNode }) {
+/** `dense`: the small inner padding of the scroll's own boxes, for a section full of cards. */
+export function Section({ title, children, actions, dense }: { title?: ReactNode; children: ReactNode; actions?: ReactNode; dense?: boolean }) {
   return (
     <Card.Root
       variant="outline"
@@ -398,7 +399,7 @@ export function Section({ title, children, actions }: { title?: ReactNode; child
       boxShadow="0 1px 0 rgba(255,240,215,.03) inset, 0 8px 24px -16px rgba(0,0,0,.6)"
     >
       {(title || actions) && (
-        <Card.Header pb="0">
+        <Card.Header pb="0" px={dense ? '3' : undefined} pt={dense ? '3' : undefined}>
           <Flex justify="space-between" align="center" gap="2" wrap="wrap">
             {title && (
               <Heading size="xl" fontWeight="semibold" color="ember.100">
@@ -409,7 +410,7 @@ export function Section({ title, children, actions }: { title?: ReactNode; child
           </Flex>
         </Card.Header>
       )}
-      <Card.Body>{children}</Card.Body>
+      <Card.Body p={dense ? '3' : undefined}>{children}</Card.Body>
     </Card.Root>
   )
 }
