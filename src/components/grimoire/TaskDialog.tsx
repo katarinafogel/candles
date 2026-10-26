@@ -319,6 +319,34 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
                   <NumInput value={t.extraCoins} onChange={(v) => set({ extraCoins: v })} />
                 </Field>
               </HStack>
+              <Field label="Повтор" helper="для бытовых дел без трекера: сделала — дело вернётся само">
+                <Chips
+                  value={t.repeat?.kind}
+                  onChange={(v) =>
+                    set({
+                      repeat:
+                        v === 'daily' ? { kind: 'daily' } : v === 'weekdays' ? { kind: 'weekdays', days: [1] } : v === 'everyN' ? { kind: 'everyN', n: 7 } : v === 'monthly' ? { kind: 'monthly' } : undefined,
+                    })
+                  }
+                  options={[
+                    { value: 'daily', label: 'каждый день' },
+                    { value: 'weekdays', label: 'дни недели' },
+                    { value: 'everyN', label: 'раз в N дней' },
+                    { value: 'monthly', label: 'каждый месяц' },
+                  ]}
+                />
+              </Field>
+              {t.repeat?.kind === 'weekdays' && (
+                <Chips
+                  multi
+                  value={t.repeat.days.map(String)}
+                  onChange={(v) => set({ repeat: { kind: 'weekdays', days: ((v as string[]) ?? []).map(Number).sort() } })}
+                  options={['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'].map((n, i) => ({ value: String(i + 1), label: n }))}
+                />
+              )}
+              {t.repeat?.kind === 'everyN' && (
+                <NumInput value={t.repeat.n} onChange={(v) => set({ repeat: { kind: 'everyN', n: Math.max(1, Math.round(v ?? 1)) } })} suffix="дней" width="160px" />
+              )}
               <Field label="Зона дома">
                 <Chips value={t.zone} onChange={(v) => set({ zone: v as string | undefined })} options={g.meta.zones.map((z) => ({ value: z, label: z }))} />
               </Field>

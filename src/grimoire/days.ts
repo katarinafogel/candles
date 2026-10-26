@@ -1,7 +1,7 @@
 // Grimoire days. A day lasts until the boundary hour (4:00 by default), so a late evening still counts
 // as «today». Day keys are plain YYYY-MM-DD strings; arithmetic on them goes through UTC noon so that
 // daylight saving shifts never move a day.
-import type { DayKey } from './types'
+import type { DayKey, Repeat } from './types'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -66,3 +66,26 @@ export function plural(n: number, one: string, few: string, many: string) {
 }
 
 export const days = (n: number) => plural(n, 'день', 'дня', 'дней')
+
+/** The next day a repeating deed comes back, counted from the day it was done. */
+export function nextRepeat(day: DayKey, r: Repeat): DayKey {
+  switch (r.kind) {
+    case 'daily':
+      return addDays(day, 1)
+    case 'everyN':
+      return addDays(day, Math.max(1, r.n))
+    case 'weekdays': {
+      const set = r.days.length ? r.days : [weekday(day)]
+      for (let i = 1; i <= 7; i++) if (set.includes(weekday(addDays(day, i)))) return addDays(day, i)
+      return addDays(day, 7)
+    }
+    case 'monthly': {
+      const [y, m, d] = day.split('-').map(Number)
+      const ny = m === 12 ? y + 1 : y
+      const nm = m === 12 ? 1 : m + 1
+      // The 31st falls back to the last day of a shorter month.
+      const last = new Date(Date.UTC(ny, nm, 0)).getUTCDate()
+      return `${ny}-${String(nm).padStart(2, '0')}-${String(Math.min(d, last)).padStart(2, '0')}`
+    }
+  }
+}

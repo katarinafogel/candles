@@ -65,6 +65,8 @@ export interface Task {
   /** Coins added by hand on top of the formula. */
   extraCoins?: number
   repeat?: Repeat
+  /** The first task of a repeating series; every repeat points to it. */
+  repeatOf?: string
   status: TaskStatus
   partialNote?: string
   waitUntil?: DayKey

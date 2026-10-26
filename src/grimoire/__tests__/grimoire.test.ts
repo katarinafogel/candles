@@ -5,7 +5,7 @@ vi.mock('localforage', () => ({ default: { setItem: async () => {}, getItem: asy
 
 const { parseQuickAdd, parseDay } = await import('../parse')
 const { baseCoins, balance, taskCoins } = await import('../coins')
-const { addDays, dayKey, daysBetween, weekday, humanDay } = await import('../days')
+const { addDays, dayKey, daysBetween, weekday, humanDay, nextRepeat } = await import('../days')
 const { sabbatDays, wheelNow, moonPhase, seasonMoment } = await import('../wheel')
 const { streak, habitLogId, habitTaskId } = await import('../habits')
 const { default: reducer, grimoireActions: A, initialGrimoire } = await import('../../store/grimoireSlice')
@@ -31,6 +31,12 @@ describe('days', () => {
     expect(weekday(MON)).toBe(1)
     expect(weekday('2026-11-01')).toBe(7)
     expect(humanDay('2026-10-27', MON)).toBe('завтра')
+  })
+  it('finds the next day of a repeat', () => {
+    expect(nextRepeat(MON, { kind: 'daily' })).toBe('2026-10-27')
+    expect(nextRepeat(MON, { kind: 'everyN', n: 10 })).toBe('2026-11-05')
+    expect(nextRepeat(MON, { kind: 'weekdays', days: [1, 4] })).toBe('2026-10-29')
+    expect(nextRepeat('2026-01-31', { kind: 'monthly' })).toBe('2026-02-28')
   })
 })
 
@@ -122,6 +128,15 @@ describe('grimoire reducer', () => {
     expect(chainOf(s, 'bulb').map((t) => t.id)).toEqual(['which'])
     s = reducer(s, { type: A.completeTask.type, payload: { id: 'which', ...w(MON) } })
     expect(isBlocked(s.tasks.bulb, s.tasks)).toBe(false)
+  })
+
+  it('brings a repeating deed back once', () => {
+    let s = add(initialGrimoire, 'w', { doOn: MON, repeat: { kind: 'everyN', n: 7 } })
+    s = reducer(s, { type: A.completeTask.type, payload: { id: 'w', ...w(MON) } })
+    s = reducer(s, { type: A.reopenTask.type, payload: { id: 'w', ...w(MON) } })
+    s = reducer(s, { type: A.completeTask.type, payload: { id: 'w', ...w(MON) } })
+    const next = Object.values(s.tasks).filter((t) => t.repeatOf === 'w')
+    expect(next.map((t) => [t.id, t.doOn, t.status])).toEqual([['w@2026-11-02', '2026-11-02', 'open']])
   })
 
   it('remembers postponements and marks a task stuck after three', () => {

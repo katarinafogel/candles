@@ -3,7 +3,7 @@
 // in its payload (filled in by `prepare`), so the reducers stay pure and testable.
 import { createSlice, nanoid, type PayloadAction } from '@reduxjs/toolkit'
 import { defaultCoinRules, taskCoins } from '../grimoire/coins'
-import { dayKey } from '../grimoire/days'
+import { dayKey, nextRepeat } from '../grimoire/days'
 import { habitLogId, habitTaskId, isDone, isScheduled, navTest, newMilestones, streak } from '../grimoire/habits'
 import type {
   CoinTx,
@@ -148,6 +148,32 @@ function syncWish(s: S, t: Task, at: string, day: DayKey, done: boolean) {
   }
 }
 
+/** A repeating deed comes back once it is done: one next copy, never two (the id says which day). */
+function spawnRepeat(s: S, t: Task, at: string, day: DayKey) {
+  if (!t.repeat || t.habitId) return
+  const next = nextRepeat(t.doOn && t.doOn > day ? t.doOn : day, t.repeat)
+  const root = t.repeatOf ?? t.id
+  const id = `${root}@${next}`.slice(0, 64)
+  if (s.tasks[id]) return
+  s.tasks[id] = newTask(
+    {
+      ...t,
+      id,
+      repeatOf: root,
+      doOn: next,
+      status: 'open',
+      postponements: [],
+      doneAt: undefined,
+      doneDay: undefined,
+      startedPaid: undefined,
+      partialNote: undefined,
+      createdAt: at,
+      dueAt: undefined,
+    },
+    at,
+  )
+}
+
 function newTask(fields: Partial<Task> & { title: string }, at: string): Task {
   return {
     type: 'deed',
@@ -243,6 +269,7 @@ const slice = createSlice({
         markHabit(s, t, at, day, true)
         syncParent(s, t.parentId, at, day)
         syncWish(s, t, at, day, true)
+        spawnRepeat(s, t, at, day)
       },
       prepare: (p: { id: string; partial?: boolean; note?: string; boundary?: number }) => ({ payload: when(p) }),
     },
