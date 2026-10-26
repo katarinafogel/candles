@@ -152,9 +152,17 @@ export default function Scroll() {
   const today = useToday()
   const { open, dialog } = useTaskDialog()
   const [pick, setPick] = useState<TaskSlot>()
+  const [survival, setSurvival] = useState(false)
   const meta = g.meta
   const w = words(meta)
-  const plan = dayPlan(g, today)
+  const fullPlan = dayPlan(g, today)
+  // Energy 1–2 in today's latest mirror entry: offer to show only the main deeds and the light ones.
+  const lastEnergy = Object.values(g.journal)
+    .filter((e) => e.day === today && e.energy)
+    .sort((a, b) => b.at.localeCompare(a.at))[0]?.energy
+  const lowEnergy = !!lastEnergy && lastEnergy <= 2
+  const light = (t: Task) => t.stars === 1 || t.status === 'done'
+  const plan = survival ? { ...fullPlan, extra: fullPlan.extra.filter(light), optional: fullPlan.optional.filter(light) } : fullPlan
   const review = meta.reviewedDay === today || meta.nav.active ? [] : toReview(g, today)
   const joys = joysAhead(g, today).slice(0, 3)
   const wheel = wheelNow(today, meta.hemisphere)
@@ -201,6 +209,17 @@ export default function Scroll() {
       </PageHeader>
 
       {review.length > 0 && <MorningReview items={review} today={today} open={open} />}
+
+      {lowEnergy && (
+        <Flex mb="4" p="3" borderRadius="l2" bg="bg.muted" align="center" gap="3" wrap="wrap">
+          <Text fontSize="sm" flex="1" color="fg.muted">
+            Энергии сегодня мало. Можно оставить только главное и лёгкое.
+          </Text>
+          <Button size="xs" variant={survival ? 'solid' : 'outline'} onClick={() => setSurvival(!survival)}>
+            {survival ? 'Показать всё' : 'Режим выживания'}
+          </Button>
+        </Flex>
+      )}
 
       <SimpleGrid columns={{ base: 1, md: 2 }} gap="3" mb="4">
         <Box p="3" borderRadius="l3" borderWidth="1px" borderColor="border" bg="bg.subtle">

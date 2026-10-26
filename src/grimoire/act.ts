@@ -37,6 +37,8 @@ export function complete(t: Task, partial = false) {
     () => store.dispatch(A.completeTask({ id: t.id, partial })),
     parts.join(' · ') || undefined,
   )
+  // Habits are ticked daily; asking each time would be noise.
+  if (!partial && !t.habitId) feedback.ask(t.id)
   if ('vibrate' in navigator && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) navigator.vibrate?.(18)
 }
 
@@ -61,4 +63,25 @@ export function useToday() {
     }
   }, [boundary])
   return day
+}
+
+// ---------- «Как далось?» ----------
+// After a deed is done the layout shows a small optional question; this is its tiny shared state.
+
+let feedbackTask: string | undefined
+const listeners = new Set<() => void>()
+export const feedback = {
+  ask(id: string) {
+    feedbackTask = id
+    listeners.forEach((l) => l())
+  },
+  clear() {
+    feedbackTask = undefined
+    listeners.forEach((l) => l())
+  },
+  get: () => feedbackTask,
+  subscribe(l: () => void) {
+    listeners.add(l)
+    return () => void listeners.delete(l)
+  },
 }
