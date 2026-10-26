@@ -294,6 +294,7 @@ export function ArcanaCard({
   onClick,
   children,
   footer,
+  fixed,
 }: {
   tone: ArcanaTone
   title: ReactNode
@@ -311,6 +312,8 @@ export function ArcanaCard({
   onClick?: () => void
   children?: ReactNode
   footer?: ReactNode
+  /** Exactly 5:8, whatever the text: what does not fit is cut off, so a grid of them is even. */
+  fixed?: boolean
 }) {
   const p = palettes[tone]
   return (
@@ -319,7 +322,9 @@ export function ArcanaCard({
       // At least 5:8 tall via an invisible spacer; taller when the text needs it,
       // and a grid row stretches every card to its tallest one.
       display="flex"
-      _before={{ content: '""', w: '0', pt: '160%' }}
+      _before={fixed ? undefined : { content: '""', w: '0', pt: '160%' }}
+      aspectRatio={fixed ? '5 / 8' : undefined}
+      overflow={fixed ? 'hidden' : undefined}
       borderRadius="10px"
       background={p.bg}
       color={p.fg}
@@ -367,14 +372,15 @@ export function ArcanaCard({
         </Box>
       </Box>
 
-      <Stack position="relative" flex="1" minW="0" gap="0" px="5" pt="5" pb="6" align="center" textAlign="center" css={{ '& > *': { flexShrink: 0 } }}>
+      <Stack position="relative" flex="1" minW="0" minH={fixed ? '0' : undefined} gap="0" px="5" pt="5" pb="6" align="center" textAlign="center" css={{ '& > *': { flexShrink: 0 } }}>
         <Flex w="100%" justify="space-between" align="flex-start" minH="26px">
           <Box onClick={(e) => e.stopPropagation()}>{select}</Box>
           <Box fontSize="xs" color={p.star} fontWeight="semibold">
             {corner}
           </Box>
         </Flex>
-        <Box mt="1" mb="2" filter={`drop-shadow(0 0 10px ${p.glow})`}>
+        {/* A fixed card is short of room: its emblem is a little smaller. */}
+        <Box mt={fixed ? '0' : '1'} mb={fixed ? '1' : '2'} filter={`drop-shadow(0 0 10px ${p.glow})`} transform={fixed ? 'scale(.8)' : undefined}>
           <Emblem tone={tone} p={p} />
         </Box>
         {figure && (
@@ -395,7 +401,7 @@ export function ArcanaCard({
           <Sparkle size={6} />
           <Box w="18px" h="1px" bg={p.line} />
         </Flex>
-        <Stack gap="0.5" fontSize="xs" color={p.muted} flex="1" w="100%" lineHeight="short">
+        <Stack gap="0.5" fontSize="xs" color={p.muted} flex="1" w="100%" lineHeight="short" minH={fixed ? '0' : undefined} overflow={fixed ? 'hidden' : undefined} flexShrink={fixed ? 1 : undefined}>
           {children}
         </Stack>
         {footer && (

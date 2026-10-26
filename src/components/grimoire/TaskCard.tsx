@@ -1,28 +1,28 @@
 // A deed as a tall arcana card, like the workshop's: its colour says what it is at a glance (cardTone):
 // swamp frog, nacre joy, wine for the hardest, silver for the needed. Leaf in the corner — done; tap — the
-// deed; swipe right — done, swipe left — to the backlog. The face shows what helps to choose;
-// postponements and dread stay inside the deed.
-import { Box, Button, Flex, HStack, Text } from '@chakra-ui/react'
+// deed; swipe right — done, swipe left — to the backlog. Every card is the same 5:8 (at most three tags
+// on it); postponements and dread stay inside the deed, «съесть сегодня» is set there too.
+import { Box, Flex, HStack, Text } from '@chakra-ui/react'
 import { useRef, useState } from 'react'
 import { LuFlame, LuHourglass, LuLink, LuMoon, LuSparkles, LuSun } from 'react-icons/lu'
 import { complete, reopen, toBacklog } from '../../grimoire/act'
 import { isFrog, taskCoins } from '../../grimoire/coins'
 import { cardTone, isBlocked, stepsOf } from '../../grimoire/selectors'
 import type { DayKey, Task } from '../../grimoire/types'
-import { useAppDispatch, useAppSelector } from '../../store'
-import { grimoireActions as A } from '../../store/grimoireSlice'
-import { ArcanaCard, arcanaButton } from '../ArcanaCard'
+import { useAppSelector } from '../../store'
+import { ArcanaCard } from '../ArcanaCard'
 import { Sparkle } from '../Magic'
 import { LeafMark } from '../ui'
-import { Deadline, Stars, Tag } from './Marks'
+import { tagPalette } from '../../grimoire/tags'
+import { Deadline, Stars } from './Marks'
 
 const sourceIcon = { habit: <LuMoon />, wheel: <LuSun />, workshop: <LuFlame /> } as Record<string, JSX.Element>
 
 /** `inBook`: on a book's page a sideways swipe turns the page, and the book's own sigil is not repeated. */
 export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today: DayKey; onOpen: (t: Task) => void; compact?: boolean; inBook?: boolean }) {
-  const dispatch = useAppDispatch()
   const g = useAppSelector((s) => s.grimoire)
   const people = useAppSelector((s) => s.data.people)
+  const tone = cardTone(t)
   const done = t.status === 'done'
   const frog = isFrog(t)
   const eating = frog && t.eatOn === today && !done
@@ -72,7 +72,7 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
         </Flex>
       )}
       <ArcanaCard
-        tone={cardTone(t)}
+        tone={tone}
         dim={done}
         selected={eating}
         onClick={() => onOpen(t)}
@@ -106,13 +106,7 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
             </Box>
           </>
         }
-        footer={
-          frog && !done && !eating && t.doOn === today ? (
-            <Button {...arcanaButton} onClick={() => dispatch(A.eatFrog({ id: t.id, day: today }))}>
-              съесть сегодня
-            </Button>
-          ) : undefined
-        }
+        fixed
       >
         <HStack gap="1.5" justify="center" wrap="wrap">
           <Stars n={t.stars} size={11} />
@@ -129,7 +123,7 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
           </Text>
         )}
         {eating && <Text color="var(--star-on)">съесть сегодня</Text>}
-        {t.status === 'partial' && <Text lineClamp={2}>часть сделана{t.partialNote ? `: ${t.partialNote}` : ''}</Text>}
+        {t.status === 'partial' && <Text lineClamp={1}>часть сделана{t.partialNote ? `: ${t.partialNote}` : ''}</Text>}
         {t.status === 'inProgress' && <Text>в работе</Text>}
         {t.status === 'waiting' && (
           <HStack gap="1" justify="center">
@@ -147,11 +141,15 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
         )}
         {(t.personIds ?? []).length > 0 && <Text lineClamp={1}>{(t.personIds ?? []).map((id) => people[id] && `@${people[id].name}`).filter(Boolean).join(' ')}</Text>}
         {!compact && t.tags.length > 0 && (
-          <HStack gap="1" justify="center" wrap="wrap" mt="1">
-            {t.tags.map((x) => (
-              <Tag key={x} name={x} />
+          // One line of tag-coloured words: a narrow card cuts it with «…» instead of growing.
+          <Text lineClamp={1} fontSize="2xs">
+            {t.tags.slice(0, 3).map((x, i) => (
+              <Text as="span" key={x} color={`${tagPalette(x, g.meta.tagColors)}.${tone === 'nacre' ? '700' : '300'}`}>
+                {i ? ' ' : ''}#{x}
+              </Text>
             ))}
-          </HStack>
+            {t.tags.length > 3 && ` +${t.tags.length - 3}`}
+          </Text>
         )}
         {steps.length > 0 && (
           <HStack gap="2" mt="1.5" fontSize="2xs">
