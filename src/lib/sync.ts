@@ -10,13 +10,13 @@ import localforage from 'localforage'
 import { actions, initialData } from '../store/dataSlice'
 import { grimoireActions, initialGrimoire, migrateGrimoire } from '../store/grimoireSlice'
 import { localActions } from '../store/localSlice'
+import { diffGrimoire, grimoireCollections, isGrimoireRow, rowsToGrimoire, type GrimoireKind } from '../grimoire/rows'
 import type { GrimoireState } from '../grimoire/types'
 import type { DataState, Review } from '../types'
 import { migrate } from './migrate'
 import { supabase } from './supabase'
 
 type WorkshopKind = 'mold' | 'material' | 'mix' | 'holder' | 'candle' | 'pour' | 'decor' | 'person' | 'instruction' | 'meta' | 'review'
-type GrimoireKind = 'task' | 'project' | 'habit' | 'habit_log' | 'wish' | 'wheel_practice' | 'journal' | 'jar' | 'jar_tx' | 'coin_tx'
 type Kind = WorkshopKind | GrimoireKind
 
 export interface Change {
@@ -39,35 +39,7 @@ const collections: [keyof DataState, Kind][] = [
   ['reviews', 'review'],
 ]
 
-/** Grimoire collections; its settings are the row (meta, grimoire). */
-export const grimoireCollections: [Exclude<keyof GrimoireState, 'meta'>, GrimoireKind][] = [
-  ['tasks', 'task'],
-  ['projects', 'project'],
-  ['habits', 'habit'],
-  ['habitLogs', 'habit_log'],
-  ['wishes', 'wish'],
-  ['practices', 'wheel_practice'],
-  ['journal', 'journal'],
-  ['jars', 'jar'],
-  ['jarTxs', 'jar_tx'],
-  ['coinTxs', 'coin_tx'],
-]
-
-const grimoireKinds = new Set<string>(grimoireCollections.map(([, k]) => k))
-export const isGrimoireRow = (kind: string, id: string) => grimoireKinds.has(kind) || (kind === 'meta' && id === 'grimoire')
-
-export function diffGrimoire(prev: GrimoireState, next: GrimoireState): Change[] {
-  const out: Change[] = []
-  for (const [key, kind] of grimoireCollections) {
-    const a = (prev[key] ?? {}) as Record<string, unknown>
-    const b = (next[key] ?? {}) as Record<string, unknown>
-    if (a === b) continue
-    for (const id in b) if (a[id] !== b[id]) out.push({ op: 'upsert', kind, id, data: b[id] })
-    for (const id in a) if (!(id in b)) out.push({ op: 'delete', kind, id })
-  }
-  if (prev.meta !== next.meta) out.push({ op: 'upsert', kind: 'meta', id: 'grimoire', data: next.meta })
-  return out
-}
+export { diffGrimoire, grimoireCollections, isGrimoireRow }
 
 export function diff(prev: DataState, next: DataState): Change[] {
   const out: Change[] = []
@@ -192,22 +164,17 @@ async function fetchAll(): Promise<{ data: DataState; grimoire: GrimoireState; e
     reviews: {},
   }
   const byKind: Record<string, string> = Object.fromEntries(collections.map(([key, kind]) => [kind, key]))
-  const g = Object.fromEntries(grimoireCollections.map(([key]) => [key, {}])) as Record<string, Record<string, unknown>> & { meta?: unknown }
-  const gByKind: Record<string, string> = Object.fromEntries(grimoireCollections.map(([key, kind]) => [kind, key]))
   let workshopRows = 0
   for (const r of rows) {
     if (r.kind === 'meta') {
       if (r.id === 'counters') d.counters = r.data as DataState['counters']
       if (r.id === 'settings') d.settings = r.data as DataState['settings']
-      if (r.id === 'grimoire') g.meta = r.data
-      else workshopRows++
+      if (r.id !== 'grimoire') workshopRows++
     } else if (byKind[r.kind]) {
       ;(d[byKind[r.kind]] as Record<string, unknown>)[r.id] = r.data
       workshopRows++
-    } else if (gByKind[r.kind]) {
-      g[gByKind[r.kind]][r.id] = r.data
     }
-    // Rows of kinds this version doesn't know (from a newer app) are left alone.
+    // Grimoire rows are collected below; kinds this version doesn't know (from a newer app) are left alone.
   }
   for (const r of reviews) {
     d.reviews![r.id] = {
@@ -222,7 +189,7 @@ async function fetchAll(): Promise<{ data: DataState; grimoire: GrimoireState; e
   const empty = !workshopRows && !reviews.length
   // A brand-new account starts with the default instruction template.
   if (empty) d.instructions = initialData.instructions
-  return { data: migrate(d), grimoire: migrateGrimoire(g as Partial<GrimoireState>), empty }
+  return { data: migrate(d), grimoire: migrateGrimoire(rowsToGrimoire(rows)), empty }
 }
 
 const hasLocalData = (d: DataState) =>

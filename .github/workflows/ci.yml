@@ -50,3 +50,24 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/0002_grimoire.sql
       - name: Access rules
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/grimoire_rls.sql
+      - name: 0003_agent (twice)
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/0003_agent.sql -f supabase/migrations/0003_agent.sql
+      - name: Agent keys
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/agent_keys.sql
+
+  agent:
+    # The agent's MCP server (Supabase Edge Function on Deno) with the grimoire core copied from src.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Core copy is up to date
+        run: node scripts/sync-agent-core.mjs --check
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type check
+        working-directory: supabase/functions/grimoire-mcp
+        run: deno check index.ts server_test.ts
+      - name: Tests
+        working-directory: supabase/functions/grimoire-mcp
+        run: deno test --allow-env

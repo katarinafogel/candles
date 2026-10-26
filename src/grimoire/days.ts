@@ -1,7 +1,7 @@
 // Grimoire days. A day lasts until the boundary hour (4:00 by default), so a late evening still counts
 // as «today». Day keys are plain YYYY-MM-DD strings; arithmetic on them goes through UTC noon so that
 // daylight saving shifts never move a day.
-import type { DayKey, Repeat } from './types'
+import type { DayKey, Repeat } from './types.ts'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -9,6 +9,17 @@ const pad = (n: number) => String(n).padStart(2, '0')
 export function dayKey(at: Date = new Date(), boundaryHour = 4): DayKey {
   const d = new Date(at.getTime() - boundaryHour * 3600_000)
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+/**
+ * The grimoire day of a moment in a given time zone. The agent's server runs in UTC, so it counts
+ * days in the owner's zone, saved in the settings by the app.
+ */
+export function dayKeyIn(at: Date, boundaryHour: number, timeZone?: string): DayKey {
+  if (!timeZone) return dayKey(at, boundaryHour)
+  const shifted = new Date(at.getTime() - boundaryHour * 3600_000)
+  // en-CA prints dates as YYYY-MM-DD.
+  return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(shifted)
 }
 
 const toUtc = (day: DayKey) => {

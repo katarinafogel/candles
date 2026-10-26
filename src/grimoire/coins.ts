@@ -2,8 +2,8 @@
 //   coins = base · stars · (1 + dreadFactor · dread) + bonuses
 // The balance is never stored: it is the sum of the coin journal (coin_tx), so offline edits on two
 // devices can't lose a payment, and undoing a deed writes a reverse entry.
-import { dueDay } from './days'
-import type { CoinRules, CoinTx, DayKey, Task } from './types'
+import { dueDay } from './days.ts'
+import type { CoinRules, CoinTx, DayKey, Task } from './types.ts'
 
 export const defaultCoinRules: CoinRules = {
   base: 10,

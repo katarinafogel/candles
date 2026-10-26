@@ -1,5 +1,5 @@
-import { dueDay } from './days'
-import type { DayKey, GrimoireMeta, GrimoireState, Task, TaskSlot } from './types'
+import { dueDay } from './days.ts'
+import type { DayKey, GrimoireMeta, GrimoireState, Task, TaskSlot } from './types.ts'
 
 export const isOpenTask = (t: Task) => t.status !== 'done' && t.status !== 'cancelled'
 
