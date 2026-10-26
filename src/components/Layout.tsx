@@ -133,12 +133,11 @@ export default function Layout() {
             <SideLink key={i.to} item={i} badge={i.to === '/reviews' ? unread : undefined} />
           ))}
         </Stack>
-        <Flex justify="center" gap="3" mt="8" color="ember.300" opacity=".5">
+        <Flex justify="center" gap="3" mt="4" color="ember.300" opacity=".5">
           <Sparkle size={8} />
           <Sparkle size={12} />
           <Sparkle size={8} />
         </Flex>
-        <Eucalyptus width={120} mx="auto" mt="4" opacity={0.45} />
       </Box>
 
       <Box flex="1" minW="0" position="relative" overflowX="clip">

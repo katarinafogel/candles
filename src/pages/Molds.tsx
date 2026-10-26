@@ -1,5 +1,5 @@
 import { Box, Button, CloseButton, Heading, HStack, IconButton, Input, InputGroup, SimpleGrid, Stack, Text } from '@chakra-ui/react'
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { LuArchive, LuArchiveRestore, LuPencil, LuPlus, LuSearch } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
 import { ArcanaCard, arcanaButton } from '../components/ArcanaCard'
@@ -177,6 +177,22 @@ export default function Molds() {
     .map((p) => ({ purpose: p, molds: list.filter((m) => m.purpose === p) }))
     .filter((g) => g.molds.length)
 
+  // Each group is its own grid, so the cards of all groups are lined up to the tallest one by hand.
+  const cardsRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const box = cardsRef.current
+    if (!box) return
+    const fit = () => {
+      box.style.removeProperty('--card-h')
+      const tallest = Math.max(0, ...[...box.querySelectorAll<HTMLElement>('[data-mold-grid] > *')].map((c) => c.offsetHeight))
+      box.style.setProperty('--card-h', `${tallest}px`)
+    }
+    fit()
+    void document.fonts?.ready.then(fit)
+    window.addEventListener('resize', fit)
+    return () => window.removeEventListener('resize', fit)
+  })
+
   return (
     <>
       <PageHeader title="Силиконовые формы" back="/more">
@@ -209,58 +225,66 @@ export default function Molds() {
             : 'Форм пока нет. Добавьте вручную или импортируйте из таблицы в настройках.'}
         </Empty>
       )}
-      {groups.map((g) => (
-        <Box key={g.purpose} mb="6">
-          <Heading size="lg" fontWeight="semibold" color="ember.100" mb="2">
-            {moldPurposePlural[g.purpose]} · {g.molds.length}
-          </Heading>
-          <SimpleGrid columns={{ base: 2, sm: 3, lg: 4, xl: 5 }} gap={{ base: '3', md: '4' }} gridAutoRows="1fr">
-            {g.molds.map((m) => {
-              const st = moldStats(d, m.id)
-              return (
-                <ArcanaCard
-                  key={m.id}
-                  tone="indigo"
-                  figure={figureOf(m)}
-                  title={m.name}
-                  sub={m.id}
-                  dim={m.archived}
-                  corner={m.archived ? 'архив' : undefined}
-                  onClick={() => nav(`/molds/${m.id}`)}
-                  footer={
-                    <>
-                      <Box w="100%" display="flex" justifyContent="center" mb="1">
-                        <StarRating size="sm" value={m.rating} onChange={(v) => dispatch(actions.upsertMold({ ...m, rating: v }))} />
-                      </Box>
-                      <IconButton {...arcanaButton} aria-label="Изменить" title="Изменить" onClick={() => setEdit(m)}>
-                        <LuPencil />
-                      </IconButton>
-                      <ArchiveButton mold={m} inCard />
-                    </>
-                  }
-                >
-                  {isPlaster(m.purpose) && (
+      <Box ref={cardsRef}>
+        {groups.map((g) => (
+          <Box key={g.purpose} mb="6">
+            <Heading size="lg" fontWeight="semibold" color="ember.100" mb="2">
+              {moldPurposePlural[g.purpose]} · {g.molds.length}
+            </Heading>
+            <SimpleGrid
+              data-mold-grid=""
+              columns={{ base: 2, sm: 3, lg: 4, xl: 5 }}
+              gap={{ base: '3', md: '4' }}
+              gridAutoRows="1fr"
+              css={{ '& > *': { minHeight: 'var(--card-h, auto)' } }}
+            >
+              {g.molds.map((m) => {
+                const st = moldStats(d, m.id)
+                return (
+                  <ArcanaCard
+                    key={m.id}
+                    tone="indigo"
+                    figure={figureOf(m)}
+                    title={m.name}
+                    sub={m.id}
+                    dim={m.archived}
+                    corner={m.archived ? 'архив' : undefined}
+                    onClick={() => nav(`/molds/${m.id}`)}
+                    footer={
+                      <>
+                        <Box w="100%" display="flex" justifyContent="center" mb="1">
+                          <StarRating size="sm" value={m.rating} onChange={(v) => dispatch(actions.upsertMold({ ...m, rating: v }))} />
+                        </Box>
+                        <IconButton {...arcanaButton} aria-label="Изменить" title="Изменить" onClick={() => setEdit(m)}>
+                          <LuPencil />
+                        </IconButton>
+                        <ArchiveButton mold={m} inCard />
+                      </>
+                    }
+                  >
+                    {isPlaster(m.purpose) && (
+                      <Text>
+                        {fmt(m.waterVolumeMl)} мл · {fmt(m.waterPct)}% воды
+                      </Text>
+                    )}
+                    {m.waxCapacityG > 0 && <Text>воск {fmt(m.waxCapacityG)} г</Text>}
+                    {m.defaultWick && (
+                      <Text>
+                        фитиль {fmt(m.defaultWick.lengthCm)} см
+                      </Text>
+                    )}
                     <Text>
-                      {fmt(m.waterVolumeMl)} мл · {fmt(m.waterPct)}% воды
+                      отлито {st.holders.length}
+                      {st.defectPct != null && ` · брак ${fmt(st.defectPct, 0)}%`}
                     </Text>
-                  )}
-                  {m.waxCapacityG > 0 && <Text>воск {fmt(m.waxCapacityG)} г</Text>}
-                  {m.defaultWick && (
-                    <Text>
-                      фитиль {fmt(m.defaultWick.lengthCm)} см
-                    </Text>
-                  )}
-                  <Text>
-                    отлито {st.holders.length}
-                    {st.defectPct != null && ` · брак ${fmt(st.defectPct, 0)}%`}
-                  </Text>
-                  {st.avgOverall != null && <Text>отзывы {fmt(st.avgOverall, 1)}</Text>}
-                </ArcanaCard>
-              )
-            })}
-          </SimpleGrid>
-        </Box>
-      ))}
+                    {st.avgOverall != null && <Text>отзывы {fmt(st.avgOverall, 1)}</Text>}
+                  </ArcanaCard>
+                )
+              })}
+            </SimpleGrid>
+          </Box>
+        ))}
+      </Box>
       {edit && <MoldDialog mold={edit} onClose={() => setEdit(null)} />}
     </>
   )

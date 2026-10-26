@@ -180,7 +180,8 @@ export default function Candles() {
         </Button>
       </PageHeader>
 
-      <Flex gap="2" mb="3" overflowX="auto" pb="1">
+      {/* Still scrolls sideways on a narrow screen, just without a visible bar. */}
+      <Flex gap="2" mb="3" overflowX="auto" pb="1" css={{ scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
         <Button size="xs" borderRadius="full" variant={!stage ? 'solid' : 'outline'} onClick={() => setStage('')}>
           Все · {all.length}
         </Button>
