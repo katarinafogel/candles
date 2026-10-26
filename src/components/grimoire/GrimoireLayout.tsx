@@ -5,6 +5,7 @@ import { useEffect, type ReactNode } from 'react'
 import { LuBookOpen, LuEllipsis, LuFlame, LuGem, LuLibrary, LuMoon, LuScrollText, LuSparkles, LuSun } from 'react-icons/lu'
 import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useBalance, useToday } from '../../grimoire/act'
+import { daysBetween } from '../../grimoire/days'
 import { words } from '../../grimoire/selectors'
 import { builtInPractices } from '../../grimoire/wheel'
 import { useAppDispatch, useAppSelector, useIsWitch } from '../../store'
@@ -53,7 +54,8 @@ function Coins() {
   const coins = useBalance()
   return (
     <NavLink to="/g/more">
-      <Flex align="center" gap="1" color="ember.200" fontFamily="heading" fontSize="xl" fontWeight="semibold" title="монеты">
+      {/* data-coins: where the spark of a done deed flies. */}
+      <Flex data-coins align="center" gap="1" color="ember.200" fontFamily="heading" fontSize="xl" fontWeight="semibold" title="монеты">
         <Sparkle size={11} />
         {coins}
       </Flex>
@@ -73,14 +75,17 @@ function useDailyChores() {
   // reopen a task already ticked on another phone. Offline there is nothing newer to wait for.
   const ready = !!loadedAt || !navigator.onLine
   const timeZone = useAppSelector((s) => s.grimoire.meta.timeZone)
+  const lastSeen = useAppSelector((s) => s.grimoire.meta.lastSeenDay)
   useEffect(() => {
     if (!ready) return
+    // A new day opened: how long she was away, for the welcome back in the scroll.
+    if (lastSeen !== today) dispatch(A.updateMeta({ lastSeenDay: today, awayDays: lastSeen ? Math.max(0, daysBetween(lastSeen, today)) : 0 }))
     // The agent's server counts days in this zone.
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
     if (tz && tz !== timeZone) dispatch(A.updateMeta({ timeZone: tz }))
     if (generatedFor !== today && !navActive) dispatch(A.generateHabitTasks())
     if (!seeded) dispatch(A.seedPractices(builtInPractices))
-  }, [ready, today, generatedFor, seeded, navActive, timeZone, dispatch])
+  }, [ready, today, generatedFor, seeded, navActive, timeZone, lastSeen, dispatch])
 }
 
 export default function GrimoireLayout() {

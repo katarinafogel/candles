@@ -4,6 +4,7 @@ import { notify } from '../components/ui'
 import { store, useAppSelector } from '../store'
 import { grimoireActions as A, today } from '../store/grimoireSlice'
 import { balance, isFrog, taskCoins } from './coins'
+import { flySpark, praise } from './fly'
 import type { GrimoireState, Task } from './types'
 
 const g = () => store.getState().grimoire
@@ -29,20 +30,19 @@ export function withUndo(title: string, change: () => void, description?: string
 
 const coinsWord = (n: number) => `${n > 0 ? '+' : ''}${n} 🪙`
 
-export function complete(t: Task, partial = false) {
-  const coins = taskCoins(t, today(), g().meta.coins, partial).total
-  const parts = [t.rewardText && !partial ? `награда: ${t.rewardText}` : '', t.enough && !partial ? `достаточно: ${t.enough}` : ''].filter(Boolean)
-  withUndo(
-    partial
-      ? `Часть сделана · ${coinsWord(coins)}`
-      : `${isFrog(t) ? '🐸 Жаба съедена!' : t.type === 'joy' ? 'Радость прожита' : 'Сделано'} · ${coinsWord(coins)}`,
-    () => store.dispatch(A.completeTask({ id: t.id, partial })),
-    parts.join(' · ') || undefined,
-  )
+/** Closes a deed with its toast; `from` — the card or button the spark flies from into the coins. */
+export function complete(t: Task, partial = false, from?: Element | null) {
+  const { tone, coins: rules } = g().meta
+  const coins = taskCoins(t, today(), rules, partial).total
+  const { title, word } = praise(partial ? 'partial' : isFrog(t) ? 'frog' : t.type === 'joy' ? 'joy' : 'done', coinsWord(coins), tone.praise)
+  const parts = [word, t.rewardText && !partial ? `награда: ${t.rewardText}` : '', t.enough && !partial ? `достаточно: ${t.enough}` : ''].filter(Boolean)
+  withUndo(title, () => store.dispatch(A.completeTask({ id: t.id, partial })), parts.join(' · ') || undefined)
+  if (!partial) flySpark(from, tone.motion)
   // Habits are ticked daily; asking each time would be noise.
   if (!partial && !t.habitId) feedback.ask(t.id)
   // A frog gets a slightly brighter answer: a double buzz instead of one.
-  if ('vibrate' in navigator && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) navigator.vibrate?.(isFrog(t) && !partial ? [18, 60, 30] : 18)
+  if (tone.motion !== 'off' && 'vibrate' in navigator && !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    navigator.vibrate?.(isFrog(t) && !partial ? [18, 60, 30] : 18)
 }
 
 export const reopen = (t: Task) => withUndo('Вернула в работу', () => store.dispatch(A.reopenTask({ id: t.id })))

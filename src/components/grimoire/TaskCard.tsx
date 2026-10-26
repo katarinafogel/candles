@@ -41,13 +41,16 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
   const [dx, setDx] = useState(0)
   const start = useRef<{ x: number; y: number } | null>(null)
 
+  const card = useRef<HTMLDivElement>(null)
+
   function tick() {
     if (done) return reopen(t)
-    complete(t)
+    complete(t, false, card.current)
   }
 
   return (
     <Box
+      ref={card}
       position="relative"
       h="100%"
       // Done: not crossed out, just paler (on top of the card's own dim).

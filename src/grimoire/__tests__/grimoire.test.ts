@@ -162,6 +162,30 @@ describe('grimoire reducer', () => {
     expect(projectTasks(s, 'p').map((t) => t.id)).toEqual(['a', 'b', 'c'])
   })
 
+  it('links «ждёт другое дело» by hand and refuses a circle', () => {
+    let s = add(initialGrimoire, 'a')
+    s = add(s, 'b')
+    s = add(s, 'c')
+    s = reducer(s, { type: A.linkBlock.type, payload: { id: 'a', blockerId: 'b', on: true } })
+    s = reducer(s, { type: A.linkBlock.type, payload: { id: 'b', blockerId: 'c', on: true } })
+    s = reducer(s, { type: A.linkBlock.type, payload: { id: 'c', blockerId: 'a', on: true } }) // a → b → c → a: ignored
+    expect([s.tasks.a.blockedBy, s.tasks.b.blockedBy, s.tasks.c.blockedBy]).toEqual([['b'], ['c'], undefined])
+    expect(isBlocked(s.tasks.a, s.tasks)).toBe(true)
+    s = reducer(s, { type: A.linkBlock.type, payload: { id: 'a', blockerId: 'b', on: false } })
+    expect(s.tasks.a.blockedBy).toBeUndefined()
+  })
+
+  it('puts leftovers into the «разобрать потом» pack without counting them as postponed', () => {
+    let s = add(initialGrimoire, 'a', { doOn: addDays(MON, -3) })
+    s = reducer(s, { type: A.clearSlate.type, payload: { ids: ['a'], day: MON } })
+    expect(s.tasks.a).toMatchObject({ later: MON })
+    expect(s.tasks.a.doOn).toBeUndefined()
+    expect(s.tasks.a.postponeCount ?? 0).toBe(0)
+    expect(s.meta).toMatchObject({ reviewedDay: MON, welcomedDay: MON })
+    s = reducer(s, { type: A.planTask.type, payload: { id: 'a', day: MON } })
+    expect(s.tasks.a.later).toBeUndefined()
+  })
+
   it('counts the day stars: joys apart, done deeds too, rituals out, past the limit is over', () => {
     let s = add(initialGrimoire, 'j', { type: 'joy', stars: 2, doOn: MON })
     s = add(s, 'a', { stars: 3, doOn: MON })

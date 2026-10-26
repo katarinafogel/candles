@@ -74,6 +74,12 @@ export const joysAhead = (g: GrimoireState, today: DayKey) =>
     .filter((t) => t.type === 'joy' && isOpenTask(t) && (t.doOn ?? dueDay(t.dueAt) ?? today) >= today)
     .sort((a, b) => (a.doOn ?? dueDay(a.dueAt) ?? '9999').localeCompare(b.doOn ?? dueDay(b.dueAt) ?? '9999'))
 
+/** «Даже в нави»: open deeds marked so, due or chosen up to `horizon` (or with no day at all). */
+export const evenInNav = (g: GrimoireState, horizon: DayKey) =>
+  Object.values(g.tasks)
+    .filter((t) => t.evenInNav && isOpenTask(t) && (!(t.doOn ?? dueDay(t.dueAt)) || (t.doOn ?? dueDay(t.dueAt))! <= horizon))
+    .sort((a, b) => (a.doOn ?? dueDay(a.dueAt) ?? '9999').localeCompare(b.doOn ?? dueDay(b.dueAt) ?? '9999'))
+
 /** Real deadlines coming up within `days`, for the calm reminder. */
 export const deadlinesSoon = (g: GrimoireState, today: DayKey, horizon: DayKey) =>
   Object.values(g.tasks)

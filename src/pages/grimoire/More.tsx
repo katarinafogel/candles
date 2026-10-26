@@ -98,6 +98,12 @@ export default function GrimoireMore() {
         <Button variant={meta.nav.active ? 'solid' : 'outline'} onClick={() => dispatch(A.setNav({ active: !meta.nav.active }))}>
           {meta.nav.active ? 'Вернуться в явь' : 'Уйти в навь'}
         </Button>
+        <Field label="Ассистент, пока ты в нави" helper="о делах с пометкой «даже в нави» он напомнит в любом случае">
+          <Chips value={meta.nav.agent ?? 'hello'} onChange={(v) => v && dispatch(A.updateMeta({ nav: { ...meta.nav, agent: v as 'hello' | 'silent' } }))} options={[
+            { value: 'hello', label: 'пишет «я тут»' },
+            { value: 'silent', label: 'молчит' },
+          ]} />
+        </Field>
         {meta.nav.history.length > 0 && (
           <Text fontSize="xs" color="fg.subtle" mt="2">
             Была в нави: {meta.nav.history.slice(-5).map((p) => `${humanDay(p.from.slice(0, 10), today)} — ${p.to ? humanDay(p.to.slice(0, 10), today) : '…'}`).join(' · ')}
@@ -175,6 +181,20 @@ export default function GrimoireMore() {
               <NumInput value={meta.planLimit.extra} onChange={(v) => dispatch(A.updateMeta({ planLimit: { ...meta.planLimit, extra: Math.max(0, Math.round(v ?? 0)) } }))} suffix="доп." width="140px" />
               <NumInput value={meta.planLimit.optional} onChange={(v) => dispatch(A.updateMeta({ planLimit: { ...meta.planLimit, optional: Math.max(0, Math.round(v ?? 0)) } }))} suffix="необяз." width="160px" />
             </HStack>
+          </Field>
+          <Field label="Похвала" helper="что пишет гримуар, когда дело сделано">
+            <Chips value={meta.tone.praise} onChange={(v) => v && dispatch(A.updateMeta({ tone: { ...meta.tone, praise: v as typeof meta.tone.praise } }))} options={[
+              { value: 'quiet', label: 'тихо' },
+              { value: 'normal', label: 'обычно' },
+              { value: 'warm', label: 'тепло' },
+            ]} />
+          </Field>
+          <Field label="Анимации" helper="искра летит с карточки в монеты; «нет» — и без вибрации">
+            <Chips value={meta.tone.motion} onChange={(v) => v && dispatch(A.updateMeta({ tone: { ...meta.tone, motion: v as typeof meta.tone.motion } }))} options={[
+              { value: 'off', label: 'нет' },
+              { value: 'soft', label: 'мягко' },
+              { value: 'bright', label: 'ярко' },
+            ]} />
           </Field>
           <Field label="Звёзд на день" helper="сколько сложности план дня держит спокойно; сверх — красные звёзды в свитке; 0 — не показывать">
             <NumInput value={meta.dayStars} onChange={(v) => dispatch(A.updateMeta({ dayStars: Math.max(0, Math.round(v ?? 0)) }))} suffix="★" width="140px" />

@@ -4,7 +4,8 @@ import { Box, Button, Flex, HStack, Stack, Text } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { Chips, confirmAction, Empty, Field, PageHeader, Section, TextArea, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
-import { addDays, humanDay } from '../../grimoire/days'
+import { addDays, dayKey, humanDay } from '../../grimoire/days'
+import { navTest } from '../../grimoire/habits'
 import type { JournalEntry } from '../../grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
@@ -105,9 +106,10 @@ function NewEntry({ evening, onDone }: { evening: boolean; onDone: () => void })
   )
 }
 
-/** Daily average of mood and energy over 30 days, with gaps where nothing was written. */
-function Chart({ entries, today }: { entries: JournalEntry[]; today: string }) {
+/** Daily average of mood and energy over 30 days, with gaps where nothing was written; days in the навь shaded. */
+function Chart({ entries, today, inNav }: { entries: JournalEntry[]; today: string; inNav: (d: string) => boolean }) {
   const days = Array.from({ length: 30 }, (_, i) => addDays(today, i - 29))
+  const navDays = days.filter(inNav).length
   const avg = (d: string, k: 'mood' | 'energy') => {
     const xs = entries.filter((e) => e.day === d && e[k]).map((e) => e[k]!)
     return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : undefined
@@ -140,6 +142,9 @@ function Chart({ entries, today }: { entries: JournalEntry[]; today: string }) {
     <Box>
       <Box position="relative" h={`${H}px`}>
         <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none" aria-label="Настроение и энергия за 30 дней">
+          {days.map((d, i) =>
+            inNav(d) ? <rect key={d} x={px(i) - W / 58} y="0" width={W / 29} height={H} fill="var(--chakra-colors-fg-subtle)" fillOpacity=".14" /> : null,
+          )}
           <path d={path('mood')} fill="none" stroke="var(--chakra-colors-ember-300)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
           <path d={path('energy')} fill="none" stroke="var(--chakra-colors-emerald-400)" strokeWidth="1.5" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />
         </svg>
@@ -159,6 +164,12 @@ function Chart({ entries, today }: { entries: JournalEntry[]; today: string }) {
           </Text>{' '}
           энергия
         </Text>
+        {navDays > 0 && (
+          <Text>
+            <Text as="span" display="inline-block" w="2.5" h="2.5" mr="1" verticalAlign="middle" bg="fg.subtle" opacity=".35" borderRadius="1px" />
+            навь · {navDays}
+          </Text>
+        )}
         <Text ml="auto">30 дней</Text>
       </HStack>
     </Box>
@@ -172,6 +183,7 @@ export default function Mirror() {
   const [mode, setMode] = useState<'entry' | 'evening'>()
   const [q, setQ] = useState('')
   const entries = useMemo(() => Object.values(g.journal).sort((a, b) => b.at.localeCompare(a.at)), [g.journal])
+  const inNav = useMemo(() => navTest(g.meta, (iso) => dayKey(new Date(iso), g.meta.dayBoundaryHour)), [g.meta])
   const needle = q.trim().toLowerCase()
   const shown = entries.filter((e) => !needle || [e.text, e.wentWell, e.putOff, e.grateful, ...(e.emotions ?? []), ...(e.factors ?? [])].some((x) => x?.toLowerCase().includes(needle)))
   const byDay = new Map<string, JournalEntry[]>()
@@ -194,7 +206,7 @@ export default function Mirror() {
         </Section>
       )}
       <Section>
-        <Chart entries={entries} today={today} />
+        <Chart entries={entries} today={today} inNav={inNav} />
       </Section>
       <TextInput value={q} onChange={setQ} placeholder="Поиск по записям, эмоциям, факторам" />
       <Box mt="4">

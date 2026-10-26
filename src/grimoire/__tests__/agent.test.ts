@@ -65,6 +65,30 @@ describe('agent tools', () => {
     expect(balance(state.coinTxs)).toBe(0)
   })
 
+  it('warns when a deed would take the day past its stars, and links «ждёт другое дело»', () => {
+    let { state } = run(base, 'grimoire_add_task', { title: 'раз', stars: 3, doOn: '2026-10-26', slot: 'extra' })
+    ;({ state } = run(state, 'grimoire_add_task', { title: 'два', stars: 3, doOn: '2026-10-26', slot: 'extra' }))
+    const third = run(state, 'grimoire_add_task', { title: 'три', stars: 2, doOn: '2026-10-26', slot: 'extra' })
+    expect((third.result as { warning?: string }).warning).toContain('звёзд в плане станет 8 при лимите 6')
+    const today = run(third.state, 'grimoire_today').result as { dayStars: { inPlan: number; limit: number; over: number } }
+    expect(today.dayStars).toMatchObject({ inPlan: 8, limit: 6, over: 2 })
+    const ids = Object.values(third.state.tasks).map((t) => t.id)
+    const linked = run(third.state, 'grimoire_wait_for', { id: ids[0], blockerId: ids[1] })
+    expect((linked.result as { waitsFor?: unknown[] }).waitsFor).toHaveLength(1)
+    expect(() => run(linked.state, 'grimoire_wait_for', { id: ids[1], blockerId: ids[0] })).toThrow(/круг/)
+  })
+
+  it('in the навь says what the assistant may send and lists the «даже в нави» deeds', () => {
+    let { state } = run(base, 'grimoire_add_task', { title: 'оплатить квартиру', dueAt: '2026-10-27', evenInNav: true })
+    ;({ state } = run(state, 'grimoire_add_task', { title: 'помыть окна', doOn: '2026-10-26' }))
+    ;({ state } = run(state, 'grimoire_set_nav', { active: true }))
+    state = { ...state, meta: { ...state.meta, nav: { ...state.meta.nav, agent: 'silent' } } }
+    const today = run(state, 'grimoire_today').result as { nav: { agent: string; note: string }; evenInNav: { title: string }[] }
+    expect(today.nav.agent).toBe('silent')
+    expect(today.nav.note).toContain('тишины')
+    expect(today.evenInNav.map((t) => t.title)).toEqual(['оплатить квартиру'])
+  })
+
   it('postpones with a reason and reports it in the day summary', () => {
     let { state, result } = run(base, 'grimoire_add_task', { title: 'позвонить', doOn: '2026-10-26' })
     const id = (result as { task: { id: string } }).task.id

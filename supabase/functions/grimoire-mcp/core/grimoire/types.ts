@@ -92,6 +92,10 @@ export interface Task {
   frog?: 'auto' | 'manual' | 'off'
   /** «Съесть сегодня»: the day this frog is promised for. */
   eatOn?: DayKey
+  /** Reminded even in the навь (a real date that must not be missed). */
+  evenInNav?: boolean
+  /** «Чистый лист»: put into the «разобрать потом» pack on this day; cleared once it is planned again. */
+  later?: DayKey
   order?: number
 }
 
@@ -261,15 +265,23 @@ export interface GrimoireMeta {
   tagColors: Record<string, string>
   /** This many postponements make a deed a frog. */
   frogPostpones: number
+  /** How a done deed is answered: the praise in the toast and the spark that flies to the coins. */
+  tone: { praise: 'quiet' | 'normal' | 'warm'; motion: 'off' | 'soft' | 'bright' }
   emotions: string[]
   factors: string[]
   /** Sabbat cards: the text is the witch's own tradition, so it is editable. */
   sabbatNotes: Partial<Record<Sabbat, string>>
-  nav: { active: boolean; since?: ISODateTime; history: NavPeriod[] }
+  /** «Уйти в навь»; `agent` — what the assistant sends meanwhile: a soft «я тут» or nothing at all. */
+  nav: { active: boolean; since?: ISODateTime; history: NavPeriod[]; agent?: 'hello' | 'silent' }
   /** Last day the habit tasks were generated for, so it happens once a day. */
   habitsGeneratedFor?: DayKey
   /** Last day the morning review was finished or skipped. */
   reviewedDay?: DayKey
+  /** The last day the grimoire was opened, and how many days passed before it (for the welcome back). */
+  lastSeenDay?: DayKey
+  awayDays?: number
+  /** The welcome back was seen (or the clean slate taken) on this day. */
+  welcomedDay?: DayKey
   /** Built-in practices were added once; deleting them later must not bring them back. */
   practicesSeeded?: boolean
 }

@@ -13,7 +13,9 @@ import {
   backlog,
   chainOf,
   dayPlan,
+  dayStars,
   deadlinesSoon,
+  evenInNav,
   isBlocked,
   isOpenTask,
   isStuck,
@@ -173,6 +175,7 @@ const taskFieldSchema = {
   estimateMin: { type: 'integer', minimum: 1 },
   zone: { type: 'string' },
   rewardText: { type: 'string', description: 'своя настоящая награда' },
+  evenInNav: { type: 'boolean', description: 'напоминать даже в нави (реальная дата, которую нельзя пропустить)' },
 }
 
 function taskFields(a: Args): Partial<Task> {
@@ -199,13 +202,29 @@ function taskFields(a: Args): Partial<Task> {
   if (want) f.want = want
   const ownerKind = oneOf(a, 'ownerKind', ['mine', 'person', 'work', 'other'] as const)
   if (ownerKind) f.ownerKind = ownerKind
+  if (typeof a.evenInNav === 'boolean') f.evenInNav = a.evenInNav || undefined
   const est = int(a, 'estimateMin', 1, 24 * 60)
   if (est != null) f.estimateMin = est
   return f
 }
 
-const navNote = (c: Ctx) =>
-  c.get().meta.nav.active ? 'Хозяйка в нави: никаких планов и проверок, только мягкое «я тут» или тишина.' : undefined
+/** What is over if a deed of `stars` joins `day` in `slot`: the slot's limit, the day's stars, or nothing. */
+function planWarning(c: Ctx, day: DayKey, slot: TaskSlot, stars: number) {
+  const g = c.get()
+  const parts: string[] = []
+  if (overLimit(g.meta, slotCounts(g, day), slot)) parts.push(`на ${day} уже набран лимит для «${slot}»`)
+  const st = dayStars(g, day)
+  if (st.limit > 0 && st.total + stars > st.limit) parts.push(`звёзд в плане станет ${st.total + stars} при лимите ${st.limit}`)
+  return parts.length ? parts.join('; ') : undefined
+}
+
+const navNote = (c: Ctx) => {
+  const nav = c.get().meta.nav
+  if (!nav.active) return undefined
+  return nav.agent === 'silent'
+    ? 'Хозяйка в нави и просила тишины: ничего не присылай сам, отвечай только на её прямой вопрос. Исключение — дела из evenInNav.'
+    : 'Хозяйка в нави: никаких планов и проверок, только мягкое «я тут» или тишина. Напомнить можно только о делах из evenInNav.'
+}
 
 // ---------- the tools ----------
 
@@ -230,9 +249,14 @@ const tools: (ToolDef & { run: Run })[] = [
       return {
         day: c.today,
         timeZone: g.meta.timeZone ?? null,
-        nav: { active: g.meta.nav.active, since: g.meta.nav.since ?? null, note: navNote(c) ?? null },
+        nav: { active: g.meta.nav.active, since: g.meta.nav.since ?? null, note: navNote(c) ?? null, agent: g.meta.nav.agent ?? 'hello' },
+        evenInNav: evenInNav(g, addDays(c.today, 3)).map(v),
         coins: { balance: balance(g.coinTxs), today: dayCoins(g.coinTxs, c.today) },
         planLimit: g.meta.planLimit,
+        dayStars: (() => {
+          const st = dayStars(g, c.today)
+          return { inPlan: st.total, joys: st.joy, limit: st.limit, over: st.over }
+        })(),
         plan: { main: plan.main.map(v), extra: plan.extra.map(v), optional: plan.optional.map(v), rituals: plan.habits.map(v) },
         morningReview: g.meta.reviewedDay === c.today || g.meta.nav.active ? [] : toReview(g, c.today).map(v),
         joysAhead: joysAhead(g, c.today).slice(0, 5).map(v),
@@ -346,7 +370,7 @@ const tools: (ToolDef & { run: Run })[] = [
       if (!fields.title) throw new AgentError('нужно название (title или line)')
       const id = nanoid()
       const slotFinal: TaskSlot | undefined = doOn ? (s ?? 'extra') : undefined
-      const warning = doOn && slotFinal && overLimit(c.get().meta, slotCounts(c.get(), doOn), slotFinal) ? `на ${doOn} уже набран лимит для «${slotFinal}»` : undefined
+      const warning = doOn && slotFinal ? planWarning(c, doOn, slotFinal, fields.stars ?? 1) : undefined
       c.apply(A.addTask.type, { fields: { ...fields, title: fields.title, id, doOn, slot: slotFinal }, at: c.at, day: c.today })
       const steps = strs(a, 'steps')
       if (steps?.length) c.apply(A.splitTask.type, { id, steps, at: c.at, day: c.today })
@@ -412,7 +436,7 @@ const tools: (ToolDef & { run: Run })[] = [
       const t = task(c, a.id)
       const d = dayArg(a, 'day')
       const s = oneOf(a, 'slot', ['main', 'extra', 'optional'] as const)
-      const warning = d && overLimit(c.get().meta, slotCounts(c.get(), d), s ?? t.slot ?? 'extra') && t.doOn !== d ? `на ${d} уже набран лимит для «${s ?? t.slot ?? 'extra'}»` : undefined
+      const warning = d && t.doOn !== d ? planWarning(c, d, s ?? t.slot ?? 'extra', t.stars) : undefined
       if (d && isBlocked(t, c.get().tasks)) throw new AgentError('дело ждёт другое дело (waitsFor), его нельзя поставить в план')
       c.apply(A.planTask.type, { id: t.id, day: d, slot: s })
       return { task: view(c.get().tasks[t.id], c), ...(warning ? { warning } : {}) }
@@ -443,14 +467,16 @@ const tools: (ToolDef & { run: Run })[] = [
   },
   {
     name: 'grimoire_finish_morning_review',
-    description: 'Закрыть утренний разбор на сегодня. allToBacklog — сначала отправить все вчерашние хвосты в бэклог.',
-    inputSchema: { type: 'object', properties: { allToBacklog: { type: 'boolean' } }, additionalProperties: false },
+    description:
+      'Закрыть утренний разбор на сегодня. allToBacklog — сначала отправить все вчерашние хвосты в бэклог (считается переносом). cleanSlate — «чистый лист» после долгого отсутствия: все хвосты одной пачкой «разобрать потом», без счёта переносов.',
+    inputSchema: { type: 'object', properties: { allToBacklog: { type: 'boolean' }, cleanSlate: { type: 'boolean' } }, additionalProperties: false },
     writes: true,
     run: (a, c) => {
       const left = toReview(c.get(), c.today)
-      if (a.allToBacklog) c.apply(A.reviewToBacklog.type, left.map((t) => t.id))
+      if (a.cleanSlate) c.apply(A.clearSlate.type, { ids: left.map((t) => t.id), day: c.today })
+      else if (a.allToBacklog) c.apply(A.reviewToBacklog.type, left.map((t) => t.id))
       c.apply(A.markReviewed.type, c.today)
-      return { reviewed: c.today, movedToBacklog: a.allToBacklog ? left.length : 0 }
+      return { reviewed: c.today, movedToBacklog: a.allToBacklog || a.cleanSlate ? left.length : 0 }
     },
   },
   {
@@ -473,6 +499,21 @@ const tools: (ToolDef & { run: Run })[] = [
     run: (a, c) => {
       const t = task(c, a.id)
       c.apply(A.setWaiting.type, { id: t.id, until: dayArg(a, 'until'), note: str(a, 'note') })
+      return view(c.get().tasks[t.id], c)
+    },
+  },
+  {
+    name: 'grimoire_wait_for',
+    description: '«Ждёт другое дело»: дело id не встанет в план, пока не закрыто дело blockerId (on=false снимает связь). Связь, которая замкнула бы круг, не ставится.',
+    inputSchema: { type: 'object', properties: { id: { type: 'string' }, blockerId: { type: 'string' }, on: { type: 'boolean', description: 'по умолчанию true' } }, required: ['id', 'blockerId'], additionalProperties: false },
+    writes: true,
+    run: (a, c) => {
+      const t = task(c, a.id)
+      const b = task(c, a.blockerId)
+      const on = a.on !== false
+      c.apply(A.linkBlock.type, { id: t.id, blockerId: b.id, on })
+      const linked = !!c.get().tasks[t.id].blockedBy?.includes(b.id)
+      if (on && !linked) throw new AgentError('эта связь замкнула бы круг: дело уже само ждёт это')
       return view(c.get().tasks[t.id], c)
     },
   },
@@ -663,9 +704,9 @@ export function runTool(name: string, args: Args | undefined, ctx: AgentContext)
 export const agentInstructions = `Это «Гримуар дел» — личный планировщик ведьмы. Задача гримуара не управлять делами, а снизить сопротивление: противное дело делать выгодно и немного смешно.
 
 Как работать:
-- Каждую сводку начинай с grimoire_today. Если nav.active — хозяйка в нави: никаких планов, проверок и напоминаний, только мягкое «я тут» или ничего.
+- Каждую сводку начинай с grimoire_today. Если nav.active — хозяйка в нави: никаких планов, проверок и напоминаний; nav.agent = hello — только мягкое «я тут», silent — ничего. Единственное исключение — дела из evenInNav.
 - Дни считаются по границе дня хозяйки (часовой пояс и час в настройках); даты — YYYY-MM-DD.
-- Не штрафуй и не дави: просрочек нет, невыполненное уходит на утренний разбор или в бэклог. Предлагай, а не требуй. План дня маленький: по умолчанию одно главное и одно необязательное; при превышении лимита спроси, что убрать.
+- Не штрафуй и не дави: просрочек нет, невыполненное уходит на утренний разбор или в бэклог. Предлагай, а не требуй. План дня маленький: по умолчанию одно главное и одно необязательное, а звёзд сложности — не больше dayStars.limit; при превышении любого лимита (warning) спроси, что убрать.
 - Меняй дела только по словам хозяйки: «сделала», «перенеси», «добавь». Не отмечай выполненным то, о чём она не сказала.
 - Буксующее дело (stuck) — повод расколоть, уменьшить, отпустить или свериться с «хочу / надо» и «чья обязанность», а не напомнить ещё раз.
 - Чудовища (dread 3) сами в план не лезут: предлагай их только когда хозяйка готова.

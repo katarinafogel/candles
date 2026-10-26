@@ -33,6 +33,7 @@ export const defaultMeta: GrimoireMeta = {
   zones: ['кухня', 'ванная', 'спальня', 'шкаф', 'балкон', 'мастерская'],
   tagColors: {},
   frogPostpones: 3,
+  tone: { praise: 'normal', motion: 'soft' },
   emotions: ['тревога', 'радость', 'усталость', 'злость', 'спокойствие', 'грусть', 'вдохновение'],
   factors: ['сон', 'работа', 'люди', 'погода', 'тело', 'деньги'],
   sabbatNotes: {},
@@ -74,6 +75,7 @@ export function migrateGrimoire(input: Partial<GrimoireState> | undefined): Grim
       ...m,
       coins: { ...defaultCoinRules, ...m.coins },
       planLimit: { ...defaultMeta.planLimit, ...m.planLimit },
+      tone: { ...defaultMeta.tone, ...m.tone },
       nav: { ...defaultMeta.nav, ...m.nav },
     },
   }
@@ -92,6 +94,13 @@ const isOpen = (t: Task) => t.status !== 'done' && t.status !== 'cancelled'
 function frogUp(s: S, t: Task) {
   if (!isOpen(t) || t.frog === 'auto' || t.frog === 'manual') return
   if ((t.frog !== 'off' && t.dread === 3) || (t.postponeCount ?? 0) >= s.meta.frogPostpones) t.frog = 'auto'
+}
+
+/** Does `from` wait for `target`, directly or down a chain of «ждёт другое дело»? */
+function waitsFor(s: S, from: string, target: string, seen = new Set<string>()): boolean {
+  if (seen.has(from)) return false
+  seen.add(from)
+  return (s.tasks[from]?.blockedBy ?? []).some((b) => b === target || waitsFor(s, b, target, seen))
 }
 
 /** One more postponement for the frog count. */
@@ -306,6 +315,22 @@ const slice = createSlice({
         syncProject(s, t.projectId, at, dayKey(new Date(at), s.meta.dayBoundaryHour))
       }
     },
+    /**
+     * «Ждёт другое дело» by hand: `id` waits until `blockerId` is closed (or stops waiting). A link that
+     * would close a circle (the blocker already waits for this deed, directly or down a chain) is ignored.
+     */
+    linkBlock(s, a: PayloadAction<{ id: string; blockerId: string; on: boolean }>) {
+      const { id, blockerId, on } = a.payload
+      const t = s.tasks[id]
+      if (!t || !s.tasks[blockerId] || id === blockerId) return
+      if (!on) {
+        t.blockedBy = (t.blockedBy ?? []).filter((x) => x !== blockerId)
+        if (!t.blockedBy.length) delete t.blockedBy
+        return
+      }
+      if (t.blockedBy?.includes(blockerId) || waitsFor(s, blockerId, id)) return
+      t.blockedBy = [...(t.blockedBy ?? []), blockerId]
+    },
     /** The order of deeds inside a book, as dragged. */
     reorderTasks(s, a: PayloadAction<string[]>) {
       a.payload.forEach((id, i) => {
@@ -427,6 +452,7 @@ const slice = createSlice({
       if (a.payload.day) {
         t.doOn = a.payload.day
         t.slot = a.payload.slot ?? t.slot ?? 'extra'
+        delete t.later
         if (t.status === 'waiting') t.status = 'open'
       } else {
         delete t.doOn
@@ -463,6 +489,24 @@ const slice = createSlice({
           countPostpone(s, t)
         }
       }
+    },
+    /**
+     * «Чистый лист» after a long absence: every leftover goes into one «разобрать потом» pack in the
+     * backlog — not a postponement, no frog counting, no shame — and the morning review is closed.
+     */
+    clearSlate(s, a: PayloadAction<{ ids: string[]; day: DayKey }>) {
+      for (const id of a.payload.ids) {
+        const t = s.tasks[id]
+        if (!t || !isOpen(t)) continue
+        delete t.doOn
+        t.later = a.payload.day
+      }
+      s.meta.reviewedDay = a.payload.day
+      s.meta.welcomedDay = a.payload.day
+    },
+    /** The «разобрать потом» pack opened: its deeds become ordinary backlog. */
+    unpackLater(s, a: PayloadAction<string[]>) {
+      for (const id of a.payload) if (s.tasks[id]) delete s.tasks[id].later
     },
     markReviewed(s, a: PayloadAction<DayKey>) {
       s.meta.reviewedDay = a.payload

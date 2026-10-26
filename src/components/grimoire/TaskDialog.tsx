@@ -2,7 +2,7 @@
 // done, part done, start a little, postpone with a reason, waiting, «потянуло за собой», split, let go.
 import { Box, Button, Flex, HStack, Input, Separator, Stack, Text, Wrap } from '@chakra-ui/react'
 import { useState } from 'react'
-import { LuChevronDown, LuChevronUp } from 'react-icons/lu'
+import { LuChevronDown, LuChevronUp, LuLink, LuX } from 'react-icons/lu'
 import { cancel, complete, reopen, toBacklog, useToday, withUndo } from '../../grimoire/act'
 import { baseCoins, isFrog, taskCoins } from '../../grimoire/coins'
 import { addDays, daysBetween, humanDay } from '../../grimoire/days'
@@ -22,12 +22,12 @@ import { chainOf, isOpenTask, isStuck, stepsOf, words } from '../../grimoire/sel
 import type { PostponeReason, Task, TaskOwnerKind, TaskSlot, Want } from '../../grimoire/types'
 import { store, useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
-import { Chips, confirmAction, Field, Modal, NumInput, Select, TextArea, TextInput } from '../ui'
+import { Check, Chips, confirmAction, Field, Modal, NumInput, Select, TextArea, TextInput } from '../ui'
 import { FrogIcon, MarkPicker } from './Marks'
 import { usePlanGuard } from './PlanGuard'
 import { TagInput } from './TagInput'
 
-type Mode = 'edit' | 'postpone' | 'spawn' | 'split' | 'partial' | 'wait'
+type Mode = 'edit' | 'postpone' | 'spawn' | 'split' | 'partial' | 'wait' | 'block'
 
 const lines = (s: string) => s.split('\n').map((x) => x.trim()).filter(Boolean)
 
@@ -49,17 +49,34 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
   const steps = stepsOf(g, live.id)
   const chain = chainOf(g, live.id)
   const parent = live.parentId ? g.tasks[live.parentId] : undefined
+  // «Ждёт другое дело»: what this deed waits for, what waits for it, and what it could wait for
+  // (open deeds, not rituals, not already linked, not those that wait for it — that would be a circle).
+  const waitsOn = (live.blockedBy ?? []).map((id) => g.tasks[id]).filter(Boolean)
+  const holds = Object.values(g.tasks).filter((x) => x.blockedBy?.includes(live.id))
+  const blockCandidates = Object.values(g.tasks)
+    .filter((x) => x.id !== live.id && !x.habitId && isOpenTask(x) && !live.blockedBy?.includes(x.id) && !holds.some((h) => h.id === x.id))
+    .sort((a, b) => (a.doOn ?? '9999').localeCompare(b.doOn ?? '9999') || a.title.localeCompare(b.title, 'ru'))
   const origin = live.spawnedFrom ? g.tasks[live.spawnedFrom] : undefined
   const coins = taskCoins(t, today, g.meta.coins)
 
-  // The frog fields change through their own buttons while the card is open; the form never writes them back.
+  // The frog fields and the «ждёт» links change through their own buttons while the card is open;
+  // the form never writes them back.
   const edits = () => {
-    const { frog: _f, postponeCount: _c, eatOn: _e, ...rest } = t
+    const { frog: _f, postponeCount: _c, eatOn: _e, blockedBy: _b, ...rest } = t
     return rest
   }
   function save() {
-    dispatch(A.updateTask({ ...edits(), title: t.title.trim() || live.title }))
-    onClose()
+    const write = () => {
+      dispatch(A.updateTask({ ...edits(), title: t.title.trim() || live.title }))
+      onClose()
+    }
+    // Moved onto today, into another slot, or made harder while on today: the plan may be full.
+    const wasToday = live.doOn === today && isOpenTask(live)
+    const slotNow = t.slot ?? 'extra'
+    const extraStars = wasToday ? Math.max(0, t.stars - live.stars) : t.stars
+    if (t.doOn === today && !live.habitId && (!wasToday || slotNow !== (live.slot ?? 'extra') || extraStars > 0))
+      guard(slotNow, write, { stars: extraStars, self: live.id, starsOnly: wasToday && slotNow === (live.slot ?? 'extra') })
+    else write()
   }
   const [guard, guardDialog] = usePlanGuard()
   // Books to put the deed in: those being read, and the one it is in already, whatever its state.
@@ -155,6 +172,30 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
         </Stack>
       )}
 
+      {mode === 'block' && (
+        <Stack gap="3">
+          <Text fontSize="sm" color="fg.muted">
+            «{live.title}» подождёт выбранное дело: до его закрытия в план не встанет, а на карточке будет видно, чего ждёт.
+          </Text>
+          <TextInput value={text} onChange={setText} placeholder="найти дело" />
+          <Stack gap="1" maxH="50vh" overflowY="auto">
+            {blockCandidates
+              .filter((x) => !text.trim() || x.title.toLowerCase().includes(text.trim().toLowerCase()))
+              .slice(0, 30)
+              .map((x) => (
+                <Flex key={x.id} as="button" textAlign="left" align="center" gap="2" px="2" py="2" borderRadius="l2" _hover={{ bg: 'bg.muted' }} onClick={() => {
+                  dispatch(A.linkBlock({ id: live.id, blockerId: x.id, on: true }))
+                  setMode('edit')
+                }}>
+                  <Text fontSize="sm" flex="1">{x.title}</Text>
+                  {x.doOn && <Text fontSize="xs" color="fg.subtle">{humanDay(x.doOn, today)}</Text>}
+                </Flex>
+              ))}
+            {!blockCandidates.length && <Text fontSize="sm" color="fg.subtle">Нет открытых дел, которые можно ждать.</Text>}
+          </Stack>
+        </Stack>
+      )}
+
       {mode === 'split' && (
         <Stack gap="4">
           <Text fontSize="sm" color="fg.muted">
@@ -178,7 +219,10 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
         <Stack gap="4">
           {open && (
             <Wrap gap="2">
-              <Button size="sm" onClick={() => act(() => complete(t))}>
+              <Button size="sm" onClick={(e) => {
+                const from = e.currentTarget
+                act(() => complete(t, false, from))
+              }}>
                 Сделано · +{coins.total}
               </Button>
               <Button size="sm" variant="outline" onClick={() => setMode('partial')}>
@@ -190,7 +234,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
                 </Button>
               )}
               {live.doOn !== today && (
-                <Button size="sm" variant="outline" onClick={() => guard(t.slot ?? 'extra', () => act(() => withUndo('В плане на сегодня', () => dispatch(A.planTask({ id: live.id, day: today, slot: t.slot })))))}>
+                <Button size="sm" variant="outline" onClick={() => guard(t.slot ?? 'extra', () => act(() => withUndo('В плане на сегодня', () => dispatch(A.planTask({ id: live.id, day: today, slot: t.slot })))), { stars: t.stars, self: live.id })}>
                   На сегодня
                 </Button>
               )}
@@ -256,7 +300,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
                     Не сегодня
                   </Button>
                 ) : (
-                  <Button size="xs" colorPalette="green" onClick={() => guard(live.doOn === today ? undefined : (t.slot ?? 'main'), () => act(() => dispatch(A.eatFrog({ id: live.id, day: today }))))}>
+                  <Button size="xs" colorPalette="green" onClick={() => guard(live.doOn === today ? undefined : (t.slot ?? 'main'), () => act(() => dispatch(A.eatFrog({ id: live.id, day: today }))), { stars: t.stars, self: live.id })}>
                     Съесть сегодня
                   </Button>
                 )}
@@ -366,6 +410,9 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
                   <NumInput value={t.extraCoins} onChange={(v) => set({ extraCoins: v })} />
                 </Field>
               </HStack>
+              <Check checked={!!t.evenInNav} onChange={(v) => set({ evenInNav: v || undefined })}>
+                Напоминать даже в нави
+              </Check>
               <Field label="Повтор" helper="для бытовых дел без трекера: сделала — дело вернётся само">
                 <Chips
                   value={t.repeat?.kind}
@@ -415,11 +462,34 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
                 <Button size="xs" variant="outline" onClick={() => { setText(''); setTo(addDays(today, 3)); setMode('wait') }}>
                   Ждёт ответа
                 </Button>
+                <Button size="xs" variant="outline" onClick={() => { setText(''); setMode('block') }}>
+                  Ждёт другое дело…
+                </Button>
                 <Button size="xs" variant="ghost" onClick={() => act(() => cancel(live))}>
                   Отпустить как ненужное
                 </Button>
               </Wrap>
             </>
+          )}
+
+          {(waitsOn.length > 0 || holds.length > 0) && (
+            <Stack gap="1.5" fontSize="sm">
+              {waitsOn.map((x) => (
+                <HStack key={x.id} gap="2">
+                  <Box color="fg.subtle" display="inline-flex">
+                    <LuLink />
+                  </Box>
+                  <Text flex="1" color={isOpenTask(x) ? 'fg' : 'fg.subtle'}>
+                    Ждёт: {x.title}
+                    {isOpenTask(x) ? '' : ' (уже закрыто)'}
+                  </Text>
+                  <Button size="2xs" variant="ghost" aria-label="Больше не ждать" onClick={() => dispatch(A.linkBlock({ id: live.id, blockerId: x.id, on: false }))}>
+                    <LuX />
+                  </Button>
+                </HStack>
+              ))}
+              {holds.length > 0 && <Text color="fg.muted">Держит: {holds.map((x) => x.title).join(', ')}</Text>}
+            </Stack>
           )}
 
           {steps.length > 0 && (

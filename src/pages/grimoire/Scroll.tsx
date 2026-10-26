@@ -10,9 +10,9 @@ import { cardColumns, TaskCard } from '../../components/grimoire/TaskCard'
 import { Empty, Modal, PageHeader, Section } from '../../components/ui'
 import { cancel, toBacklog, useToday, withUndo } from '../../grimoire/act'
 import { dayCoins } from '../../grimoire/coins'
-import { addDays, days, humanDay } from '../../grimoire/days'
+import { addDays, dayKey, days, daysBetween, humanDay } from '../../grimoire/days'
 import { slotLabel } from '../../grimoire/labels'
-import { backlog, dayPlan, dayStars, deadlinesSoon, isBlocked, joysAhead, toReview, words } from '../../grimoire/selectors'
+import { backlog, dayPlan, dayStars, deadlinesSoon, evenInNav, isBlocked, joysAhead, toReview, words } from '../../grimoire/selectors'
 import type { Task, TaskSlot } from '../../grimoire/types'
 import { moonPhase, moonPhaseNames, sabbats, wheelNow } from '../../grimoire/wheel'
 import { useAppDispatch, useAppSelector } from '../../store'
@@ -24,6 +24,49 @@ const weekdayLong = ['воскресенье', 'понедельник', 'вто
 function dateTitle(day: string) {
   const d = new Date(`${day}T12:00:00Z`)
   return `${weekdayLong[d.getUTCDay()]}, ${humanDay(day, '0000-01-01')}`
+}
+
+/**
+ * Welcome back after the навь or a few days away: no wall of overdue deeds. «Чистый лист» puts every
+ * leftover into one «разобрать потом» pack in the backlog; «по одному» opens the usual morning review.
+ */
+function Welcome({ items, today, navDays, away }: { items: Task[]; today: string; navDays?: number; away: number }) {
+  const dispatch = useAppDispatch()
+  const welcomed = () => dispatch(A.updateMeta({ welcomedDay: today }))
+  return (
+    <Section>
+      <Stack gap="3" align="center" textAlign="center" py="2">
+        <Box color="ember.200">
+          <Crescent size={34} />
+        </Box>
+        <Text fontFamily="heading" fontSize="2xl" color="ember.100">
+          С возвращением
+        </Text>
+        <Text fontSize="sm" color="fg.muted" maxW="440px">
+          {navDays != null ? `Ты была в нави ${days(Math.max(1, navDays))}. ` : `Тебя не было ${days(away)}. `}
+          {items.length
+            ? `С прошлых дней осталось ${items.length}. Ничего не горит: можно начать с чистого листа, а хвосты разобрать потом.`
+            : 'Хвостов нет, можно просто начать день.'}
+        </Text>
+        <Flex gap="2" wrap="wrap" justify="center">
+          {items.length > 0 ? (
+            <>
+              <Button size="sm" onClick={() => withUndo('Чистый лист: хвосты в «разобрать потом»', () => dispatch(A.clearSlate({ ids: items.map((t) => t.id), day: today })))}>
+                Чистый лист
+              </Button>
+              <Button size="sm" variant="outline" onClick={welcomed}>
+                Разобрать по одному
+              </Button>
+            </>
+          ) : (
+            <Button size="sm" onClick={welcomed}>
+              Начать день
+            </Button>
+          )}
+        </Flex>
+      </Stack>
+    </Section>
+  )
 }
 
 /** One leftover at a time: keep, shrink, put off, let go — or everything to the backlog. */
@@ -56,10 +99,15 @@ function MorningReview({ items, today, open }: { items: Task[]; today: string; o
         <Button size="sm" variant="ghost" onClick={() => cancel(t)}>
           Отменить
         </Button>
+        {items.length >= 5 && (
+          <Button size="sm" variant="ghost" ml="auto" onClick={() => withUndo('Чистый лист: хвосты в «разобрать потом»', () => dispatch(A.clearSlate({ ids: items.map((x) => x.id), day: today })))}>
+            Чистый лист
+          </Button>
+        )}
         <Button
           size="sm"
           variant="ghost"
-          ml="auto"
+          ml={items.length >= 5 ? undefined : 'auto'}
           onClick={() =>
             withUndo('Всё в бэклоге', () => {
               dispatch(A.reviewToBacklog(items.map((x) => x.id)))
@@ -93,10 +141,14 @@ function PickFromBacklog({ onClose, today, slot }: { onClose: () => void; today:
         <Stack gap="1">
           {list.map((t) => (
             <Flex key={t.id} align="center" gap="3" py="2" px="2" borderRadius="l2" _hover={{ bg: 'bg.muted' }} cursor="pointer" onClick={() => {
-              guard(slot, () => {
-                dispatch(A.planTask({ id: t.id, day: today, slot }))
-                onClose()
-              })
+              guard(
+                slot,
+                () => {
+                  dispatch(A.planTask({ id: t.id, day: today, slot }))
+                  onClose()
+                },
+                { stars: t.stars, self: t.id },
+              )
             }}>
               <Box flex="1">
                 <Text fontSize="sm">{t.title}</Text>
@@ -187,9 +239,15 @@ export default function Scroll() {
   const light = (t: Task) => t.stars === 1 || t.status === 'done'
   const plan = survival ? { ...fullPlan, extra: fullPlan.extra.filter(light), optional: fullPlan.optional.filter(light) } : fullPlan
   const review = meta.reviewedDay === today || meta.nav.active ? [] : toReview(g, today)
+  // Back from the навь today, or away for 3+ days: a welcome first, until it is answered.
+  const lastNav = meta.nav.history[meta.nav.history.length - 1]
+  const backFromNav = !!lastNav?.to && dayKey(new Date(lastNav.to), meta.dayBoundaryHour) === today
+  const navDays = lastNav?.to ? daysBetween(dayKey(new Date(lastNav.from), meta.dayBoundaryHour), today) : undefined
+  const welcome = meta.nav.active || meta.welcomedDay === today ? undefined : backFromNav ? 'nav' : (meta.awayDays ?? 0) >= 3 ? 'away' : undefined
   const joys = joysAhead(g, today).slice(0, 3)
   const wheel = wheelNow(today, meta.hemisphere)
   const soon = deadlinesSoon(g, today, addDays(today, 3)).filter((t) => t.doOn !== today)
+  const navReminders = meta.nav.active ? evenInNav(g, addDays(today, 3)) : []
   const coinsToday = dayCoins(g.coinTxs, today)
   const openToday = plan.all.filter((t) => t.status !== 'done')
   const wishesNear = Object.values(g.wishes).filter((x) => x.status === 'dream' && x.sabbat === wheel.current.sabbat).length
@@ -210,10 +268,19 @@ export default function Scroll() {
             <Button onClick={() => dispatch(A.setNav({ active: false }))}>Вернуться в явь</Button>
           </Stack>
         </Section>
-        {soon.length > 0 && (
+        {navReminders.length > 0 && (
+          <Section title="Даже в нави">
+            <SimpleGrid gridTemplateColumns={cardColumns} gap={{ base: '3', md: '4' }}>
+              {navReminders.map((t) => (
+                <TaskCard key={t.id} t={t} today={today} onOpen={open} compact />
+              ))}
+            </SimpleGrid>
+          </Section>
+        )}
+        {soon.filter((t) => !t.evenInNav).length > 0 && (
           <Section title="Реальные сроки">
             <SimpleGrid gridTemplateColumns={cardColumns} gap={{ base: '3', md: '4' }}>
-              {soon.map((t) => (
+              {soon.filter((t) => !t.evenInNav).map((t) => (
                 <TaskCard key={t.id} t={t} today={today} onOpen={open} compact />
               ))}
             </SimpleGrid>
@@ -231,7 +298,11 @@ export default function Scroll() {
         </Text>
       </PageHeader>
 
-      {review.length > 0 && <MorningReview items={review} today={today} open={open} />}
+      {welcome ? (
+        <Welcome items={review} today={today} away={meta.awayDays ?? 0} navDays={welcome === 'nav' ? navDays : undefined} />
+      ) : (
+        review.length > 0 && <MorningReview items={review} today={today} open={open} />
+      )}
 
       {lowEnergy && (
         <Flex mb="4" p="3" borderRadius="l2" bg="bg.muted" align="center" gap="3" wrap="wrap">

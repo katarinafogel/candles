@@ -65,11 +65,15 @@ export function QuickAdd({ planToday, autoFocus, onAdded, fields: extra }: { pla
       ...extra,
     }
     // A full plan asks what to move first; the line stays until the deed is really added.
-    guard(doOn === today ? slot : undefined, () => {
-      dispatch(A.addTask({ fields }))
-      setLine('')
-      onAdded?.()
-    })
+    guard(
+      doOn === today ? slot : undefined,
+      () => {
+        dispatch(A.addTask({ fields }))
+        setLine('')
+        onAdded?.()
+      },
+      { stars: p.stars },
+    )
   }
 
   const shown = line.trim().length > 0

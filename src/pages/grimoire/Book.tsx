@@ -1,5 +1,5 @@
 // The book of deeds: every task with filters by state, tags, zone and deadline.
-import { Box, Flex, HStack, Input, SimpleGrid, Stack, Tabs, Text } from '@chakra-ui/react'
+import { Box, Button, Flex, HStack, Input, SimpleGrid, Stack, Tabs, Text } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { QuickAdd } from '../../components/grimoire/QuickAdd'
@@ -9,7 +9,8 @@ import { Chips, Empty, PageHeader, Section, Select } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
 import { allTags, backlog, isBlocked, isOpenTask, isStuck, isWaiting, words } from '../../grimoire/selectors'
 import type { Task } from '../../grimoire/types'
-import { useAppSelector } from '../../store'
+import { useAppDispatch, useAppSelector } from '../../store'
+import { grimoireActions as A } from '../../store/grimoireSlice'
 
 type View = 'backlog' | 'planned' | 'waiting' | 'stuck' | 'done' | 'all'
 type Sort = 'due' | 'created' | 'dread' | 'stars'
@@ -31,6 +32,7 @@ const sorters: Record<Sort, (a: Task, b: Task) => number> = {
 }
 
 export default function Book() {
+  const dispatch = useAppDispatch()
   const g = useAppSelector((s) => s.grimoire)
   const today = useToday()
   const { open, dialog } = useTaskDialog()
@@ -75,6 +77,9 @@ export default function Book() {
     return view === 'done' ? xs : [...xs].sort((a, b) => Number(a.status === 'done') - Number(b.status === 'done') || sorters[sort](a, b))
   }, [g, view, q, tags, zone, sort, today])
 
+  // «Чистый лист» leftovers stand apart at the top of the backlog until planned or unpacked.
+  const packed = view === 'backlog' ? list.filter((t) => t.later) : []
+  const rest = view === 'backlog' ? list.filter((t) => !t.later) : list
   const tagList = allTags(g)
   return (
     <>
@@ -115,13 +120,30 @@ export default function Book() {
           </Flex>
         )}
       </Stack>
-      {list.length ? (
+      {packed.length > 0 && (
+        <Box mb="5" p="3" borderRadius="l3" borderWidth="1px" borderStyle="dashed" borderColor="border.emphasized">
+          <Flex align="center" justify="space-between" gap="2" mb="3" wrap="wrap">
+            <Text fontFamily="heading" fontSize="lg" color="ember.100">
+              Разобрать потом · {packed.length}
+            </Text>
+            <Button size="xs" variant="ghost" onClick={() => dispatch(A.unpackLater(packed.map((t) => t.id)))}>
+              Распаковать
+            </Button>
+          </Flex>
+          <SimpleGrid gridTemplateColumns={cardColumns} gap={{ base: '3', md: '4' }}>
+            {packed.map((t) => (
+              <TaskCard key={t.id} t={t} today={today} onOpen={open} />
+            ))}
+          </SimpleGrid>
+        </Box>
+      )}
+      {rest.length ? (
         <SimpleGrid gridTemplateColumns={cardColumns} gap={{ base: '3', md: '4' }}>
-          {list.map((t) => (
+          {rest.map((t) => (
             <TaskCard key={t.id} t={t} today={today} onOpen={open} />
           ))}
         </SimpleGrid>
-      ) : (
+      ) : packed.length ? null : (
         <Empty>{view === 'backlog' ? 'Бэклог пуст — и это нормально.' : view === 'stuck' ? 'Ничего не буксует.' : 'Здесь пусто.'}</Empty>
       )}
       {dialog}
