@@ -82,13 +82,13 @@ export function MarkPicker({ kind, value, onChange }: { kind: 'stars' | 'dread';
 }
 
 /** A real deadline, said calmly: «до четверга»; close ones get a soft candle tint, never red. */
-export function Deadline({ dueAt, today }: { dueAt?: string; today: DayKey }) {
+export function Deadline({ dueAt, today, size = 'xs' }: { dueAt?: string; today: DayKey; size?: '2xs' | 'xs' }) {
   const d = dueDay(dueAt)
   if (!d) return null
   const close = d <= today
   const time = dueAt && dueAt.length > 10 ? ` ${dueAt.slice(11, 16)}` : ''
   return (
-    <Text as="span" fontSize="xs" color={close ? 'var(--star-on, var(--chakra-colors-ember-200))' : 'fg.muted'} whiteSpace="nowrap">
+    <Text as="span" fontSize={size} color={close ? 'var(--star-on, var(--chakra-colors-ember-200))' : 'fg.muted'} whiteSpace="nowrap">
       до {humanDay(d, today)}
       {time}
     </Text>

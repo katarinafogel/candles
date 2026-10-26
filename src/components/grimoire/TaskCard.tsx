@@ -4,9 +4,10 @@
 // on it); postponements and dread stay inside the deed, «съесть сегодня» is set there too.
 import { Box, Flex, HStack, Text } from '@chakra-ui/react'
 import { useRef, useState } from 'react'
-import { LuFlame, LuHourglass, LuLink, LuMoon, LuSparkles, LuSun } from 'react-icons/lu'
+import { LuCalendarClock, LuFlame, LuHourglass, LuLink, LuMoon, LuSparkles, LuSun } from 'react-icons/lu'
 import { complete, reopen, toBacklog } from '../../grimoire/act'
 import { isFrog, taskCoins } from '../../grimoire/coins'
+import { dueDay } from '../../grimoire/days'
 import { cardTone, isBlocked, stepsOf } from '../../grimoire/selectors'
 import type { DayKey, Task } from '../../grimoire/types'
 import { useAppSelector } from '../../store'
@@ -125,9 +126,22 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
           {sourceIcon[t.source] && <Box display="inline-flex">{sourceIcon[t.source]}</Box>}
         </HStack>
         {!done && t.dueAt && (
-          <Text>
-            <Deadline dueAt={t.dueAt} today={today} />
-          </Text>
+          // The real deadline as a pill, so it is seen at a glance; due today or past — in the star colour.
+          <HStack
+            alignSelf="center"
+            gap="1"
+            px="2"
+            py="0.5"
+            mt="0.5"
+            borderRadius="full"
+            fontSize="2xs"
+            lineHeight="1.2"
+            title="дедлайн"
+            bg={`color-mix(in srgb, ${dueDay(t.dueAt)! <= today ? 'var(--star-on) 28%' : 'var(--card-fg) 14%'}, var(--card-solid))`}
+          >
+            <LuCalendarClock />
+            <Deadline dueAt={t.dueAt} today={today} size="2xs" />
+          </HStack>
         )}
         {eating && <Text color="var(--star-on)">съесть сегодня</Text>}
         {t.status === 'partial' && <Text lineClamp={1}>часть сделана{t.partialNote ? `: ${t.partialNote}` : ''}</Text>}
