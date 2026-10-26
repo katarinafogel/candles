@@ -12,6 +12,8 @@ export interface LocalState {
   ownerId?: string | null
   email?: string
   profile?: Profile | null
+  /** Roles from user_roles (witch opens the grimoire, admin hands out roles). Cached for offline start. */
+  roles?: string[]
   sync: {
     pending: number
     syncing: boolean
@@ -33,6 +35,9 @@ const slice = createSlice({
     },
     setProfile(s, a: PayloadAction<Profile | null>) {
       s.profile = a.payload
+    },
+    setRoles(s, a: PayloadAction<string[]>) {
+      s.roles = a.payload
     },
     setSync(s, a: PayloadAction<Partial<LocalState['sync']>>) {
       s.sync = { ...(s.sync ?? { pending: 0, syncing: false }), ...a.payload }
