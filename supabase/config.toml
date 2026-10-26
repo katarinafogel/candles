@@ -1,0 +1,4 @@
+# Only what differs from the defaults. The agent's MCP server checks its own key, so Supabase must
+# not demand a user JWT for it.
+[functions.grimoire-mcp]
+verify_jwt = false

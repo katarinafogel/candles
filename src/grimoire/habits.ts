@@ -2,8 +2,8 @@
 // ticking the task is the mark in the tracker. Streaks follow the schedule, not calendar days:
 // one skip a week is forgiven («оберег»), extra shields can be bought, and days in «навь» freeze
 // the streak instead of breaking it.
-import { addDays, daysBetween, weekStart, weekday } from './days'
-import type { DayKey, GrimoireMeta, Habit, HabitLog } from './types'
+import { addDays, daysBetween, weekStart, weekday } from './days.ts'
+import type { DayKey, GrimoireMeta, Habit, HabitLog } from './types.ts'
 
 export const habitLogId = (habitId: string, day: DayKey) => `${habitId}:${day}`
 /** One task per habit and day on every device, so two phones never create a duplicate. */

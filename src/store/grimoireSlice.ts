@@ -2,9 +2,9 @@
 // only stores the result. Every action that depends on «now» carries the moment and the grimoire day
 // in its payload (filled in by `prepare`), so the reducers stay pure and testable.
 import { createSlice, nanoid, type PayloadAction } from '@reduxjs/toolkit'
-import { defaultCoinRules, taskCoins } from '../grimoire/coins'
-import { dayKey, nextRepeat } from '../grimoire/days'
-import { habitLogId, habitTaskId, isDone, isScheduled, navTest, newMilestones, streak } from '../grimoire/habits'
+import { defaultCoinRules, taskCoins } from '../grimoire/coins.ts'
+import { dayKey, nextRepeat } from '../grimoire/days.ts'
+import { habitLogId, habitTaskId, isDone, isScheduled, navTest, newMilestones, streak } from '../grimoire/habits.ts'
 import type {
   CoinTx,
   DayKey,
@@ -18,7 +18,7 @@ import type {
   Task,
   TaskSlot,
   WheelPractice,
-} from '../grimoire/types'
+} from '../grimoire/types.ts'
 
 export const defaultMeta: GrimoireMeta = {
   coins: defaultCoinRules,

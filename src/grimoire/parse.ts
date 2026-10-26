@@ -4,8 +4,8 @@
 // Tokens: * stars (1–3), ☠ dread (0–3), #tag, !deadline (пн…вс, сегодня, завтра, послезавтра,
 // 12.11, 12.11.2026, 2026-11-12), @person, +радость, +главное / +доп / +необяз (slot, puts it in today's
 // plan), +сегодня / +завтра (the day to do it).
-import { addDays, weekday } from './days'
-import type { DayKey, TaskSlot, TaskType } from './types'
+import { addDays, weekday } from './days.ts'
+import type { DayKey, TaskSlot, TaskType } from './types.ts'
 
 export interface ParsedTask {
   title: string

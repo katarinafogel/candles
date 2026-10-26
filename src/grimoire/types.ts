@@ -237,6 +237,8 @@ export interface GrimoireMeta {
   coins: CoinRules
   /** Hour (0–23) when «today» ends, for owls: 4 means the day lasts until 4:00. */
   dayBoundaryHour: number
+  /** The owner's time zone (IANA), saved by the app, so the agent counts days the same way. */
+  timeZone?: string
   hemisphere: 'north' | 'south'
   planLimit: { main: number; extra: number; optional: number }
   streaksOn: boolean

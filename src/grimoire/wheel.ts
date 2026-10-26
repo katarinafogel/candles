@@ -1,8 +1,8 @@
 // Wheel of the year: eight sabbats split the year into eight segments. Solstices and equinoxes are
 // computed astronomically (Meeus, «Astronomical Algorithms», ch. 27, accurate to minutes), the
 // cross-quarter days are fixed dates. In the southern hemisphere the wheel turns half a year.
-import { addDays, dayKey, daysBetween } from './days'
-import type { DayKey, Sabbat, WheelPractice } from './types'
+import { addDays, dayKey, daysBetween } from './days.ts'
+import type { DayKey, Sabbat, WheelPractice } from './types.ts'
 
 export const sabbatOrder: Sabbat[] = ['samhain', 'yule', 'imbolc', 'ostara', 'beltane', 'litha', 'lughnasadh', 'mabon']
 

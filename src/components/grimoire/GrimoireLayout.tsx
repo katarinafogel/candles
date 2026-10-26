@@ -72,11 +72,15 @@ function useDailyChores() {
   // Before the server copy arrives the device may hold stale tasks; writing on top of them could
   // reopen a task already ticked on another phone. Offline there is nothing newer to wait for.
   const ready = !!loadedAt || !navigator.onLine
+  const timeZone = useAppSelector((s) => s.grimoire.meta.timeZone)
   useEffect(() => {
     if (!ready) return
+    // The agent's server counts days in this zone.
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    if (tz && tz !== timeZone) dispatch(A.updateMeta({ timeZone: tz }))
     if (generatedFor !== today && !navActive) dispatch(A.generateHabitTasks())
     if (!seeded) dispatch(A.seedPractices(builtInPractices))
-  }, [ready, today, generatedFor, seeded, navActive, dispatch])
+  }, [ready, today, generatedFor, seeded, navActive, timeZone, dispatch])
 }
 
 export default function GrimoireLayout() {
