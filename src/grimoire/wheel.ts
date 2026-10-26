@@ -8,6 +8,8 @@ export const sabbatOrder: Sabbat[] = ['samhain', 'yule', 'imbolc', 'ostara', 'be
 
 export interface SabbatInfo {
   name: string
+  /** «подготовиться к Самайну». */
+  dative: string
   theme: string
   /** Sector color on the wheel, readable on the dark background. */
   color: string
@@ -15,14 +17,14 @@ export interface SabbatInfo {
 }
 
 export const sabbats: Record<Sabbat, SabbatInfo> = {
-  samhain: { name: 'Самайн', theme: 'Память предков, завершение, отпускание', color: '#9c5b3c', symbol: '🎃' },
-  yule: { name: 'Йоль', theme: 'Возвращение света, отдых, надежда', color: '#5f7f8f', symbol: '🕯' },
-  imbolc: { name: 'Имболк', theme: 'Пробуждение, очищение, первые намерения', color: '#b9b2a3', symbol: '🔥' },
-  ostara: { name: 'Остара', theme: 'Равновесие, начала, посев', color: '#8ea883', symbol: '🌱' },
-  beltane: { name: 'Белтейн', theme: 'Расцвет, страсть, творчество', color: '#b56a6a', symbol: '🌸' },
-  litha: { name: 'Лита', theme: 'Пик силы, солнце, изобилие', color: '#d9a441', symbol: '☀' },
-  lughnasadh: { name: 'Ламмас', theme: 'Первый урожай, благодарность за труд', color: '#c18a4a', symbol: '🌾' },
-  mabon: { name: 'Мабон', theme: 'Второй урожай, итоги, равновесие', color: '#8a6d4b', symbol: '🍂' },
+  samhain: { name: 'Самайн', dative: 'Самайну', theme: 'Память предков, завершение, отпускание', color: '#9c5b3c', symbol: '🎃' },
+  yule: { name: 'Йоль', dative: 'Йолю', theme: 'Возвращение света, отдых, надежда', color: '#5f7f8f', symbol: '🕯' },
+  imbolc: { name: 'Имболк', dative: 'Имболку', theme: 'Пробуждение, очищение, первые намерения', color: '#b9b2a3', symbol: '🔥' },
+  ostara: { name: 'Остара', dative: 'Остаре', theme: 'Равновесие, начала, посев', color: '#8ea883', symbol: '🌱' },
+  beltane: { name: 'Белтейн', dative: 'Белтейну', theme: 'Расцвет, страсть, творчество', color: '#b56a6a', symbol: '🌸' },
+  litha: { name: 'Лита', dative: 'Лите', theme: 'Пик силы, солнце, изобилие', color: '#d9a441', symbol: '☀' },
+  lughnasadh: { name: 'Ламмас', dative: 'Ламмасу', theme: 'Первый урожай, благодарность за труд', color: '#c18a4a', symbol: '🌾' },
+  mabon: { name: 'Мабон', dative: 'Мабону', theme: 'Второй урожай, итоги, равновесие', color: '#8a6d4b', symbol: '🍂' },
 }
 
 // Meeus table 27.C: periodic terms A, B, C.

@@ -401,7 +401,7 @@ const slice = createSlice({
         const { habit, at, day } = a.payload
         const id = habit.id ?? nanoid()
         const prev = s.habits[id]
-        const h: Habit = { shields: 0, ...prev, ...habit, id, createdAt: prev?.createdAt ?? habit.createdAt ?? at }
+        const h: Habit = { ...prev, ...habit, id, shields: habit.shields ?? prev?.shields ?? 0, createdAt: prev?.createdAt ?? habit.createdAt ?? at }
         s.habits[id] = h
         // Today's task follows the habit at once: created, renamed or dropped.
         const tid = habitTaskId(id, day)
