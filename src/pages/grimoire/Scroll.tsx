@@ -232,7 +232,7 @@ export default function Scroll() {
                 ✦ {t.title}
                 <Text as="span" color="fg.subtle">
                   {' '}
-                  · {humanDay(t.doOn ?? t.dueAt!.slice(0, 10), today)}
+                  · {humanDay(t.doOn ?? t.dueAt?.slice(0, 10) ?? today, today)}
                 </Text>
               </Text>
             ))
