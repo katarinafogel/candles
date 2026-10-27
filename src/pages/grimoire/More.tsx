@@ -76,6 +76,7 @@ export default function GrimoireMore() {
       <PageHeader title="Ещё" />
       <Stack gap="0" borderWidth="1px" borderColor="border" borderRadius="l3" bg="bg.subtle" overflow="hidden" mb="4">
         {[
+          { to: '/g/calendar', label: 'Календарь: луны, саббаты и эсбаты' },
           { to: '/g/projects', label: `${words(meta).projects}: полка проектов` },
           { to: '/g/mirror', label: 'Зеркало: дневник и настроение' },
           { to: '/g/wishes', label: 'Сундук желаний и зал славы' },

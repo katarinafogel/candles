@@ -2,7 +2,7 @@
 // fulfilled one moves to the hall of fame with the time it took «от мечты до яви».
 import { Box, Button, Flex, HStack, SimpleGrid, Stack, Tabs, Text } from '@chakra-ui/react'
 import { useState } from 'react'
-import { LuPlus } from 'react-icons/lu'
+import { LuExternalLink, LuPlus } from 'react-icons/lu'
 import { Crescent, Sparkle } from '../../components/Magic'
 import { confirmAction, Empty, Field, Modal, notify, NumInput, PageHeader, TextArea, TextInput } from '../../components/ui'
 import { daysBetween, plural } from '../../grimoire/days'
@@ -76,6 +76,9 @@ function WishDialog({ wish, onClose }: { wish: Draft; onClose: () => void }) {
         <Field label="Описание">
           <TextArea value={w.description ?? ''} onChange={(v) => setW({ ...w, description: v || undefined })} />
         </Field>
+        <Field label="Ссылка" helper="магазин, место, пост — необязательно">
+          <TextInput value={w.url ?? ''} onChange={(v) => setW({ ...w, url: v.trim() || undefined })} placeholder="https://" />
+        </Field>
         <Field label="Примерная стоимость" helper="необязательно">
           <NumInput value={w.price} onChange={(v) => setW({ ...w, price: v })} suffix="₽" />
         </Field>
@@ -87,9 +90,60 @@ function WishDialog({ wish, onClose }: { wish: Draft; onClose: () => void }) {
   )
 }
 
+/** A link only when it is one: «ozon.ru/…» gets its https, anything else stays text in the dialog. */
+export function wishHref(url?: string) {
+  if (!url) return undefined
+  const u = /^https?:\/\//i.test(url) ? url : `https://${url}`
+  try {
+    return new URL(u).protocol.startsWith('http') ? u : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function WishLink({ url }: { url?: string }) {
+  const href = wishHref(url)
+  if (!href) return null
+  return (
+    <Box as="a" {...{ href, target: '_blank', rel: 'noopener noreferrer' }} display="inline-flex" alignItems="center" gap="1" fontSize="xs" color="purple.200" textDecoration="underline" mt="1" onClick={(e) => e.stopPropagation()}>
+      <LuExternalLink /> {new URL(href).hostname.replace(/^www\./, '')}
+    </Box>
+  )
+}
+
+/** «Сбылась»: a few words to keep with it in the hall of fame (or later, for one the deed fulfilled). */
+function FulfillDialog({ w, onClose }: { w: Wish; onClose: () => void }) {
+  const dispatch = useAppDispatch()
+  const done = w.status === 'fulfilled'
+  const [note, setNote] = useState(w.fulfilledNote ?? '')
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={done ? w.title : `Сбылась: ${w.title}`}
+      footer={
+        <Button
+          onClick={() => {
+            if (done) dispatch(A.upsertWish({ wish: { ...w, fulfilledNote: note.trim() || undefined } }))
+            else dispatch(A.fulfillWish({ id: w.id, note: note.trim() || undefined }))
+            onClose()
+          }}
+        >
+          {done ? 'Сохранить' : 'В зал славы'}
+        </Button>
+      }
+    >
+      <Field label="Пара слов" helper="как это было; можно оставить пустым">
+        <TextArea value={note} onChange={setNote} rows={4} placeholder="поехала одна, и это было лучшее лето" />
+      </Field>
+    </Modal>
+  )
+}
+
 function WishCard({ w, onEdit }: { w: Wish; onEdit: () => void }) {
   const dispatch = useAppDispatch()
   const task = useAppSelector((s) => (w.taskId ? s.grimoire.tasks[w.taskId] : undefined))
+  const [fulfilling, setFulfilling] = useState(false)
   return (
     <Box p="4" borderRadius="l3" borderWidth="1px" borderColor="purple.800" bg="bg.subtle" backgroundImage="radial-gradient(16rem 8rem at 100% 0%, rgba(147,112,170,.14), transparent 70%)">
       <Flex justify="space-between" gap="2" align="flex-start">
@@ -112,6 +166,7 @@ function WishCard({ w, onEdit }: { w: Wish; onEdit: () => void }) {
             {w.sabbat ? `к ${sabbats[w.sabbat].dative} · ` : ''}
             {`мечтаю ${span(w.createdAt, new Date().toISOString()) || 'с сегодняшнего дня'}`}
           </Text>
+          <WishLink url={w.url} />
         </Box>
       </Flex>
       <HStack gap="2" mt="3" wrap="wrap">
@@ -128,13 +183,14 @@ function WishCard({ w, onEdit }: { w: Wish; onEdit: () => void }) {
             в деле{task ? `: ${task.title}` : ''}
           </Text>
         )}
-        <Button size="xs" variant="outline" onClick={() => dispatch(A.fulfillWish({ id: w.id }))}>
+        <Button size="xs" variant="outline" onClick={() => setFulfilling(true)}>
           Сбылась
         </Button>
         <Button size="xs" variant="ghost" onClick={() => dispatch(A.releaseWish(w.id))}>
           Отпустить
         </Button>
       </HStack>
+      {fulfilling && <FulfillDialog w={w} onClose={() => setFulfilling(false)} />}
     </Box>
   )
 }
@@ -143,6 +199,7 @@ export default function Wishes() {
   const g = useAppSelector((s) => s.grimoire)
   const [tab, setTab] = useState<'chest' | 'hall'>('chest')
   const [edit, setEdit] = useState<Draft>()
+  const [words, setWords] = useState<Wish>()
   const all = Object.values(g.wishes)
   const dreams = all.filter((w) => w.status === 'dream' || w.status === 'inProgress').sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const fame = all.filter((w) => w.status === 'fulfilled').sort((a, b) => (b.fulfilledAt ?? '').localeCompare(a.fulfilledAt ?? ''))
@@ -193,11 +250,16 @@ export default function Wishes() {
                   <Text fontSize="xs" color="fg.muted" mt="1">
                     {new Date(w.createdAt).toLocaleDateString('ru')} → {w.fulfilledAt ? new Date(w.fulfilledAt).toLocaleDateString('ru') : '—'} · {w.fulfilledAt ? span(w.createdAt, w.fulfilledAt) || 'в тот же день' : ''}
                   </Text>
-                  {w.fulfilledNote && (
-                    <Text fontSize="sm" mt="2">
+                  {w.fulfilledNote ? (
+                    <Text fontSize="sm" mt="2" cursor="pointer" onClick={() => setWords(w)}>
                       {w.fulfilledNote}
                     </Text>
+                  ) : (
+                    <Button size="xs" variant="ghost" mt="2" onClick={() => setWords(w)}>
+                      Пара слов
+                    </Button>
                   )}
+                  <WishLink url={w.url} />
                 </Box>
               ))}
             </SimpleGrid>
@@ -207,6 +269,7 @@ export default function Wishes() {
         </>
       )}
       {edit && <WishDialog wish={edit} onClose={() => setEdit(undefined)} />}
+      {words && <FulfillDialog w={words} onClose={() => setWords(undefined)} />}
     </>
   )
 }

@@ -2,7 +2,6 @@
 // one-line adding and «на сегодня всё».
 import { Box, Button, Flex, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
-import { Link as RouterLink } from 'react-router-dom'
 import { Crescent } from '../../components/Magic'
 import { usePlanGuard } from '../../components/grimoire/PlanGuard'
 import { useTaskDialog } from '../../components/grimoire/TaskDialog'
@@ -13,8 +12,11 @@ import { dayCoins } from '../../grimoire/coins'
 import { addDays, dayKey, days, daysBetween, humanDay } from '../../grimoire/days'
 import { slotLabel } from '../../grimoire/labels'
 import { backlog, dayPlan, dayStars, deadlinesSoon, evenInNav, isBlocked, joysAhead, toReview, words } from '../../grimoire/selectors'
-import type { Task, TaskSlot } from '../../grimoire/types'
-import { moonPhase, moonPhaseNames, sabbats, wheelNow } from '../../grimoire/wheel'
+import type { Sabbat, Task, TaskSlot } from '../../grimoire/types'
+import { isFullMoon, moonPhase, moonPhaseNames, sabbats, wheelNow } from '../../grimoire/wheel'
+import { MoonIcon } from '../../components/grimoire/MoonIcon'
+import { WheelPick } from '../../components/grimoire/WheelPick'
+import { sabbatTag, SabbatNoteDialog } from './Wheel'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 import { Dread, StarMark, Stars } from '../../components/grimoire/Marks'
@@ -228,6 +230,8 @@ export default function Scroll() {
   const { open, dialog } = useTaskDialog()
   const [pick, setPick] = useState<TaskSlot>()
   const [survival, setSurvival] = useState(false)
+  const [wheelPick, setWheelPick] = useState(false)
+  const [noteFor, setNoteFor] = useState<Sabbat>()
   const meta = g.meta
   const w = words(meta)
   const fullPlan = dayPlan(g, today)
@@ -251,6 +255,18 @@ export default function Scroll() {
   const coinsToday = dayCoins(g.coinTxs, today)
   const openToday = plan.all.filter((t) => t.status !== 'done')
   const wishesNear = Object.values(g.wishes).filter((x) => x.status === 'dream' && x.sabbat === wheel.current.sabbat).length
+  // The coming sabbat shows up two weeks ahead; for three days after one, a word on how it went.
+  const sabbatSoon = wheel.daysToNext <= 14
+  const afterSabbat = daysBetween(wheel.current.day, today) <= 3
+  const noteOf = (sabbat: Sabbat, from: string) => Object.values(g.journal).some((e) => e.tags?.includes(sabbatTag(sabbat)) && e.day >= from)
+  const askNote = afterSabbat && !noteOf(wheel.current.sabbat, wheel.current.day)
+  // «Что ты писала в прошлый Самайн»: the latest entry about the same sabbat from an earlier turn.
+  const memoryFor = sabbatSoon ? wheel.next : afterSabbat ? wheel.current : undefined
+  const memory = memoryFor
+    ? Object.values(g.journal)
+        .filter((e) => e.text && e.tags?.includes(sabbatTag(memoryFor.sabbat)) && e.day < addDays(memoryFor.day, -30))
+        .sort((a, b) => b.day.localeCompare(a.day))[0]
+    : undefined
 
   if (meta.nav.active)
     return (
@@ -335,10 +351,20 @@ export default function Scroll() {
               Пока ничего. Добавь с «+радость».
             </Text>
           )}
-          <Text fontSize="sm" mt="1" color="fg.muted">
-            {sabbats[wheel.next.sabbat].symbol} {sabbats[wheel.next.sabbat].name} через {days(wheel.daysToNext)}
-            {wishesNear ? ` · хотелок отрезка: ${wishesNear}` : ''}
-          </Text>
+          {sabbatSoon && (
+            <Text fontSize="sm" mt="1" color="fg.muted">
+              {sabbats[wheel.next.sabbat].symbol} до {sabbats[wheel.next.sabbat].genitive} {days(wheel.daysToNext)}
+              {wishesNear ? ` · хотелок отрезка: ${wishesNear}` : ''}
+            </Text>
+          )}
+          {isFullMoon(today) && (
+            <HStack gap="1.5" mt="1" fontSize="sm" color="fg.muted">
+              <Box color="ember.100">
+                <MoonIcon day={today} size={13} />
+              </Box>
+              <Text as="span">Сегодня полнолуние, эсбат</Text>
+            </HStack>
+          )}
         </Box>
         <Box p="3" borderRadius="l3" borderWidth="1px" borderColor="border" bg="bg.subtle">
           <Text fontFamily="heading" fontSize="lg" color="ember.100" mb="1">
@@ -348,13 +374,36 @@ export default function Scroll() {
             Сделано {plan.all.filter((t) => t.status === 'done').length + plan.habits.filter((t) => t.status === 'done').length} · монет за день {coinsToday > 0 ? `+${coinsToday}` : coinsToday}
           </Text>
           <DayStars today={today} />
-          {wheel.daysToNext <= 7 && (
-            <Button asChild size="xs" variant="outline" mt="2">
-              <RouterLink to={`/g/wheel?s=${wheel.next.sabbat}`}>Подготовиться к {sabbats[wheel.next.sabbat].dative} →</RouterLink>
-            </Button>
-          )}
+          <Button size="xs" variant="outline" mt="2" onClick={() => setWheelPick(true)}>
+            {sabbatSoon ? `Подготовиться к ${sabbats[wheel.next.sabbat].dative}` : 'Дела колеса'}
+          </Button>
         </Box>
       </SimpleGrid>
+
+      {(askNote || memory) && (
+        <Section>
+          {askNote && (
+            <Flex gap="3" align="center" wrap="wrap">
+              <Text fontSize="sm" flex="1" minW="200px">
+                {sabbats[wheel.current.sabbat].symbol} Как прошёл {sabbats[wheel.current.sabbat].name}? Пара слов останется в журнале саббата до следующего года.
+              </Text>
+              <Button size="xs" variant="outline" onClick={() => setNoteFor(wheel.current.sabbat)}>
+                Записать
+              </Button>
+            </Flex>
+          )}
+          {memory && memoryFor && (
+            <Box mt={askNote ? '3' : '0'}>
+              <Text fontSize="xs" color="fg.subtle">
+                В прошлый {sabbats[memoryFor.sabbat].name} ({memory.day.slice(0, 4)}) ты писала:
+              </Text>
+              <Text fontSize="sm" fontStyle="italic" whiteSpace="pre-wrap" lineClamp={4}>
+                «{memory.text}»
+              </Text>
+            </Box>
+          )}
+        </Section>
+      )}
 
       <Section dense>
         <PlanSection title="Главное" slot="main" tasks={plan.main} today={today} open={open} pick={setPick} />
@@ -393,6 +442,8 @@ export default function Scroll() {
 
       {pick && <PickFromBacklog slot={pick} today={today} onClose={() => setPick(undefined)} />}
       {dialog}
+      {wheelPick && <WheelPick onClose={() => setWheelPick(false)} focus={sabbatSoon ? wheel.next.sabbat : undefined} />}
+      {noteFor && <SabbatNoteDialog sabbat={noteFor} onClose={() => setNoteFor(undefined)} />}
     </>
   )
 }

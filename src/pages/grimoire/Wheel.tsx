@@ -1,13 +1,16 @@
 // The wheel of the year: eight sectors, a «today» hand, months outside, full moons inside.
-// Tap a sector to see its sabbat and the deeds and practices of the segment: «хочу», «в дела», «не моё».
+// Tap a sector to see its sabbat: its card by fields, the deeds and practices of the segment («хочу»,
+// «в дела», «не моё») and its journal; below, the esbat — the full moon, a small holiday every month.
 import { Box, Button, Flex, HStack, Stack, Text } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { MoonIcon } from '../../components/grimoire/MoonIcon'
+import { WheelPick } from '../../components/grimoire/WheelPick'
 import { Chips, Empty, Field, Modal, notify, PageHeader, Section, TextArea, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
-import { addDays, days, humanDay, plainDay } from '../../grimoire/days'
-import type { Sabbat, WheelPractice } from '../../grimoire/types'
-import { moonPhase, sabbatOrder, sabbats, segmentOf, wheelNow } from '../../grimoire/wheel'
+import { addDays, days, daysBetween, humanDay, plainDay } from '../../grimoire/days'
+import type { DayKey, JournalEntry, Sabbat, WheelPractice } from '../../grimoire/types'
+import { isFullMoon, nextFullMoon, sabbatCardDefaults, sabbatCardFields, sabbatOrder, sabbats, segmentOf, wheelNow } from '../../grimoire/wheel'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 
@@ -39,7 +42,7 @@ function WheelSvg({ today, hemisphere, selected, onSelect, marks }: { today: str
   const fullMoons = useMemo(() => {
     const out: number[] = []
     let d = addDays(today, -183)
-    for (let i = 0; i < 366; i++, d = addDays(d, 1)) if (moonPhase(d) === 4 && moonPhase(addDays(d, -1)) !== 4) out.push(wheelNow(d, hemisphere).turn)
+    for (let i = 0; i < 366; i++, d = addDays(d, 1)) if (isFullMoon(d)) out.push(wheelNow(d, hemisphere).turn)
     return out
   }, [today, hemisphere])
   const [hx, hy] = at(now.turn, R + 6)
@@ -116,7 +119,7 @@ function WheelSvg({ today, hemisphere, selected, onSelect, marks }: { today: str
           {now.daysToNext}
         </text>
         <text x={C} y={C + 14} textAnchor="middle" fontSize="9" fill="#1b1814">
-          до {sabbats[now.next.sabbat].dative}
+          до {sabbats[now.next.sabbat].genitive}
         </text>
         <line x1={hx0} y1={hy0} x2={hx} y2={hy} stroke="var(--chakra-colors-ember-300)" strokeWidth="2" strokeLinecap="round" />
         <circle cx={hx} cy={hy} r="4" fill="var(--chakra-colors-ember-300)" />
@@ -125,14 +128,15 @@ function WheelSvg({ today, hemisphere, selected, onSelect, marks }: { today: str
   )
 }
 
-function PracticeDialog({ sabbat, onClose }: { sabbat: Sabbat; onClose: () => void }) {
+function PracticeDialog({ sabbat, onClose }: { sabbat: Sabbat | 'esbat'; onClose: () => void }) {
   const dispatch = useAppDispatch()
-  const [p, setP] = useState<Omit<WheelPractice, 'id'>>({ title: '', sabbat, mode: 'once' })
+  const esbat = sabbat === 'esbat'
+  const [p, setP] = useState<Omit<WheelPractice, 'id'>>({ title: '', sabbat, mode: esbat ? 'day' : 'once' })
   return (
     <Modal
       open
       onClose={onClose}
-      title={`Своё к ${sabbats[sabbat].dative}`}
+      title={esbat ? 'Своё к полнолунию' : `Своё к ${sabbats[sabbat].dative}`}
       footer={
         <Button
           disabled={!p.title.trim()}
@@ -149,6 +153,7 @@ function PracticeDialog({ sabbat, onClose }: { sabbat: Sabbat; onClose: () => vo
         <Field label="Название">
           <TextInput value={p.title} onChange={(v) => setP({ ...p, title: v })} />
         </Field>
+        {!esbat && (
         <Field label="Когда">
           <Chips value={p.mode} onChange={(v) => setP({ ...p, mode: (v as WheelPractice['mode']) ?? 'once' })} options={[
             { value: 'day', label: 'в день саббата' },
@@ -156,6 +161,7 @@ function PracticeDialog({ sabbat, onClose }: { sabbat: Sabbat; onClose: () => vo
             { value: 'once', label: 'однажды за отрезок' },
           ]} />
         </Field>
+        )}
         <Field label="Что это">
           <Chips value={p.seasonal ? 'yes' : 'no'} onChange={(v) => setP({ ...p, seasonal: v === 'yes' })} options={[
             { value: 'no', label: 'практика' },
@@ -173,19 +179,165 @@ function PracticeDialog({ sabbat, onClose }: { sabbat: Sabbat; onClose: () => vo
   )
 }
 
-export default function Wheel() {
+/** One practice with its buttons; «В дела» puts a practice of the holiday's own day onto that day. */
+function PracticeRow({ p, want, inBook, lived, day, today }: { p: WheelPractice; want: boolean; inBook: boolean; lived: boolean; day?: DayKey; today: DayKey }) {
   const dispatch = useAppDispatch()
+  return (
+    <Flex gap="3" align="center" wrap="wrap" py="2" borderBottomWidth="1px" borderColor="border.muted" _last={{ borderBottomWidth: 0 }}>
+      <Box flex="1" minW="160px">
+        <Text fontSize="sm">
+          {want && <Text as="span" color="ember.300">♡ </Text>}
+          {p.title}
+        </Text>
+        <Text fontSize="xs" color="fg.subtle">
+          {p.seasonal ? 'бытовое · ' : ''}
+          {p.sabbat === 'esbat' ? 'в полнолуние' : p.mode === 'day' ? 'в день саббата' : p.mode === 'segment' ? 'весь отрезок' : 'однажды за отрезок'}
+          {lived ? ` · прожито в этом году` : ''}
+          {p.source ? ` · ${p.source}` : ''}
+        </Text>
+      </Box>
+      <HStack gap="1">
+        <Button size="xs" variant={want ? 'solid' : 'outline'} colorPalette="ember" onClick={() => dispatch(want ? A.unwantPractice(p.id) : A.wantPractice({ practiceId: p.id }))}>
+          Хочу
+        </Button>
+        {inBook ? (
+          <Text fontSize="xs" color="fg.subtle" px="2">
+            в делах
+          </Text>
+        ) : (
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={() => {
+              const doOn = p.mode === 'day' && day && day >= today ? day : undefined
+              dispatch(A.practiceToTask({ practiceId: p.id, doOn }))
+              notify(doOn ? `В делах на ${humanDay(doOn, today)}` : 'В бэклоге')
+            }}
+          >
+            В дела
+          </Button>
+        )}
+        <Button
+          size="xs"
+          variant="ghost"
+          onClick={() => {
+            dispatch(A.upsertPractice({ ...p, hidden: true }))
+            notify('Скрыто', 'info', undefined, { label: 'Вернуть', onClick: () => dispatch(A.upsertPractice({ ...p, hidden: false })) })
+          }}
+        >
+          Не моё
+        </Button>
+      </HStack>
+    </Flex>
+  )
+}
+
+/** The sabbat's correspondences field by field: her own words, or the built-in ones in a quieter tone. */
+function SabbatCardView({ sabbat, editing }: { sabbat: Sabbat; editing: boolean }) {
+  const dispatch = useAppDispatch()
+  const meta = useAppSelector((s) => s.grimoire.meta)
+  const own = meta.sabbatCards[sabbat] ?? {}
+  const base = sabbatCardDefaults[sabbat]
+  const set = (k: string, v: string) => dispatch(A.updateMeta({ sabbatCards: { ...meta.sabbatCards, [sabbat]: { ...own, [k]: v || undefined } } }))
+  const notes = meta.sabbatNotes[sabbat]
+  return (
+    <Stack gap={editing ? '3' : '1.5'} mt="3">
+      {sabbatCardFields.map(({ key, label }) =>
+        editing ? (
+          <Field key={key} label={label}>
+            <TextInput value={own[key] ?? ''} onChange={(v) => set(key, v)} placeholder={base[key]} />
+          </Field>
+        ) : (
+          <Flex key={key} gap="3" fontSize="sm">
+            <Text w="72px" flexShrink={0} color="fg.subtle">
+              {label}
+            </Text>
+            <Text color={own[key] ? 'fg' : 'fg.muted'}>{own[key] || base[key]}</Text>
+          </Flex>
+        ),
+      )}
+      {editing ? (
+        <Field label="Своё" helper="ритуал, традиция, что угодно">
+          <TextArea value={notes ?? ''} onChange={(v) => dispatch(A.updateMeta({ sabbatNotes: { ...meta.sabbatNotes, [sabbat]: v } }))} rows={4} />
+        </Field>
+      ) : (
+        notes && (
+          <Text fontSize="sm" mt="1.5" whiteSpace="pre-wrap">
+            {notes}
+          </Text>
+        )
+      )}
+    </Stack>
+  )
+}
+
+export const sabbatTag = (s: Sabbat) => `саббат:${s}`
+
+/** Write down how a sabbat went; a year later the scroll reminds what was written. */
+export function SabbatNoteDialog({ sabbat, onClose }: { sabbat: Sabbat; onClose: () => void }) {
+  const dispatch = useAppDispatch()
+  const [text, setText] = useState('')
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={`Как прошёл ${sabbats[sabbat].name}`}
+      footer={
+        <Button
+          disabled={!text.trim()}
+          onClick={() => {
+            dispatch(A.addJournal({ entry: { type: 'entry', text: text.trim(), tags: [sabbatTag(sabbat)] } }))
+            notify('Записано в журнал саббата', 'success')
+            onClose()
+          }}
+        >
+          Записать
+        </Button>
+      }
+    >
+      <TextArea value={text} onChange={setText} rows={6} placeholder="что делала, что почувствовала, что хочется повторить через год" />
+    </Modal>
+  )
+}
+
+function SabbatJournal({ entries, onWrite, name }: { entries: JournalEntry[]; onWrite: () => void; name: string }) {
+  return (
+    <Section title="Журнал саббата" actions={<Button size="xs" variant="outline" onClick={onWrite}>Записать впечатления</Button>}>
+      {entries.length ? (
+        <Stack gap="3">
+          {entries.map((e) => (
+            <Box key={e.id}>
+              <Text fontSize="xs" color="fg.subtle">
+                {name} {e.day.slice(0, 4)} · {plainDay(e.day)}
+              </Text>
+              <Text fontSize="sm" whiteSpace="pre-wrap">
+                {e.text}
+              </Text>
+            </Box>
+          ))}
+        </Stack>
+      ) : (
+        <Empty>Здесь будут впечатления после праздника, а через год — что ты писала в прошлый {name}.</Empty>
+      )}
+    </Section>
+  )
+}
+
+export default function Wheel() {
   const g = useAppSelector((s) => s.grimoire)
   const today = useToday()
   const [params, setParams] = useSearchParams()
   const hemisphere = g.meta.hemisphere
   const now = wheelNow(today, hemisphere)
   const selected = (params.get('s') as Sabbat) || now.current.sabbat
-  const [adding, setAdding] = useState(false)
-  const [editNotes, setEditNotes] = useState(false)
+  const [adding, setAdding] = useState<Sabbat | 'esbat'>()
+  const [editCard, setEditCard] = useState(false)
+  const [writing, setWriting] = useState(false)
+  const [picking, setPicking] = useState(false)
   const info = sabbats[selected]
   const seg = segmentOf(selected, today, hemisphere)
   const year = today.slice(0, 4)
+  const moon = nextFullMoon(today)
 
   const wanted = useMemo(() => new Set(Object.values(g.wishes).filter((w) => w.practiceId && (w.status === 'dream' || w.status === 'inProgress')).map((w) => w.practiceId!)), [g.wishes])
   // Practices already sitting in the book as open deeds: «В дела» again would only make a twin.
@@ -203,114 +355,70 @@ export default function Wheel() {
   ) as Record<Sabbat, { want: number; lived: number }>
 
   // Wished ones first: the segment passes, and then it is a whole year of waiting.
-  const practices = Object.values(g.practices)
-    .filter((p) => p.sabbat === selected && !p.hidden)
-    .sort((a, b) => Number(wanted.has(b.id)) - Number(wanted.has(a.id)) || Number(!!a.seasonal) - Number(!!b.seasonal) || a.title.localeCompare(b.title))
-  const pastJournal = Object.values(g.journal).filter((j) => j.tags?.includes(`саббат:${selected}`))
+  const sorted = (of: Sabbat | 'esbat') =>
+    Object.values(g.practices)
+      .filter((p) => p.sabbat === of && !p.hidden)
+      .sort((a, b) => Number(wanted.has(b.id)) - Number(wanted.has(a.id)) || Number(!!a.seasonal) - Number(!!b.seasonal) || a.title.localeCompare(b.title))
+  const row = (p: WheelPractice, day?: DayKey) => <PracticeRow key={p.id} p={p} want={wanted.has(p.id)} inBook={inBook.has(p.id)} lived={lived.has(p.id)} day={day} today={today} />
+  const journal = Object.values(g.journal)
+    .filter((j) => j.text && j.tags?.includes(sabbatTag(selected)))
+    .sort((a, b) => b.at.localeCompare(a.at))
 
   return (
     <>
       <PageHeader title="Колесо года">
         <Text fontSize="sm" color="fg.muted">
-          сейчас {sabbats[now.current.sabbat].name} · до {sabbats[now.next.sabbat].dative} {days(now.daysToNext)}
+          сейчас {sabbats[now.current.sabbat].name} · до {sabbats[now.next.sabbat].genitive} {days(now.daysToNext)}
         </Text>
+        {!g.meta.nav.active && (
+          <Button size="xs" variant="outline" onClick={() => setPicking(true)}>
+            Подобрать дела
+          </Button>
+        )}
       </PageHeader>
       <WheelSvg today={today} hemisphere={hemisphere} selected={selected} onSelect={(s) => setParams({ s }, { replace: true })} marks={marks} />
 
       <Section
         title={`${info.symbol} ${info.name}`}
         actions={
-          <Button size="xs" variant="ghost" onClick={() => setEditNotes(!editNotes)}>
-            {editNotes ? 'Готово' : 'Моя традиция'}
+          <Button size="xs" variant="ghost" onClick={() => setEditCard(!editCard)}>
+            {editCard ? 'Готово' : 'Моя традиция'}
           </Button>
         }
       >
         <Text fontSize="sm" color="fg.muted">
           {plainDay(seg.from)} — {plainDay(seg.to)} · {info.theme}
         </Text>
-        {editNotes ? (
-          <Box mt="3">
-            <TextArea
-              value={g.meta.sabbatNotes[selected] ?? ''}
-              onChange={(v) => dispatch(A.updateMeta({ sabbatNotes: { ...g.meta.sabbatNotes, [selected]: v } }))}
-              placeholder="смысл, цвета, травы, камни, символы, еда"
-              rows={5}
-            />
-          </Box>
-        ) : (
-          g.meta.sabbatNotes[selected] && (
-            <Text fontSize="sm" mt="3" whiteSpace="pre-wrap">
-              {g.meta.sabbatNotes[selected]}
-            </Text>
-          )
-        )}
+        <SabbatCardView sabbat={selected} editing={editCard} />
       </Section>
 
-      <Section title="Что можно сделать" actions={<Button size="xs" variant="outline" onClick={() => setAdding(true)}>Добавить своё</Button>}>
-        {practices.length ? (
-          <Stack gap="2">
-            {practices.map((p) => {
-              const want = wanted.has(p.id)
-              return (
-                <Flex key={p.id} gap="3" align="center" wrap="wrap" py="2" borderBottomWidth="1px" borderColor="border.muted" _last={{ borderBottomWidth: 0 }}>
-                  <Box flex="1" minW="160px">
-                    <Text fontSize="sm">
-                      {want && <Text as="span" color="ember.300">♡ </Text>}
-                      {p.title}
-                    </Text>
-                    <Text fontSize="xs" color="fg.subtle">
-                      {p.seasonal ? 'бытовое · ' : ''}
-                      {p.mode === 'day' ? 'в день саббата' : p.mode === 'segment' ? 'весь отрезок' : 'однажды за отрезок'}
-                      {lived.get(p.id) ? ` · прожито в этом году` : ''}
-                      {p.source ? ` · ${p.source}` : ''}
-                    </Text>
-                  </Box>
-                  <HStack gap="1">
-                    <Button size="xs" variant={want ? 'solid' : 'outline'} colorPalette="ember" onClick={() => dispatch(want ? A.unwantPractice(p.id) : A.wantPractice({ practiceId: p.id }))}>
-                      Хочу
-                    </Button>
-                    {inBook.has(p.id) ? (
-                      <Text fontSize="xs" color="fg.subtle" px="2">
-                        в делах
-                      </Text>
-                    ) : (
-                      <Button
-                        size="xs"
-                        variant="outline"
-                        onClick={() => {
-                          const doOn = p.mode === 'day' && seg.from >= today ? seg.from : undefined
-                          dispatch(A.practiceToTask({ practiceId: p.id, doOn }))
-                          notify(doOn ? `В делах на ${humanDay(doOn, today)}` : 'В бэклоге')
-                        }}
-                      >
-                        В дела
-                      </Button>
-                    )}
-                    <Button
-                      size="xs"
-                      variant="ghost"
-                      onClick={() => {
-                        dispatch(A.upsertPractice({ ...p, hidden: true }))
-                        notify('Скрыто', 'info', undefined, { label: 'Вернуть', onClick: () => dispatch(A.upsertPractice({ ...p, hidden: false })) })
-                      }}
-                    >
-                      Не моё
-                    </Button>
-                  </HStack>
-                </Flex>
-              )
-            })}
-          </Stack>
-        ) : (
-          <Empty>Для этого отрезка пока ничего нет.</Empty>
-        )}
-        {pastJournal.length > 0 && (
-          <Text fontSize="xs" color="fg.muted" mt="3">
-            Записей о прошлых {info.name}ах: {pastJournal.length}
-          </Text>
-        )}
+      <Section title="Что можно сделать" actions={<Button size="xs" variant="outline" onClick={() => setAdding(selected)}>Добавить своё</Button>}>
+        {sorted(selected).length ? <Stack gap="2">{sorted(selected).map((p) => row(p, seg.from))}</Stack> : <Empty>Для этого отрезка пока ничего нет.</Empty>}
       </Section>
-      {adding && <PracticeDialog sabbat={selected} onClose={() => setAdding(false)} />}
+
+      <SabbatJournal entries={journal} name={info.name} onWrite={() => setWriting(true)} />
+
+      <Box id="esbat" scrollMarginTop="16px">
+        <Section
+          title={
+            <HStack gap="2">
+              <Box color="ember.100">
+                <MoonIcon day={moon} size={20} />
+              </Box>
+              <Text as="span">Эсбат</Text>
+            </HStack>
+          }
+          actions={<Button size="xs" variant="outline" onClick={() => setAdding('esbat')}>Добавить своё</Button>}
+        >
+          <Text fontSize="sm" color="fg.muted" mb="2">
+            Полнолуние, малый праздник каждого месяца · {moon === today ? 'сегодня' : `${humanDay(moon, today)}, через ${days(daysBetween(today, moon))}`}
+          </Text>
+          {sorted('esbat').length ? <Stack gap="2">{sorted('esbat').map((p) => row(p, moon))}</Stack> : <Empty>Практик полнолуния пока нет.</Empty>}
+        </Section>
+      </Box>
+      {adding && <PracticeDialog sabbat={adding} onClose={() => setAdding(undefined)} />}
+      {writing && <SabbatNoteDialog sabbat={selected} onClose={() => setWriting(false)} />}
+      {picking && <WheelPick onClose={() => setPicking(false)} />}
     </>
   )
 }

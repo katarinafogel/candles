@@ -154,3 +154,14 @@ describe('agent tools', () => {
     expect(back.meta.timeZone).toBe('Europe/Moscow')
   })
 })
+
+describe('wheel tool', () => {
+  it('gives the sabbat card and the esbat', () => {
+    const g = migrateGrimoire({ ...initialGrimoire, meta: { ...initialGrimoire.meta, sabbatCards: { samhain: { herbs: 'моя полынь' } } } })
+    const samhain = run(g, 'grimoire_wheel', { sabbat: 'samhain' }).result as { card: Record<string, string> }
+    expect(samhain.card.herbs).toBe('моя полынь')
+    expect(samhain.card.colors).toBeTruthy()
+    const esbat = run(g, 'grimoire_wheel', { sabbat: 'esbat' }).result as { day: string }
+    expect(esbat.day >= dayKeyIn(NOW, 4)).toBe(true)
+  })
+})

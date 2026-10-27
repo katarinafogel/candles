@@ -6,7 +6,7 @@ vi.mock('localforage', () => ({ default: { setItem: async () => {}, getItem: asy
 const { parseQuickAdd, parseDay } = await import('../parse')
 const { baseCoins, balance, taskCoins } = await import('../coins')
 const { addDays, dayKey, daysBetween, weekday, humanDay, nextRepeat } = await import('../days')
-const { sabbatDays, wheelNow, moonPhase, seasonMoment } = await import('../wheel')
+const { sabbatDays, wheelNow, moonPhase, seasonMoment, isFullMoon, nextFullMoon, sabbats, builtInPractices, lunarPhaseMoment } = await import('../wheel')
 const { streak, habitLogId, habitTaskId } = await import('../habits')
 const { default: reducer, grimoireActions: A, initialGrimoire, migrateGrimoire } = await import('../../store/grimoireSlice')
 const { diffGrimoire, isGrimoireRow } = await import('../../lib/sync')
@@ -377,6 +377,43 @@ describe('wheel of the year', () => {
   it('knows the Moon', () => {
     expect(moonPhase('2024-01-25')).toBe(4)
     expect(moonPhase('2024-01-11')).toBe(0)
+  })
+  it('finds true full and new moons to the minute', () => {
+    // Published UTC moments: full 3 Jan 10:03, 1 Feb 22:09, 26 Oct 04:12; new 10 Oct 15:50.
+    const off = (k: number, iso: string) => Math.abs(lunarPhaseMoment(k).getTime() - Date.parse(iso))
+    expect(off(321.5, '2026-01-03T10:03Z')).toBeLessThan(3 * 60_000)
+    expect(off(322.5, '2026-02-01T22:09Z')).toBeLessThan(3 * 60_000)
+    expect(off(331.5, '2026-10-26T04:12Z')).toBeLessThan(3 * 60_000)
+    expect(off(331, '2026-10-10T15:50Z')).toBeLessThan(3 * 60_000)
+  })
+  it('marks exactly one esbat day a cycle', () => {
+    let n = 0
+    for (let d = '2026-01-01'; d <= '2026-12-31'; d = addDays(d, 1)) if (isFullMoon(d)) n++
+    // 2026 has 13 full moons.
+    expect(n).toBe(13)
+    expect(nextFullMoon('2026-10-27')).toBe(dayKey(lunarPhaseMoment(332.5), 0))
+    expect(moonPhase(nextFullMoon('2026-10-27'))).toBe(4)
+    expect(moonPhase(addDays(nextFullMoon('2026-10-27'), 1))).toBe(5)
+  })
+  it('says «до Самайна» and «к Самайну»', () => {
+    expect(`до ${sabbats.samhain.genitive}`).toBe('до Самайна')
+    expect(`к ${sabbats.beltane.dative}`).toBe('к Бельтайну')
+    expect(sabbats.ostara.genitive).toBe('Остары')
+  })
+  it('adds the esbat practices to a grimoire seeded before them, once', () => {
+    const old = builtInPractices.filter((p) => p.sabbat !== 'esbat')
+    let g: GS = reducer(initialGrimoire, A.seedPractices(old))
+    const hidden = old[0]
+    g = reducer({ ...g, meta: { ...g.meta, esbatsSeeded: undefined } }, A.deletePractice(hidden.id))
+    g = reducer(g, A.seedPractices(builtInPractices))
+    expect(Object.values(g.practices).filter((p) => p.sabbat === 'esbat').length).toBeGreaterThan(0)
+    // A deleted built-in sabbat practice does not come back with them.
+    expect(g.practices[hidden.id]).toBeUndefined()
+    const esbat = Object.values(g.practices).find((p) => p.sabbat === 'esbat')!
+    g = reducer(g, A.wantPractice({ practiceId: esbat.id }))
+    expect(Object.values(g.wishes)[0].sabbat).toBeUndefined()
+    g = reducer(g, A.practiceToTask({ practiceId: esbat.id, doOn: '2026-11-24' }))
+    expect(Object.values(g.tasks)[0].tags).toEqual(['эсбат'])
   })
 })
 

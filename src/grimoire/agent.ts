@@ -26,7 +26,7 @@ import {
   toReview,
 } from './selectors.ts'
 import type { DayKey, GrimoireState, PostponeReason, Task, TaskSlot } from './types.ts'
-import { sabbatOrder, sabbats, segmentOf, wheelNow } from './wheel.ts'
+import { nextFullMoon, sabbatCardDefaults, sabbatOrder, sabbats, segmentOf, wheelNow } from './wheel.ts'
 
 export class AgentError extends Error {}
 
@@ -268,6 +268,7 @@ const tools: (ToolDef & { run: Run })[] = [
           next: sabbats[wheel.next.sabbat].name,
           nextDay: wheel.next.day,
           daysToNext: wheel.daysToNext,
+          fullMoon: nextFullMoon(c.today),
         },
       }
     },
@@ -641,25 +642,29 @@ const tools: (ToolDef & { run: Run })[] = [
   },
   {
     name: 'grimoire_wheel',
-    description: 'Колесо года: текущий отрезок или указанный саббат, его даты и практики (сначала отмеченные «хочу», особенно если отрезок скоро закончится).',
-    inputSchema: { type: 'object', properties: { sabbat: { type: 'string', enum: sabbatOrder } }, additionalProperties: false },
+    description:
+      'Колесо года: текущий отрезок или указанный саббат, его даты, соответствия (смысл, цвета, травы, камни, символы, еда) и практики (сначала отмеченные «хочу», особенно если отрезок скоро закончится). sabbat=esbat — ближайшее полнолуние и его практики.',
+    inputSchema: { type: 'object', properties: { sabbat: { type: 'string', enum: [...sabbatOrder, 'esbat'] } }, additionalProperties: false },
     writes: false,
     run: (a, c) => {
       const g = c.get()
       const now = wheelNow(c.today, g.meta.hemisphere)
-      const s = oneOf(a, 'sabbat', sabbatOrder) ?? now.current.sabbat
-      const seg = segmentOf(s, c.today, g.meta.hemisphere)
+      const s = oneOf(a, 'sabbat', [...sabbatOrder, 'esbat'] as const) ?? now.current.sabbat
       const wanted = new Set(Object.values(g.wishes).filter((w) => w.practiceId && (w.status === 'dream' || w.status === 'inProgress')).map((w) => w.practiceId))
+      const practices = Object.values(g.practices)
+        .filter((p) => p.sabbat === s && !p.hidden)
+        .sort((x, y) => Number(wanted.has(y.id)) - Number(wanted.has(x.id)))
+        .map((p) => ({ id: p.id, title: p.title, mode: p.mode, seasonal: !!p.seasonal, want: wanted.has(p.id) }))
+      if (s === 'esbat') return { esbat: 'полнолуние', day: nextFullMoon(c.today), practices }
+      const seg = segmentOf(s, c.today, g.meta.hemisphere)
       return {
         sabbat: sabbats[s].name,
         theme: sabbats[s].theme,
         from: seg.from,
         to: seg.to,
+        card: { ...sabbatCardDefaults[s], ...g.meta.sabbatCards[s] },
         notes: g.meta.sabbatNotes[s] ?? null,
-        practices: Object.values(g.practices)
-          .filter((p) => p.sabbat === s && !p.hidden)
-          .sort((x, y) => Number(wanted.has(y.id)) - Number(wanted.has(x.id)))
-          .map((p) => ({ id: p.id, title: p.title, mode: p.mode, seasonal: !!p.seasonal, want: wanted.has(p.id) })),
+        practices,
       }
     },
   },

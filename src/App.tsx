@@ -13,6 +13,7 @@ import GrimoireMore from './pages/grimoire/More'
 import Rituals from './pages/grimoire/Rituals'
 import Scroll from './pages/grimoire/Scroll'
 import Wheel from './pages/grimoire/Wheel'
+import GrimoireCalendar from './pages/grimoire/Calendar'
 import Wishes from './pages/grimoire/Wishes'
 import HolderPage from './pages/HolderPage'
 import Holders from './pages/Holders'
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="projects/:id" element={<ProjectBook />} />
         <Route path="rituals" element={<Rituals />} />
         <Route path="wheel" element={<Wheel />} />
+        <Route path="calendar" element={<GrimoireCalendar />} />
         <Route path="mirror" element={<Mirror />} />
         <Route path="wishes" element={<Wishes />} />
         <Route path="more" element={<GrimoireMore />} />

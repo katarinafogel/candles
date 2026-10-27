@@ -36,6 +36,7 @@ export const defaultMeta: GrimoireMeta = {
   emotions: ['тревога', 'радость', 'усталость', 'злость', 'спокойствие', 'грусть', 'вдохновение'],
   factors: ['сон', 'работа', 'люди', 'погода', 'тело', 'деньги'],
   sabbatNotes: {},
+  sabbatCards: {},
   nav: { active: false, history: [] },
 }
 
@@ -754,10 +755,12 @@ const slice = createSlice({
     },
 
     // ----- wheel of the year -----
+    /** The starter practices once; a grimoire seeded before the esbats gets only those, once too. */
     seedPractices(s, a: PayloadAction<WheelPractice[]>) {
-      if (s.meta.practicesSeeded) return
-      for (const p of a.payload) if (!s.practices[p.id]) s.practices[p.id] = p
+      if (s.meta.practicesSeeded && s.meta.esbatsSeeded) return
+      for (const p of a.payload) if ((!s.meta.practicesSeeded || p.sabbat === 'esbat') && !s.practices[p.id]) s.practices[p.id] = p
       s.meta.practicesSeeded = true
+      s.meta.esbatsSeeded = true
     },
     upsertPractice(s, a: PayloadAction<Omit<WheelPractice, 'id'> & { id?: string }>) {
       const id = a.payload.id ?? nanoid()
@@ -773,7 +776,7 @@ const slice = createSlice({
         if (!p) return
         if (Object.values(s.wishes).some((w) => w.practiceId === p.id && (w.status === 'dream' || w.status === 'inProgress'))) return
         const id = nanoid()
-        s.wishes[id] = { id, title: p.title, tags: [], status: 'dream', createdAt: a.payload.at, practiceId: p.id, sabbat: p.sabbat }
+        s.wishes[id] = { id, title: p.title, tags: [], status: 'dream', createdAt: a.payload.at, practiceId: p.id, ...(p.sabbat !== 'esbat' ? { sabbat: p.sabbat } : {}) }
       },
       prepare: (p: { practiceId: string }) => ({ payload: when(p) }),
     },
@@ -793,7 +796,7 @@ const slice = createSlice({
             note: [p.description, ...(p.steps ?? []).map((x, i) => `${i + 1}. ${x}`)].filter(Boolean).join('\n') || undefined,
             source: 'wheel',
             practiceId: p.id,
-            tags: [p.seasonal ? 'сезонное' : 'колесо'],
+            tags: [p.sabbat === 'esbat' ? 'эсбат' : p.seasonal ? 'сезонное' : 'колесо'],
             doOn: a.payload.doOn,
             ...(a.payload.doOn ? { slot: 'optional' as const } : {}),
             ...(wish ? { want: 'want' as const, wishId: wish.id } : {}),

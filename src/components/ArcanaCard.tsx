@@ -282,6 +282,30 @@ export const arcanaButton: ButtonProps = {
 
 export const solidOf: Record<ArcanaTone, string> = { indigo: '#262b5e', pearl: '#efe9e6', olive: '#6a6a3a', swamp: '#2b4325', nacre: '#f1ecef', wine: '#4d1624', silver: '#3c4048' }
 
+/** The card's frame: two lines, corner stars, edge diamonds and vines; inside a relative box. */
+export function ArcanaFrame({ p }: { p: Palette }) {
+  return (
+    <>
+      <Box position="absolute" inset="7px" borderWidth="1px" borderColor={p.line} borderRadius="3px" pointerEvents="none" />
+      <Box position="absolute" inset="11px" borderWidth="1px" borderColor={p.line} opacity=".55" pointerEvents="none" />
+      <Box position="absolute" inset="0" pointerEvents="none" color={p.star}>
+        <Box position="absolute" top="15px" left="15px"><Sparkle size={9} /></Box>
+        <Box position="absolute" top="15px" right="15px"><Sparkle size={9} /></Box>
+        <Box position="absolute" bottom="15px" left="15px"><Sparkle size={9} /></Box>
+        <Box position="absolute" bottom="15px" right="15px"><Sparkle size={9} /></Box>
+        <Diamond p={p} top="0px" />
+        <Diamond p={p} bottom="0px" />
+        <Box position="absolute" top="10px" right="10px" opacity=".85">
+          <Vine color={p.line} transform="translate(-64px, 0) scaleX(-1)" />
+        </Box>
+        <Box position="absolute" bottom="10px" left="10px" opacity=".55">
+          <Vine color={p.line} transform="translate(0, -74px) scaleY(-1)" />
+        </Box>
+      </Box>
+    </>
+  )
+}
+
 export function ArcanaCard({
   tone,
   title,
@@ -354,23 +378,7 @@ export function ArcanaCard({
         '--chakra-colors-border': p.line,
       }}
     >
-      {/* Frame: two lines, corner stars, edge diamonds and vines. */}
-      <Box position="absolute" inset="7px" borderWidth="1px" borderColor={p.line} borderRadius="3px" pointerEvents="none" />
-      <Box position="absolute" inset="11px" borderWidth="1px" borderColor={p.line} opacity=".55" pointerEvents="none" />
-      <Box position="absolute" inset="0" pointerEvents="none" color={p.star}>
-        <Box position="absolute" top="15px" left="15px"><Sparkle size={9} /></Box>
-        <Box position="absolute" top="15px" right="15px"><Sparkle size={9} /></Box>
-        <Box position="absolute" bottom="15px" left="15px"><Sparkle size={9} /></Box>
-        <Box position="absolute" bottom="15px" right="15px"><Sparkle size={9} /></Box>
-        <Diamond p={p} top="0px" />
-        <Diamond p={p} bottom="0px" />
-        <Box position="absolute" top="10px" right="10px" opacity=".85">
-          <Vine color={p.line} transform="translate(-64px, 0) scaleX(-1)" />
-        </Box>
-        <Box position="absolute" bottom="10px" left="10px" opacity=".55">
-          <Vine color={p.line} transform="translate(0, -74px) scaleY(-1)" />
-        </Box>
-      </Box>
+      <ArcanaFrame p={p} />
 
       <Stack position="relative" flex="1" minW="0" minH={fixed ? '0' : undefined} gap="0" px="5" pt="5" pb="6" align="center" textAlign="center" css={{ '& > *': { flexShrink: 0 } }}>
         <Flex w="100%" justify="space-between" align="flex-start" minH="26px">

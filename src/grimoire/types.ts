@@ -143,12 +143,23 @@ export interface HabitLog {
 
 export type Sabbat = 'samhain' | 'yule' | 'imbolc' | 'ostara' | 'beltane' | 'litha' | 'lughnasadh' | 'mabon'
 
+/** A sabbat's correspondences, as on a card. */
+export interface SabbatCard {
+  meaning: string
+  colors: string
+  herbs: string
+  stones: string
+  symbols: string
+  food: string
+}
+
 export interface WheelPractice {
   id: string
   title: string
   description?: string
   steps?: string[]
-  sabbat: Sabbat
+  /** A sabbat's segment, or `esbat` — a full moon, the small holiday that comes every month. */
+  sabbat: Sabbat | 'esbat'
   /** On the sabbat day, as a habit of the whole segment, or once during the segment. */
   mode: 'day' | 'segment' | 'once'
   /** A household seasonal deed (spring cleaning, preserves) rather than a practice. */
@@ -181,6 +192,8 @@ export interface Wish {
   createdAt: ISODateTime
   fulfilledAt?: ISODateTime
   fulfilledNote?: string
+  /** Where it lives: a shop page, a place, a post. */
+  url?: string
   taskId?: string
   projectId?: string
   jarId?: string
@@ -270,6 +283,8 @@ export interface GrimoireMeta {
   factors: string[]
   /** Sabbat cards: the text is the witch's own tradition, so it is editable. */
   sabbatNotes: Partial<Record<Sabbat, string>>
+  /** Her own correspondences of a sabbat, field by field; an empty field shows the built-in one. */
+  sabbatCards: Partial<Record<Sabbat, Partial<SabbatCard>>>
   /** «Уйти в навь»; `agent` — what the assistant sends meanwhile: a soft «я тут» or nothing at all. */
   nav: { active: boolean; since?: ISODateTime; history: NavPeriod[]; agent?: 'hello' | 'silent' }
   /** Last day the habit tasks were generated for, so it happens once a day. */
@@ -283,6 +298,8 @@ export interface GrimoireMeta {
   welcomedDay?: DayKey
   /** Built-in practices were added once; deleting them later must not bring them back. */
   practicesSeeded?: boolean
+  /** The built-in esbat practices came later: added once to grimoires seeded before them. */
+  esbatsSeeded?: boolean
 }
 
 export interface GrimoireState {
