@@ -2,7 +2,7 @@
 // done, part done, start a little, postpone with a reason, waiting, «потянуло за собой», split, let go.
 import { Box, Button, Flex, HStack, Input, Separator, Stack, Text, Wrap } from '@chakra-ui/react'
 import { useState } from 'react'
-import { LuChevronDown, LuChevronUp, LuLink, LuX } from 'react-icons/lu'
+import { LuChevronDown, LuChevronUp, LuGripVertical, LuLink, LuX } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
 import { cancel, complete, reopen, start, toBacklog, useToday, withUndo } from '../../grimoire/act'
 import { baseCoins, isFrog, taskCoins } from '../../grimoire/coins'
@@ -27,7 +27,9 @@ import { Check, Chips, confirmAction, Field, Modal, NumInput, Select, TextArea, 
 import { WordChip } from './EmotionWheel'
 import { FrogIcon, MarkPicker } from './Marks'
 import { usePlanGuard } from './PlanGuard'
+import { ScarNote } from './ScarNote'
 import { TagInput } from './TagInput'
+import { useReorder } from './useReorder'
 
 type Mode = 'edit' | 'postpone' | 'spawn' | 'split' | 'partial' | 'wait' | 'block'
 
@@ -365,7 +367,10 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
           )}
           {Object.keys(people).length > 0 && (
             <Field label="Люди">
-              <Chips multi value={t.personIds ?? []} onChange={(v) => set({ personIds: (v as string[]) ?? [] })} options={Object.values(people).map((p) => ({ value: p.id, label: p.name }))} />
+              <Stack gap="2">
+                <Chips multi value={t.personIds ?? []} onChange={(v) => set({ personIds: (v as string[]) ?? [] })} options={Object.values(people).map((p) => ({ value: p.id, label: p.name }))} />
+                {open && <ScarNote personIds={t.personIds ?? []} />}
+              </Stack>
             </Field>
           )}
           <Field label="Награда" helper="своя настоящая, покажется в момент выполнения">
@@ -500,19 +505,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
             </Stack>
           )}
 
-          {steps.length > 0 && (
-            <Box>
-              <Text fontSize="sm" color="fg.muted" mb="1">
-                Шаги · {steps.filter((x) => x.status === 'done').length} из {steps.length}
-              </Text>
-              {steps.map((s) => (
-                <Text key={s.id} fontSize="sm" textDecoration={s.status === 'done' ? 'line-through' : undefined} color={s.status === 'done' ? 'fg.subtle' : 'fg'}>
-                  {s.title}
-                  {s.doOn ? ` · ${humanDay(s.doOn, today)}` : ''}
-                </Text>
-              ))}
-            </Box>
-          )}
+          {steps.length > 0 && <QuestSteps questId={live.id} today={today} />}
           {(chain.length > 0 || origin || parent) && (
             <Box fontSize="sm" color="fg.muted">
               {parent && <Text>Шаг квеста «{parent.title}»</Text>}
@@ -584,5 +577,59 @@ function DeedMirror({ taskId, onGo }: { taskId: string; onGo: (to: string) => vo
         + чувство
       </Button>
     </Flex>
+  )
+}
+
+/** A quest's steps: open ones dragged by the grip to change the order; the quest kept as a spell. */
+function QuestSteps({ questId, today }: { questId: string; today: string }) {
+  const dispatch = useAppDispatch()
+  const g = useAppSelector((s) => s.grimoire)
+  const w = words(g.meta)
+  const all = stepsOf(g, questId).filter((s) => s.status !== 'cancelled')
+  const openIds = all.filter((s) => s.status !== 'done').map((s) => s.id)
+  const reorder = useReorder(openIds, (ids) => dispatch(A.reorderTasks(ids)))
+  const shown = [...reorder.shown.map((id) => g.tasks[id]).filter(Boolean), ...all.filter((s) => s.status === 'done')]
+  const saved = (g.meta.spells ?? []).some((sp) => sp.title === g.tasks[questId]?.title)
+  return (
+    <Box>
+      <Flex align="center" justify="space-between" gap="2" mb="1" wrap="wrap">
+        <Text fontSize="sm" color="fg.muted">
+          Шаги · {all.filter((x) => x.status === 'done').length} из {all.length}
+        </Text>
+        <Button
+          size="2xs"
+          variant="ghost"
+          disabled={saved}
+          onClick={() => withUndo(`Сохранено как ${w.spell}`, () => dispatch(A.saveSpell({ taskId: questId })))}
+        >
+          {saved ? `уже есть ${w.spell}` : `Сохранить как ${w.spell}`}
+        </Button>
+      </Flex>
+      <Stack gap="0.5">
+        {shown.map((s) => {
+          const movable = s.status !== 'done'
+          return (
+            <HStack key={s.id} data-reorder={movable ? s.id : undefined} gap="1" opacity={reorder.dragging === s.id ? 0.5 : 1} py="0.5">
+              <Box
+                as="button"
+                aria-label="Перетащить шаг"
+                display="inline-flex"
+                color="fg.subtle"
+                cursor="grab"
+                touchAction="none"
+                visibility={movable ? 'visible' : 'hidden'}
+                onPointerDown={(e: React.PointerEvent) => movable && reorder.onPointerDown(s.id, e)}
+              >
+                <LuGripVertical />
+              </Box>
+              <Text fontSize="sm" textDecoration={s.status === 'done' ? 'line-through' : undefined} color={s.status === 'done' ? 'fg.subtle' : 'fg'}>
+                {s.title}
+                {s.doOn ? ` · ${humanDay(s.doOn, today)}` : ''}
+              </Text>
+            </HStack>
+          )
+        })}
+      </Stack>
+    </Box>
   )
 }

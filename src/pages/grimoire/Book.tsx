@@ -6,6 +6,7 @@ import { QuickAdd } from '../../components/grimoire/QuickAdd'
 import { useTaskDialog } from '../../components/grimoire/TaskDialog'
 import { cardColumns, TaskCard } from '../../components/grimoire/TaskCard'
 import { Chips, Empty, PageHeader, Section, Select } from '../../components/ui'
+import { SpellsDialog } from '../../components/grimoire/Spells'
 import { useToday } from '../../grimoire/act'
 import { allTags, backlog, isBlocked, isOpenTask, isStuck, isWaiting, words } from '../../grimoire/selectors'
 import type { Task } from '../../grimoire/types'
@@ -39,6 +40,7 @@ export default function Book() {
   const [params, setParams] = useSearchParams()
   const view = (params.get('v') as View) || 'backlog'
   const [q, setQ] = useState('')
+  const [spells, setSpells] = useState(false)
   const [tags, setTags] = useState<string[]>([])
   const [zone, setZone] = useState<string>()
   const [sort, setSort] = useState<Sort>('due')
@@ -83,7 +85,12 @@ export default function Book() {
   const tagList = allTags(g)
   return (
     <>
-      <PageHeader title={w.book} />
+      <PageHeader title={w.book}>
+        <Button size="sm" variant="outline" onClick={() => setSpells(true)}>
+          {w.spells}
+        </Button>
+      </PageHeader>
+      {spells && <SpellsDialog onClose={() => setSpells(false)} />}
       <Section>
         <QuickAdd />
       </Section>

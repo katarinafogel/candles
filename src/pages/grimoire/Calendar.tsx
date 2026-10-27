@@ -71,7 +71,7 @@ function monthBg(m: MonthInfo) {
   return `${glow}, linear-gradient(100deg, ${a} 0%, ${a} ${Math.max(0, at - 18)}%, ${b} ${Math.min(100, at + 18)}%, ${b} 100%)`
 }
 
-function MonthCard({ m, today, holidays, busy, feel, onDay, refFor }: { m: MonthInfo; today: DayKey; holidays: Record<DayKey, Sabbat>; busy: Set<DayKey>; feel: Map<DayKey, string>; onDay: (d: DayKey) => void; refFor?: (el: HTMLDivElement | null) => void }) {
+function MonthCard({ m, today, holidays, busy, feel, born, onDay, refFor }: { m: MonthInfo; today: DayKey; holidays: Record<DayKey, Sabbat>; busy: Set<DayKey>; feel: Map<DayKey, string>; born: Map<string, string[]>; onDay: (d: DayKey) => void; refFor?: (el: HTMLDivElement | null) => void }) {
   const pad = weekday(m.first) - 1
   const cells = [...Array.from({ length: pad }, () => undefined), ...Array.from({ length: m.length }, (_, i) => addDays(m.first, i))]
   const fullMoons = cells.filter((d): d is DayKey => !!d && isFullMoon(d))
@@ -160,6 +160,11 @@ function MonthCard({ m, today, holidays, busy, feel, onDay, refFor }: { m: Month
                   <HStack gap="2px" h="5px">
                     <Box w="3px" h="3px" borderRadius="full" bg={busy.has(d) ? p.star : 'transparent'} />
                     {feel.has(d) && <Box w="5px" h="5px" borderRadius="full" bg={feel.get(d)} borderWidth="0.5px" borderColor="rgba(20,16,12,.6)" />}
+                    {born.has(d.slice(5)) && (
+                      <Text fontSize="7px" lineHeight="5px" aria-hidden>
+                        🎂
+                      </Text>
+                    )}
                   </HStack>
                 </Box>
               )
@@ -176,6 +181,8 @@ function DayDialog({ day, today, holiday, onClose }: { day: DayKey; today: DayKe
   const { open, dialog } = useTaskDialog()
   const deeds = Object.values(g.tasks).filter((t) => !t.habitId && t.status !== 'cancelled' && (t.doneDay === day || (t.doOn === day && t.status !== 'done')))
   const notes = Object.values(g.journal).filter((e) => e.day === day)
+  const people = useAppSelector((s) => s.data.people)
+  const born = Object.values(g.personNotes ?? {}).filter((n) => n.birthday?.slice(-5) === day.slice(5) && people[n.id])
   const full = isFullMoon(day)
   const n = daysBetween(today, day)
   return (
@@ -190,6 +197,17 @@ function DayDialog({ day, today, holiday, onClose }: { day: DayKey; today: DayKe
             {n === 0 ? ' · сегодня' : n > 0 ? ` · через ${days(n)}` : ''}
           </Text>
         </HStack>
+        {born.map((n) => (
+          <Text key={n.id} fontSize="sm">
+            🎂{' '}
+            <RouterLink to={`/g/people/${n.id}`}>
+              <Text as="span" color="ember.100">
+                {people[n.id].name}
+              </Text>
+            </RouterLink>{' '}
+            — день рождения{n.birthday!.length > 5 ? `, ${+day.slice(0, 4) - +n.birthday!.slice(0, 4)}` : ''}
+          </Text>
+        ))}
         {holiday && (
           <Flex gap="2" align="center" wrap="wrap">
             <Text fontSize="sm" flex="1">
@@ -251,6 +269,13 @@ export default function Calendar() {
   const holidays = useMemo(() => Object.fromEntries(Object.entries(sabbatDays(year, hemisphere)).map(([s, d]) => [d, s as Sabbat])) as Record<DayKey, Sabbat>, [year, hemisphere])
   const months = useMemo(() => Array.from({ length: 12 }, (_, i) => monthInfo(year, i + 1, hemisphere, holidays)), [year, hemisphere, holidays])
   // A dot under days that have deeds: planned or done there.
+  // Birthdays by «MM-DD», so every year's card shows them.
+  const people = useAppSelector((s) => s.data.people)
+  const born = useMemo(() => {
+    const by = new Map<string, string[]>()
+    for (const n of Object.values(g.personNotes ?? {})) if (n.birthday && people[n.id]) by.set(n.birthday.slice(-5), [...(by.get(n.birthday.slice(-5)) ?? []), people[n.id].name])
+    return by
+  }, [g.personNotes, people])
   const feel = useMemo(() => {
     const by = new Map<DayKey, string[]>()
     for (const e of Object.values(g.journal)) if (e.words?.length) by.set(e.day, [...(by.get(e.day) ?? []), ...e.words])
@@ -291,6 +316,7 @@ export default function Calendar() {
             holidays={holidays}
             busy={busy}
             feel={feel}
+            born={born}
             onDay={setDay}
             refFor={m.year === thisYear && m.month === +today.slice(5, 7) ? (el) => (current.current = el) : undefined}
           />

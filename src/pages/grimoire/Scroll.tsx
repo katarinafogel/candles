@@ -15,6 +15,7 @@ import { slotLabel } from '../../grimoire/labels'
 import { backlog, dayPlan, dayStars, deadlinesSoon, evenInNav, isBlocked, joysAhead, toReview, words } from '../../grimoire/selectors'
 import type { Sabbat, Task, TaskSlot } from '../../grimoire/types'
 import { isFullMoon, moonPhase, moonPhaseNames, sabbats, wheelNow } from '../../grimoire/wheel'
+import { upcomingDates } from '../../grimoire/people'
 import { MoonIcon } from '../../components/grimoire/MoonIcon'
 import { WheelPick } from '../../components/grimoire/WheelPick'
 import { sabbatTag, SabbatNoteDialog } from './Wheel'
@@ -358,6 +359,7 @@ export default function Scroll() {
               {wishesNear ? ` · хотелок отрезка: ${wishesNear}` : ''}
             </Text>
           )}
+          <PeopleDates today={today} />
           {isFullMoon(today) && (
             <HStack gap="1.5" mt="1" fontSize="sm" color="fg.muted">
               <Box color="ember.100">
@@ -470,5 +472,43 @@ function EveningCall({ today }: { today: string }) {
     <Button asChild size="xs" variant="outline" mt="2" mr="2">
       <RouterLink to="/g/mirror/evening">🌙 Вечерняя страница</RouterLink>
     </Button>
+  )
+}
+
+/** Birthdays and other dates of the bestiary in the next two weeks, with a gift deed one tap away. */
+function PeopleDates({ today }: { today: string }) {
+  const dispatch = useAppDispatch()
+  const notes = useAppSelector((s) => s.grimoire.personNotes)
+  const tasks = useAppSelector((s) => s.grimoire.tasks)
+  const people = useAppSelector((s) => s.data.people)
+  const soon = upcomingDates(notes, today, 14).filter((d) => people[d.personId])
+  return (
+    <>
+      {soon.map((d) => {
+        const name = people[d.personId].name
+        const title = `Подарок: ${name}`
+        const has = Object.values(tasks).some((t) => t.title === title && t.status !== 'cancelled' && (t.status !== 'done' || (t.doneDay ?? '') >= addDays(d.day, -30)))
+        return (
+          <HStack key={`${d.personId}${d.label}`} gap="1.5" mt="1" fontSize="sm" color="fg.muted" wrap="wrap">
+            <Text>
+              🎂{' '}
+              <RouterLink to={`/g/people/${d.personId}`}>
+                <Text as="span" color="ember.100">
+                  {name}
+                </Text>
+              </RouterLink>
+              {' — '}
+              {d.label}
+              {d.age ? `, ${d.age}` : ''} · {d.inDays === 0 ? 'сегодня' : d.inDays === 1 ? 'завтра' : `через ${days(d.inDays)}`}
+            </Text>
+            {!has && (
+              <Button size="2xs" variant="ghost" onClick={() => withUndo('Подарок в бэклоге', () => dispatch(A.addTask({ fields: { title, personIds: [d.personId], dueAt: d.day, type: 'joy', tags: ['подарки'] } })))}>
+                + подарок
+              </Button>
+            )}
+          </HStack>
+        )
+      })}
+    </>
   )
 }

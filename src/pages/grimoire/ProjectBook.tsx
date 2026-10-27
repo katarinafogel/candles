@@ -8,6 +8,8 @@ import { LuGripHorizontal, LuPencil } from 'react-icons/lu'
 import { Navigate, useParams } from 'react-router-dom'
 import { BookCover, bookColor } from '../../components/grimoire/BookCover'
 import { QuickAdd } from '../../components/grimoire/QuickAdd'
+import { SpellsDialog } from '../../components/grimoire/Spells'
+import { useReorder } from '../../components/grimoire/useReorder'
 import { cardColumns, TaskCard } from '../../components/grimoire/TaskCard'
 import { useTaskDialog } from '../../components/grimoire/TaskDialog'
 import { Sparkle } from '../../components/Magic'
@@ -23,40 +25,13 @@ import { ProjectDialog } from './Projects'
 const PER_PAGE = 6
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-/** Dragging a card by its grip: the order changes live under the finger and is saved on release. */
-function useReorder(ids: string[], save: (ids: string[]) => void) {
-  const [order, setOrder] = useState<string[] | null>(null)
-  const dragging = useRef<string | null>(null)
-  const shown = order ?? ids
-
-  function onPointerDown(id: string, e: React.PointerEvent) {
-    e.preventDefault()
-    e.stopPropagation()
-    dragging.current = id
-    let current = ids
-    setOrder(ids)
-    const move = (ev: PointerEvent) => {
-      const over = (document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement | null)?.closest<HTMLElement>('[data-reorder]')?.dataset.reorder
-      if (!over || over === dragging.current) return
-      const next = current.filter((x) => x !== dragging.current)
-      const at = next.indexOf(over) + (current.indexOf(over) > current.indexOf(dragging.current!) ? 1 : 0)
-      next.splice(at, 0, dragging.current!)
-      current = next
-      setOrder(next)
-    }
-    const up = () => {
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', up)
-      window.removeEventListener('pointercancel', up)
-      if (current.join() !== ids.join()) save(current)
-      dragging.current = null
-      setOrder(null)
-    }
-    window.addEventListener('pointermove', move)
-    window.addEventListener('pointerup', up)
-    window.addEventListener('pointercancel', up)
-  }
-  return { shown, onPointerDown, dragging: order ? dragging.current : null }
+/** The grip above a card: dragged sideways or down it moves the card through the book. */
+function Grip({ movable, onDown }: { movable: boolean; onDown: (e: React.PointerEvent) => void }) {
+  return (
+    <Flex as="button" aria-label="Перетащить" justify="center" color="#8a7356" cursor="grab" touchAction="none" visibility={movable ? 'visible' : 'hidden'} onPointerDown={(e: React.PointerEvent) => movable && onDown(e)}>
+      <LuGripHorizontal />
+    </Flex>
+  )
 }
 
 function Page({ children, n, id, wideOnly }: { children: ReactNode; n: number; id?: string; wideOnly?: boolean }) {
@@ -105,6 +80,7 @@ export default function ProjectBook() {
   const { open, dialog } = useTaskDialog()
   const project = g.projects[id]
   const [editing, setEditing] = useState(false)
+  const [spells, setSpells] = useState(false)
   const [quest, setQuest] = useState<string>()
   // The opening: the cord comes off, then the cover turns away.
   const [stage, setStage] = useState<'tied' | 'untied' | 'opening' | 'open'>(() => (reducedMotion() ? 'open' : 'tied'))
@@ -123,13 +99,17 @@ export default function ProjectBook() {
   const reorder = useReorder(openIds, (ids) => dispatch(A.reorderTasks(ids)))
   const ordered: Task[] = [...reorder.shown.map((x) => g.tasks[x]).filter(Boolean), ...deeds.filter((t) => t.status === 'done')]
 
+  // The opened quest's steps are dragged the same way, within the quest.
+  const questSteps = quest ? stepsOf(g, quest).filter((s) => s.status !== 'cancelled') : []
+  const stepOrder = useReorder(questSteps.filter((s) => s.status !== 'done').map((s) => s.id), (ids) => dispatch(A.reorderTasks(ids)))
+
   // Pages of cards; a quest's steps get the page right after the one holding it.
   const sheets: { key: string; tasks: Task[]; steps?: Task }[] = []
   for (let i = 0; i < ordered.length; i += PER_PAGE) {
     const chunk = ordered.slice(i, i + PER_PAGE)
     sheets.push({ key: `p${i}`, tasks: chunk })
     const q = chunk.find((t) => t.id === quest)
-    if (q) sheets.push({ key: `q${q.id}`, tasks: stepsOf(g, q.id).filter((s) => s.status !== 'cancelled'), steps: q })
+    if (q) sheets.push({ key: `q${q.id}`, tasks: [...stepOrder.shown.map((x) => g.tasks[x]).filter(Boolean), ...questSteps.filter((s) => s.status === 'done')], steps: q })
   }
 
   useEffect(() => {
@@ -145,6 +125,9 @@ export default function ProjectBook() {
   return (
     <>
       <PageHeader title={project.title} back="/g/projects">
+        <Button size="sm" variant="outline" onClick={() => setSpells(true)}>
+          {words(g.meta).spells}
+        </Button>
         <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
           <LuPencil /> Обложка
         </Button>
@@ -228,7 +211,10 @@ export default function ProjectBook() {
                   </Flex>
                   <SimpleGrid gridTemplateColumns={cardColumns} gap="3">
                     {sh.tasks.map((t) => (
-                      <TaskCard key={t.id} t={t} today={today} onOpen={open} compact inBook />
+                      <Stack key={t.id} data-reorder={t.status !== 'done' ? t.id : undefined} gap="1" opacity={stepOrder.dragging === t.id ? 0.55 : 1} transition="opacity .15s">
+                        <Grip movable={t.status !== 'done'} onDown={(e) => stepOrder.onPointerDown(t.id, e)} />
+                        <TaskCard t={t} today={today} onOpen={open} compact inBook />
+                      </Stack>
                     ))}
                   </SimpleGrid>
                 </Stack>
@@ -240,19 +226,7 @@ export default function ProjectBook() {
                     const movable = t.status !== 'done'
                     return (
                       <Stack key={t.id} data-reorder={movable ? t.id : undefined} gap="1" opacity={reorder.dragging === t.id ? 0.55 : 1} transition="opacity .15s">
-                        {/* The grip above the card: dragged sideways or down it moves the card through the book. */}
-                        <Flex
-                          as="button"
-                          aria-label="Перетащить"
-                          justify="center"
-                          color="#8a7356"
-                          cursor="grab"
-                          touchAction="none"
-                          visibility={movable ? 'visible' : 'hidden'}
-                          onPointerDown={(e: React.PointerEvent) => movable && reorder.onPointerDown(t.id, e)}
-                        >
-                          <LuGripHorizontal />
-                        </Flex>
+                        <Grip movable={movable} onDown={(e) => reorder.onPointerDown(t.id, e)} />
                         <Box flex="1" outline={quest === t.id ? '2px solid #a0703a' : undefined} outlineOffset="2px" borderRadius="10px">
                           <TaskCard t={t} today={today} onOpen={openCard} inBook />
                         </Box>
@@ -276,6 +250,7 @@ export default function ProjectBook() {
       </Box>
 
       {editing && <ProjectDialog project={project} onClose={() => setEditing(false)} />}
+      {spells && <SpellsDialog projectId={project.id} onClose={() => setSpells(false)} />}
       {dialog}
     </>
   )

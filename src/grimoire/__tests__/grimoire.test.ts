@@ -504,3 +504,41 @@ describe('mirror analytics', async () => {
     expect(row).toContain('"звонок; опять"')
   })
 })
+
+describe('spells and the bestiary', async () => {
+  const P = await import('../people')
+  it('keeps a quest as a spell and casts it with the steps in order', () => {
+    let s: GS = { ...initialGrimoire, meta: { ...initialGrimoire.meta, spells: [] } }
+    s = reducer(s, A.addTask({ fields: { id: 'q', title: 'покрасить потолок', stars: 3, tags: ['дом'] } }))
+    s = reducer(s, A.splitTask({ id: 'q', steps: ['купить краску', 'застелить пол', 'покрасить'] }))
+    const [a, b] = Object.values(s.tasks).filter((t) => t.parentId === 'q').sort((x, y) => x.order! - y.order!)
+    s = reducer(s, A.reorderTasks([b.id, a.id]))
+    s = reducer(s, A.saveSpell({ taskId: 'q' }))
+    const sp = s.meta.spells[0]
+    expect(sp.steps.map((x) => x.title)).toEqual(['застелить пол', 'купить краску', 'покрасить'])
+    s = reducer(s, A.castSpell({ spellId: sp.id, title: 'потолок в спальне', projectId: 'p1' }))
+    const q2 = Object.values(s.tasks).find((t) => t.title === 'потолок в спальне')!
+    expect(q2.projectId).toBe('p1')
+    expect(q2.stars).toBe(3)
+    const steps = Object.values(s.tasks).filter((t) => t.parentId === q2.id).sort((x, y) => x.order! - y.order!)
+    expect(steps.map((t) => t.title)).toEqual(['застелить пол', 'купить краску', 'покрасить'])
+    expect(steps.every((t) => t.projectId === 'p1' && t.tags.includes('дом'))).toBe(true)
+  })
+  it('finds the next birthday, a leap one too, and the age', () => {
+    expect(P.nextOccurrence('03-14', MON)).toBe('2027-03-14')
+    expect(P.nextOccurrence('10-26', MON)).toBe('2026-10-26')
+    expect(P.nextOccurrence('2000-02-29', '2027-01-01')).toBe('2027-02-28')
+    const soon = P.upcomingDates({ a: { id: 'a', birthday: '1990-11-02', dates: [{ id: 'd', label: 'годовщина', date: '12-31' }] } }, MON, 14)
+    expect(soon).toEqual([{ personId: 'a', label: 'день рождения', day: '2026-11-02', inDays: 7, age: 36 }])
+  })
+  it('lets go of a scar without losing it, and counts the year', () => {
+    let s: GS = initialGrimoire
+    s = reducer(s, A.addPersonLine({ personId: 'a', list: 'scars', text: 'не пришла', on: '2026-03-10' }))
+    s = reducer(s, A.addPersonLine({ personId: 'a', list: 'kindness', text: 'помогла', on: '2026-05-01' }))
+    expect(P.liveScars(s.personNotes.a)).toHaveLength(1)
+    const id = s.personNotes.a.scars![0].id
+    s = reducer(s, A.updatePersonLine({ personId: 'a', list: 'scars', id, patch: { released: MON } }))
+    expect(P.liveScars(s.personNotes.a)).toHaveLength(0)
+    expect(P.personBalance(s, 'a', MON)).toEqual({ forThem: 0, kindness: 1, scars: 1 })
+  })
+})

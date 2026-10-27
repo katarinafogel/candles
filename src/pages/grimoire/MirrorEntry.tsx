@@ -2,10 +2,12 @@
 // Top to bottom on a phone, wheel left and fields right on a wide screen. Routes: /g/mirror/new,
 // /g/mirror/evening, /g/mirror/:id; `?task=` ties a new entry to a deed, `?source=` says where from.
 import { Box, Button, Flex, Grid, HStack, Input, Stack, Text } from '@chakra-ui/react'
+import { nanoid } from '@reduxjs/toolkit'
 import { useMemo, useState } from 'react'
 import { LuPlus, LuX } from 'react-icons/lu'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { EmotionPicker, WordChip } from '../../components/grimoire/EmotionWheel'
+import { matchPeople } from '../../components/grimoire/QuickAdd'
 import { WordCard } from '../../components/grimoire/WordCard'
 import { Chips, confirmAction, Field, PageHeader, Section, TextArea, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
@@ -13,6 +15,7 @@ import { bodyZones, emotionActions, emotionWords, mirrorFactors, wordColor } fro
 import { isOpenTask } from '../../grimoire/selectors'
 import type { JournalEntry } from '../../grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
+import { actions } from '../../store/dataSlice'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 
 export const energyNames = ['почти нет', 'мало', 'ровно', 'бодро', 'через край']
@@ -90,11 +93,13 @@ function BodyMap({ value, onChange }: { value: string[]; onChange: (v: string[])
 }
 
 /** A searched list with the chosen ones as chips: deeds of today and the backlog, or workshop people. */
-function PickList({ chosen, options, multi, placeholder, onChange }: { chosen: string[]; options: { id: string; label: string }[]; multi?: boolean; placeholder: string; onChange: (v: string[]) => void }) {
+function PickList({ chosen, options, multi, placeholder, onChange, onCreate }: { chosen: string[]; options: { id: string; label: string }[]; multi?: boolean; placeholder: string; onChange: (v: string[]) => void; onCreate?: (name: string) => void }) {
   const [q, setQ] = useState('')
   const needle = q.trim().toLowerCase().replace(/^@/, '')
   const found = needle ? options.filter((o) => !chosen.includes(o.id) && o.label.toLowerCase().includes(needle)).slice(0, 6) : []
   const label = (id: string) => options.find((o) => o.id === id)?.label ?? '…'
+  // Someone not in the bestiary yet: added there by name, right from here.
+  const fresh = onCreate && needle && !options.some((o) => o.label.toLowerCase() === needle) ? q.trim().replace(/^@/, '') : ''
   return (
     <Stack gap="2">
       {chosen.length > 0 && (
@@ -123,6 +128,20 @@ function PickList({ chosen, options, multi, placeholder, onChange }: { chosen: s
             </Button>
           ))}
         </Flex>
+      )}
+      {fresh && (
+        <Box>
+          <Button
+            size="xs"
+            variant="ghost"
+            onClick={() => {
+              onCreate!(fresh)
+              setQ('')
+            }}
+          >
+            <LuPlus /> добавить «{fresh}» в бестиарий
+          </Button>
+        </Box>
       )}
     </Stack>
   )
@@ -192,6 +211,18 @@ export default function MirrorEntry() {
     [g.tasks, today, e.taskId],
   )
   const personOptions = Object.values(people).map((p) => ({ id: p.id, label: p.name }))
+  const newPerson = (name: string) => {
+    const pid = nanoid(8)
+    dispatch(actions.upsertPerson({ id: pid, name, contact: '', notes: '' }))
+    return pid
+  }
+  const peoplePick = (
+    <PickList multi chosen={e.people ?? []} options={personOptions} placeholder="@имя" onChange={(v) => set({ people: v.length ? v : undefined })} onCreate={(name) => set({ people: [...(e.people ?? []), newPerson(name)] })} />
+  )
+  // «@Аня» in the text ties the entry to Аня, as in a deed's line.
+  const mentioned = [...new Set([...(e.text ?? '').matchAll(/@([\p{L}][\p{L}\-]*)/gu)].map((m) => m[1]))]
+  const mentionedPeople = matchPeople(mentioned)
+  const aboutPeople = e.factors?.some((f) => f === 'people' || f === 'close')
   const todays = Object.values(g.journal)
     .filter((x) => x.day === today && x.id !== entry?.id)
     .sort((a, b) => a.at.localeCompare(b.at))
@@ -207,7 +238,8 @@ export default function MirrorEntry() {
 
   const empty = !e.words?.length && !e.energy && !e.factors?.length && !e.text?.trim() && !e.wentWell && !e.putOff && !e.grateful && !e.trigger?.trim() && !e.bodyZones?.length
   const save = () => {
-    const fields = { ...e, text: e.text?.trim() || undefined, trigger: e.trigger?.trim() || undefined }
+    const tied = [...new Set([...(e.people ?? []), ...mentionedPeople.filter(Boolean).map((p) => p!.id)])]
+    const fields = { ...e, people: tied.length ? tied : undefined, text: e.text?.trim() || undefined, trigger: e.trigger?.trim() || undefined }
     if (entry) dispatch(A.updateJournal({ ...fields, id: entry.id, at }))
     else {
       const type = evening ? 'evening' : source === 'task_done' ? 'taskFeedback' : 'entry'
@@ -228,7 +260,7 @@ export default function MirrorEntry() {
         <PickList chosen={e.taskId ? [e.taskId] : []} options={taskOptions} placeholder="найти дело на сегодня или в бэклоге" onChange={(v) => set({ taskId: v[0] })} />
       </Field>
       <Field label="С кем">
-        <PickList multi chosen={e.people ?? []} options={personOptions} placeholder="@имя" onChange={(v) => set({ people: v.length ? v : undefined })} />
+        {peoplePick}
       </Field>
       <Field label="Что с этим сделаю">
         <Chips value={e.action} onChange={(v) => set({ action: (v as string) ?? undefined })} options={emotionActions.map((a) => ({ value: a.key, label: a.label }))} />
@@ -276,6 +308,11 @@ export default function MirrorEntry() {
           <Field label="Что влияет">
             <Chips multi value={e.factors ?? []} onChange={(v) => set({ factors: (v as string[]) ?? [] })} options={mirrorFactors.map((f) => ({ value: f.key, label: f.label }))} />
           </Field>
+          {aboutPeople && (
+            <Field label="Кто именно?" helper="можно и через @имя в тексте записи">
+              {peoplePick}
+            </Field>
+          )}
           {evening && (
             <>
               <Field label="Что получилось">
@@ -290,7 +327,24 @@ export default function MirrorEntry() {
             </>
           )}
           <Field label="Запись">
-            <TextArea value={e.text ?? ''} onChange={(v) => set({ text: v })} rows={evening ? 3 : 5} />
+            <Stack gap="1.5">
+              <TextArea value={e.text ?? ''} onChange={(v) => set({ text: v })} rows={evening ? 3 : 5} placeholder="@имя привяжет человека" />
+              {mentioned.length > 0 && (
+                <Flex gap="1.5" wrap="wrap" fontSize="xs">
+                  {mentioned.map((n, i) =>
+                    mentionedPeople[i] ? (
+                      <Text key={n} color="emerald.300">
+                        @{mentionedPeople[i]!.name}
+                      </Text>
+                    ) : (
+                      <Button key={n} size="2xs" variant="ghost" onClick={() => set({ people: [...(e.people ?? []), newPerson(n)] })}>
+                        <LuPlus /> @{n} — добавить в бестиарий
+                      </Button>
+                    ),
+                  )}
+                </Flex>
+              )}
+            </Stack>
           </Field>
           <Field label="Когда">
             <input

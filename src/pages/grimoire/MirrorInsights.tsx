@@ -15,7 +15,7 @@ import { energyNames } from './MirrorEntry'
 type Period = 'week' | 'month' | 'segment'
 
 /** One row: a label and a bar split by petals, widths by share; the names of the two biggest under it. */
-function PetalBar({ label, counts, note }: { label: ReactNode; counts: PetalCounts; note?: ReactNode }) {
+export function PetalBar({ label, counts, note }: { label: ReactNode; counts: PetalCounts; note?: ReactNode }) {
   const sum = total(counts)
   const top = petalOrder.filter((p) => counts[p]).sort((a, b) => counts[b] - counts[a]).slice(0, 2)
   return (

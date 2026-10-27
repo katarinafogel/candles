@@ -118,8 +118,8 @@ export function chainOf(g: GrimoireState, id: string): Task[] {
 /** Game words or plain ones, as chosen in the settings. */
 export function words(meta: Pick<GrimoireMeta, 'gameWords'>) {
   return meta.gameWords
-    ? { scroll: 'Свиток дня', book: 'Книга дел', rituals: 'Ритуалы', ritual: 'ритуал', quest: 'квест', wheel: 'Колесо года', treasury: 'Сокровищница', projects: 'Великие деяния' }
-    : { scroll: 'Сегодня', book: 'Все дела', rituals: 'Привычки', ritual: 'привычка', quest: 'задача с шагами', wheel: 'Колесо года', treasury: 'Монеты', projects: 'Проекты' }
+    ? { scroll: 'Свиток дня', book: 'Книга дел', rituals: 'Ритуалы', ritual: 'ритуал', quest: 'квест', wheel: 'Колесо года', treasury: 'Сокровищница', projects: 'Великие деяния', spell: 'заклинание', spells: 'Заклинания' }
+    : { scroll: 'Сегодня', book: 'Все дела', rituals: 'Привычки', ritual: 'привычка', quest: 'задача с шагами', wheel: 'Колесо года', treasury: 'Монеты', projects: 'Проекты', spell: 'шаблон', spells: 'Шаблоны' }
 }
 
 /**

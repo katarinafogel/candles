@@ -80,7 +80,8 @@ export default function GrimoireMore() {
         {[
           { to: '/g/calendar', label: 'Календарь: луны, саббаты и эсбаты' },
           { to: '/g/projects', label: `${words(meta).projects}: полка проектов` },
-          { to: '/g/mirror', label: 'Зеркало: дневник и настроение' },
+          { to: '/g/mirror', label: 'Зеркало: словарь эмоций и записи' },
+          { to: '/g/people', label: 'Бестиарий: люди, памятка и даты' },
           { to: '/g/wishes', label: 'Сундук желаний и зал славы' },
         ].map((i) => (
           <RouterLink key={i.to} to={i.to}>
@@ -229,6 +230,9 @@ export default function GrimoireMore() {
           <Check checked={meta.gameWords} onChange={(v) => dispatch(A.updateMeta({ gameWords: v }))}>
             Игровые названия (свиток, квест, ритуал)
           </Check>
+          <Field label="Круги бестиария" helper="через запятую">
+            <TextInput value={(meta.circles ?? []).join(', ')} onChange={(v) => dispatch(A.updateMeta({ circles: v.split(',').map((x) => x.trim()).filter(Boolean) }))} />
+          </Field>
           <Field label="Зоны дома" helper="через запятую">
             <TextInput value={meta.zones.join(', ')} onChange={(v) => dispatch(A.updateMeta({ zones: v.split(',').map((x) => x.trim()).filter(Boolean) }))} />
           </Field>

@@ -15,6 +15,7 @@ import { grimoireActions as A } from '../../store/grimoireSlice'
 import { Modal } from '../ui'
 import { Dread, Stars, Tag } from './Marks'
 import { usePlanGuard } from './PlanGuard'
+import { ScarNote } from './ScarNote'
 
 /** Finds workshop people by the name typed after @ (the bestiary shares them). */
 export function matchPeople(names: string[]) {
@@ -128,6 +129,7 @@ export function QuickAdd({ planToday, autoFocus, onAdded, fields: extra }: { pla
           ))}
         </HStack>
       )}
+      {shown && <ScarNote personIds={people.map((x) => x?.id)} />}
       {!shown && (
         <Text fontSize="2xs" color="fg.subtle" px="1">
           * сложность · ☠ нехотение · #тег · !пт срок · @имя · +радость · +главное / +доп / +необяз

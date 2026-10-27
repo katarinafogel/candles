@@ -20,6 +20,9 @@ import type {
   Task,
   TaskSlot,
   WheelPractice,
+  PersonLine,
+  PersonList,
+  PersonNotes,
 } from '../grimoire/types.ts'
 
 export const defaultMeta: GrimoireMeta = {
@@ -36,6 +39,8 @@ export const defaultMeta: GrimoireMeta = {
   frogPostpones: 3,
   emotionAsk: 'hard',
   eveningAt: '21:00',
+  spells: [],
+  circles: ['семья', 'друзья', 'работа', 'ковен', 'знакомые'],
   tone: { praise: 'normal', motion: 'soft' },
   sabbatNotes: {},
   sabbatCards: {},
@@ -53,6 +58,7 @@ export const initialGrimoire: GrimoireState = {
   jars: {},
   jarTxs: {},
   coinTxs: {},
+  personNotes: {},
   meta: defaultMeta,
 }
 
@@ -555,6 +561,69 @@ const slice = createSlice({
         delete t.doOn
       },
       prepare: (p: { id: string; steps: string[]; boundary?: number }) => ({ payload: when(p) }),
+    },
+
+    // ----- «заклинания»: a quest kept as a template -----
+    saveSpell: {
+      reducer(s, a: PayloadAction<{ taskId: string; title?: string; spellId: string } & When>) {
+        const t = s.tasks[a.payload.taskId]
+        if (!t) return
+        const steps = Object.values(s.tasks)
+          .filter((x) => x.parentId === t.id && x.status !== 'cancelled')
+          .sort((x, y) => (x.order ?? 0) - (y.order ?? 0))
+          .map((x) => ({ title: x.title, stars: x.stars, dread: x.dread }))
+        if (!steps.length) return
+        s.meta.spells.push({ id: a.payload.spellId, title: (a.payload.title ?? t.title).trim().slice(0, 200), stars: t.stars, dread: t.dread, tags: [...t.tags], steps, createdAt: a.payload.at })
+      },
+      prepare: (p: { taskId: string; title?: string }) => ({ payload: when({ ...p, spellId: nanoid() }) }),
+    },
+    /** Casts a spell: a new quest in the backlog (or in a project's book) with the spell's steps in order. */
+    castSpell: {
+      reducer(s, a: PayloadAction<{ spellId: string; title?: string; projectId?: string; questId: string } & When>) {
+        const sp = s.meta.spells.find((x) => x.id === a.payload.spellId)
+        if (!sp) return
+        const { at, questId, projectId } = a.payload
+        const q = newTask({ id: questId, title: a.payload.title?.trim() || sp.title, stars: sp.stars, dread: sp.dread, tags: [...sp.tags], projectId, source: projectId ? 'project' : 'manual' }, at)
+        s.tasks[q.id] = q
+        frogUp(s, q)
+        sp.steps.forEach((step, i) => {
+          const x = newTask({ ...step, tags: [...sp.tags], parentId: q.id, projectId, order: i, source: q.source }, at)
+          s.tasks[x.id] = x
+        })
+      },
+      prepare: (p: { spellId: string; title?: string; projectId?: string }) => ({ payload: when({ ...p, questId: nanoid() }) }),
+    },
+    renameSpell(s, a: PayloadAction<{ id: string; title: string }>) {
+      const sp = s.meta.spells.find((x) => x.id === a.payload.id)
+      if (sp && a.payload.title.trim()) sp.title = a.payload.title.trim().slice(0, 200)
+    },
+    deleteSpell(s, a: PayloadAction<string>) {
+      s.meta.spells = s.meta.spells.filter((x) => x.id !== a.payload)
+    },
+
+    // ----- the bestiary: memo, scars and kindness of a workshop person -----
+    updatePersonNotes(s, a: PayloadAction<Partial<PersonNotes> & { id: string }>) {
+      s.personNotes[a.payload.id] = { ...s.personNotes[a.payload.id], ...a.payload }
+    },
+    addPersonLine: {
+      reducer(s, a: PayloadAction<{ personId: string; list: PersonList; text: string; lineId: string; on?: DayKey } & When>) {
+        const { personId, list, text, lineId, day } = a.payload
+        if (!text.trim()) return
+        const n = (s.personNotes[personId] ??= { id: personId })
+        ;(n[list] ??= []).push({ id: lineId, day: a.payload.on ?? day, text: text.trim().slice(0, 500) })
+      },
+      prepare: (p: { personId: string; list: PersonList; text: string; on?: DayKey }) => ({ payload: when({ ...p, lineId: nanoid() }) }),
+    },
+    updatePersonLine(s, a: PayloadAction<{ personId: string; list: PersonList; id: string; patch: Partial<PersonLine> }>) {
+      const line = s.personNotes[a.payload.personId]?.[a.payload.list]?.find((x) => x.id === a.payload.id)
+      if (line) Object.assign(line, a.payload.patch)
+    },
+    deletePersonLine(s, a: PayloadAction<{ personId: string; list: PersonList; id: string }>) {
+      const n = s.personNotes[a.payload.personId]
+      if (n?.[a.payload.list]) n[a.payload.list] = n[a.payload.list]!.filter((x) => x.id !== a.payload.id)
+    },
+    deletePersonNotes(s, a: PayloadAction<string>) {
+      delete s.personNotes[a.payload]
     },
 
     // ----- «уйти в навь» -----

@@ -294,6 +294,10 @@ export interface GrimoireMeta {
   emotionAsk: 'off' | 'hard' | 'all'
   /** From this time (HH:MM) the scroll offers the evening page until the day ends; empty — never. */
   eveningAt: string
+  /** Quests kept as templates («заклинания»). */
+  spells: Spell[]
+  /** The bestiary's circles: семья, друзья… — an editable list. */
+  circles: string[]
   /** How a done deed is answered: the praise in the toast and the spark that flies to the coins. */
   tone: { praise: 'quiet' | 'normal' | 'warm'; motion: 'off' | 'soft' | 'bright' }
   /** Sabbat cards: the text is the witch's own tradition, so it is editable. */
@@ -317,6 +321,52 @@ export interface GrimoireMeta {
   esbatsSeeded?: boolean
 }
 
+/** «Заклинание»: a quest kept as a template — its own marks and its steps in order — to cast again. */
+export interface Spell {
+  id: string
+  title: string
+  stars: 1 | 2 | 3
+  dread: 0 | 1 | 2 | 3
+  tags: string[]
+  steps: { title: string; stars: 1 | 2 | 3; dread: 0 | 1 | 2 | 3 }[]
+  createdAt: ISODateTime
+}
+
+/** A dated line on a person's card: a fact, a scar, a kindness, a question to ask. */
+export interface PersonLine {
+  id: string
+  day: DayKey
+  text: string
+  /** A scar «отпустила» on this day: kept in the history, gone from the warnings. */
+  released?: DayKey
+  /** A question already asked on this day. */
+  asked?: DayKey
+}
+
+/** The dated lists of a person's card. */
+export type PersonList = 'gifts' | 'ask' | 'facts' | 'scars' | 'kindness'
+
+/**
+ * The bestiary's memo about a workshop person (kind `person_notes`, id = the person's id). Lives in
+ * the grimoire, not on `person`: it is the witch's alone, under her role, and never reaches a
+ * candle's public page.
+ */
+export interface PersonNotes {
+  id: string
+  nickname?: string
+  circle?: string
+  /** «MM-DD», or «YYYY-MM-DD» when the year is known. */
+  birthday?: string
+  dates?: { id: string; label: string; date: string }[]
+  likes?: string
+  dislikes?: string
+  gifts?: PersonLine[]
+  ask?: PersonLine[]
+  facts?: PersonLine[]
+  scars?: PersonLine[]
+  kindness?: PersonLine[]
+}
+
 export interface GrimoireState {
   tasks: Record<string, Task>
   projects: Record<string, Project>
@@ -328,5 +378,6 @@ export interface GrimoireState {
   jars: Record<string, Jar>
   jarTxs: Record<string, JarTx>
   coinTxs: Record<string, CoinTx>
+  personNotes: Record<string, PersonNotes>
   meta: GrimoireMeta
 }
