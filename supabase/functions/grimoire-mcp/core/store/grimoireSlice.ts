@@ -34,6 +34,7 @@ export const defaultMeta: GrimoireMeta = {
   zones: ['кухня', 'ванная', 'спальня', 'шкаф', 'балкон', 'мастерская'],
   tagColors: {},
   frogPostpones: 3,
+  emotionAsk: 'hard',
   tone: { praise: 'normal', motion: 'soft' },
   sabbatNotes: {},
   sabbatCards: {},

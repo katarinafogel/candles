@@ -15,6 +15,7 @@ import { addDays, days, daysBetween, plainDay, weekday } from '../../grimoire/da
 import type { DayKey, Sabbat } from '../../grimoire/types'
 import { isFullMoon, moonPhase, moonPhaseNames, sabbatDays, sabbats, wheelNow } from '../../grimoire/wheel'
 import { useAppSelector } from '../../store'
+import { mainPetal, petals } from '../../grimoire/emotions'
 
 const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
 const weekdays = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс']
@@ -70,7 +71,7 @@ function monthBg(m: MonthInfo) {
   return `${glow}, linear-gradient(100deg, ${a} 0%, ${a} ${Math.max(0, at - 18)}%, ${b} ${Math.min(100, at + 18)}%, ${b} 100%)`
 }
 
-function MonthCard({ m, today, holidays, busy, onDay, refFor }: { m: MonthInfo; today: DayKey; holidays: Record<DayKey, Sabbat>; busy: Set<DayKey>; onDay: (d: DayKey) => void; refFor?: (el: HTMLDivElement | null) => void }) {
+function MonthCard({ m, today, holidays, busy, feel, onDay, refFor }: { m: MonthInfo; today: DayKey; holidays: Record<DayKey, Sabbat>; busy: Set<DayKey>; feel: Map<DayKey, string>; onDay: (d: DayKey) => void; refFor?: (el: HTMLDivElement | null) => void }) {
   const pad = weekday(m.first) - 1
   const cells = [...Array.from({ length: pad }, () => undefined), ...Array.from({ length: m.length }, (_, i) => addDays(m.first, i))]
   const fullMoons = cells.filter((d): d is DayKey => !!d && isFullMoon(d))
@@ -155,7 +156,11 @@ function MonthCard({ m, today, holidays, busy, onDay, refFor }: { m: MonthInfo; 
                       <MoonIcon day={d} size={18} lit={full ? '#fff6dc' : 'rgba(246,239,228,.85)'} />
                     )}
                   </Box>
-                  <Box w="3px" h="3px" borderRadius="full" bg={busy.has(d) ? p.star : 'transparent'} />
+                  {/* Deeds of the day, and the day's main feeling in its petal's colour. */}
+                  <HStack gap="2px" h="5px">
+                    <Box w="3px" h="3px" borderRadius="full" bg={busy.has(d) ? p.star : 'transparent'} />
+                    {feel.has(d) && <Box w="5px" h="5px" borderRadius="full" bg={feel.get(d)} borderWidth="0.5px" borderColor="rgba(20,16,12,.6)" />}
+                  </HStack>
                 </Box>
               )
             })}
@@ -246,6 +251,11 @@ export default function Calendar() {
   const holidays = useMemo(() => Object.fromEntries(Object.entries(sabbatDays(year, hemisphere)).map(([s, d]) => [d, s as Sabbat])) as Record<DayKey, Sabbat>, [year, hemisphere])
   const months = useMemo(() => Array.from({ length: 12 }, (_, i) => monthInfo(year, i + 1, hemisphere, holidays)), [year, hemisphere, holidays])
   // A dot under days that have deeds: planned or done there.
+  const feel = useMemo(() => {
+    const by = new Map<DayKey, string[]>()
+    for (const e of Object.values(g.journal)) if (e.words?.length) by.set(e.day, [...(by.get(e.day) ?? []), ...e.words])
+    return new Map([...by].map(([d, ws]) => [d, petals[mainPetal(ws)!].color]))
+  }, [g.journal])
   const busy = useMemo(() => new Set(Object.values(g.tasks).flatMap((t) => (t.habitId || t.status === 'cancelled' ? [] : [t.status === 'done' ? t.doneDay : t.doOn].filter((d): d is DayKey => !!d)))), [g.tasks])
   const current = useRef<HTMLDivElement | null>(null)
   const thisYear = +today.slice(0, 4)
@@ -280,6 +290,7 @@ export default function Calendar() {
             today={today}
             holidays={holidays}
             busy={busy}
+            feel={feel}
             onDay={setDay}
             refFor={m.year === thisYear && m.month === +today.slice(5, 7) ? (el) => (current.current = el) : undefined}
           />

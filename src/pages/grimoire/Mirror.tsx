@@ -1,138 +1,22 @@
 // «Зеркало»: the emotion dictionary instead of a mood scale. An entry is up to three words from the
-// wheel, energy, «что влияет» and a text — any of them; the evening page is an entry too. Two tabs:
-// the feed (filters by petal, deed, person; energy over 30 days) and the dictionary (the wheel coloured
-// by how often each word was marked).
+// wheel, energy, «что влияет» and a text — any of them; it is written on its own page (MirrorEntry),
+// the evening page too. Three tabs: the feed (filters by petal, deed, person; energy over 30 days),
+// the dictionary (the wheel coloured by how often each word was marked) and the analytics.
 import { Box, Button, Flex, HStack, Stack, Tabs, Text } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
-import { EmotionPicker, EmotionWheel, WordChip } from '../../components/grimoire/EmotionWheel'
+import { useNavigate } from 'react-router-dom'
+import { EmotionWheel, WordChip } from '../../components/grimoire/EmotionWheel'
 import { WordCard } from '../../components/grimoire/WordCard'
-import { Chips, confirmAction, Empty, Field, Modal, PageHeader, Section, Select, TextArea, TextInput } from '../../components/ui'
+import { Chips, Empty, PageHeader, Section, Select, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
 import { addDays, dayKey, humanDay, plural } from '../../grimoire/days'
-import { emotionWords, factorLabel, mirrorFactors, petalOrder, petals, wordColor, wordPetals, type Petal } from '../../grimoire/emotions'
+import { actionLabel, bodyLabel, emotionWords, factorLabel, petalOrder, petals, wordColor, wordPetals, type Petal } from '../../grimoire/emotions'
 import { navTest } from '../../grimoire/habits'
 import type { JournalEntry } from '../../grimoire/types'
 import { wheelNow } from '../../grimoire/wheel'
-import { useAppDispatch, useAppSelector } from '../../store'
-import { grimoireActions as A } from '../../store/grimoireSlice'
-
-const energyNames = ['почти нет', 'мало', 'ровно', 'бодро', 'через край']
-
-/** `datetime-local` wants the local time without a zone. */
-const toLocalInput = (iso: string) => {
-  const d = new Date(iso)
-  return new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
-}
-
-/** A slider 1–5; untouched means «не отмечала». */
-function EnergySlider({ value, onChange }: { value?: number; onChange: (v?: number) => void }) {
-  return (
-    <Field label={`Энергия${value ? `: ${energyNames[value - 1]}` : ''}`}>
-      <HStack gap="3">
-        <input
-          type="range"
-          min={1}
-          max={5}
-          step={1}
-          value={value ?? 3}
-          onChange={(e) => onChange(Number(e.target.value))}
-          aria-label="Уровень энергии"
-          style={{ flex: 1, accentColor: 'var(--chakra-colors-emerald-400)', opacity: value ? 1 : 0.45 }}
-        />
-        {value ? (
-          <Button size="2xs" variant="ghost" onClick={() => onChange(undefined)}>
-            сбросить
-          </Button>
-        ) : (
-          <Text fontSize="xs" color="fg.subtle" w="16">
-            не отмечено
-          </Text>
-        )}
-      </HStack>
-    </Field>
-  )
-}
-
-/** One screen, top to bottom: the wheel, energy, what affects, the text. At least one of them. */
-function EntryDialog({ entry, evening, onClose }: { entry?: JournalEntry; evening?: boolean; onClose: () => void }) {
-  const dispatch = useAppDispatch()
-  const [e, setE] = useState<Partial<JournalEntry>>(entry ?? {})
-  const [at, setAt] = useState(entry?.at ?? new Date().toISOString())
-  const [info, setInfo] = useState<string>()
-  const set = (p: Partial<JournalEntry>) => setE({ ...e, ...p })
-  const isEvening = evening || e.type === 'evening'
-  const empty = !e.words?.length && !e.energy && !e.factors?.length && !e.text?.trim() && !e.wentWell && !e.putOff && !e.grateful
-  const save = () => {
-    const fields = { ...e, text: e.text?.trim() || undefined }
-    if (entry) dispatch(A.updateJournal({ ...fields, id: entry.id, at }))
-    else dispatch(A.addJournal({ entry: { ...fields, type: isEvening ? 'evening' : 'entry', source: isEvening ? 'evening' : 'mirror' }, at }))
-    onClose()
-  }
-  return (
-    <Modal
-      open
-      onClose={onClose}
-      size="lg"
-      title={entry ? 'Запись' : isEvening ? 'Вечерняя страница' : 'Новая запись'}
-      footer={
-        <>
-          {entry && (
-            <Button
-              variant="ghost"
-              colorPalette="red"
-              mr="auto"
-              onClick={() => {
-                if (confirmAction('Удалить запись?')) {
-                  dispatch(A.deleteJournal(entry.id))
-                  onClose()
-                }
-              }}
-            >
-              Удалить
-            </Button>
-          )}
-          <Button disabled={empty} onClick={save}>
-            Записать
-          </Button>
-        </>
-      }
-    >
-      <Stack gap="5">
-        <EmotionPicker value={e.words ?? []} onChange={(words) => set({ words })} onInfo={setInfo} />
-        <EnergySlider value={e.energy} onChange={(energy) => set({ energy })} />
-        <Field label="Что влияет">
-          <Chips multi value={e.factors ?? []} onChange={(v) => set({ factors: (v as string[]) ?? [] })} options={mirrorFactors.map((f) => ({ value: f.key, label: f.label }))} />
-        </Field>
-        {isEvening && (
-          <>
-            <Field label="Что получилось">
-              <TextInput value={e.wentWell ?? ''} onChange={(v) => set({ wentWell: v || undefined })} />
-            </Field>
-            <Field label="Что отложила и почему">
-              <TextInput value={e.putOff ?? ''} onChange={(v) => set({ putOff: v || undefined })} />
-            </Field>
-            <Field label="За что благодарна">
-              <TextInput value={e.grateful ?? ''} onChange={(v) => set({ grateful: v || undefined })} />
-            </Field>
-          </>
-        )}
-        <Field label="Запись">
-          <TextArea value={e.text ?? ''} onChange={(v) => set({ text: v })} rows={isEvening ? 3 : 4} />
-        </Field>
-        <Field label="Когда">
-          <input
-            type="datetime-local"
-            value={toLocalInput(at)}
-            max={toLocalInput(new Date().toISOString())}
-            onChange={(ev) => ev.target.value && setAt(new Date(ev.target.value).toISOString())}
-            style={{ background: 'transparent', color: 'inherit', border: '1px solid var(--chakra-colors-border)', borderRadius: 6, padding: '6px 8px', colorScheme: 'dark' }}
-          />
-        </Field>
-      </Stack>
-      {info && <WordCard wordKey={info} onClose={() => setInfo(undefined)} onPick={setInfo} />}
-    </Modal>
-  )
-}
+import { useAppSelector } from '../../store'
+import { MirrorInsights } from './MirrorInsights'
+import { energyNames } from './MirrorEntry'
 
 /** Daily energy over 30 days, with gaps where nothing was written; days in the навь shaded. */
 function EnergyChart({ entries, today, inNav }: { entries: JournalEntry[]; today: string; inNav: (d: string) => boolean }) {
@@ -211,7 +95,7 @@ function EntryCard({ e, onOpen, onWord }: { e: JournalEntry; onOpen: () => void;
         {e.energy && <Text color="emerald.300">энергия: {energyNames[e.energy - 1]}</Text>}
         {e.type === 'taskFeedback' && <Text color="fg.muted">после дела: {task?.title ?? 'дело'}</Text>}
         {e.type === 'evening' && <Text color="fg.muted">вечер</Text>}
-        {e.type === 'entry' && task && <Text color="fg.muted">дело: {task.title}</Text>}
+        {e.type === 'entry' && task && <Text color="fg.muted">{e.source === 'task_start' ? 'перед делом' : 'дело'}: {task.title}</Text>}
       </HStack>
       {!!e.words?.length && (
         <Flex gap="1.5" wrap="wrap" onClick={(ev) => ev.stopPropagation()}>
@@ -228,6 +112,11 @@ function EntryCard({ e, onOpen, onWord }: { e: JournalEntry; onOpen: () => void;
       {(!!e.factors?.length || !!e.people?.length) && (
         <Text fontSize="xs" color="fg.muted" mt="1">
           {[...(e.factors ?? []).map(factorLabel), ...(e.people ?? []).map((id) => people[id] && `@${people[id].name}`).filter(Boolean)].join(' · ')}
+        </Text>
+      )}
+      {(e.trigger || !!e.bodyZones?.length || e.action) && (
+        <Text fontSize="xs" color="fg.muted" mt="1">
+          {[e.trigger && `случилось: ${e.trigger}`, e.bodyZones?.length && `в теле: ${e.bodyZones.map(bodyLabel).join(', ')}`, e.action && actionLabel(e.action)].filter(Boolean).join(' · ')}
         </Text>
       )}
       {e.wentWell && <Text fontSize="sm">Получилось: {e.wentWell}</Text>}
@@ -379,31 +268,39 @@ function Dictionary({ entries, onWord }: { entries: JournalEntry[]; onWord: (k: 
   )
 }
 
+type Tab = 'feed' | 'dictionary' | 'insights'
+
 export default function Mirror() {
   const journal = useAppSelector((s) => s.grimoire.journal)
-  const [tab, setTab] = useState<'feed' | 'dictionary'>('feed')
-  const [dialog, setDialog] = useState<{ entry?: JournalEntry; evening?: boolean }>()
+  const navigate = useNavigate()
+  const [tab, setTab] = useState<Tab>('feed')
   const [info, setInfo] = useState<string>()
   const entries = useMemo(() => Object.values(journal).sort((a, b) => b.at.localeCompare(a.at)), [journal])
 
   return (
     <>
       <PageHeader title="Зеркало">
-        <Button size="sm" onClick={() => setDialog({})}>
+        <Button size="sm" onClick={() => navigate('/g/mirror/new')}>
           Новая запись
         </Button>
-        <Button size="sm" variant="outline" onClick={() => setDialog({ evening: true })}>
+        <Button size="sm" variant="outline" onClick={() => navigate('/g/mirror/evening')}>
           Вечерняя страница
         </Button>
       </PageHeader>
-      <Tabs.Root value={tab} onValueChange={(e) => setTab(e.value as 'feed' | 'dictionary')} variant="line" size="sm" mb="4">
+      <Tabs.Root value={tab} onValueChange={(e) => setTab(e.value as Tab)} variant="line" size="sm" mb="4">
         <Tabs.List>
           <Tabs.Trigger value="feed">Записи</Tabs.Trigger>
           <Tabs.Trigger value="dictionary">Словарь эмоций</Tabs.Trigger>
+          <Tabs.Trigger value="insights">Что видно</Tabs.Trigger>
         </Tabs.List>
       </Tabs.Root>
-      {tab === 'feed' ? <Feed entries={entries} onOpen={(entry) => setDialog({ entry })} onWord={setInfo} /> : <Dictionary entries={entries} onWord={setInfo} />}
-      {dialog && <EntryDialog key={dialog.entry?.id ?? String(dialog.evening)} entry={dialog.entry} evening={dialog.evening} onClose={() => setDialog(undefined)} />}
+      {tab === 'feed' ? (
+        <Feed entries={entries} onOpen={(entry) => navigate(`/g/mirror/${entry.id}`)} onWord={setInfo} />
+      ) : tab === 'dictionary' ? (
+        <Dictionary entries={entries} onWord={setInfo} />
+      ) : (
+        <MirrorInsights entries={entries} />
+      )}
       {info && <WordCard wordKey={info} onClose={() => setInfo(undefined)} onPick={setInfo} />}
     </>
   )

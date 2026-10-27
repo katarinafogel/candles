@@ -12,6 +12,8 @@ import { words } from '../../grimoire/selectors'
 import { tagPalette, tagPalettes, tagsByUse } from '../../grimoire/tags'
 import { Tag } from '../../components/grimoire/Marks'
 import { isTouchDevice, saveFile } from '../../lib/download'
+import { actionLabel, bodyLabel, factorLabel } from '../../grimoire/emotions'
+import { mirrorCsv } from '../../grimoire/mirrorStats'
 import { store, useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 
@@ -206,6 +208,13 @@ export default function GrimoireMore() {
               <NumInput value={meta.coins.frogFactor} onChange={(v) => dispatch(A.updateMeta({ coins: { ...meta.coins, frogFactor: Math.max(1, v ?? 1.5) } }))} suffix="× награда" width="170px" />
             </HStack>
           </Field>
+          <Field label="Чувство у дела" helper="«С каким чувством берёшься?» при «Начать понемногу» и «Как теперь?» после «Сделала»">
+            <Chips value={meta.emotionAsk ?? 'hard'} onChange={(v) => v && dispatch(A.updateMeta({ emotionAsk: v as typeof meta.emotionAsk }))} options={[
+              { value: 'off', label: 'не спрашивать' },
+              { value: 'hard', label: 'жабы и чудовища' },
+              { value: 'all', label: 'все дела' },
+            ]} />
+          </Field>
           <Check checked={meta.streaksOn} onChange={(v) => dispatch(A.updateMeta({ streaksOn: v }))}>
             Серии и бонусы за них
           </Check>
@@ -254,6 +263,17 @@ export default function GrimoireMore() {
             }}
           >
             Выгрузить гримуар (JSON)
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            alignSelf="flex-start"
+            onClick={async () => {
+              const csv = mirrorCsv(store.getState().grimoire, store.getState().data.people, { factor: factorLabel, body: bodyLabel, action: actionLabel })
+              await saveFile(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `mirror-${today}.csv`, isTouchDevice())
+            }}
+          >
+            Выгрузить зеркало (CSV)
           </Button>
           <Button
             size="xs"

@@ -459,3 +459,48 @@ describe('tags', async () => {
     expect(completeTag('помыть окна #до', 'дом')).toBe('помыть окна #дом ')
   })
 })
+
+describe('mirror analytics', async () => {
+  const S = await import('../mirrorStats')
+  const E = await import('../emotions')
+  type J = import('../types').JournalEntry
+  const j = (id: string, day: string, words: string[], extra: Partial<J> = {}): J => ({ id, at: `${day}T09:00:00`, day, type: 'entry', words, ...extra })
+  const task = { id: 't', title: 'налоги', dread: 3, stars: 2, tags: ['бумаги'], postponements: [{ at: `${MON}T10:00:00`, day: MON }] } as unknown as import('../types').Task
+
+  it('counts petals, a mixed feeling for both', () => {
+    const c = S.countPetals([j('a', MON, ['joy.2', 'dyad.love'])])
+    expect(c.joy).toBe(2)
+    expect(c.trust).toBe(1)
+    expect(S.total(c)).toBe(3)
+    expect(E.mainPetal(['fear.1', 'fear.2', 'joy.1'])).toBe('fear')
+  })
+  it('puts the morning words into the morning', () => {
+    const r = S.rhythm([j('a', MON, ['fear.1'])])
+    expect(r.map((x) => x.key)).toEqual(['morning'])
+  })
+  it('compares before and after at a dreaded deed, and the tags fear comes to', () => {
+    const list = [j('a', MON, ['fear.2'], { taskId: 't', source: 'task_start' }), j('b', MON, ['joy.1'], { taskId: 't', type: 'taskFeedback', source: 'task_done' })]
+    const d = S.deedsAndFeelings({ tasks: { t: task } }, list)
+    expect(d.before.fear).toBe(1)
+    expect(d.after.joy).toBe(1)
+    expect(d.tags).toEqual([['бумаги', 1]])
+  })
+  it('looks at the words before a postponement on its day', () => {
+    const p = S.postponeFeelings({ tasks: { t: task } }, [j('a', MON, ['fear.1'])], MON, MON)
+    expect(p.moves).toBe(1)
+    expect(p.near.fear).toBe(1)
+  })
+  it('counts the vocabulary and how precise it is', () => {
+    const v = S.vocabulary([j('a', MON, ['fear.1', 'fear.2', 'joy.3'])], MON)
+    expect(v.now.distinct).toBe(3)
+    expect(v.now.precise).toBeCloseTo(2 / 3)
+  })
+  it('exports the mirror as CSV with words by name', () => {
+    const csv = S.mirrorCsv({ journal: { a: j('a', MON, ['anger.1'], { text: 'звонок; опять', factors: ['hobby'] }) }, tasks: {} }, {}, { factor: E.factorLabel, body: E.bodyLabel, action: E.actionLabel })
+    const [head, row] = csv.replace('﻿', '').split('\r\n')
+    expect(head.startsWith('время;день')).toBe(true)
+    expect(row).toContain('досада;anger.1;anger')
+    expect(row).toContain('хобби')
+    expect(row).toContain('"звонок; опять"')
+  })
+})

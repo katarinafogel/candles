@@ -155,6 +155,47 @@ export const mirrorFactors: { key: string; label: string }[] = [
   { key: 'duties', label: 'обязанности' },
   { key: 'cycle', label: 'цикл' },
   { key: 'moon', label: 'Луна' },
+  { key: 'hobby', label: 'хобби' },
+  { key: 'space', label: 'окружающее пространство' },
 ]
 
 export const factorLabel = (key: string) => mirrorFactors.find((f) => f.key === key)?.label ?? key
+
+/** «Не знаю, что чувствую», step one: which petals feel pleasant. Surprise can go either way. */
+export const petalsByTone: Record<'pleasant' | 'unpleasant' | 'unclear', Petal[]> = {
+  pleasant: ['joy', 'trust', 'anticipation', 'surprise'],
+  unpleasant: ['fear', 'sadness', 'disgust', 'anger', 'surprise'],
+  unclear: petalOrder,
+}
+
+/** The «+» details: where in the body, and what she'll do about it. */
+export const bodyZones: { key: string; label: string }[] = [
+  { key: 'head', label: 'голова' },
+  { key: 'throat', label: 'горло' },
+  { key: 'chest', label: 'грудь' },
+  { key: 'belly', label: 'живот' },
+  { key: 'arms', label: 'руки' },
+  { key: 'legs', label: 'ноги' },
+]
+
+export const emotionActions: { key: string; label: string }[] = [
+  { key: 'noticed', label: 'просто заметила' },
+  { key: 'release', label: 'выпустить' },
+  { key: 'care', label: 'позаботиться о себе' },
+  { key: 'talk', label: 'поговорить' },
+]
+
+export const bodyLabel = (key: string) => bodyZones.find((z) => z.key === key)?.label ?? key
+export const actionLabel = (key: string) => emotionActions.find((a) => a.key === key)?.label ?? key
+
+/** One tap at a deed: the middle word of each petal. */
+export const quickWords = petalOrder.map((p) => `${p}.2`)
+
+/** The petal marked most among these words (a mixed feeling counts for both of its petals). */
+export function mainPetal(keys: string[]): Petal | undefined {
+  const n = new Map<Petal, number>()
+  for (const k of keys) for (const p of wordPetals(k)) n.set(p, (n.get(p) ?? 0) + 1)
+  let best: Petal | undefined
+  for (const [p, c] of n) if (!best || c > n.get(best)!) best = p
+  return best
+}

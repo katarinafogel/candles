@@ -4,7 +4,7 @@
 import { Box, Button, Flex, HStack, IconButton, Input, Stack, Text } from '@chakra-ui/react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { LuInfo, LuX } from 'react-icons/lu'
-import { dyadFor, dyads, emotionWords, petalOrder, petals, petalWords, searchWords, wordColor, type Petal } from '../../grimoire/emotions'
+import { dyadFor, dyads, emotionWords, petalOrder, petals, petalsByTone, petalWords, searchWords, wordColor, type Petal } from '../../grimoire/emotions'
 import { Sparkle } from '../Magic'
 
 const R0 = 26
@@ -14,7 +14,7 @@ const RINGS = [
   [R0, 96],
 ] as const
 const DYAD_R = 233
-const VIEW = 252
+const VIEW = 272
 const SPAN = 20
 
 const rad = (deg: number) => ((deg - 90) * Math.PI) / 180
@@ -227,14 +227,17 @@ function useNarrow(limit = 420) {
  * Picking 1–3 words: the wheel, a search by word or synonym, the chosen ones as chips (a tap removes),
  * and a soft hint of the mixed feeling when two neighbouring petals are chosen.
  */
-export function EmotionPicker({ value, onChange, onInfo }: { value: string[]; onChange: (v: string[]) => void; onInfo: (key: string) => void }) {
+export function EmotionPicker({ value, onChange, onInfo, max = 3 }: { value: string[]; onChange: (v: string[]) => void; onInfo: (key: string) => void; max?: number }) {
   const [ref, narrow] = useNarrow()
   const [open, setOpen] = useState<Petal>()
   const [q, setQ] = useState('')
-  const full = value.length >= 3
+  const [lost, setLost] = useState(false)
+  const full = value.length >= max
   const toggle = (key: string) => {
     if (value.includes(key)) onChange(value.filter((x) => x !== key))
     else if (!full) onChange([...value, key])
+    // A single-word question just swaps the word.
+    else if (max === 1) onChange([key])
   }
   const hint = !full ? dyadFor(value) : undefined
   const found = searchWords(q)
@@ -261,7 +264,7 @@ export function EmotionPicker({ value, onChange, onInfo }: { value: string[]; on
                   flex="1"
                   justifyContent="flex-start"
                   variant={value.includes(x.key) ? 'solid' : 'outline'}
-                  disabled={full && !value.includes(x.key)}
+                  disabled={full && max > 1 && !value.includes(x.key)}
                   onClick={() => toggle(x.key)}
                   borderColor={`color-mix(in srgb, ${wordColor(x.key)} 60%, transparent)`}
                   minH="11"
@@ -280,7 +283,24 @@ export function EmotionPicker({ value, onChange, onInfo }: { value: string[]; on
           </Stack>
         </Box>
       )}
-      <Input size="sm" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Найти слово: «раздраж», «тоска»…" />
+      <Flex gap="2" align="center" wrap="wrap">
+        <Input size="sm" flex="1" minW="200px" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Найти слово: «раздраж», «тоска»…" />
+        {!lost && (
+          <Button size="sm" variant="ghost" disabled={full && max > 1} onClick={() => setLost(true)}>
+            Не знаю, что чувствую
+          </Button>
+        )}
+      </Flex>
+      {lost && (
+        <DontKnow
+          onInfo={onInfo}
+          onClose={() => setLost(false)}
+          onPick={(k) => {
+            if (!value.includes(k)) toggle(k)
+            setLost(false)
+          }}
+        />
+      )}
       {q.trim() && (
         <Flex gap="1.5" wrap="wrap">
           {found.length ? (
@@ -297,7 +317,7 @@ export function EmotionPicker({ value, onChange, onInfo }: { value: string[]; on
           value.map((k) => <WordChip key={k} wordKey={k} onClick={() => onInfo(k)} onRemove={() => toggle(k)} />)
         ) : (
           <Text fontSize="xs" color="fg.subtle">
-            До трёх слов. Долгое нажатие на слово — что оно значит.
+            {max === 1 ? 'Одно слово.' : 'До трёх слов.'} Долгое нажатие на слово — что оно значит.
           </Text>
         )}
       </Flex>
@@ -310,5 +330,87 @@ export function EmotionPicker({ value, onChange, onInfo }: { value: string[]; on
         </Flex>
       )}
     </Stack>
+  )
+}
+
+type Tone = keyof typeof petalsByTone
+
+/**
+ * «Не знаю, что чувствую»: when no word comes, the path narrows step by step — pleasant or not, which
+ * petal is nearer, how strong. The word found joins the picker as an ordinary choice.
+ */
+function DontKnow({ onPick, onInfo, onClose }: { onPick: (key: string) => void; onInfo: (key: string) => void; onClose: () => void }) {
+  const [tone, setTone] = useState<Tone>()
+  const [petal, setPetal] = useState<Petal>()
+  const step = !tone ? 1 : !petal ? 2 : 3
+  const back = () => (petal ? setPetal(undefined) : setTone(undefined))
+  return (
+    <Box p="3" borderRadius="l2" borderWidth="1px" borderColor="border.emphasized" bg="bg.muted">
+      <Flex justify="space-between" align="center" mb="2">
+        <Text fontSize="sm" color="fg.muted">
+          Шаг {step} из 3 · {step === 1 ? 'какое это чувство?' : step === 2 ? 'что ближе?' : 'насколько сильно?'}
+        </Text>
+        <HStack gap="1">
+          {step > 1 && (
+            <Button size="2xs" variant="ghost" onClick={back}>
+              назад
+            </Button>
+          )}
+          <IconButton size="2xs" variant="ghost" aria-label="Закрыть" onClick={onClose}>
+            <LuX />
+          </IconButton>
+        </HStack>
+      </Flex>
+      {step === 1 && (
+        <Flex gap="2" wrap="wrap">
+          {(
+            [
+              ['pleasant', 'приятно'],
+              ['unpleasant', 'неприятно'],
+              ['unclear', 'непонятно'],
+            ] as const
+          ).map(([k, label]) => (
+            <Button key={k} size="sm" variant="outline" flex="1" minW="100px" onClick={() => setTone(k)}>
+              {label}
+            </Button>
+          ))}
+        </Flex>
+      )}
+      {step === 2 && (
+        <Flex gap="2" wrap="wrap">
+          {petalsByTone[tone!].map((p) => (
+            <Button key={p} size="sm" variant="outline" borderColor={`color-mix(in srgb, ${petals[p].color} 60%, transparent)`} onClick={() => setPetal(p)}>
+              <Box w="8px" h="8px" borderRadius="full" bg={petals[p].color} />
+              {petals[p].name}
+            </Button>
+          ))}
+        </Flex>
+      )}
+      {step === 3 && (
+        <Stack gap="1.5">
+          {petalWords(petal!).map((x, i) => (
+            <Flex key={x.key} gap="1" align="center">
+              <Button flex="1" h="auto" py="2" variant="outline" justifyContent="flex-start" textAlign="left" whiteSpace="normal" borderColor={`color-mix(in srgb, ${wordColor(x.key)} 60%, transparent)`} onClick={() => onPick(x.key)}>
+                <Stack gap="0.5" align="flex-start">
+                  <HStack gap="1.5">
+                    <Box w="8px" h="8px" borderRadius="full" bg={wordColor(x.key)} />
+                    <Text as="span">{x.word}</Text>
+                    <Text as="span" fontSize="xs" color="fg.subtle">
+                      {['слабо', 'средне', 'сильно'][i]}
+                    </Text>
+                  </HStack>
+                  <Text as="span" fontSize="xs" color="fg.muted" fontWeight="normal">
+                    {x.explain}
+                  </Text>
+                </Stack>
+              </Button>
+              <IconButton size="sm" variant="ghost" aria-label={`Что такое «${x.word}»`} onClick={() => onInfo(x.key)}>
+                <LuInfo />
+              </IconButton>
+            </Flex>
+          ))}
+        </Stack>
+      )}
+    </Box>
   )
 }

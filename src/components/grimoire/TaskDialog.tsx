@@ -3,7 +3,8 @@
 import { Box, Button, Flex, HStack, Input, Separator, Stack, Text, Wrap } from '@chakra-ui/react'
 import { useState } from 'react'
 import { LuChevronDown, LuChevronUp, LuLink, LuX } from 'react-icons/lu'
-import { cancel, complete, reopen, toBacklog, useToday, withUndo } from '../../grimoire/act'
+import { useNavigate } from 'react-router-dom'
+import { cancel, complete, reopen, start, toBacklog, useToday, withUndo } from '../../grimoire/act'
 import { baseCoins, isFrog, taskCoins } from '../../grimoire/coins'
 import { addDays, daysBetween, humanDay } from '../../grimoire/days'
 import {
@@ -23,6 +24,7 @@ import type { PostponeReason, Task, TaskOwnerKind, TaskSlot, Want } from '../../
 import { store, useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 import { Check, Chips, confirmAction, Field, Modal, NumInput, Select, TextArea, TextInput } from '../ui'
+import { WordChip } from './EmotionWheel'
 import { FrogIcon, MarkPicker } from './Marks'
 import { usePlanGuard } from './PlanGuard'
 import { TagInput } from './TagInput'
@@ -37,6 +39,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
   const g = useAppSelector((s) => s.grimoire)
   const people = useAppSelector((s) => s.data.people)
   const live = g.tasks[task.id] ?? task
+  const navigate = useNavigate()
   const [t, setT] = useState<Task>(live)
   const [more, setMore] = useState(false)
   const [mode, setMode] = useState<Mode>('edit')
@@ -229,7 +232,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
                 Сделана часть
               </Button>
               {live.status !== 'inProgress' && !live.startedPaid && (
-                <Button size="sm" variant="outline" onClick={() => act(() => withUndo(`Начато · +${g.meta.coins.startedCoins} 🪙`, () => dispatch(A.startTask({ id: live.id }))))}>
+                <Button size="sm" variant="outline" onClick={() => act(() => start(live))}>
                   Начать понемногу
                 </Button>
               )}
@@ -310,6 +313,11 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
               </Wrap>
             </Box>
           )}
+
+          <DeedMirror taskId={live.id} onGo={(to) => {
+            onClose()
+            navigate(to)
+          }} />
 
           <Field label="Название">
             <TextInput value={t.title} onChange={(v) => set({ title: v.slice(0, 200) })} />
@@ -545,4 +553,36 @@ export function useTaskDialog() {
     open: (t: Task) => setId(t.id),
     dialog: task ? <TaskDialog key={task.id} task={store.getState().grimoire.tasks[task.id] ?? task} onClose={() => setId(undefined)} /> : null,
   }
+}
+
+/** The deed's side of the link with the mirror: its entries, and a way to add one tied to it. */
+function DeedMirror({ taskId, onGo }: { taskId: string; onGo: (to: string) => void }) {
+  const journal = useAppSelector((s) => s.grimoire.journal)
+  const mine = Object.values(journal)
+    .filter((e) => e.taskId === taskId)
+    .sort((a, b) => a.at.localeCompare(b.at))
+  return (
+    <Flex gap="2" align="center" wrap="wrap" fontSize="sm">
+      <Text color="fg.muted">В зеркале:</Text>
+      {mine.map((e) =>
+        e.words?.length ? (
+          <HStack key={e.id} gap="1" as="button" onClick={() => onGo(`/g/mirror/${e.id}`)}>
+            <Text fontSize="xs" color="fg.subtle">
+              {e.source === 'task_start' ? 'до' : e.type === 'taskFeedback' ? 'после' : ''}
+            </Text>
+            {e.words.map((k) => (
+              <WordChip key={k} wordKey={k} size="xs" />
+            ))}
+          </HStack>
+        ) : (
+          <Button key={e.id} size="2xs" variant="ghost" onClick={() => onGo(`/g/mirror/${e.id}`)}>
+            запись
+          </Button>
+        ),
+      )}
+      <Button size="2xs" variant="outline" onClick={() => onGo(`/g/mirror/new?task=${taskId}`)}>
+        + чувство
+      </Button>
+    </Flex>
+  )
 }

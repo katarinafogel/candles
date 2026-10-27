@@ -7,6 +7,7 @@ import Candles from './pages/Candles'
 import Decor from './pages/Decor'
 import Book from './pages/grimoire/Book'
 import Mirror from './pages/grimoire/Mirror'
+import MirrorEntry from './pages/grimoire/MirrorEntry'
 import ProjectBook from './pages/grimoire/ProjectBook'
 import Projects from './pages/grimoire/Projects'
 import GrimoireMore from './pages/grimoire/More'
@@ -55,6 +56,7 @@ export default function App() {
         <Route path="wheel" element={<Wheel />} />
         <Route path="calendar" element={<GrimoireCalendar />} />
         <Route path="mirror" element={<Mirror />} />
+        <Route path="mirror/:id" element={<MirrorEntry />} />
         <Route path="wishes" element={<Wishes />} />
         <Route path="more" element={<GrimoireMore />} />
         <Route path="*" element={<Scroll />} />

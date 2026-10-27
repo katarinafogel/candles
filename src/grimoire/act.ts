@@ -5,6 +5,7 @@ import { store, useAppSelector } from '../store'
 import { grimoireActions as A, today } from '../store/grimoireSlice'
 import { balance, isFrog, taskCoins } from './coins'
 import { flySpark, praise } from './fly'
+import { isHard } from './mirrorStats'
 import type { GrimoireState, Task } from './types'
 
 const g = () => store.getState().grimoire
@@ -39,11 +40,21 @@ export function complete(t: Task, partial = false, from?: Element | null) {
   withUndo(title, () => store.dispatch(A.completeTask({ id: t.id, partial })), parts.join(' · ') || undefined)
   if (!partial) flySpark(from, tone.motion)
   // Habits are ticked daily; asking each time would be noise.
-  if (!partial && !t.habitId) feedback.ask(t.id)
+  if (!partial && !t.habitId) feedback.ask(t.id, 'done')
   // A frog gets a slightly brighter answer: a double buzz instead of one.
   if (tone.motion !== 'off' && 'vibrate' in navigator && !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
     navigator.vibrate?.(isFrog(t) && !partial ? [18, 60, 30] : 18)
 }
+
+/** «Начать понемногу», and «С каким чувством берёшься?» when the settings ask it for this deed. */
+export function start(t: Task) {
+  withUndo(`Начато · +${g().meta.coins.startedCoins} 🪙`, () => store.dispatch(A.startTask({ id: t.id })))
+  if (asksEmotion(t, g().meta.emotionAsk)) feedback.ask(t.id, 'start')
+}
+
+/** Whether the emotion question comes at this deed: by default only at frogs and «чудовища». */
+export const asksEmotion = (t: Task, ask: GrimoireState['meta']['emotionAsk'] = 'hard') =>
+  !t.habitId && (ask === 'all' || (ask === 'hard' && isHard(t)))
 
 export const reopen = (t: Task) => withUndo('Вернула в работу', () => store.dispatch(A.reopenTask({ id: t.id })))
 export const toBacklog = (ids: string[], title = 'В бэклоге') => withUndo(title, () => store.dispatch(A.toBacklog(ids)))
@@ -68,21 +79,21 @@ export function useToday() {
   return day
 }
 
-// ---------- «Как далось?» ----------
-// After a deed is done the layout shows a small optional question; this is its tiny shared state.
+// ---------- «Как теперь?» ----------
+// After a deed is started or done the layout shows a small optional question; this is its tiny shared state.
 
-let feedbackTask: string | undefined
+let feedbackAsk: { id: string; kind: 'start' | 'done' } | undefined
 const listeners = new Set<() => void>()
 export const feedback = {
-  ask(id: string) {
-    feedbackTask = id
+  ask(id: string, kind: 'start' | 'done') {
+    feedbackAsk = { id, kind }
     listeners.forEach((l) => l())
   },
   clear() {
-    feedbackTask = undefined
+    feedbackAsk = undefined
     listeners.forEach((l) => l())
   },
-  get: () => feedbackTask,
+  get: () => feedbackAsk,
   subscribe(l: () => void) {
     listeners.add(l)
     return () => void listeners.delete(l)
