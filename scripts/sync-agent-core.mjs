@@ -12,6 +12,7 @@ const files = [
   'grimoire/agent.ts',
   'grimoire/coins.ts',
   'grimoire/days.ts',
+  'grimoire/emotions.ts',
   'grimoire/habits.ts',
   'grimoire/parse.ts',
   'grimoire/rows.ts',

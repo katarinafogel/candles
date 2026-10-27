@@ -4,6 +4,7 @@
 // in its payload (filled in by `prepare`), so the reducers stay pure and testable.
 import { createSlice, nanoid, type PayloadAction } from '@reduxjs/toolkit'
 import { defaultCoinRules, taskCoins } from '../grimoire/coins.ts'
+import { cleanWords } from '../grimoire/emotions.ts'
 import { dayKey, nextRepeat } from '../grimoire/days.ts'
 import { habitLogId, habitTaskId, isDone, isScheduled, navTest, newMilestones, streak } from '../grimoire/habits.ts'
 import type {
@@ -34,8 +35,6 @@ export const defaultMeta: GrimoireMeta = {
   tagColors: {},
   frogPostpones: 3,
   tone: { praise: 'normal', motion: 'soft' },
-  emotions: ['тревога', 'радость', 'усталость', 'злость', 'спокойствие', 'грусть', 'вдохновение'],
-  factors: ['сон', 'работа', 'люди', 'погода', 'тело', 'деньги'],
   sabbatNotes: {},
   sabbatCards: {},
   nav: { active: false, history: [] },
@@ -685,27 +684,33 @@ const slice = createSlice({
 
     // ----- journal («Зеркало») -----
     /**
-     * A journal entry: a mood mark, a text, or both. +2 coins for the day's first entry, +1 for a
-     * «как далось?» feedback. The marks themselves never pay, so there is no reason to prettify them.
+     * A mirror entry: dictionary words, energy, factors, a text. Feelings are never paid for — no coins
+     * for any entry, so there is nothing to farm. Unknown words are dropped, at most three are kept.
      */
     addJournal: {
       reducer(s, a: PayloadAction<{ entry: Omit<JournalEntry, 'at' | 'day'> } & When>) {
         const { entry, at, day } = a.payload
         const e: JournalEntry = { ...entry, at, day }
+        const words = cleanWords(entry.words)
+        if (words) e.words = words
+        else delete e.words
         s.journal[e.id] = e
-        if (e.type === 'taskFeedback') {
-          pay(s, at, day, 1, { reason: 'отклик на дело', tag: 'journal', refKind: 'journal', refId: e.id })
-        } else if (!Object.values(s.coinTxs).some((x) => x.tag === 'journal' && x.day === day && x.reason === 'запись в зеркале')) {
-          pay(s, at, day, 2, { reason: 'запись в зеркале', tag: 'journal', refKind: 'journal', refId: e.id })
-        }
       },
       prepare: (p: { entry: Omit<JournalEntry, 'at' | 'day' | 'id'> & { id?: string }; at?: string }) => ({
         payload: when({ ...p, entry: { ...p.entry, id: p.entry.id ?? nanoid() } }),
       }),
     },
+    /** A changed time moves the entry to its own day. */
     updateJournal(s, a: PayloadAction<Partial<JournalEntry> & { id: string }>) {
       const e = s.journal[a.payload.id]
-      if (e) Object.assign(e, a.payload)
+      if (!e) return
+      Object.assign(e, a.payload)
+      if ('words' in a.payload) {
+        const words = cleanWords(a.payload.words)
+        if (words) e.words = words
+        else delete e.words
+      }
+      if (a.payload.at && !a.payload.day) e.day = dayKey(new Date(a.payload.at), s.meta.dayBoundaryHour)
     },
     deleteJournal(s, a: PayloadAction<string>) {
       delete s.journal[a.payload]

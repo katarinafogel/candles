@@ -141,9 +141,11 @@ describe('agent tools', () => {
     const sp = run(state, 'grimoire_spawn_task', { fromId: id, title: 'узнать цвет' })
     state = sp.state
     expect((sp.result as { origin: { waitsFor: unknown[] } }).origin.waitsFor).toHaveLength(1)
-    ;({ state } = run(state, 'grimoire_add_journal', { mood: 4, energy: 2, text: 'устала' }))
-    expect(Object.values(state.journal)[0]).toMatchObject({ mood: 4, energy: 2, day: '2026-10-26' })
+    ;({ state } = run(state, 'grimoire_add_journal', { words: ['anger.1', 'joy.9', 'dyad.awe'], energy: 2, text: 'устала' }))
+    // An unknown word is dropped; the entry says it came from the assistant.
+    expect(Object.values(state.journal)[0]).toMatchObject({ words: ['anger.1', 'dyad.awe'], energy: 2, day: '2026-10-26', source: 'assistant' })
     expect(() => run(state, 'grimoire_add_journal', {})).toThrow(/пустая/)
+    expect(() => run(state, 'grimoire_add_journal', { words: ['joy.9'] })).toThrow(/пустая/)
   })
 
   it('round-trips through table rows: what it writes is what the app reads', () => {

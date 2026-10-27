@@ -202,17 +202,30 @@ export interface Wish {
   sabbat?: Sabbat
 }
 
+/**
+ * A mirror entry: words from the emotion dictionary (see emotions.ts), energy, «что влияет», a text —
+ * any of them, at least one. The evening page and «как далось?» are entries too.
+ */
 export interface JournalEntry {
   id: string
+  /** When it was felt: now by default, can be moved back. */
   at: ISODateTime
   day: DayKey
-  mood?: number
+  /** Up to three dictionary keys in order: «anger.1», «dyad.awe». */
+  words?: string[]
   energy?: number
-  emotions?: string[]
+  /** Keys of `mirrorFactors`. */
   factors?: string[]
   text?: string
   tags?: string[]
   type: 'entry' | 'taskFeedback' | 'evening'
+  /** Where it was written from. */
+  source?: 'mirror' | 'task_start' | 'task_done' | 'evening' | 'assistant'
+  /** The «+» details: where in the body, what happened, what to do about it, who was there. */
+  bodyZones?: string[]
+  trigger?: string
+  action?: string
+  people?: string[]
   taskId?: string
   /** «Как далось?»: real difficulty and dread, compared with what was set when the task was made. */
   realStars?: number
@@ -280,8 +293,6 @@ export interface GrimoireMeta {
   frogPostpones: number
   /** How a done deed is answered: the praise in the toast and the spark that flies to the coins. */
   tone: { praise: 'quiet' | 'normal' | 'warm'; motion: 'off' | 'soft' | 'bright' }
-  emotions: string[]
-  factors: string[]
   /** Sabbat cards: the text is the witch's own tradition, so it is editable. */
   sabbatNotes: Partial<Record<Sabbat, string>>
   /** Her own correspondences of a sabbat, field by field; an empty field shows the built-in one. */

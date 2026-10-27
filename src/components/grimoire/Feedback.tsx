@@ -44,7 +44,7 @@ export function FeedbackPrompt() {
         open
         onClose={() => feedback.clear()}
         title="Как далось?"
-        footer={<Button onClick={() => save(stars, dread, note)}>Записать · +1 🪙</Button>}
+        footer={<Button onClick={() => save(stars, dread, note)}>Записать</Button>}
       >
         <Stack gap="4">
           <Text fontSize="sm" color="fg.muted">

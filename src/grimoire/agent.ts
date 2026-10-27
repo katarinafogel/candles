@@ -7,6 +7,7 @@ import reducer, { grimoireActions as A } from '../store/grimoireSlice.ts'
 import { balance, dayCoins, isFrog, taskCoins } from './coins.ts'
 import { addDays, dayKeyIn, isDayKey } from './days.ts'
 import { habitLogId, habitTaskId, isDone, isScheduled, navTest, streak } from './habits.ts'
+import { cleanWords, emotionWords, mirrorFactors } from './emotions.ts'
 import { parseQuickAdd } from './parse.ts'
 import {
   backlog,
@@ -593,15 +594,15 @@ const tools: (ToolDef & { run: Run })[] = [
   },
   {
     name: 'grimoire_add_journal',
-    description: 'Запись в зеркало (дневник): настроение и энергия 1–5, эмоции, факторы, текст. type evening — вечерняя страница (что получилось, что отложила и почему, за что благодарна). Записывай только то, что хозяйка сказала сама.',
+    description:
+      'Запись в зеркало: до трёх слов из словаря эмоций (ключи вида anger.1 или dyad.awe), энергия 1–5, факторы «что влияет», текст. type evening — вечерняя страница (что получилось, что отложила и почему, за что благодарна). Слово эмоции записывай только после того, как хозяйка его подтвердила; монет за записи нет.',
     inputSchema: {
       type: 'object',
       properties: {
         type: { type: 'string', enum: ['entry', 'evening'] },
-        mood: { type: 'integer', minimum: 1, maximum: 5 },
+        words: { type: 'array', items: { type: 'string', enum: Object.keys(emotionWords) }, maxItems: 3 },
         energy: { type: 'integer', minimum: 1, maximum: 5 },
-        emotions: { type: 'array', items: { type: 'string' } },
-        factors: { type: 'array', items: { type: 'string' } },
+        factors: { type: 'array', items: { type: 'string', enum: mirrorFactors.map((f) => f.key) } },
         text: { type: 'string' },
         wentWell: { type: 'string' },
         putOff: { type: 'string' },
@@ -614,17 +615,17 @@ const tools: (ToolDef & { run: Run })[] = [
       const entry = {
         id: nanoid(),
         type: oneOf(a, 'type', ['entry', 'evening'] as const) ?? 'entry',
-        mood: int(a, 'mood', 1, 5),
+        source: 'assistant' as const,
+        words: cleanWords(strs(a, 'words')),
         energy: int(a, 'energy', 1, 5),
-        emotions: strs(a, 'emotions'),
-        factors: strs(a, 'factors'),
+        factors: strs(a, 'factors')?.filter((f) => mirrorFactors.some((x) => x.key === f)),
         text: str(a, 'text'),
         wentWell: str(a, 'wentWell'),
         putOff: str(a, 'putOff'),
         grateful: str(a, 'grateful'),
       }
       const clean = Object.fromEntries(Object.entries(entry).filter(([, v]) => v != null && !(Array.isArray(v) && !v.length)))
-      if (Object.keys(clean).length <= 2) throw new AgentError('запись пустая')
+      if (Object.keys(clean).length <= 3) throw new AgentError('запись пустая')
       c.apply(A.addJournal.type, { entry: clean, at: c.at, day: c.today })
       return c.get().journal[entry.id]
     },

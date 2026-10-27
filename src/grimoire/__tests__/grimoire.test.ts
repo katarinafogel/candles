@@ -10,6 +10,7 @@ const { sabbatDays, wheelNow, moonPhase, seasonMoment, isFullMoon, nextFullMoon,
 const { streak, habitLogId, habitTaskId } = await import('../habits')
 const { default: reducer, grimoireActions: A, initialGrimoire, migrateGrimoire } = await import('../../store/grimoireSlice')
 const { diffGrimoire, isGrimoireRow } = await import('../../lib/sync')
+const { emotionWords, dyadFor, searchWords, wordPetals } = await import('../emotions')
 const { dayPlan, dayStars, isBlocked, isStuck, toReview, chainOf, cardTone, projectProgress, projectTasks } = await import('../selectors')
 type GS = typeof initialGrimoire
 type Habit = import('../types').Habit
@@ -307,12 +308,24 @@ describe('grimoire reducer', () => {
     expect(balance(s.coinTxs)).toBe(7 * 10 + 15)
   })
 
-  it('pays +2 for the first mirror entry of the day and +1 for each feedback', () => {
+  it('pays nothing for mirror entries and keeps at most three known words', () => {
     let s = initialGrimoire
-    for (const type of ['entry', 'evening', 'taskFeedback', 'taskFeedback'] as const)
-      s = reducer(s, { type: A.addJournal.type, payload: { entry: { id: `${type}${Object.keys(s.journal).length}`, type, mood: 4 }, ...w(MON) } })
-    expect(Object.keys(s.journal)).toHaveLength(4)
-    expect(balance(s.coinTxs)).toBe(2 + 1 + 1)
+    for (const type of ['entry', 'evening', 'taskFeedback'] as const)
+      s = reducer(s, { type: A.addJournal.type, payload: { entry: { id: type, type, words: ['joy.2', 'nope', 'joy.2', 'trust.1', 'fear.1', 'anger.3'] }, ...w(MON) } })
+    expect(balance(s.coinTxs)).toBe(0)
+    expect(s.journal.entry.words).toEqual(['joy.2', 'trust.1', 'fear.1'])
+    // Moving the time back moves the entry to its day.
+    s = reducer(s, A.updateJournal({ id: 'entry', at: at(addDays(MON, -2)), words: [] }))
+    expect(s.journal.entry.day).toBe(addDays(MON, -2))
+    expect(s.journal.entry.words).toBeUndefined()
+  })
+  it('knows the dictionary: 32 words, neighbours suggest a mixed feeling, synonyms find words', () => {
+    expect(Object.keys(emotionWords)).toHaveLength(32)
+    expect(dyadFor(['fear.1', 'surprise.2'])).toBe('dyad.awe')
+    expect(dyadFor(['joy.1', 'sadness.1'])).toBeUndefined()
+    expect(dyadFor(['fear.1', 'surprise.2', 'dyad.awe'])).toBeUndefined()
+    expect(searchWords('раздраж').map((x) => x.key)).toEqual(['anger.1', 'anger.2'])
+    expect(wordPetals('dyad.optimism')).toEqual(['anticipation', 'joy'])
   })
 
   it('fulfils a wish once: by its deed or by hand', () => {
