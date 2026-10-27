@@ -1,7 +1,8 @@
 // The day scroll: joys ahead, the morning review, today's plan (main → extra → optional → rituals),
 // one-line adding and «на сегодня всё».
 import { Box, Button, Flex, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Link as RouterLink } from 'react-router-dom'
 import { Crescent } from '../../components/Magic'
 import { usePlanGuard } from '../../components/grimoire/PlanGuard'
 import { useTaskDialog } from '../../components/grimoire/TaskDialog'
@@ -374,6 +375,7 @@ export default function Scroll() {
             Сделано {plan.all.filter((t) => t.status === 'done').length + plan.habits.filter((t) => t.status === 'done').length} · монет за день {coinsToday > 0 ? `+${coinsToday}` : coinsToday}
           </Text>
           <DayStars today={today} />
+          <EveningCall today={today} />
           <Button size="xs" variant="outline" mt="2" onClick={() => setWheelPick(true)}>
             {sabbatSoon ? `Подготовиться к ${sabbats[wheel.next.sabbat].dative}` : 'Дела колеса'}
           </Button>
@@ -445,5 +447,28 @@ export default function Scroll() {
       {wheelPick && <WheelPick onClose={() => setWheelPick(false)} focus={sabbatSoon ? wheel.next.sabbat : undefined} />}
       {noteFor && <SabbatNoteDialog sabbat={noteFor} onClose={() => setNoteFor(undefined)} />}
     </>
+  )
+}
+
+/** From the evening time until the day ends, a quiet call to the evening page — gone once it's written. */
+function EveningCall({ today }: { today: string }) {
+  const meta = useAppSelector((s) => s.grimoire.meta)
+  const written = useAppSelector((s) => Object.values(s.grimoire.journal).some((e) => e.day === today && e.type === 'evening'))
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(t)
+  }, [])
+  const at = meta.eveningAt ?? '21:00'
+  if (!at || written || meta.nav.active) return null
+  const [h, m] = at.split(':').map(Number)
+  const mins = now.getHours() * 60 + now.getMinutes()
+  // After midnight it is still «today» until the day boundary.
+  const evening = mins >= h * 60 + m || now.getHours() < meta.dayBoundaryHour
+  if (!evening) return null
+  return (
+    <Button asChild size="xs" variant="outline" mt="2" mr="2">
+      <RouterLink to="/g/mirror/evening">🌙 Вечерняя страница</RouterLink>
+    </Button>
   )
 }

@@ -215,6 +215,14 @@ export default function GrimoireMore() {
               { value: 'all', label: 'все дела' },
             ]} />
           </Field>
+          <Field label="Вечерняя страница" helper="с этого времени до конца дня свиток зовёт её записать; пусто — не звать">
+            <input
+              type="time"
+              value={meta.eveningAt ?? '21:00'}
+              onChange={(e) => dispatch(A.updateMeta({ eveningAt: e.target.value }))}
+              style={{ background: 'transparent', color: 'inherit', border: '1px solid var(--chakra-colors-border)', borderRadius: 6, padding: '6px 8px', colorScheme: 'dark', width: 120 }}
+            />
+          </Field>
           <Check checked={meta.streaksOn} onChange={(v) => dispatch(A.updateMeta({ streaksOn: v }))}>
             Серии и бонусы за них
           </Check>

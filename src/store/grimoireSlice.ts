@@ -34,6 +34,7 @@ export const defaultMeta: GrimoireMeta = {
   tagColors: {},
   frogPostpones: 3,
   emotionAsk: 'hard',
+  eveningAt: '21:00',
   tone: { praise: 'normal', motion: 'soft' },
   sabbatNotes: {},
   sabbatCards: {},

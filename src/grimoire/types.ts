@@ -292,6 +292,8 @@ export interface GrimoireMeta {
   frogPostpones: number
   /** «С каким чувством берёшься?» and «Как теперь?» at a deed: for none, only frogs and «чудовища», or all. */
   emotionAsk: 'off' | 'hard' | 'all'
+  /** From this time (HH:MM) the scroll offers the evening page until the day ends; empty — never. */
+  eveningAt: string
   /** How a done deed is answered: the praise in the toast and the spark that flies to the coins. */
   tone: { praise: 'quiet' | 'normal' | 'warm'; motion: 'off' | 'soft' | 'bright' }
   /** Sabbat cards: the text is the witch's own tradition, so it is editable. */
