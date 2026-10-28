@@ -16,6 +16,7 @@ import { backlog, dayPlan, dayStars, deadlinesSoon, evenInNav, isBlocked, joysAh
 import type { Sabbat, Task, TaskSlot } from '../../grimoire/types'
 import { isFullMoon, moonPhase, moonPhaseNames, sabbats, wheelNow } from '../../grimoire/wheel'
 import { upcomingDates } from '../../grimoire/people'
+import { WorkshopOffers } from '../../components/grimoire/FromWorkshop'
 import { MoonIcon } from '../../components/grimoire/MoonIcon'
 import { WheelPick } from '../../components/grimoire/WheelPick'
 import { sabbatTag, SabbatNoteDialog } from './Wheel'
@@ -333,6 +334,7 @@ export default function Scroll() {
         </Flex>
       )}
 
+      <WorkshopOffers />
       <SimpleGrid columns={{ base: 1, md: 2 }} gap="3" mb="4">
         <Box p="3" borderRadius="l3" borderWidth="1px" borderColor="border" bg="bg.subtle">
           <Text fontFamily="heading" fontSize="lg" color="ember.100" mb="1">

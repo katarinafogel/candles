@@ -22,6 +22,7 @@ import type {
   PersonLine,
   PersonList,
   PersonNotes,
+  WorkshopKind,
 } from '../grimoire/types.ts'
 
 export const defaultMeta: GrimoireMeta = {
@@ -438,8 +439,9 @@ const slice = createSlice({
         const t = s.tasks[a.payload.id]
         if (!t || !isOpen(t)) return
         t.status = 'cancelled'
-        // Letting the last open deed go also finishes the book.
-        if (!t.parentId) syncProject(s, t.projectId, a.payload.at, a.payload.day)
+        // Letting the last open step go closes the quest; the last open deed, the book.
+        if (t.parentId) syncParent(s, t.parentId, a.payload.at, a.payload.day)
+        else syncProject(s, t.projectId, a.payload.at, a.payload.day)
       },
       prepare: (id: string) => ({ payload: when({ id }) }),
     },
@@ -560,6 +562,22 @@ const slice = createSlice({
         delete t.doOn
       },
       prepare: (p: { id: string; steps: string[]; boundary?: number }) => ({ payload: when(p) }),
+    },
+
+    // ----- deeds of the workshop -----
+    /** A quest over workshop items: one step per item, each ticked by the workshop itself. */
+    addWorkshopQuest: {
+      reducer(s, a: PayloadAction<{ questId: string; title: string; kind: WorkshopKind; step: string; items: { id: string; label: string }[]; doOn?: DayKey; projectId?: string } & When>) {
+        const { questId, title, kind, step, items, doOn, at } = a.payload
+        if (!items.length) return
+        const q = newTask({ id: questId, title, tags: ['мастерская'], source: 'workshop', workshopStep: { kind, step }, ...(doOn ? { doOn } : {}) }, at)
+        s.tasks[q.id] = q
+        items.forEach((it, i) => {
+          const x = newTask({ title: it.label, tags: ['мастерская'], parentId: q.id, order: i, source: q.source, workshop: { kind, id: it.id, step } }, at)
+          s.tasks[x.id] = x
+        })
+      },
+      prepare: (p: { title: string; kind: WorkshopKind; step: string; items: { id: string; label: string }[]; doOn?: DayKey }) => ({ payload: when({ ...p, questId: nanoid() }) }),
     },
 
     // ----- «заклинания»: a quest kept as a template -----

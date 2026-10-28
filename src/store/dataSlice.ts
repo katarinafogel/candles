@@ -36,6 +36,8 @@ export const defaultSettings: Settings = {
   varnishMlPerLayer: 5,
   varnishInLayers: 5,
   varnishOutLayers: 3,
+  dryDays: 3,
+  cureDays: 14,
   publicUrl: '',
 }
 

@@ -329,6 +329,9 @@ export interface Settings {
   /** Layers of the inner and outer varnish: the leaves to tick on a card before it moves on. */
   varnishInLayers: number
   varnishOutLayers: number
+  /** Days a plaster holder dries, and wax cures, before the next step: the grimoire plans the deed by them. */
+  dryDays: number
+  cureDays: number
   /** Address of the published app, used in QR links. Empty = the current address. */
   publicUrl: string
   lastBackupAt?: ISODate

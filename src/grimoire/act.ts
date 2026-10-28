@@ -6,6 +6,7 @@ import { grimoireActions as A, today } from '../store/grimoireSlice'
 import { balance, isFrog, taskCoins } from './coins'
 import { flySpark, praise } from './fly'
 import { isHard } from './mirrorStats'
+import { workshopRun } from './workshopRun'
 import type { GrimoireState, Task } from './types'
 
 const g = () => store.getState().grimoire
@@ -33,6 +34,11 @@ const coinsWord = (n: number) => `${n > 0 ? '+' : ''}${n} 🪙`
 
 /** Closes a deed with its toast; `from` — the card or button the spark flies from into the coins. */
 export function complete(t: Task, partial = false, from?: Element | null) {
+  // A workshop deed is done in the workshop: its step dialog opens, and the deed ticks itself after.
+  if (!partial && (t.workshop || t.workshopStep)) {
+    const items = t.workshop ? [t.workshop] : Object.values(g().tasks).filter((x) => x.parentId === t.id && x.workshop && x.status !== 'done' && x.status !== 'cancelled').map((x) => x.workshop!)
+    if (items.length) return workshopRun.ask({ kind: items[0].kind, step: items[0].step, ids: items.map((x) => x.id) })
+  }
   const { tone, coins: rules } = g().meta
   const coins = taskCoins(t, today(), rules, partial).total
   const { title, word } = praise(partial ? 'partial' : isFrog(t) ? 'frog' : t.type === 'joy' ? 'joy' : 'done', coinsWord(coins), tone.praise)

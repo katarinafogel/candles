@@ -315,6 +315,12 @@ export default function Settings() {
           <Field label="Слоёв лака снаружи">
             <NumInput value={s.varnishOutLayers} onChange={(v) => set({ varnishOutLayers: v ?? 3 })} suffix="слоёв" />
           </Field>
+          <Field label="Сушка гипса" helper="через сколько дней гримуар напомнит проверить, высохли ли">
+            <NumInput value={s.dryDays} onChange={(v) => set({ dryDays: Math.max(0, Math.round(v ?? 3)) })} suffix="дн." />
+          </Field>
+          <Field label="Дозревание воска" helper="через сколько дней после заливки гримуар предложит украсить">
+            <NumInput value={s.cureDays} onChange={(v) => set({ cureDays: Math.max(0, Math.round(v ?? 14)) })} suffix="дн." />
+          </Field>
         </SimpleGrid>
       </Section>
 

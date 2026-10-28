@@ -35,10 +35,14 @@ import Settings from './pages/Settings'
 import Stock from './pages/Stock'
 import Apps from './pages/Apps'
 import { useAppManifest } from './lib/apps'
+import { useWorkshopSync, WorkshopRunner } from './components/grimoire/WorkshopRun'
 
 export default function App() {
   useAppManifest()
+  useWorkshopSync()
   return (
+    <>
+    <WorkshopRunner />
     <Routes>
       {/* The recipient's page lives outside the master layout. */}
       <Route path="/c/:slug/:id" element={<PublicCandle />} />
@@ -90,5 +94,6 @@ export default function App() {
       </Route>
       </Route>
     </Routes>
+    </>
   )
 }

@@ -35,6 +35,18 @@ export interface Postponement {
   reason?: PostponeReason
 }
 
+/** A step of the workshop a deed stands for: a holder's next stage, or a candle's. */
+export type WorkshopKind = 'holder' | 'candle'
+export interface WorkshopLink {
+  kind: WorkshopKind
+  /** The item: P-0042 or S-0042. */
+  id: string
+  /** The step: a holder's target stage (dried, varnishIn, painted, varnishOut, dampers, done, wicked) or a candle's (pour, decorated, ready, given). */
+  step: string
+  /** Let go by itself — the item went to defects or was deleted; comes back if that is undone. */
+  lost?: boolean
+}
+
 export interface Task {
   id: string
   title: string
@@ -61,6 +73,10 @@ export interface Task {
   zone?: string
   tags: string[]
   personIds?: string[]
+  /** One item of a workshop deed: ticked by itself when the item takes this step in the workshop. */
+  workshop?: WorkshopLink
+  /** A workshop deed (the quest over the items): its step, and whether the next one was offered. */
+  workshopStep?: { kind: WorkshopKind; step: string; offered?: boolean }
   rewardText?: string
   /** Coins added by hand on top of the formula. */
   extraCoins?: number

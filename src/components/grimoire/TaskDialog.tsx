@@ -28,6 +28,8 @@ import { WordChip } from './EmotionWheel'
 import { FrogIcon, MarkPicker } from './Marks'
 import { usePlanGuard } from './PlanGuard'
 import { ScarNote } from './ScarNote'
+import { WorkshopItems } from './WorkshopItems'
+import { NextStepOffer } from './FromWorkshop'
 import { TagInput } from './TagInput'
 import { useReorder } from './useReorder'
 
@@ -316,6 +318,8 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
             </Box>
           )}
 
+          {live.workshopStep && <WorkshopItems quest={live} onLeave={onClose} />}
+          {live.workshopStep && live.status === 'done' && <NextStepOffer quest={live} />}
           <DeedMirror taskId={live.id} onGo={(to) => {
             onClose()
             navigate(to)
@@ -505,7 +509,12 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
             </Stack>
           )}
 
-          {steps.length > 0 && <QuestSteps questId={live.id} today={today} />}
+          {!live.workshopStep && steps.length > 0 && <QuestSteps questId={live.id} today={today} />}
+          {live.workshop && (
+            <Text fontSize="sm" color="fg.muted">
+              Пункт дела мастерской: отметится сам, когда {live.workshop.id} пройдёт этот шаг в мастерской.
+            </Text>
+          )}
           {(chain.length > 0 || origin || parent) && (
             <Box fontSize="sm" color="fg.muted">
               {parent && <Text>Шаг квеста «{parent.title}»</Text>}

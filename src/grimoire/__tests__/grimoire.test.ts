@@ -542,3 +542,63 @@ describe('spells and the bestiary', async () => {
     expect(P.personBalance(s, 'a', MON)).toEqual({ forThem: 0, kindness: 1, scars: 1 })
   })
 })
+
+describe('deeds of the workshop', async () => {
+  const W = await import('../workshop')
+  const { initialData } = await import('../../store/dataSlice')
+  type D = import('../../types').DataState
+  const holder = (id: string, stage: string, extra: object = {}) => ({ id, moldId: 'M-001', mixId: 'G-1', purpose: 'holder', mix: {}, dryStart: '2026-10-20T10:00:00.000Z', stage, history: [{ stage, date: '2026-10-20', consumption: [] }], ...extra })
+  const data = (holders: object[], candles: object[] = []): D =>
+    ({ ...initialData, molds: { 'M-001': { id: 'M-001', name: 'Книжка' } }, holders: Object.fromEntries(holders.map((h: any) => [h.id, h])), candles: Object.fromEntries(candles.map((c: any) => [c.id, c])) }) as unknown as D
+
+  it('knows the next step, the state of an item and the deed title', () => {
+    const d = data([holder('P-1', 'varnishIn'), holder('P-2', 'painted'), holder('P-3', 'defect')])
+    expect(W.nextStep(d, 'holder', 'P-1')).toBe('painted')
+    expect(W.itemState(d, { kind: 'holder', id: 'P-1', step: 'painted' })).toBe('open')
+    expect(W.itemState(d, { kind: 'holder', id: 'P-2', step: 'painted' })).toBe('done')
+    expect(W.itemState(d, { kind: 'holder', id: 'P-3', step: 'painted' })).toBe('defect')
+    expect(W.itemState(d, { kind: 'holder', id: 'P-9', step: 'painted' })).toBe('gone')
+    expect(W.questTitle('holder', 'painted', 5)).toBe('Расписать · 5 подсвечников')
+    expect(W.itemLabel(d, 'holder', 'P-1')).toBe('P-1 Книжка')
+  })
+  it('plans the drying check by the settings', () => {
+    const d = data([holder('P-1', 'drying')])
+    expect(W.plannedDay(d, 'holder', 'dried', ['P-1'], '2026-10-21')).toBe('2026-10-23')
+    expect(W.plannedDay(d, 'holder', 'dried', ['P-1'], '2026-10-28')).toBe('2026-10-28')
+    expect(W.plannedDay(d, 'holder', 'painted', ['P-1'], '2026-10-21')).toBeUndefined()
+  })
+  it('ticks a step when the workshop did it, lets a defect go, reopens an undone one', () => {
+    let s: GS = initialGrimoire
+    s = reducer(s, A.addWorkshopQuest({ title: 'Расписать', kind: 'holder', step: 'painted', items: [{ id: 'P-1', label: 'P-1' }, { id: 'P-2', label: 'P-2' }] }))
+    const quest = Object.values(s.tasks).find((t) => t.workshopStep)!
+    const [a, b] = Object.values(s.tasks).filter((t) => t.parentId === quest.id).sort((x, y) => x.order! - y.order!)
+    const apply = (d: D) => {
+      for (const x of W.syncActions(d, s.tasks)) {
+        if (x.to === 'done') s = reducer(s, A.completeTask({ id: x.id }))
+        else if (x.to === 'open') s = reducer(s, A.reopenTask({ id: x.id }))
+        else {
+          s = reducer(s, A.cancelTask(x.id))
+          s = reducer(s, A.updateTask({ id: x.id, workshop: { ...s.tasks[x.id].workshop!, lost: true } }))
+        }
+      }
+    }
+    apply(data([holder('P-1', 'painted'), holder('P-2', 'varnishIn')]))
+    expect(s.tasks[a.id].status).toBe('done')
+    expect(s.tasks[b.id].status).toBe('open')
+    apply(data([holder('P-1', 'painted'), holder('P-2', 'defect')]))
+    expect(s.tasks[b.id].status).toBe('cancelled')
+    expect(s.tasks[quest.id].status).toBe('done')
+    apply(data([holder('P-1', 'varnishIn'), holder('P-2', 'defect')]))
+    expect(s.tasks[a.id].status).toBe('open')
+    expect(s.tasks[quest.id].status).toBe('open')
+  })
+  it('offers the next step for the same items', () => {
+    let s: GS = initialGrimoire
+    s = reducer(s, A.addWorkshopQuest({ title: 'Расписать', kind: 'holder', step: 'painted', items: [{ id: 'P-1', label: 'P-1' }, { id: 'P-2', label: 'P-2' }] }))
+    const quest = Object.values(s.tasks).find((t) => t.workshopStep)!
+    for (const t of Object.values(s.tasks).filter((t) => t.parentId === quest.id)) s = reducer(s, A.completeTask({ id: t.id }))
+    const o = W.nextOffer(data([holder('P-1', 'painted'), holder('P-2', 'painted')]), s.tasks, s.tasks[quest.id])
+    expect(o).toEqual({ kind: 'holder', step: 'varnishOut', ids: ['P-1', 'P-2'], done: 2 })
+    expect(W.doneTitle('holder', 'painted', 2)).toBe('Расписала 2')
+  })
+})

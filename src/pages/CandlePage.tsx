@@ -19,7 +19,7 @@ import { MixRecipe } from './HolderPage'
 import { ReadyDialog } from './Candles'
 import { withUndo } from '../lib/undo'
 
-function GiveDialog({ id, onClose, onDone }: { id: string; onClose: () => void; onDone: () => void }) {
+export function GiveDialog({ id, onClose, onDone }: { id: string; onClose: () => void; onDone: () => void }) {
   const d = useData()
   const dispatch = useAppDispatch()
   const [personId, setPersonId] = useState('')

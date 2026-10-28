@@ -1,6 +1,6 @@
 import { Box, Button, Flex, HStack, Input, SimpleGrid, Stack, Text, Wrap } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
-import { LuDroplets, LuPlus, LuPrinter, LuSparkles, LuCheck, LuTriangleAlert } from 'react-icons/lu'
+import { LuDroplets, LuPlus, LuPrinter, LuSparkles, LuCheck, LuTriangleAlert, LuMoon } from 'react-icons/lu'
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { DecorateDialog, DefectDialog } from '../components/StepDialogs'
 import { ArcanaCard } from '../components/ArcanaCard'
@@ -9,7 +9,8 @@ import { fmt } from '../lib/calc'
 import { nowLocal, toIso } from '../lib/dates'
 import { candleStageLabel, candleStageOrder, wickSchemeLabel } from '../lib/labels'
 import { byId, candleRating, materialOptions, moldOfCandle, sootShare, sortMolds } from '../lib/selectors'
-import { useAppDispatch, useData } from '../store'
+import { useAppDispatch, useData, useIsWitch } from '../store'
+import { FromWorkshopDialog } from '../components/grimoire/FromWorkshop'
 import { actions } from '../store/dataSlice'
 import type { CandleStage, WickScheme } from '../types'
 import { withUndo } from '../lib/undo'
@@ -130,6 +131,8 @@ export default function Candles() {
   const [f, setF] = useState({ fragrance: '', wax: '', person: '', scheme: '', moldTemp: '', minRating: '' })
   const [sort, setSort] = useState<Sort>('id')
   const [sel, setSel] = useState<string[]>([])
+  const [toGrimoire, setToGrimoire] = useState(false)
+  const witch = useIsWitch()
   const [dialog, setDialog] = useState<'decor' | 'ready' | 'defect' | 'molded' | null>(null)
 
   // A holder with a wick is still a holder until it is poured; molded candles have no holder to wait on.
@@ -307,10 +310,24 @@ export default function Candles() {
             <Button size="sm" variant="outline" colorPalette="red" onClick={() => setDialog('defect')}>
               <LuTriangleAlert /> Брак
             </Button>
+            {witch && (
+              <Button size="sm" variant="outline" onClick={() => setToGrimoire(true)}>
+                <LuMoon /> В гримуар
+              </Button>
+            )}
           </Flex>
         </Box>
       )}
 
+      {toGrimoire && (
+        <FromWorkshopDialog
+          preset={{ kind: 'candle', ids: selected }}
+          onClose={() => {
+            setToGrimoire(false)
+            setSel([])
+          }}
+        />
+      )}
       {dialog === 'decor' && <DecorateDialog ids={selected} onClose={close} />}
       {dialog === 'ready' && <ReadyDialog ids={selected} onClose={close} />}
       {dialog === 'defect' && <DefectDialog kind="candle" ids={selected} onClose={close} />}

@@ -1,6 +1,6 @@
 import { Box, Button, Flex, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
-import { LuArrowRight, LuDroplets, LuFlaskConical, LuTriangleAlert } from 'react-icons/lu'
+import { LuArrowRight, LuDroplets, LuFlaskConical, LuMoon, LuTriangleAlert } from 'react-icons/lu'
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { DefectDialog, HolderStepDialog } from '../components/StepDialogs'
 import { ArcanaCard, arcanaButton } from '../components/ArcanaCard'
@@ -8,7 +8,8 @@ import { Check, Empty, LeafMark, PageHeader, Select } from '../components/ui'
 import { daysBetween, fmtDate } from '../lib/calc'
 import { holderNextTitle, holderStageLabel, moldPurposeLabel, holderStageOrder, holderStageShort } from '../lib/labels'
 import { byId } from '../lib/selectors'
-import { useAppDispatch, useData } from '../store'
+import { useAppDispatch, useData, useIsWitch } from '../store'
+import { FromWorkshopDialog } from '../components/grimoire/FromWorkshop'
 import { actions, nextHolderStage, varnishTarget } from '../store/dataSlice'
 import type { Holder, HolderStage } from '../types'
 import { withUndo } from '../lib/undo'
@@ -58,6 +59,8 @@ export default function Holders() {
   const stage = (sp.get('stage') ?? '') as HolderStage | ''
   const moldId = sp.get('mold') ?? ''
   const [sel, setSel] = useState<string[]>([])
+  const [toGrimoire, setToGrimoire] = useState(false)
+  const witch = useIsWitch()
   const [dialog, setDialog] = useState<'next' | 'defect' | null>(null)
 
   const all = byId(d.holders)
@@ -213,6 +216,11 @@ export default function Holders() {
             <Button variant="outline" colorPalette="red" onClick={() => setDialog('defect')}>
               <LuTriangleAlert /> Брак
             </Button>
+            {witch && (
+              <Button variant="outline" gridColumn="span 2" onClick={() => setToGrimoire(true)}>
+                <LuMoon /> В гримуар · {selected.length}
+              </Button>
+            )}
           </SimpleGrid>
         </Box>
       )}
@@ -222,6 +230,15 @@ export default function Holders() {
           ids={selected.length ? selected : sel}
           onClose={() => {
             setDialog(null)
+            setSel([])
+          }}
+        />
+      )}
+      {toGrimoire && (
+        <FromWorkshopDialog
+          preset={{ kind: 'holder', ids: selected }}
+          onClose={() => {
+            setToGrimoire(false)
             setSel([])
           }}
         />
