@@ -16,6 +16,7 @@ import type { JournalEntry } from '../../grimoire/types'
 import { wheelNow } from '../../grimoire/wheel'
 import { useAppSelector } from '../../store'
 import { MirrorInsights } from './MirrorInsights'
+import { CycleDialog } from '../../components/grimoire/Cycle'
 import { energyNames } from './MirrorEntry'
 
 /** Daily energy over 30 days, with gaps where nothing was written; days in the навь shaded. */
@@ -275,6 +276,7 @@ export default function Mirror() {
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('feed')
   const [info, setInfo] = useState<string>()
+  const [cycle, setCycle] = useState(false)
   const entries = useMemo(() => Object.values(journal).sort((a, b) => b.at.localeCompare(a.at)), [journal])
 
   return (
@@ -286,7 +288,11 @@ export default function Mirror() {
         <Button size="sm" variant="outline" onClick={() => navigate('/g/mirror/evening')}>
           Вечерняя страница
         </Button>
+        <Button size="sm" variant="ghost" onClick={() => setCycle(true)}>
+          Цикл
+        </Button>
       </PageHeader>
+      {cycle && <CycleDialog onClose={() => setCycle(false)} />}
       <Tabs.Root value={tab} onValueChange={(e) => setTab(e.value as Tab)} variant="line" size="sm" mb="4">
         <Tabs.List>
           <Tabs.Trigger value="feed">Записи</Tabs.Trigger>

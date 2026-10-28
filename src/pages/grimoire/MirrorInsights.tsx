@@ -6,9 +6,10 @@ import { Chips, Empty, Section } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
 import { addDays, plural } from '../../grimoire/days'
 import { factorLabel, mirrorFactors, petalOrder, petals } from '../../grimoire/emotions'
-import { byFactor, byMoon, bySabbat, countPetals, dayParts, deedsAndFeelings, inDays, marksIn, minMarks, moonGroups, peopleFeelings, postponeFeelings, rhythm, total, vocabulary, type PetalCounts } from '../../grimoire/mirrorStats'
+import { cycleInsights, byFactor, byMoon, bySabbat, countPetals, dayParts, deedsAndFeelings, inDays, marksIn, minMarks, moonGroups, peopleFeelings, postponeFeelings, rhythm, total, vocabulary, type PetalCounts } from '../../grimoire/mirrorStats'
 import type { JournalEntry } from '../../grimoire/types'
 import { sabbats, wheelNow } from '../../grimoire/wheel'
+import { cyclePhases } from '../../grimoire/cycle'
 import { useAppSelector } from '../../store'
 import { energyNames } from './MirrorEntry'
 
@@ -161,6 +162,38 @@ export function MirrorInsights({ entries }: { entries: JournalEntry[] }) {
           </Block>
         </Stack>
       )}
+      <CycleBlock entries={entries} />
     </>
+  )
+}
+
+/** The cycle: by phase — energy, petals, deeds done and put off per day; after three marked cycles. */
+function CycleBlock({ entries }: { entries: JournalEntry[] }) {
+  const g = useAppSelector((s) => s.grimoire)
+  const today = useToday()
+  if (!Object.keys(g.cycles ?? {}).length) return null
+  const ci = cycleInsights(g, entries, today)
+  return (
+    <Block title="Цикл" question="Какая энергия, какие чувства и сколько дел по фазам? По твоим отметкам, не прогноз.">
+      {ci.cycles < 3 ? (
+        quiet(`Выводы появятся после трёх отмеченных циклов — сейчас ${ci.cycles}.`)
+      ) : (
+        ci.rows
+          .filter((r) => r.days > 0)
+          .map((r) => (
+            <PetalBar
+              key={r.phase}
+              label={
+                <HStack gap="1.5" as="span">
+                  <Box as="span" w="8px" h="8px" borderRadius="full" bg={cyclePhases[r.phase].color} display="inline-block" />
+                  {cyclePhases[r.phase].name}
+                </HStack>
+              }
+              counts={r.counts}
+              note={[r.energy != null && `энергия ${r.energy.toFixed(1).replace('.', ',')}`, `дел в день ${r.done.toFixed(1).replace('.', ',')}`, r.postponed > 0 && `переносов ${r.postponed.toFixed(1).replace('.', ',')}`].filter(Boolean).join(' · ')}
+            />
+          ))
+      )}
+    </Block>
   )
 }

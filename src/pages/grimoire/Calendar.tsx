@@ -16,6 +16,7 @@ import type { DayKey, Sabbat } from '../../grimoire/types'
 import { isFullMoon, moonPhase, moonPhaseNames, sabbatDays, sabbats, wheelNow } from '../../grimoire/wheel'
 import { useAppSelector } from '../../store'
 import { mainPetal, petals } from '../../grimoire/emotions'
+import { cycleDay, cyclePhases, cycleStats, type CycleDay } from '../../grimoire/cycle'
 
 const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
 const weekdays = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс']
@@ -71,7 +72,7 @@ function monthBg(m: MonthInfo) {
   return `${glow}, linear-gradient(100deg, ${a} 0%, ${a} ${Math.max(0, at - 18)}%, ${b} ${Math.min(100, at + 18)}%, ${b} 100%)`
 }
 
-function MonthCard({ m, today, holidays, busy, feel, born, onDay, refFor }: { m: MonthInfo; today: DayKey; holidays: Record<DayKey, Sabbat>; busy: Set<DayKey>; feel: Map<DayKey, string>; born: Map<string, string[]>; onDay: (d: DayKey) => void; refFor?: (el: HTMLDivElement | null) => void }) {
+function MonthCard({ m, today, holidays, busy, feel, born, cyc, onDay, refFor }: { m: MonthInfo; today: DayKey; holidays: Record<DayKey, Sabbat>; busy: Set<DayKey>; feel: Map<DayKey, string>; born: Map<string, string[]>; cyc: (d: DayKey) => CycleDay | undefined; onDay: (d: DayKey) => void; refFor?: (el: HTMLDivElement | null) => void }) {
   const pad = weekday(m.first) - 1
   const cells = [...Array.from({ length: pad }, () => undefined), ...Array.from({ length: m.length }, (_, i) => addDays(m.first, i))]
   const fullMoons = cells.filter((d): d is DayKey => !!d && isFullMoon(d))
@@ -156,6 +157,8 @@ function MonthCard({ m, today, holidays, busy, feel, born, onDay, refFor }: { m:
                       <MoonIcon day={d} size={18} lit={full ? '#fff6dc' : 'rgba(246,239,228,.85)'} />
                     )}
                   </Box>
+                  {/* The cycle's phase as a thin line: solid where marked, faint where forecast. */}
+                  {cyc(d) && <Box h="2px" w="70%" borderRadius="full" bg={cyclePhases[cyc(d)!.phase].color} opacity={cyc(d)!.predicted ? 0.35 : 0.85} />}
                   {/* Deeds of the day, and the day's main feeling in its petal's colour. */}
                   <HStack gap="2px" h="5px">
                     <Box w="3px" h="3px" borderRadius="full" bg={busy.has(d) ? p.star : 'transparent'} />
@@ -182,6 +185,7 @@ function DayDialog({ day, today, holiday, onClose }: { day: DayKey; today: DayKe
   const deeds = Object.values(g.tasks).filter((t) => !t.habitId && t.status !== 'cancelled' && (t.doneDay === day || (t.doOn === day && t.status !== 'done')))
   const notes = Object.values(g.journal).filter((e) => e.day === day)
   const people = useAppSelector((s) => s.data.people)
+  const cycleHere = cycleDay(g.cycles ?? {}, day)
   const born = Object.values(g.personNotes ?? {}).filter((n) => n.birthday?.slice(-5) === day.slice(5) && people[n.id])
   const full = isFullMoon(day)
   const n = daysBetween(today, day)
@@ -197,6 +201,15 @@ function DayDialog({ day, today, holiday, onClose }: { day: DayKey; today: DayKe
             {n === 0 ? ' · сегодня' : n > 0 ? ` · через ${days(n)}` : ''}
           </Text>
         </HStack>
+        {cycleHere && (
+          <HStack gap="2" fontSize="sm" color="fg.muted">
+            <Box w="8px" h="8px" borderRadius="full" bg={cyclePhases[cycleHere.phase].color} />
+            <Text>
+              День цикла {cycleHere.n} · {cyclePhases[cycleHere.phase].name}
+              {cycleHere.predicted || cycleHere.approx ? ' · примерно' : ''}
+            </Text>
+          </HStack>
+        )}
         {born.map((n) => (
           <Text key={n.id} fontSize="sm">
             🎂{' '}
@@ -269,6 +282,11 @@ export default function Calendar() {
   const holidays = useMemo(() => Object.fromEntries(Object.entries(sabbatDays(year, hemisphere)).map(([s, d]) => [d, s as Sabbat])) as Record<DayKey, Sabbat>, [year, hemisphere])
   const months = useMemo(() => Array.from({ length: 12 }, (_, i) => monthInfo(year, i + 1, hemisphere, holidays)), [year, hemisphere, holidays])
   // A dot under days that have deeds: planned or done there.
+  const cycles = g.cycles
+  const cyc = useMemo(() => {
+    const stats = cycleStats(cycles ?? {})
+    return (d: DayKey) => cycleDay(cycles ?? {}, d, stats)
+  }, [cycles])
   // Birthdays by «MM-DD», so every year's card shows them.
   const people = useAppSelector((s) => s.data.people)
   const born = useMemo(() => {
@@ -317,6 +335,7 @@ export default function Calendar() {
             busy={busy}
             feel={feel}
             born={born}
+            cyc={cyc}
             onDay={setDay}
             refFor={m.year === thisYear && m.month === +today.slice(5, 7) ? (el) => (current.current = el) : undefined}
           />

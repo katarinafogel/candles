@@ -23,6 +23,7 @@ import type {
   PersonList,
   PersonNotes,
   WorkshopKind,
+  CycleEntry,
 } from '../grimoire/types.ts'
 
 export const defaultMeta: GrimoireMeta = {
@@ -41,6 +42,7 @@ export const defaultMeta: GrimoireMeta = {
   eveningAt: '21:00',
   spells: [],
   circles: ['семья', 'друзья', 'работа', 'ковен', 'знакомые'],
+  cycleToAgent: true,
   tone: { praise: 'normal', motion: 'soft' },
   sabbatNotes: {},
   sabbatCards: {},
@@ -59,6 +61,7 @@ export const initialGrimoire: GrimoireState = {
   jarTxs: {},
   coinTxs: {},
   personNotes: {},
+  cycles: {},
   meta: defaultMeta,
 }
 
@@ -562,6 +565,21 @@ const slice = createSlice({
         delete t.doOn
       },
       prepare: (p: { id: string; steps: string[]; boundary?: number }) => ({ payload: when(p) }),
+    },
+
+    // ----- the cycle -----
+    /** A period started (or one is edited): a start, later its end, how heavy, how it felt. */
+    upsertCycle: {
+      reducer(s, a: PayloadAction<CycleEntry>) {
+        // Merged, so two quick taps (how heavy, how it felt) don't undo each other.
+        const c = { ...s.cycles[a.payload.id], ...a.payload }
+        if (c.end && c.end < c.start) delete c.end
+        s.cycles[c.id] = c
+      },
+      prepare: (c: Omit<CycleEntry, 'id'> & { id?: string }) => ({ payload: { ...c, id: c.id ?? nanoid() } }),
+    },
+    deleteCycle(s, a: PayloadAction<string>) {
+      delete s.cycles[a.payload]
     },
 
     // ----- deeds of the workshop -----

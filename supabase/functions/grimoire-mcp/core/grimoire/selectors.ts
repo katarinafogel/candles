@@ -42,7 +42,8 @@ export function dayStars(g: GrimoireState, day: DayKey) {
   const deeds = dayPlan(g, day).all
   const joy = deeds.filter((t) => t.type === 'joy').reduce((n, t) => n + t.stars, 0)
   const deed = deeds.filter((t) => t.type !== 'joy').reduce((n, t) => n + t.stars, 0)
-  const limit = g.meta.dayStars
+  // «Лёгкий план» for this day halves the limit.
+  const limit = g.meta.easyDay === day && g.meta.dayStars > 0 ? Math.max(1, Math.ceil(g.meta.dayStars / 2)) : g.meta.dayStars
   return { joy, deed, total: joy + deed, limit, over: limit > 0 ? Math.max(0, joy + deed - limit) : 0 }
 }
 

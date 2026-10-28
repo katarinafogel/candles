@@ -2,7 +2,8 @@
 // question («в какое время чаще страх?»), and none of it is shown until there are enough marks.
 import { addDays } from './days.ts'
 import { emotionWords, petalOrder, wordPetals, type Petal } from './emotions.ts'
-import type { DayKey, GrimoireState, JournalEntry, Sabbat, Task } from './types.ts'
+import type { CycleEntry, DayKey, GrimoireState, JournalEntry, Sabbat, Task } from './types.ts'
+import { cycleDay, cycleStats, periodsOf, phaseOrder, type CyclePhase } from './cycle.ts'
 import { moonPhase, sabbatOrder, wheelNow } from './wheel.ts'
 import { isFrog } from './coins.ts'
 
@@ -166,4 +167,49 @@ export function mirrorCsv(g: Pick<GrimoireState, 'journal' | 'tasks'>, people: R
       (e.tags ?? []).join(', '),
     ])
   return '﻿' + [head, ...rows].map((r) => r.map(cell).join(';')).join('\r\n')
+}
+
+/** Mean energy by cycle phase over the marked cycles (predicted ones don't count), and overall. */
+export function cycleEnergy(entries: JournalEntry[], cycles: Record<string, CycleEntry>) {
+  const stats = cycleStats(cycles)
+  const by: Record<CyclePhase, number[]> = { menstrual: [], follicular: [], ovulation: [], luteal: [] }
+  for (const e of entries) {
+    if (!e.energy) continue
+    const c = cycleDay(cycles, e.day, stats)
+    if (c && !c.predicted) by[c.phase].push(e.energy)
+  }
+  const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : undefined)
+  return { byPhase: Object.fromEntries(phaseOrder.map((p) => [p, mean(by[p])])) as Record<CyclePhase, number | undefined>, all: mean(Object.values(by).flat()) }
+}
+
+/**
+ * The cycle in the mirror: by phase — energy, petals, deeds done and postponed per day. Only marked
+ * cycles count (not the forecast), and only from the first marked start.
+ */
+export function cycleInsights(g: Pick<GrimoireState, 'tasks' | 'cycles'>, entries: JournalEntry[], today: DayKey) {
+  const cycles = g.cycles ?? {}
+  const stats = cycleStats(cycles)
+  const phaseOn = (d: DayKey) => {
+    const c = cycleDay(cycles, d, stats)
+    return c && !c.predicted ? c.phase : undefined
+  }
+  const days: Record<CyclePhase, number> = { menstrual: 0, follicular: 0, ovulation: 0, luteal: 0 }
+  const first = periodsOf(cycles)[0]?.start
+  if (first) for (let d = first; d <= today; d = addDays(d, 1)) {
+    const p = phaseOn(d)
+    if (p) days[p]++
+  }
+  const tasks = Object.values(g.tasks).filter((t) => !t.habitId)
+  const energy = cycleEnergy(entries, cycles)
+  return {
+    cycles: stats.cycles,
+    rows: phaseOrder.map((p) => ({
+      phase: p,
+      days: days[p],
+      energy: energy.byPhase[p],
+      counts: countPetals(entries.filter((e) => phaseOn(e.day) === p)),
+      done: days[p] ? tasks.filter((t) => t.status === 'done' && t.doneDay && phaseOn(t.doneDay) === p).length / days[p] : 0,
+      postponed: days[p] ? tasks.flatMap((t) => t.postponements).filter((x) => phaseOn(x.day) === p).length / days[p] : 0,
+    })),
+  }
 }

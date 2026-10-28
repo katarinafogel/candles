@@ -314,6 +314,10 @@ export interface GrimoireMeta {
   spells: Spell[]
   /** The bestiary's circles: семья, друзья… — an editable list. */
   circles: string[]
+  /** The cycle is shown to the assistant (phase in the morning plan); off — it never leaves the app. */
+  cycleToAgent: boolean
+  /** «Лёгкий план» taken for this day: the day's stars limit is halved. */
+  easyDay?: DayKey
   /** How a done deed is answered: the praise in the toast and the spark that flies to the coins. */
   tone: { praise: 'quiet' | 'normal' | 'warm'; motion: 'off' | 'soft' | 'bright' }
   /** Sabbat cards: the text is the witch's own tradition, so it is editable. */
@@ -383,6 +387,18 @@ export interface PersonNotes {
   kindness?: PersonLine[]
 }
 
+/** One period: from its first day to its last, and how it felt. Kind `cycle`, under the witch role. */
+export interface CycleEntry {
+  id: string
+  start: DayKey
+  /** Empty while it goes on. */
+  end?: DayKey
+  /** 1 light · 2 medium · 3 heavy. */
+  flow?: 1 | 2 | 3
+  /** Keys of `cycleSymptoms`: pain, tired, sweet… */
+  symptoms?: string[]
+}
+
 export interface GrimoireState {
   tasks: Record<string, Task>
   projects: Record<string, Project>
@@ -395,5 +411,6 @@ export interface GrimoireState {
   jarTxs: Record<string, JarTx>
   coinTxs: Record<string, CoinTx>
   personNotes: Record<string, PersonNotes>
+  cycles: Record<string, CycleEntry>
   meta: GrimoireMeta
 }

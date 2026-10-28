@@ -602,3 +602,39 @@ describe('deeds of the workshop', async () => {
     expect(W.doneTitle('holder', 'painted', 2)).toBe('Расписала 2')
   })
 })
+
+describe('the cycle', async () => {
+  const C = await import('../cycle')
+  const S = await import('../mirrorStats')
+  const mk = (starts: [string, string?][]) => Object.fromEntries(starts.map(([start, end], i) => [`c${i}`, { id: `c${i}`, start, end }]))
+  it('guesses 28 days until three cycles, then counts the last ones', () => {
+    expect(C.cycleStats(mk([['2026-09-01', '2026-09-05']]))).toEqual({ length: 28, period: 5, approx: true, cycles: 0 })
+    const four = mk([['2026-06-01', '2026-06-04'], ['2026-06-31'.replace('06-31', '07-01'), '2026-07-04'], ['2026-07-31', '2026-08-03'], ['2026-08-30', '2026-09-02']])
+    const s = C.cycleStats(four)
+    expect(s.approx).toBe(false)
+    expect(s.length).toBe(30)
+    expect(s.period).toBe(4)
+  })
+  it('places a day in its phase and forecasts the next start', () => {
+    const cycles = mk([['2026-10-01', '2026-10-05']])
+    expect(C.cycleDay(cycles, '2026-09-30')).toBeUndefined()
+    expect(C.cycleDay(cycles, '2026-10-03')).toMatchObject({ n: 3, phase: 'menstrual', predicted: false })
+    expect(C.cycleDay(cycles, '2026-10-08')?.phase).toBe('follicular')
+    expect(C.cycleDay(cycles, '2026-10-14')?.phase).toBe('ovulation')
+    expect(C.cycleDay(cycles, '2026-10-20')).toMatchObject({ phase: 'luteal', nextStart: '2026-10-29' })
+    expect(C.cycleDay(cycles, '2026-10-30')).toMatchObject({ n: 2, phase: 'menstrual', predicted: true })
+  })
+  it('averages the energy by phase over marked cycles', () => {
+    const cycles = mk([['2026-10-01', '2026-10-05']])
+    const e = (day: string, energy: number) => ({ id: day, at: `${day}T10:00:00`, day, type: 'entry' as const, energy })
+    const r = S.cycleEnergy([e('2026-10-02', 2), e('2026-10-03', 1), e('2026-10-09', 4)], cycles)
+    expect(r.byPhase.menstrual).toBe(1.5)
+    expect(r.byPhase.follicular).toBe(4)
+    expect(r.all).toBeCloseTo(7 / 3)
+  })
+  it('halves the stars limit on an easy day', () => {
+    const s = { ...initialGrimoire, meta: { ...initialGrimoire.meta, dayStars: 6, easyDay: MON } }
+    expect(dayStars(s, MON).limit).toBe(3)
+    expect(dayStars(s, '2026-10-27').limit).toBe(6)
+  })
+})

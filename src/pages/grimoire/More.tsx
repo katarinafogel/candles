@@ -225,6 +225,9 @@ export default function GrimoireMore() {
               style={{ background: 'transparent', color: 'inherit', border: '1px solid var(--chakra-colors-border)', borderRadius: 6, padding: '6px 8px', colorScheme: 'dark', width: 120 }}
             />
           </Field>
+          <Check checked={meta.cycleToAgent ?? true} onChange={(v) => dispatch(A.updateMeta({ cycleToAgent: v }))}>
+            Цикл: показывать ассистенту (фаза в утреннем плане)
+          </Check>
           <Check checked={meta.streaksOn} onChange={(v) => dispatch(A.updateMeta({ streaksOn: v }))}>
             Серии и бонусы за них
           </Check>
