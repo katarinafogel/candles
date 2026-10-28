@@ -3,10 +3,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { LuCopy, LuFlame, LuSend, LuWind } from 'react-icons/lu'
 import { useParams } from 'react-router-dom'
 import { ReviewForm } from '../components/ReviewForm'
-import { notify, NumInput } from '../components/ui'
+import { Chips, Field, notify, NumInput, TextArea } from '../components/ui'
+import { candleColors, scentNotes } from '../lib/labels'
 import { fmt, round2 } from '../lib/calc'
 import { supabase } from '../lib/supabase'
-import type { ReviewAnswers } from '../types'
+import type { ReviewAnswers, TesterAnswer } from '../types'
 import { MoonSlice } from '../components/Magic'
 
 interface Session {
@@ -135,10 +136,120 @@ function BurnTracker({ id, sessions, setSessions }: { id: string; sessions: Sess
   )
 }
 
+const testerKey = (slug: string) => `tester:${slug}`
+const answeredTester = (slug: string) => {
+  try {
+    return !!localStorage.getItem(testerKey(slug))
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Right after a review: «Хотите помогать тестировать свечи дальше?». No — a thank-you; yes — which
+ * scents and colours they like and a free comment. Asked once per master in this browser.
+ */
+function TesterQuestion({ slug, reviewId, master, onDone }: { slug: string; reviewId: string; master?: string; onDone: () => void }) {
+  const [step, setStep] = useState<'ask' | 'form' | 'thanks'>('ask')
+  const [wants, setWants] = useState(false)
+  const [a, setA] = useState<TesterAnswer>({ wants: true })
+  const [sending, setSending] = useState(false)
+  const send = async (answer: TesterAnswer) => {
+    setSending(true)
+    // Not getting through is no reason to bother the person: the review itself is already in.
+    await supabase
+      .rpc('submit_tester', {
+        p_slug: slug,
+        p_review_id: reviewId,
+        p_tester: answer,
+      })
+      .then(
+        () => undefined,
+        () => undefined,
+      )
+    try {
+      localStorage.setItem(testerKey(slug), answer.wants ? 'yes' : 'no')
+    } catch {
+      /* the question may come again next time */
+    }
+    setSending(false)
+    setWants(answer.wants)
+    setStep('thanks')
+  }
+  return (
+    <Box p="5" borderRadius="l3" bg="bg.subtle" borderWidth="1px" borderColor="ember.700">
+      {step === 'ask' && (
+        <Stack gap="4" textAlign="center">
+          <Heading size="lg" fontWeight="semibold">
+            Хотите помогать тестировать свечи дальше?
+          </Heading>
+          <Text fontSize="sm" color="fg.muted">
+            Иногда {master ?? 'мастер'} делает новые свечи и ищет, кому дать их попробовать.
+          </Text>
+          <HStack gap="3" justify="center">
+            <Button size="lg" onClick={() => setStep('form')}>
+              Да, хочу
+            </Button>
+            <Button size="lg" variant="outline" loading={sending} onClick={() => send({ wants: false })}>
+              Нет, спасибо
+            </Button>
+          </HStack>
+        </Stack>
+      )}
+      {step === 'form' && (
+        <Stack gap="5">
+          <Heading size="lg" fontWeight="semibold">
+            Здорово! Немного о вкусах
+          </Heading>
+          <Field label="Какие ароматы нравятся?">
+            <Chips multi value={a.notes ?? []} onChange={(v) => setA({ ...a, notes: (v as string[]) ?? [] })} options={scentNotes.map((n) => ({ value: n, label: n }))} />
+          </Field>
+          <Field label="Какие цвета любите?">
+            <Chips multi value={a.colors ?? []} onChange={(v) => setA({ ...a, colors: (v as string[]) ?? [] })} options={candleColors.map((c) => ({ value: c, label: c }))} />
+          </Field>
+          <Field label="Комментарий">
+            <TextArea value={a.comment ?? ''} onChange={(v) => setA({ ...a, comment: v })} rows={3} placeholder="что угодно: любимые запахи, на что аллергия, какие свечи хотелось бы" />
+          </Field>
+          <Button
+            size="lg"
+            loading={sending}
+            onClick={() =>
+              send({
+                ...a,
+                wants: true,
+                comment: a.comment?.trim() || undefined,
+              })
+            }
+          >
+            <LuSend /> Отправить
+          </Button>
+        </Stack>
+      )}
+      {step === 'thanks' && (
+        <Stack gap="3" textAlign="center">
+          <Heading size="lg" fontWeight="semibold">
+            {wants ? 'Спасибо! Записали' : 'Спасибо, что попробовали свечу!'}
+          </Heading>
+          <Text fontSize="sm" color="fg.muted">
+            {wants ? `${master ?? 'Мастер'} напишет, когда будет новая свеча на пробу.` : 'Ваш отзыв очень помогает делать свечи лучше. Пусть она горит тепло и ровно.'}
+          </Text>
+          <Button variant="ghost" size="sm" onClick={onDone}>
+            Закрыть
+          </Button>
+        </Stack>
+      )}
+    </Box>
+  )
+}
+
 export default function PublicCandle() {
   const { slug = '', id = '' } = useParams()
   const trackerKey = `${slug}/${id}`
-  const [info, setInfo] = useState<{ name?: string; instruction?: string; master?: string } | null>(null)
+  const [info, setInfo] = useState<{
+    name?: string
+    instruction?: string
+    master?: string
+  } | null>(null)
   const [loading, setLoading] = useState(true)
   const [sessions, setSessions] = useState<Session[]>(() => load(trackerKey))
   const [answers, setAnswers] = useState<ReviewAnswers>({})
@@ -146,13 +257,17 @@ export default function PublicCandle() {
   const [sent, setSent] = useState(0)
   const [sentFinal, setSentFinal] = useState(false)
   const [failed, setFailed] = useState<string | null>(null)
+  const [askTester, setAskTester] = useState<string>()
 
   useEffect(() => {
     // Only the name, the instruction and the master's name are public.
     supabase
       .rpc('candle_public', { p_slug: slug, p_id: id })
       .then(({ data }) => setInfo(data?.found ? data : data?.master ? { master: data.master } : null))
-      .then(() => setLoading(false), () => setLoading(false))
+      .then(
+        () => setLoading(false),
+        () => setLoading(false),
+      )
   }, [slug, id])
 
   const outCount = sessions.filter((s) => s.selfOut).length
@@ -182,10 +297,14 @@ export default function PublicCandle() {
     setSending(true)
     setFailed(null)
     try {
-      const { error } = await supabase.rpc('submit_review', { p_slug: slug, p_review: p })
+      const { error } = await supabase.rpc('submit_review', {
+        p_slug: slug,
+        p_review: p,
+      })
       if (error) throw new Error(error.message)
       setSent((n) => n + 1)
       setSentFinal(p.finished === 'yes')
+      if (!answeredTester(slug)) setAskTester(p.id)
       notify('Спасибо! Отзыв отправлен')
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch {
@@ -219,66 +338,80 @@ export default function PublicCandle() {
           )}
           {sent > 0 && (
             <Text color="emerald.300" mt="3">
-              {sentFinal
-                ? 'Спасибо! Отзыв получен.'
-                : `Отзыв получен${sent > 1 ? ` (${sent})` : ''}. Можно отправить ещё один, когда свеча догорит.`}
+              {sentFinal ? 'Спасибо! Отзыв получен.' : `Отзыв получен${sent > 1 ? ` (${sent})` : ''}. Можно отправить ещё один, когда свеча догорит.`}
             </Text>
           )}
         </Box>
 
-        {info?.instruction && (
-          <Box p="4" borderRadius="l3" bg="bg.subtle" borderWidth="1px" borderColor="border">
-            <Heading size="sm" mb="2">
-              Как жечь свечу
-            </Heading>
-            <Text whiteSpace="pre-wrap" fontSize="sm" color="fg.muted">
-              {info.instruction}
-            </Text>
-          </Box>
+        {askTester && (
+          <TesterQuestion
+            slug={slug}
+            reviewId={askTester}
+            master={info?.master}
+            onDone={() => {
+              setAskTester(undefined)
+              window.scrollTo({ top: 0 })
+            }}
+          />
         )}
 
-        <Box>
-          <Heading size="md" mb="4" textAlign="center">
-            Трекер горения
-          </Heading>
-          <BurnTracker id={trackerKey} sessions={sessions} setSessions={setSessions} />
-          <Text fontSize="xs" color="fg.subtle" textAlign="center" mt="3">
-            История хранится в этом браузере: при смене телефона или очистке браузера она потеряется.
-          </Text>
-        </Box>
+        {!askTester && (
+          <>
+            {info?.instruction && (
+              <Box p="4" borderRadius="l3" bg="bg.subtle" borderWidth="1px" borderColor="border">
+                <Heading size="sm" mb="2">
+                  Как жечь свечу
+                </Heading>
+                <Text whiteSpace="pre-wrap" fontSize="sm" color="fg.muted">
+                  {info.instruction}
+                </Text>
+              </Box>
+            )}
 
-        <Box>
-          <Heading size="md" mb="1">
-            Отзыв
-          </Heading>
-          <Text fontSize="sm" color="fg.muted" mb="4">
-            Все вопросы необязательные — ответьте, на что хочется.
-          </Text>
-          <ReviewForm value={{ ...answers, wentOut: answers.wentOut ?? wentOut }} onChange={setAnswers} />
-        </Box>
-
-        <Stack gap="3">
-          <Button size="xl" onClick={send} loading={sending}>
-            <LuSend /> Отправить
-          </Button>
-          {failed && (
-            <Box p="3" borderWidth="1px" borderColor="orange.700" borderRadius="l3">
-              <Text fontSize="sm" color="orange.300" mb="2">
-                Не получилось отправить. Скопируйте ответ и перешлите его мастеру в мессенджер.
+            <Box>
+              <Heading size="md" mb="4" textAlign="center">
+                Трекер горения
+              </Heading>
+              <BurnTracker id={trackerKey} sessions={sessions} setSessions={setSessions} />
+              <Text fontSize="xs" color="fg.subtle" textAlign="center" mt="3">
+                История хранится в этом браузере: при смене телефона или очистке браузера она потеряется.
               </Text>
-              <Button
-                variant="outline"
-                w="100%"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(`Отзыв на свечу ${slug}/${id}:\n${failed}`)
-                  notify('Ответ скопирован')
-                }}
-              >
-                <LuCopy /> Скопировать ответ
-              </Button>
             </Box>
-          )}
-        </Stack>
+
+            <Box>
+              <Heading size="md" mb="1">
+                Отзыв
+              </Heading>
+              <Text fontSize="sm" color="fg.muted" mb="4">
+                Все вопросы необязательные — ответьте, на что хочется.
+              </Text>
+              <ReviewForm value={{ ...answers, wentOut: answers.wentOut ?? wentOut }} onChange={setAnswers} />
+            </Box>
+
+            <Stack gap="3">
+              <Button size="xl" onClick={send} loading={sending}>
+                <LuSend /> Отправить
+              </Button>
+              {failed && (
+                <Box p="3" borderWidth="1px" borderColor="orange.700" borderRadius="l3">
+                  <Text fontSize="sm" color="orange.300" mb="2">
+                    Не получилось отправить. Скопируйте ответ и перешлите его мастеру в мессенджер.
+                  </Text>
+                  <Button
+                    variant="outline"
+                    w="100%"
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(`Отзыв на свечу ${slug}/${id}:\n${failed}`)
+                      notify('Ответ скопирован')
+                    }}
+                  >
+                    <LuCopy /> Скопировать ответ
+                  </Button>
+                </Box>
+              )}
+            </Stack>
+          </>
+        )}
       </Stack>
     </Container>
   )

@@ -292,6 +292,17 @@ export interface ReviewAnswers {
   finished?: 'yes' | 'burning'
   comment?: string
   name?: string
+  /** «Как с вами связаться»: free text — a phone, a messenger handle. */
+  contact?: string
+}
+
+/** The answer to «Хотите помогать тестировать свечи дальше?», sent right after the review. */
+export interface TesterAnswer {
+  wants: boolean
+  notes?: string[]
+  colors?: string[]
+  comment?: string
+  at?: ISODate
 }
 
 export interface Review extends ReviewAnswers {
@@ -303,6 +314,7 @@ export interface Review extends ReviewAnswers {
   sessions?: number
   selfExtinguished?: number
   read: boolean
+  tester?: TesterAnswer
 }
 
 export interface Settings {

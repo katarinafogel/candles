@@ -177,6 +177,9 @@ export const decorKindLabel: Record<DecorKind, string> = {
 }
 
 export const seasons = ['зима', 'весна', 'лето', 'осень', 'универсальный']
+/** Colours a tester can like; the same list is checked by submit_tester in the database. */
+export const candleColors = ['белый', 'молочный', 'бежевый', 'розовый', 'красный', 'бордовый', 'оранжевый', 'жёлтый', 'зелёный', 'голубой', 'синий', 'фиолетовый', 'серый', 'чёрный', 'золотой']
+
 export const scentNotes = ['цветочный', 'ягодный/фруктовый', 'древесный', 'пряный', 'сладкий', 'гурманский', 'парфюм', 'озон/свежесть', 'зеленый', 'пудровый']
 
 export const reviewQuestions = {

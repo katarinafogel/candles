@@ -55,7 +55,7 @@ jobs:
       - name: Access rules
         run: psql -q -v ON_ERROR_STOP=1 -f supabase/tests/grimoire_rls.sql 2>&1 | tee out.txt || { grep -m3 -E 'ERROR|FATAL|assert' out.txt | sed 's/^/::error::/'; exit 1; }
       - name: 0003_agent (twice), 0004, 0005
-        run: psql -q -v ON_ERROR_STOP=1 -f supabase/migrations/0003_agent.sql -f supabase/migrations/0003_agent.sql -f supabase/migrations/0004_search_path.sql -f supabase/migrations/0005_agent_read.sql 2>&1 | tee out.txt || { grep -m3 -E 'ERROR|FATAL|assert' out.txt | sed 's/^/::error::/'; exit 1; }
+        run: psql -q -v ON_ERROR_STOP=1 -f supabase/migrations/0003_agent.sql -f supabase/migrations/0003_agent.sql -f supabase/migrations/0004_search_path.sql -f supabase/migrations/0005_agent_read.sql -f supabase/migrations/0006_review_tester.sql 2>&1 | tee out.txt || { grep -m3 -E 'ERROR|FATAL|assert' out.txt | sed 's/^/::error::/'; exit 1; }
       - name: Agent keys
         run: psql -q -v ON_ERROR_STOP=1 -f supabase/tests/agent_keys.sql 2>&1 | tee out.txt || { grep -m3 -E 'ERROR|FATAL|assert' out.txt | sed 's/^/::error::/'; exit 1; }
 

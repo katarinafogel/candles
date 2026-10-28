@@ -93,6 +93,9 @@ export function ReviewForm({ value, onChange }: { value: ReviewAnswers; onChange
       <Field label="Как вас зовут?">
         <TextInput value={value.name ?? ''} onChange={(v) => set('name', v)} />
       </Field>
+      <Field label="Как с вами связаться?" helper="телефон, телеграм — как удобно">
+        <TextInput value={value.contact ?? ''} onChange={(v) => set('contact', v)} />
+      </Field>
       {chips('instructionClear')}
       <SliderQuestion
         label="Как свеча в целом?"
@@ -173,6 +176,29 @@ export function ReviewCard({ r, children }: { r: Review; children?: React.ReactN
         <Text fontSize="sm" whiteSpace="pre-wrap">
           {r.comment}
         </Text>
+      )}
+      {r.contact && (
+        <Text fontSize="sm" color="fg.muted" mt="1">
+          Связаться: {r.contact}
+        </Text>
+      )}
+      {r.tester && (
+        <Box mt="2" fontSize="sm">
+          {r.tester.wants ? (
+            <>
+              <Text color="emerald.300">Хочет тестировать свечи дальше</Text>
+              {!!r.tester.notes?.length && <Text color="fg.muted">Ароматы: {r.tester.notes.join(', ')}</Text>}
+              {!!r.tester.colors?.length && <Text color="fg.muted">Цвета: {r.tester.colors.join(', ')}</Text>}
+              {r.tester.comment && (
+                <Text color="fg.muted" whiteSpace="pre-wrap">
+                  {r.tester.comment}
+                </Text>
+              )}
+            </>
+          ) : (
+            <Text color="fg.subtle">Тестировать дальше не хочет</Text>
+          )}
+        </Box>
       )}
       {children}
     </Box>
