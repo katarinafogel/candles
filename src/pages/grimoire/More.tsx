@@ -83,6 +83,7 @@ export default function GrimoireMore() {
           { to: '/g/mirror', label: 'Зеркало: словарь эмоций и записи' },
           { to: '/g/people', label: 'Бестиарий: люди, памятка и даты' },
           { to: '/g/wishes', label: 'Сундук желаний и зал славы' },
+          { to: '/g/jars', label: 'Копилки: настоящие деньги' },
           { to: '/apps', label: 'Другие проекты' },
         ].map((i) => (
           <RouterLink key={i.to} to={i.to}>

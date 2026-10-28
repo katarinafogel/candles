@@ -3,7 +3,7 @@ import { Box, Button, Flex, HStack, IconButton, Input, SimpleGrid, Stack, Text }
 import { useMemo, useState } from 'react'
 import { LuMinus, LuPencil, LuPlus } from 'react-icons/lu'
 import { MarkPicker } from '../../components/grimoire/Marks'
-import { Chips, confirmAction, Empty, Field, Modal, notify, NumInput, PageHeader, Section, TextInput } from '../../components/ui'
+import { Chips, confirmAction, Empty, Field, Modal, notify, NumInput, PageHeader, Section, Select, TextInput } from '../../components/ui'
 import { useBalance, useToday } from '../../grimoire/act'
 import { addDays, dayKey, weekStart } from '../../grimoire/days'
 import { habitLogId, habitTaskId, isDone, isScheduled, navTest, streak } from '../../grimoire/habits'
@@ -29,6 +29,8 @@ function HabitDialog({ habit, onClose }: { habit: Draft; onClose: () => void }) 
   const dispatch = useAppDispatch()
   const [h, setH] = useState<Draft>(habit)
   const set = (p: Partial<Draft>) => setH({ ...h, ...p })
+  const allJars = useAppSelector((st) => st.grimoire.jars)
+  const jars = Object.values(allJars).filter((j) => j.status === 'saving' || j.status === 'collected' || j.id === h.jarId)
   const s = h.schedule
   return (
     <Modal
@@ -119,6 +121,18 @@ function HabitDialog({ habit, onClose }: { habit: Draft; onClose: () => void }) 
             <Input type="date" value={h.activeTo ?? ''} onChange={(e) => set({ activeTo: e.target.value || undefined })} />
           </Field>
         </HStack>
+        {jars.length > 0 && (
+          <HStack gap="3" align="flex-end" wrap="wrap">
+            <Field label="Пополняет копилку" helper="отметка сама кладёт сумму в копилку">
+              <Select value={h.jarId ?? ''} onChange={(v) => set({ jarId: v || undefined, jarAmount: v ? (h.jarAmount ?? 1000) : undefined })} placeholder="нет" options={jars.map((j) => ({ value: j.id, label: j.title }))} />
+            </Field>
+            {h.jarId && (
+              <Field label="Сколько">
+                <NumInput value={h.jarAmount} onChange={(v) => set({ jarAmount: v && v > 0 ? v : undefined })} width="140px" />
+              </Field>
+            )}
+          </HStack>
+        )}
         {h.id && (
           <Field label="Состояние">
             <Chips value={h.status} onChange={(v) => set({ status: (v as Habit['status']) ?? 'active' })} options={[

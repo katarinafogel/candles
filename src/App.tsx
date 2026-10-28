@@ -17,6 +17,7 @@ import Scroll from './pages/grimoire/Scroll'
 import Wheel from './pages/grimoire/Wheel'
 import GrimoireCalendar from './pages/grimoire/Calendar'
 import Wishes from './pages/grimoire/Wishes'
+import Jars from './pages/grimoire/Jars'
 import HolderPage from './pages/HolderPage'
 import Holders from './pages/Holders'
 import Home from './pages/Home'
@@ -69,6 +70,7 @@ export default function App() {
         <Route path="people" element={<Bestiary />} />
         <Route path="people/:id" element={<BestiaryCard />} />
         <Route path="wishes" element={<Wishes />} />
+        <Route path="jars" element={<Jars />} />
         <Route path="more" element={<GrimoireMore />} />
         <Route path="*" element={<Scroll />} />
       </Route>

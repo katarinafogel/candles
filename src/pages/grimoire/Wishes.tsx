@@ -1,10 +1,10 @@
-// «Сундук желаний» and «Зал славы»: dreams without deadlines; one button makes a dream a deed, and a
-// fulfilled one moves to the hall of fame with the time it took «от мечты до яви».
-import { Box, Button, Flex, HStack, SimpleGrid, Stack, Tabs, Text } from '@chakra-ui/react'
+// «Сундук желаний» and «Зал славы»: dreams without deadlines; «Воплотить» makes a dream a deed, a quest,
+// a book or a jar, and a fulfilled one moves to the hall of fame with the time it took «от мечты до яви».
+import { Box, Button, Flex, HStack, Input, SimpleGrid, Stack, Tabs, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { LuExternalLink, LuPlus } from 'react-icons/lu'
 import { Crescent, Sparkle } from '../../components/Magic'
-import { confirmAction, Empty, Field, Modal, notify, NumInput, PageHeader, TextArea, TextInput } from '../../components/ui'
+import { Chips, confirmAction, Empty, Field, Modal, notify, NumInput, PageHeader, TextArea, TextInput } from '../../components/ui'
 import { daysBetween, plural } from '../../grimoire/days'
 import type { Wish } from '../../grimoire/types'
 import { sabbats } from '../../grimoire/wheel'
@@ -140,10 +140,74 @@ function FulfillDialog({ w, onClose }: { w: Wish; onClose: () => void }) {
   )
 }
 
+type Way = 'task' | 'quest' | 'project' | 'jar'
+
+/**
+ * «Воплотить»: a dream becomes a deed, a quest with steps, a book of deeds or a jar. It comes true by
+ * itself — when the deed or quest is done, the book is read, or the jar is collected and spent.
+ */
+function EmbodyDialog({ w, onClose }: { w: Wish; onClose: () => void }) {
+  const dispatch = useAppDispatch()
+  const [way, setWay] = useState<Way>(w.price ? 'jar' : 'task')
+  const [steps, setSteps] = useState('')
+  const [goal, setGoal] = useState<number | undefined>(w.price)
+  const [date, setDate] = useState('')
+  const lines = steps.split('\n').map((x) => x.trim()).filter(Boolean)
+  const ok = way === 'quest' ? lines.length > 0 : way === 'jar' ? !!goal : true
+  const go = () => {
+    if (way === 'task' || way === 'quest') {
+      dispatch(A.wishToTask({ wishId: w.id, steps: way === 'quest' ? lines : undefined }))
+      notify(way === 'quest' ? 'Стала квестом: он в бэклоге' : 'Стала делом: оно в бэклоге', 'success', 'Когда сделаешь, мечта уйдёт в зал славы')
+    } else if (way === 'project') {
+      dispatch(A.wishToProject({ wishId: w.id }))
+      notify('Стала проектом: книга на полке «Великих деяний»', 'success', 'Мечта сбудется, когда книга будет прочитана')
+    } else {
+      dispatch(A.wishToJar({ wishId: w.id, goal: goal!, targetDate: date || undefined }))
+      notify('Заведена копилка', 'success', 'Мечта сбудется, когда копилка будет собрана и потрачена')
+    }
+    onClose()
+  }
+  return (
+    <Modal open onClose={onClose} title={`Воплотить: ${w.title}`} footer={<Button colorPalette="purple" disabled={!ok} onClick={go}>Воплотить</Button>}>
+      <Stack gap="4">
+        <Chips value={way} onChange={(v) => setWay((v as Way) ?? way)} options={[
+          { value: 'task', label: 'в дело' },
+          { value: 'quest', label: 'в квест' },
+          { value: 'project', label: 'в проект' },
+          { value: 'jar', label: 'в копилку' },
+        ]} />
+        {way === 'quest' && (
+          <Field label="Шаги" helper="по одному на строку">
+            <TextArea value={steps} onChange={setSteps} rows={5} placeholder={'Выбрать модель\nСравнить цены\nКупить'} />
+          </Field>
+        )}
+        {way === 'project' && (
+          <Text fontSize="sm" color="fg.muted">
+            Появится книга «{w.title}» на полке — дела в неё добавишь сама.
+          </Text>
+        )}
+        {way === 'jar' && (
+          <>
+            <Field label="Сколько собрать">
+              <NumInput value={goal} onChange={(v) => setGoal(v && v > 0 ? v : undefined)} suffix="₽" width="180px" />
+            </Field>
+            <Field label="К какой дате" helper="необязательно: с датой копилка считает, сколько откладывать в неделю">
+              <Input size="sm" type="date" w="170px" value={date} onChange={(e) => setDate(e.target.value)} style={{ colorScheme: 'dark' }} />
+            </Field>
+          </>
+        )}
+      </Stack>
+    </Modal>
+  )
+}
+
 function WishCard({ w, onEdit }: { w: Wish; onEdit: () => void }) {
   const dispatch = useAppDispatch()
   const task = useAppSelector((s) => (w.taskId ? s.grimoire.tasks[w.taskId] : undefined))
+  const project = useAppSelector((s) => (w.projectId ? s.grimoire.projects[w.projectId] : undefined))
+  const jar = useAppSelector((s) => (w.jarId ? s.grimoire.jars[w.jarId] : undefined))
   const [fulfilling, setFulfilling] = useState(false)
+  const [embody, setEmbody] = useState(false)
   return (
     <Box p="4" borderRadius="l3" borderWidth="1px" borderColor="purple.800" bg="bg.subtle" backgroundImage="radial-gradient(16rem 8rem at 100% 0%, rgba(147,112,170,.14), transparent 70%)">
       <Flex justify="space-between" gap="2" align="flex-start">
@@ -171,16 +235,13 @@ function WishCard({ w, onEdit }: { w: Wish; onEdit: () => void }) {
       </Flex>
       <HStack gap="2" mt="3" wrap="wrap">
         {w.status === 'dream' && (
-          <Button size="xs" colorPalette="purple" onClick={() => {
-            dispatch(A.wishToTask({ wishId: w.id }))
-            notify('Стала делом: оно в бэклоге', 'success', 'Когда дело будет сделано, мечта уйдёт в зал славы')
-          }}>
+          <Button size="xs" colorPalette="purple" onClick={() => setEmbody(true)}>
             Воплотить
           </Button>
         )}
         {w.status === 'inProgress' && (
           <Text fontSize="xs" color="purple.200">
-            в деле{task ? `: ${task.title}` : ''}
+            {jar ? `в копилке: ${jar.title}` : project ? `в проекте: ${project.title}` : `в деле${task ? `: ${task.title}` : ''}`}
           </Text>
         )}
         <Button size="xs" variant="outline" onClick={() => setFulfilling(true)}>
@@ -191,6 +252,7 @@ function WishCard({ w, onEdit }: { w: Wish; onEdit: () => void }) {
         </Button>
       </HStack>
       {fulfilling && <FulfillDialog w={w} onClose={() => setFulfilling(false)} />}
+      {embody && <EmbodyDialog w={w} onClose={() => setEmbody(false)} />}
     </Box>
   )
 }

@@ -12,6 +12,7 @@ import type {
   GrimoireMeta,
   GrimoireState,
   Habit,
+  Jar,
   JournalEntry,
   Wish,
   PostponeReason,
@@ -150,11 +151,13 @@ function syncParent(s: S, parentId: string | undefined, at: string, day: DayKey)
     parent.doneAt = at
     parent.doneDay = day
     settle(s, parent, at, day, s.meta.coins.complexBonus, 'complex', `квест завершён: ${parent.title}`)
+    syncWish(s, parent, at, day, true)
   } else if (!allDone && parent.status === 'done') {
     parent.status = 'open'
     delete parent.doneAt
     delete parent.doneDay
     settle(s, parent, at, day, 0, 'undo', '')
+    syncWish(s, parent, at, day, false)
   }
 }
 
@@ -172,10 +175,12 @@ function syncProject(s: S, projectId: string | undefined, at: string, day: DayKe
     p.status = 'done'
     p.doneAt = at
     pay(s, at, day, s.meta.coins.projectBonus - net, { reason: `книга прочитана: ${p.title}`, tag: 'project', refKind: 'project', refId: p.id })
+    fulfillLinked(s, Object.values(s.wishes).find((w) => w.projectId === p.id), at, day, true)
   } else if (!allDone && p.status === 'done') {
     p.status = 'active'
     delete p.doneAt
     if (undo) pay(s, at, day, -net, { reason: `отмена: ${p.title}`, tag: 'undo', refKind: 'project', refId: p.id })
+    if (undo) fulfillLinked(s, Object.values(s.wishes).find((w) => w.projectId === p.id), at, day, false)
   }
 }
 
@@ -185,9 +190,11 @@ function markHabit(s: S, t: Task, at: string, day: DayKey, done: boolean) {
   const id = habitLogId(h.id, t.doOn)
   if (!done) {
     delete s.habitLogs[id]
+    habitToJar(s, h, id, at, day, false)
     return
   }
   s.habitLogs[id] = { id, habitId: h.id, date: t.doOn, value: h.mark.kind === 'count' ? h.mark.goal : 1 }
+  habitToJar(s, h, id, at, day, true)
   payStreak(s, h, at, day)
 }
 
@@ -206,6 +213,55 @@ function payStreak(s: S, h: Habit, at: string, day: DayKey) {
 /** A wish made real by a task goes to the hall of fame when the task is done, and back if undone. */
 function syncWish(s: S, t: Task, at: string, day: DayKey, done: boolean) {
   const w = t.wishId ? s.wishes[t.wishId] : undefined
+  if (!w) return
+  const net = Object.values(s.coinTxs).reduce((sum, x) => (x.refId === w.id ? sum + x.amount : sum), 0)
+  if (done && w.status !== 'fulfilled') {
+    w.status = 'fulfilled'
+    w.fulfilledAt = at
+    pay(s, at, day, s.meta.coins.wishBonus - net, { reason: `мечта сбылась: ${w.title}`, tag: 'wish', refKind: 'wish', refId: w.id })
+  } else if (!done && w.status === 'fulfilled') {
+    w.status = 'inProgress'
+    delete w.fulfilledAt
+    pay(s, at, day, -net, { reason: `отмена: ${w.title}`, tag: 'undo', refKind: 'wish', refId: w.id })
+  }
+}
+
+/** Coins for a jar half and fully filled, once each. */
+export const jarMilestones = [
+  { pct: 50, coins: 25 },
+  { pct: 100, coins: 100 },
+]
+
+export const jarBalance = (s: Pick<S, 'jarTxs'>, jarId: string) => Object.values(s.jarTxs).reduce((sum, x) => (x.jarId === jarId ? sum + x.amount : sum), 0)
+
+/** After money moves: a full jar is «собрана», a milestone pays once; a jar no longer full saves again. */
+function syncJar(s: S, jarId: string, at: string, day: DayKey) {
+  const j = s.jars[jarId]
+  if (!j || j.goal <= 0) return
+  const pct = (jarBalance(s, jarId) / j.goal) * 100
+  const paid = new Set(j.paidMilestones ?? [])
+  for (const m of jarMilestones)
+    if (pct >= m.pct && !paid.has(m.pct)) {
+      pay(s, at, day, m.coins, { reason: `копилка ${m.pct === 100 ? 'собрана' : 'наполовину'}: ${j.title}`, tag: 'jar', refKind: 'jar', refId: j.id })
+      paid.add(m.pct)
+    }
+  j.paidMilestones = [...paid].sort((a, b) => a - b)
+  if (pct >= 100 && j.status === 'saving') j.status = 'collected'
+  else if (pct < 100 && j.status === 'collected') j.status = 'saving'
+}
+
+/** «Отложить 1000 ₽»: a ticked ritual puts its sum into its jar; unticked, takes it back. */
+function habitToJar(s: S, h: Habit, logId: string, at: string, day: DayKey, done: boolean) {
+  if (!h.jarId || !h.jarAmount || !s.jars[h.jarId]) return
+  const id = `habit:${logId}`
+  if (done && !s.jarTxs[id]) s.jarTxs[id] = { id, jarId: h.jarId, at, amount: h.jarAmount, note: h.title, habitLogId: logId }
+  else if (!done && s.jarTxs[id]) delete s.jarTxs[id]
+  else return
+  syncJar(s, h.jarId, at, day)
+}
+
+/** A wish made real by a project or a jar comes true when the book is read or the money spent. */
+function fulfillLinked(s: S, w: Wish | undefined, at: string, day: DayKey, done: boolean) {
   if (!w) return
   const net = Object.values(s.coinTxs).reduce((sum, x) => (x.refId === w.id ? sum + x.amount : sum), 0)
   if (done && w.status !== 'fulfilled') {
@@ -567,6 +623,79 @@ const slice = createSlice({
       prepare: (p: { id: string; steps: string[]; boundary?: number }) => ({ payload: when(p) }),
     },
 
+    // ----- jars: real money, only counted -----
+    upsertJar: {
+      reducer(s, a: PayloadAction<{ jar: Omit<Jar, 'status'> & Partial<Pick<Jar, 'status'>> } & When>) {
+        const { jar, at, day } = a.payload
+        const prev = s.jars[jar.id]
+        s.jars[jar.id] = { ...prev, ...jar, status: jar.status ?? prev?.status ?? 'saving', createdAt: prev?.createdAt ?? at }
+        syncJar(s, jar.id, at, day)
+      },
+      prepare: (p: { jar: Omit<Jar, 'id' | 'status'> & Partial<Pick<Jar, 'id' | 'status'>> }) => ({ payload: when({ jar: { ...p.jar, id: p.jar.id ?? nanoid() } }) }),
+    },
+    deleteJar(s, a: PayloadAction<string>) {
+      delete s.jars[a.payload]
+      for (const x of Object.values(s.jarTxs)) if (x.jarId === a.payload) delete s.jarTxs[x.id]
+      for (const h of Object.values(s.habits)) if (h.jarId === a.payload) delete h.jarId
+      for (const w of Object.values(s.wishes)) if (w.jarId === a.payload) delete w.jarId
+    },
+    /** + put in, − taken out. */
+    addJarTx: {
+      reducer(s, a: PayloadAction<{ jarId: string; amount: number; note?: string; txId: string } & When>) {
+        const { jarId, amount, note, txId, at, day } = a.payload
+        if (!s.jars[jarId] || !amount) return
+        s.jarTxs[txId] = { id: txId, jarId, at, amount, ...(note?.trim() ? { note: note.trim().slice(0, 200) } : {}) }
+        syncJar(s, jarId, at, day)
+      },
+      prepare: (p: { jarId: string; amount: number; note?: string; at?: string }) => ({ payload: when({ ...p, txId: nanoid() }) }),
+    },
+    deleteJarTx: {
+      reducer(s, a: PayloadAction<{ id: string } & When>) {
+        const x = s.jarTxs[a.payload.id]
+        if (!x) return
+        delete s.jarTxs[x.id]
+        syncJar(s, x.jarId, a.payload.at, a.payload.day)
+      },
+      prepare: (id: string) => ({ payload: when({ id }) }),
+    },
+    /** «Потрачена» makes its wish come true; «закрыта» just puts the jar away. */
+    setJarStatus: {
+      reducer(s, a: PayloadAction<{ id: string; status: Jar['status'] } & When>) {
+        const { id, status, at, day } = a.payload
+        const j = s.jars[id]
+        if (!j) return
+        const was = j.status
+        j.status = status
+        const wish = j.wishId ? s.wishes[j.wishId] : undefined
+        if (status === 'spent') fulfillLinked(s, wish, at, day, true)
+        else if (was === 'spent') fulfillLinked(s, wish, at, day, false)
+        if (status === 'saving' || status === 'collected') syncJar(s, id, at, day)
+      },
+      prepare: (p: { id: string; status: Jar['status'] }) => ({ payload: when(p) }),
+    },
+    /** «Воплотить» into a book: the wish comes true when the book is read. */
+    wishToProject: {
+      reducer(s, a: PayloadAction<{ wishId: string; projectId: string } & When>) {
+        const w = s.wishes[a.payload.wishId]
+        if (!w) return
+        s.projects[a.payload.projectId] = { id: a.payload.projectId, title: w.title, description: w.description, status: 'active', createdAt: a.payload.at }
+        w.status = 'inProgress'
+        w.projectId = a.payload.projectId
+      },
+      prepare: (p: { wishId: string }) => ({ payload: when({ ...p, projectId: nanoid() }) }),
+    },
+    /** «Воплотить» into a jar: the wish comes true when the money is collected and spent. */
+    wishToJar: {
+      reducer(s, a: PayloadAction<{ wishId: string; jarId: string; goal: number; targetDate?: DayKey } & When>) {
+        const w = s.wishes[a.payload.wishId]
+        if (!w) return
+        s.jars[a.payload.jarId] = { id: a.payload.jarId, title: w.title, goal: a.payload.goal, currency: '₽', targetDate: a.payload.targetDate, status: 'saving', wishId: w.id, createdAt: a.payload.at }
+        w.status = 'inProgress'
+        w.jarId = a.payload.jarId
+      },
+      prepare: (p: { wishId: string; goal: number; targetDate?: DayKey }) => ({ payload: when({ ...p, jarId: nanoid() }) }),
+    },
+
     // ----- the cycle -----
     /** A period started (or one is edited): a start, later its end, how heavy, how it felt. */
     upsertCycle: {
@@ -723,6 +852,7 @@ const slice = createSlice({
         else s.habitLogs[id] = { id, habitId, date, value }
         const t = s.tasks[habitTaskId(habitId, date)]
         const done = isDone(h, s.habitLogs[id])
+        habitToJar(s, h, id, at, day, done)
         if (t && done && t.status !== 'done') {
           t.status = 'done'
           t.doneAt = at
@@ -839,15 +969,20 @@ const slice = createSlice({
     },
     /** «Воплотить»: the wish becomes a deed; when the deed is done the wish goes to the hall of fame. */
     wishToTask: {
-      reducer(s, a: PayloadAction<{ wishId: string; taskId: string; fields: Partial<Task> } & When>) {
+      reducer(s, a: PayloadAction<{ wishId: string; taskId: string; fields: Partial<Task>; steps?: string[] } & When>) {
         const w = s.wishes[a.payload.wishId]
         if (!w) return
         const t = newTask({ title: w.title, tags: [...w.tags], source: 'wish', want: 'want', ...a.payload.fields, id: a.payload.taskId, wishId: w.id }, a.payload.at)
         s.tasks[t.id] = t
+        // «В квест»: the steps come with it; the wish comes true when the quest is done.
+        ;(a.payload.steps ?? []).forEach((title, i) => {
+          const x = newTask({ title, tags: [...w.tags], source: 'wish', parentId: t.id, order: i }, a.payload.at)
+          s.tasks[x.id] = x
+        })
         w.status = 'inProgress'
         w.taskId = t.id
       },
-      prepare: (p: { wishId: string; fields?: Partial<Task> }) => ({ payload: when({ ...p, fields: p.fields ?? {}, taskId: nanoid() }) }),
+      prepare: (p: { wishId: string; fields?: Partial<Task>; steps?: string[] }) => ({ payload: when({ ...p, fields: p.fields ?? {}, taskId: nanoid() }) }),
     },
     /** Came true by itself, or by hand: into the hall of fame with a photo-less note. */
     fulfillWish: {

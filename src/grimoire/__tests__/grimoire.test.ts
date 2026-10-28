@@ -638,3 +638,56 @@ describe('the cycle', async () => {
     expect(dayStars(s, '2026-10-27').limit).toBe(6)
   })
 })
+
+describe('jars', async () => {
+  const J = await import('../jars')
+  it('fills a jar, pays at half and full once, and a spent jar makes its wish come true', () => {
+    let s: GS = initialGrimoire
+    s = reducer(s, A.upsertWish({ wish: { id: 'w', title: 'торшер', tags: [], price: 1000 } }))
+    s = reducer(s, A.wishToJar({ wishId: 'w', goal: 1000 }))
+    const jar = Object.values(s.jars)[0]
+    expect(s.wishes.w.status).toBe('inProgress')
+    s = reducer(s, A.addJarTx({ jarId: jar.id, amount: 600 }))
+    expect(s.jars[jar.id].paidMilestones).toEqual([50])
+    s = reducer(s, A.addJarTx({ jarId: jar.id, amount: 400 }))
+    expect(s.jars[jar.id].status).toBe('collected')
+    const coins = () => Object.values(s.coinTxs).filter((x) => x.refKind === 'jar').reduce((a, x) => a + x.amount, 0)
+    expect(coins()).toBe(125)
+    s = reducer(s, A.addJarTx({ jarId: jar.id, amount: -100 }))
+    expect(s.jars[jar.id].status).toBe('saving')
+    s = reducer(s, A.addJarTx({ jarId: jar.id, amount: 100 }))
+    expect(coins()).toBe(125)
+    s = reducer(s, A.setJarStatus({ id: jar.id, status: 'spent' }))
+    expect(s.wishes.w.status).toBe('fulfilled')
+  })
+  it('a ritual puts its sum in, and unticking takes it back', () => {
+    let s: GS = initialGrimoire
+    s = reducer(s, A.upsertJar({ jar: { id: 'j', title: 'отпуск', goal: 10000, currency: '₽' } }))
+    s = reducer(s, { type: A.upsertHabit.type, payload: { habit: { id: 'h', title: 'отложить', schedule: { kind: 'daily' }, mark: { kind: 'check' }, stars: 1, dread: 0, status: 'active', jarId: 'j', jarAmount: 1000 }, ...w(MON) } })
+    const tid = habitTaskId('h', MON)
+    s = reducer(s, { type: A.completeTask.type, payload: { id: tid, ...w(MON) } })
+    expect(Object.values(s.jarTxs).map((x) => x.amount)).toEqual([1000])
+    s = reducer(s, { type: A.reopenTask.type, payload: { id: tid, ...w(MON) } })
+    expect(Object.values(s.jarTxs)).toHaveLength(0)
+  })
+  it('a wish embodied as a quest comes true with the quest; as a project, when the book is read', () => {
+    let s: GS = initialGrimoire
+    s = reducer(s, A.upsertWish({ wish: { id: 'w', title: 'ремонт', tags: [] } }))
+    s = reducer(s, A.wishToTask({ wishId: 'w', steps: ['обои', 'пол'] }))
+    for (const t of Object.values(s.tasks).filter((t) => t.parentId)) s = reducer(s, A.completeTask({ id: t.id }))
+    expect(s.wishes.w.status).toBe('fulfilled')
+    s = reducer(s, A.upsertWish({ wish: { id: 'w2', title: 'сад', tags: [] } }))
+    s = reducer(s, A.wishToProject({ wishId: 'w2' }))
+    const pid = s.wishes.w2.projectId!
+    s = reducer(s, A.addTask({ fields: { id: 'd', title: 'посадить', projectId: pid } }))
+    s = reducer(s, A.completeTask({ id: 'd' }))
+    expect(s.wishes.w2.status).toBe('fulfilled')
+  })
+  it('plans by the date or by the pace', () => {
+    const jar = { id: 'j', title: 'x', goal: 10000, currency: '₽', status: 'saving' as const, targetDate: '2026-11-23' }
+    expect(J.jarPlan(jar, [{ id: 't', jarId: 'j', at: `${MON}T10:00:00`, amount: 2000 }], MON).perWeek).toBe(2000)
+    const pace = J.jarPlan({ ...jar, targetDate: undefined }, [{ id: 't', jarId: 'j', at: `${MON}T10:00:00`, amount: 4000 }], MON)
+    expect(pace.perWeek).toBe(500)
+    expect(pace.when).toBe('2027-01-18')
+  })
+})

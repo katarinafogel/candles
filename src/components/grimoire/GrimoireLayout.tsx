@@ -2,7 +2,7 @@
 // «Другие проекты» at the end of the menu, coins in the header and the floating «+».
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
 import { useEffect, type ReactNode } from 'react'
-import { LuBookOpen, LuCalendarDays, LuEllipsis, LuFlame, LuGem, LuLibrary, LuMoon, LuScrollText, LuLayoutGrid, LuSparkles, LuSun, LuUsers } from 'react-icons/lu'
+import { LuBookOpen, LuCalendarDays, LuEllipsis, LuFlame, LuGem, LuLibrary, LuMoon, LuScrollText, LuLayoutGrid, LuPiggyBank, LuSparkles, LuSun, LuUsers } from 'react-icons/lu'
 import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useBalance, useToday } from '../../grimoire/act'
 import { daysBetween } from '../../grimoire/days'
@@ -87,6 +87,7 @@ export default function GrimoireLayout() {
     { to: '/g/mirror', label: 'Зеркало', icon: <LuGem /> },
     { to: '/g/people', label: 'Бестиарий', icon: <LuUsers /> },
     { to: '/g/wishes', label: 'Сундук желаний', icon: <LuSparkles /> },
+    { to: '/g/jars', label: 'Копилки', icon: <LuPiggyBank /> },
   ]
 
   return (

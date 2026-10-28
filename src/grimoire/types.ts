@@ -146,6 +146,8 @@ export interface Habit {
   /** Streak milestones already paid, so a bonus is never paid twice. */
   paidMilestones?: number[]
   jarId?: string
+  /** «Отложить 1000 ₽»: what each tick puts into `jarId`. */
+  jarAmount?: number
   createdAt: ISODateTime
 }
 
@@ -192,7 +194,7 @@ export interface CoinTx {
   amount: number
   reason: string
   /** What the entry is for; `undo` entries reverse an earlier payment for the same ref. */
-  tag: 'done' | 'partial' | 'started' | 'complex' | 'project' | 'streak' | 'undo' | 'manual' | 'journal' | 'wish'
+  tag: 'done' | 'partial' | 'started' | 'complex' | 'project' | 'streak' | 'undo' | 'manual' | 'journal' | 'wish' | 'jar'
   refKind?: 'task' | 'habit' | 'wish' | 'jar' | 'journal' | 'project' | 'manual'
   refId?: string
 }
@@ -260,6 +262,9 @@ export interface Jar {
   status: 'saving' | 'collected' | 'spent' | 'closed'
   wishId?: string
   projectId?: string
+  createdAt?: ISODateTime
+  /** 50 and 100 (%): the coins for filling half and all of it were paid once. */
+  paidMilestones?: number[]
 }
 
 export interface JarTx {
@@ -268,6 +273,8 @@ export interface JarTx {
   at: ISODateTime
   amount: number
   note?: string
+  /** Put in by a ritual («отложить 1000 ₽»): its log, so unticking takes it back. */
+  habitLogId?: string
 }
 
 export interface CoinRules {
