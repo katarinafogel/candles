@@ -33,8 +33,11 @@ import PublicCandle from './pages/PublicCandle'
 import Reviews from './pages/Reviews'
 import Settings from './pages/Settings'
 import Stock from './pages/Stock'
+import Apps from './pages/Apps'
+import { useAppManifest } from './lib/apps'
 
 export default function App() {
+  useAppManifest()
   return (
     <Routes>
       {/* The recipient's page lives outside the master layout. */}
@@ -47,6 +50,7 @@ export default function App() {
         }
       >
       <Route path="/print" element={<PrintQr />} />
+      <Route path="/apps" element={<Apps />} />
       {/* The grimoire: only for the witch role (GrimoireLayout sends everyone else to the workshop). */}
       <Route path="/g" element={<GrimoireLayout />}>
         <Route index element={<Scroll />} />

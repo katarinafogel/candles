@@ -1,0 +1,17 @@
+{
+  "id": "./?app=workshop",
+  "name": "Мастерская свечей",
+  "short_name": "Свечи",
+  "description": "Производственный журнал мастерской свечей",
+  "lang": "ru",
+  "theme_color": "#13110f",
+  "background_color": "#13110f",
+  "display": "standalone",
+  "start_url": "./?app=workshop#/",
+  "scope": "./",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

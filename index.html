@@ -6,8 +6,23 @@
     <meta name="theme-color" content="#13110f" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Свечи" id="app-title" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" id="app-icon" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" id="app-touch-icon" />
+    <link rel="manifest" href="./manifest.webmanifest" id="app-manifest" />
+    <script>
+      // Two apps on one site: «?app=grimoire» (or a grimoire address) gets the grimoire's manifest and
+      // icon, so the phone installs it as its own app. Kept in step on navigation by src/lib/apps.ts.
+      ;(function () {
+        var app = new URLSearchParams(location.search).get('app') || (location.hash.indexOf('#/g') === 0 ? 'grimoire' : 'workshop')
+        if (app !== 'grimoire') return
+        document.getElementById('app-manifest').href = './manifest-grimoire.webmanifest'
+        document.getElementById('app-touch-icon').href = './apple-touch-icon-grimoire.png'
+        document.getElementById('app-icon').href = './icon-grimoire.svg'
+        document.getElementById('app-title').content = 'Гримуар'
+        document.title = 'Гримуар дел'
+      })()
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Manrope:wght@400;500;600;700&display=swap&subset=cyrillic" rel="stylesheet" />

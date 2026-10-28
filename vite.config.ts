@@ -10,25 +10,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg', 'apple-touch-icon.png'],
-      manifest: {
-        name: 'Мастерская свечей',
-        short_name: 'Свечи',
-        description: 'Производственный журнал мастерской свечей',
-        lang: 'ru',
-        theme_color: '#13110f',
-        background_color: '#13110f',
-        display: 'standalone',
-        start_url: './',
-        scope: './',
-        icons: [
-          { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-        ],
-      },
+      includeAssets: ['icon.svg', 'icon-grimoire.svg', 'apple-touch-icon.png', 'apple-touch-icon-grimoire.png', '*.webmanifest'],
+      // Two installable apps from one site: the workshop and the grimoire, each with its own manifest
+      // in public/ (index.html picks one by the address), so the plugin writes none.
+      manifest: false,
+      includeManifestIcons: false,
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2,webmanifest}'],
         // Static pages are served as is, not replaced by the app shell.
         navigateFallbackDenylist: [/privacy\.html$/],
       },

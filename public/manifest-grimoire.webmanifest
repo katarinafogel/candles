@@ -1,0 +1,17 @@
+{
+  "id": "./?app=grimoire",
+  "name": "Гримуар дел",
+  "short_name": "Гримуар",
+  "description": "Дела, ритуалы, колесо года и зеркало",
+  "lang": "ru",
+  "theme_color": "#13110f",
+  "background_color": "#13110f",
+  "display": "standalone",
+  "start_url": "./?app=grimoire#/g",
+  "scope": "./",
+  "icons": [
+    { "src": "icon-grimoire-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-grimoire-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-grimoire-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

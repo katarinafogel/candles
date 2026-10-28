@@ -83,6 +83,7 @@ export default function GrimoireMore() {
           { to: '/g/mirror', label: 'Зеркало: словарь эмоций и записи' },
           { to: '/g/people', label: 'Бестиарий: люди, памятка и даты' },
           { to: '/g/wishes', label: 'Сундук желаний и зал славы' },
+          { to: '/apps', label: 'Другие проекты' },
         ].map((i) => (
           <RouterLink key={i.to} to={i.to}>
             <Flex align="center" gap="3" px="4" py="3" borderBottomWidth="1px" borderColor="border.muted" _hover={{ bg: 'bg.muted' }}>

@@ -1,8 +1,8 @@
 // The grimoire's own shell in the workshop's style: side menu on a computer, bottom tabs on a phone,
-// a «Мастерская / Гримуар» switch, coins in the header and the floating «+».
+// «Другие проекты» at the end of the menu, coins in the header and the floating «+».
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
 import { useEffect, type ReactNode } from 'react'
-import { LuBookOpen, LuCalendarDays, LuEllipsis, LuFlame, LuGem, LuLibrary, LuMoon, LuScrollText, LuSparkles, LuSun, LuUsers } from 'react-icons/lu'
+import { LuBookOpen, LuCalendarDays, LuEllipsis, LuFlame, LuGem, LuLibrary, LuMoon, LuScrollText, LuLayoutGrid, LuSparkles, LuSun, LuUsers } from 'react-icons/lu'
 import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useBalance, useToday } from '../../grimoire/act'
 import { daysBetween } from '../../grimoire/days'
@@ -19,35 +19,6 @@ interface NavItem {
   to: string
   label: string
   icon: ReactNode
-}
-
-/** The switch between the two books, shown only to a witch. */
-export function ModeSwitch({ current }: { current: 'workshop' | 'grimoire' }) {
-  const item = (to: string, label: string, on: boolean, icon: ReactNode) => (
-    <NavLink to={to} style={{ flex: 1 }}>
-      <Flex
-        align="center"
-        justify="center"
-        gap="1.5"
-        py="1.5"
-        px="2.5"
-        borderRadius="full"
-        fontSize="xs"
-        fontWeight={on ? 'semibold' : 'normal'}
-        color={on ? 'ember.contrast' : 'fg.muted'}
-        bg={on ? 'ember.solid' : 'transparent'}
-      >
-        {icon}
-        {label}
-      </Flex>
-    </NavLink>
-  )
-  return (
-    <Flex borderWidth="1px" borderColor="border" borderRadius="full" p="0.5" bg="bg.subtle" minW="210px">
-      {item('/', 'Мастерская', current === 'workshop', <LuFlame />)}
-      {item('/g', 'Гримуар', current === 'grimoire', <LuMoon />)}
-    </Flex>
-  )
 }
 
 function Coins() {
@@ -128,15 +99,12 @@ export default function GrimoireLayout() {
           </Text>
         </Flex>
         <MoonPhases size={12} gap="2.5" color="ember.200" px="2" mb="4" />
-        <Box mb="4">
-          <ModeSwitch current="grimoire" />
-        </Box>
         <Flex mb="4" px="2" justify="space-between" align="center">
           <SyncBadge />
           <Coins />
         </Flex>
         <Stack gap="1">
-          {[...items, ...extra, { ...more, label: 'Ещё: монеты, навь, настройки' }].map((i) => (
+          {[...items, ...extra, { ...more, label: 'Ещё: монеты, навь, настройки' }, { to: '/apps', label: 'Другие проекты', icon: <LuLayoutGrid /> }].map((i) => (
             <NavLink key={i.to} to={i.to} end={i.to === '/g'}>
               {({ isActive }) => (
                 <Flex
@@ -164,7 +132,12 @@ export default function GrimoireLayout() {
       <Box flex="1" minW="0" position="relative" overflowX="clip">
         <Box position="relative" zIndex="1" px={{ base: '4', md: '8' }} pt={{ base: '4', md: '8' }} pb={{ base: '28', md: '24' }} maxW="1000px">
           <Flex display={{ base: 'flex', md: 'none' }} justify="space-between" align="center" mb="3" gap="3">
-            <ModeSwitch current="grimoire" />
+            <Flex align="center" gap="2">
+              <MoonSlice size={26} tone="stone" />
+              <Text fontFamily="heading" fontWeight="semibold" fontSize="lg" color="ember.100">
+                Гримуар дел
+              </Text>
+            </Flex>
             <Flex align="center" gap="3">
               <SyncBadge />
               <Coins />
