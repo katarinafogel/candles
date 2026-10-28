@@ -4,6 +4,7 @@ import { LuChevronRight } from 'react-icons/lu'
 import { Link as RouterLink } from 'react-router-dom'
 import { useState } from 'react'
 import { AgentKeys } from '../../components/grimoire/AgentKeys'
+import { PushSettings } from '../../components/grimoire/PushSettings'
 import { Check, Chips, confirmAction, Field, NumInput, PageHeader, Section, Stat, TextInput } from '../../components/ui'
 import { useBalance, useToday } from '../../grimoire/act'
 import { dayCoins } from '../../grimoire/coins'
@@ -166,6 +167,9 @@ export default function GrimoireMore() {
         )}
       </Section>
 
+      <Section title="Уведомления">
+        <PushSettings />
+      </Section>
       <Section title="Доступ для агента">
         <AgentKeys />
       </Section>

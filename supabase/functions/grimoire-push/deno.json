@@ -1,0 +1,9 @@
+{
+  "imports": {
+    "@reduxjs/toolkit": "npm:@reduxjs/toolkit@2.3.0",
+    "web-push": "npm:web-push@3.6.7"
+  },
+  "compilerOptions": {
+    "strict": true
+  }
+}

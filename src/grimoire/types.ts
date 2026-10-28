@@ -325,6 +325,11 @@ export interface GrimoireMeta {
   cycleToAgent: boolean
   /** «Лёгкий план» taken for this day: the day's stars limit is halved. */
   easyDay?: DayKey
+  /**
+   * Push notifications (sent by the server to every device she turned them on): the morning plan, the
+   * afternoon check, the evening (at `eveningAt`), deadlines and sabbats. An empty time is off.
+   */
+  notify: { morning: string; afternoon: string; evening: boolean; deadlines: boolean; sabbats: boolean }
   /** How a done deed is answered: the praise in the toast and the spark that flies to the coins. */
   tone: { praise: 'quiet' | 'normal' | 'warm'; motion: 'off' | 'soft' | 'bright' }
   /** Sabbat cards: the text is the witch's own tradition, so it is editable. */

@@ -691,3 +691,24 @@ describe('jars', async () => {
     expect(pace.when).toBe('2027-01-18')
   })
 })
+
+describe('push notifications', async () => {
+  const N = await import('../notify')
+  it('sends each kind once, in its window, and nothing in the навь', () => {
+    let s: GS = initialGrimoire
+    s = reducer(s, A.addTask({ fields: { id: 'a', title: 'налоги', doOn: MON, slot: 'main', dueAt: MON } }))
+    const m = N.dueMessages(s, MON, '09:20', [])
+    expect(m.map((x) => x.kind)).toEqual(['morning'])
+    expect(m[0].body).toContain('главное — налоги')
+    expect(m[0].body).toContain('Срок сегодня: налоги')
+    expect(N.dueMessages(s, MON, '09:20', ['morning'])).toEqual([])
+    expect(N.dueMessages(s, MON, '13:00', [])).toEqual([])
+    expect(N.dueMessages(s, MON, '21:10', []).map((x) => x.kind)).toEqual(['evening'])
+    const nav = { ...s, meta: { ...s.meta, nav: { ...s.meta.nav, active: true } } }
+    expect(N.dueMessages(nav, MON, '09:20', [])).toEqual([])
+  })
+  it('names the sabbat on its eve', () => {
+    const m = N.morningMessage(initialGrimoire, '2026-10-30')
+    expect(m!.body).toContain('Завтра Самайн')
+  })
+})

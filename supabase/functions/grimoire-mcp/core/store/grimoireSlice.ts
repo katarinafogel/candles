@@ -45,6 +45,7 @@ export const defaultMeta: GrimoireMeta = {
   spells: [],
   circles: ['семья', 'друзья', 'работа', 'ковен', 'знакомые'],
   cycleToAgent: true,
+  notify: { morning: '09:00', afternoon: '', evening: true, deadlines: true, sabbats: true },
   tone: { praise: 'normal', motion: 'soft' },
   sabbatNotes: {},
   sabbatCards: {},
@@ -90,6 +91,7 @@ export function migrateGrimoire(input: Partial<GrimoireState> | undefined): Grim
       planLimit: { ...defaultMeta.planLimit, ...m.planLimit },
       tone: { ...defaultMeta.tone, ...m.tone },
       nav: { ...defaultMeta.nav, ...m.nav },
+      notify: { ...defaultMeta.notify, ...m.notify },
     },
   }
 }

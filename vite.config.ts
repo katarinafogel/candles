@@ -17,6 +17,8 @@ export default defineConfig({
       includeManifestIcons: false,
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,webmanifest}'],
+        // The push handler lives beside the generated worker (public/push-sw.js).
+        importScripts: ['push-sw.js'],
         // Static pages are served as is, not replaced by the app shell.
         navigateFallbackDenylist: [/privacy\.html$/],
       },
