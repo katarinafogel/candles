@@ -8,7 +8,7 @@ import webpush from 'web-push'
 import { dayKeyIn } from './core/grimoire/days.ts'
 import { dueMessages, type NotifyKind, type PushMessage } from './core/grimoire/notify.ts'
 import { rowsToGrimoire } from './core/grimoire/rows.ts'
-import { migrateGrimoire } from './core/store/grimoireSlice.ts'
+import type { GrimoireMeta, GrimoireState } from './core/grimoire/types.ts'
 
 const url = Deno.env.get('SUPABASE_URL')!
 const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -58,6 +58,21 @@ async function send(c: Config & { public_key: string; private_key: string }, sub
   }
 }
 
+/** Only what the messages read: the rows as they are, the settings over their defaults (as the app has them). */
+function grimoireOf(rows: { kind: string; id: string; data: unknown }[]): GrimoireState {
+  const g = rowsToGrimoire(rows)
+  const m = (g.meta ?? {}) as Partial<GrimoireMeta>
+  const meta = {
+    ...m,
+    dayBoundaryHour: m.dayBoundaryHour ?? 4,
+    hemisphere: m.hemisphere ?? 'north',
+    eveningAt: m.eveningAt ?? '21:00',
+    nav: { active: false, history: [], ...m.nav },
+    notify: { morning: '09:00', afternoon: '', evening: true, deadlines: true, sabbats: true, ...m.notify },
+  } as GrimoireMeta
+  return { tasks: {}, projects: {}, habits: {}, habitLogs: {}, wishes: {}, practices: {}, journal: {}, jars: {}, jarTxs: {}, coinTxs: {}, personNotes: {}, cycles: {}, ...g, meta }
+}
+
 const localTime = (tz: string, at: Date) => new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false }).format(at)
 
 async function tick() {
@@ -73,7 +88,7 @@ async function tick() {
     } catch {
       continue // no witch role any more
     }
-    const g = migrateGrimoire(rowsToGrimoire(rows))
+    const g = grimoireOf(rows)
     const tz = g.meta.timeZone ?? 'Europe/Moscow'
     const today = dayKeyIn(now, g.meta.dayBoundaryHour, tz)
     const [state] = await rest<{ day: string; sent: NotifyKind[] }[]>(`push_state?owner_id=eq.${owner}&select=day,sent`)
