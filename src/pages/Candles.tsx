@@ -1,5 +1,5 @@
 import { Box, Button, Flex, HStack, Input, SimpleGrid, Stack, Text, Wrap } from '@chakra-ui/react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { LuDroplets, LuPlus, LuPrinter, LuSparkles, LuCheck, LuTriangleAlert, LuMoon } from 'react-icons/lu'
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { DecorateDialog, DefectDialog } from '../components/StepDialogs'
@@ -12,7 +12,8 @@ import { byId, candleRating, materialOptions, moldOfCandle, sootShare, sortMolds
 import { useAppDispatch, useData, useIsWitch } from '../store'
 import { FromWorkshopDialog } from '../components/grimoire/FromWorkshop'
 import { actions } from '../store/dataSlice'
-import type { CandleStage, WickScheme } from '../types'
+import type { Candle, CandleStage, WickScheme } from '../types'
+import { useFollowStage } from '../lib/followStage'
 import { withUndo } from '../lib/undo'
 import { figureOf } from '../components/MoldIcons'
 
@@ -137,23 +138,21 @@ export default function Candles() {
 
   // A holder with a wick is still a holder until it is poured; molded candles have no holder to wait on.
   const all = byId(d.candles).filter((c) => !(c.holderId && c.stage === 'wicked'))
-  const list = useMemo(() => {
-    const out = all.filter((c) => {
-      const pour = c.pourId ? d.pours[c.pourId] : undefined
-      if (stage && c.stage !== stage && !(stage === 'curing' && c.stage === 'decorated')) return false
-      if (f.fragrance && pour?.fragrance.materialId !== f.fragrance) return false
-      if (f.wax && !pour?.waxes.some((w) => w.materialId === f.wax)) return false
-      if (f.person && (f.person === 'self' ? !c.burnedBySelf : c.personId !== f.person)) return false
-      if (f.scheme && c.wick.scheme !== f.scheme) return false
-      if (f.moldTemp === 'none' && pour?.tempMoldC !== 'none') return false
-      if (f.moldTemp === 'heated' && (pour?.tempMoldC == null || pour.tempMoldC === 'none')) return false
-      if (f.minRating && (candleRating(d, c.id) ?? -1) < Number(f.minRating)) return false
-      return true
-    })
-    if (sort === 'rating') out.sort((a, b) => (candleRating(d, b.id) ?? -1) - (candleRating(d, a.id) ?? -1))
-    if (sort === 'soot') out.sort((a, b) => (sootShare(d, b.id) ?? -1) - (sootShare(d, a.id) ?? -1))
-    return out
-  }, [all, d, stage, f, sort])
+  const passes = (c: Candle) => {
+    const pour = c.pourId ? d.pours[c.pourId] : undefined
+    if (f.fragrance && pour?.fragrance.materialId !== f.fragrance) return false
+    if (f.wax && !pour?.waxes.some((w) => w.materialId === f.wax)) return false
+    if (f.person && (f.person === 'self' ? !c.burnedBySelf : c.personId !== f.person)) return false
+    if (f.scheme && c.wick.scheme !== f.scheme) return false
+    if (f.moldTemp === 'none' && pour?.tempMoldC !== 'none') return false
+    if (f.moldTemp === 'heated' && (pour?.tempMoldC == null || pour.tempMoldC === 'none')) return false
+    if (f.minRating && (candleRating(d, c.id) ?? -1) < Number(f.minRating)) return false
+    return true
+  }
+  const filtered = all.filter(passes)
+  const list = filtered.filter((c) => !stage || c.stage === stage || (stage === 'curing' && c.stage === 'decorated'))
+  if (sort === 'rating') list.sort((a, b) => (candleRating(d, b.id) ?? -1) - (candleRating(d, a.id) ?? -1))
+  if (sort === 'soot') list.sort((a, b) => (sootShare(d, b.id) ?? -1) - (sootShare(d, a.id) ?? -1))
 
   const selected = sel.filter((i) => list.some((c) => c.id === i))
   const stages = selected.map((i) => d.candles[i].stage)
@@ -169,6 +168,7 @@ export default function Candles() {
     setSp(n, { replace: true })
     setSel([])
   }
+  useFollowStage(`${stage}:${JSON.stringify(f)}`, stage, filtered, setStage)
 
   return (
     <>

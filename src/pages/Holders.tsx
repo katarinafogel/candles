@@ -12,26 +12,39 @@ import { useAppDispatch, useData, useIsWitch } from '../store'
 import { FromWorkshopDialog } from '../components/grimoire/FromWorkshop'
 import { actions, nextHolderStage, varnishTarget } from '../store/dataSlice'
 import type { Holder, HolderStage } from '../types'
+import { useFollowStage } from '../lib/followStage'
 import { withUndo } from '../lib/undo'
 import { figureOf } from '../components/MoldIcons'
 
-/** One leaf per varnish layer; ticking the last one moves the item to the next stage. */
-function VarnishLeaves({ h }: { h: Holder }) {
+/**
+ * One leaf per varnish layer, for one item or a whole selection on the table together; ticking the
+ * last one moves them to the next stage. Items that are ahead of the selection don't lose layers
+ * when it catches up; only taking a layer back sets everyone to the same count.
+ */
+function VarnishLeaves({ items, size = 18, onFinish }: { items: Holder[]; size?: number; onFinish?: () => void }) {
   const d = useData()
   const dispatch = useAppDispatch()
-  const step = nextHolderStage(h)
+  const step = nextHolderStage(items[0])
   if (step !== 'varnishIn' && step !== 'varnishOut') return null
   const target = varnishTarget(d, step)
-  const done = h.layersDone ?? 0
-  const set = (n: number) => {
-    const change = () => dispatch(actions.setVarnishLayers({ id: h.id, done: n, date: new Date().toISOString() }))
-    if (n >= target) withUndo('holder', [h.id], change, `${step === 'varnishIn' ? 'Лак внутри' : 'Лак снаружи'}: все ${target} слоёв`)
-    else change()
+  const counts = items.map((h) => h.layersDone ?? 0)
+  const done = Math.min(...counts)
+  const most = Math.max(...counts)
+  const set = (n: number, back: boolean) => {
+    const date = new Date().toISOString()
+    const change = () => {
+      for (const h of items) dispatch(actions.setVarnishLayers({ id: h.id, done: back ? n : Math.max(h.layersDone ?? 0, n), date }))
+    }
+    if (n < target) return change()
+    const name = step === 'varnishIn' ? 'Лак внутри' : 'Лак снаружи'
+    withUndo('holder', items.map((h) => h.id), change, `${name}: все ${target} слоёв${items.length > 1 ? ` · ${items.length} шт.` : ''}`)
+    onFinish?.()
   }
   return (
     <Stack gap="0.5" align="center" w="100%">
-      <Text fontSize="2xs" color="fg.muted">
-        {step === 'varnishIn' ? 'слои лака внутри' : 'слои лака снаружи'} · {done}/{target}
+      <Text fontSize={items.length > 1 ? 'xs' : '2xs'} color="fg.muted">
+        {step === 'varnishIn' ? 'слои лака внутри' : 'слои лака снаружи'} · {done === most ? done : `от ${done} до ${most}`}/{target}
+        {items.length > 1 && ` · ${items.length} шт.`}
       </Text>
       <Flex gap="0" justify="center" wrap="wrap">
         {Array.from({ length: target }, (_, i) => (
@@ -42,9 +55,9 @@ function VarnishLeaves({ h }: { h: Holder }) {
             cursor="pointer"
             aria-label={`Слой ${i + 1}`}
             // A tap on the last ticked leaf takes that layer back.
-            onClick={() => set(i + 1 === done ? i : i + 1)}
+            onClick={() => (i + 1 === done ? set(i, true) : set(i + 1, false))}
           >
-            <LeafMark on={i < done} size={18} />
+            <LeafMark on={i < done} size={size} />
           </Box>
         ))}
       </Flex>
@@ -64,9 +77,8 @@ export default function Holders() {
   const [dialog, setDialog] = useState<'next' | 'defect' | null>(null)
 
   const all = byId(d.holders)
-  const list = all.filter(
-    (h) => (stage ? h.stage === stage : h.stage !== 'candle' && h.stage !== 'defect' && h.stage !== 'done') && (!moldId || h.moldId === moldId),
-  )
+  const ofMold = all.filter((h) => !moldId || h.moldId === moldId)
+  const list = ofMold.filter((h) => (stage ? h.stage === stage : h.stage !== 'candle' && h.stage !== 'defect' && h.stage !== 'done'))
   const setFilter = (k: string, v: string) => {
     const n = new URLSearchParams(sp)
     if (v) n.set(k, v)
@@ -74,11 +86,13 @@ export default function Holders() {
     setSp(n, { replace: true })
     setSel([])
   }
+  useFollowStage(`${stage}:${moldId}`, stage, ofMold, (s) => setFilter('stage', s))
   const counts = Object.fromEntries(holderStageOrder.map((s) => [s, all.filter((h) => h.stage === s).length]))
   const selected = sel.filter((i) => list.some((h) => h.id === i))
   const selStage = selected.length ? nextHolderStage(d.holders[selected[0]]) : undefined
   const sameStage = selected.every((i) => d.holders[i].stage === d.holders[selected[0]]?.stage)
   const canNext = selected.length > 0 && sameStage && !!selStage
+  const layering = selected.length > 1 && sameStage && (selStage === 'varnishIn' || selStage === 'varnishOut')
   const allWicked = selected.length > 0 && selected.every((i) => d.holders[i].stage === 'wicked' && d.holders[i].candleId)
   const pour = (ids: string[]) => nav(`/pour/new?ids=${ids.map((i) => d.holders[i].candleId).join(',')}`)
 
@@ -155,7 +169,7 @@ export default function Holders() {
                 ) : (
                   nextHolderStage(h) && (
                     <>
-                      <VarnishLeaves h={h} />
+                      <VarnishLeaves items={[h]} />
                       <Button
                         {...arcanaButton}
                         onClick={() => {
@@ -182,7 +196,7 @@ export default function Holders() {
         })}
       </SimpleGrid>
       {/* Room for the action bar so it does not cover the last cards. */}
-      {selected.length > 0 && <Box h="140px" />}
+      {selected.length > 0 && <Box h={layering ? '200px' : '140px'} />}
 
       {selected.length > 0 && (
         <Box
@@ -204,6 +218,11 @@ export default function Holders() {
             maxW="560px"
             mx="auto"
           >
+            {layering && (
+              <Box gridColumn="span 2">
+                <VarnishLeaves items={selected.map((i) => d.holders[i])} size={26} onFinish={() => setSel([])} />
+              </Box>
+            )}
             {allWicked ? (
               <Button onClick={() => pour(selected)}>
                 <LuDroplets /> Залить · {selected.length}
