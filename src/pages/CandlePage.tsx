@@ -1,8 +1,8 @@
 import { Box, Button, HStack, Input, Stack, Text } from '@chakra-ui/react'
 import { nanoid } from '@reduxjs/toolkit'
 import { useState } from 'react'
-import { LuCheck, LuGift, LuPlus, LuQrCode, LuSparkles, LuTriangleAlert, LuUndo2 } from 'react-icons/lu'
-import { useParams } from 'react-router-dom'
+import { LuCheck, LuGift, LuPlus, LuQrCode, LuSparkles, LuTrash2, LuTriangleAlert, LuUndo2 } from 'react-icons/lu'
+import { useNavigate, useParams } from 'react-router-dom'
 import { History } from '../components/History'
 import { QrBlock } from '../components/QrBlock'
 import { ReviewCard, ReviewForm } from '../components/ReviewForm'
@@ -123,6 +123,7 @@ export default function CandlePage() {
   const { id = '' } = useParams()
   const d = useData()
   const dispatch = useAppDispatch()
+  const nav = useNavigate()
   const [dialog, setDialog] = useState<'decor' | 'ready' | 'give' | 'defect' | 'qr' | 'review' | null>(null)
   const c = d.candles[id]
   if (!c) return <Empty>Свеча {id} не найдена</Empty>
@@ -178,6 +179,20 @@ export default function CandlePage() {
             <LuTriangleAlert /> Брак
           </Button>
         )}
+        <Button
+          size="sm"
+          variant="ghost"
+          colorPalette="red"
+          onClick={() => {
+            const withHolder = c.holderId ? ` Вместе с ней удалится подсвечник ${c.holderId}.` : ''
+            if (!confirmAction(`Удалить свечу ${id} и её отзывы?${withHolder} QR перестанет работать, материалы на склад не вернутся.`)) return
+            dispatch(actions.deleteItem({ kind: 'candle', id, date: new Date().toISOString() }))
+            notify('Свеча удалена')
+            nav('/candles')
+          }}
+        >
+          <LuTrash2 /> Удалить
+        </Button>
       </PageHeader>
 
       <Section title="Свеча">

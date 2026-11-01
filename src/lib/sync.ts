@@ -24,6 +24,8 @@ export interface Change {
   kind: Kind
   id: string
   data?: unknown
+  /** The row is saved with this date and stops being loaded; it stays in the database. */
+  deleteDate?: string
 }
 
 const collections: [keyof DataState, Kind][] = [
@@ -41,14 +43,14 @@ const collections: [keyof DataState, Kind][] = [
 
 export { diffGrimoire, grimoireCollections, isGrimoireRow }
 
-export function diff(prev: DataState, next: DataState): Change[] {
+export function diff(prev: DataState, next: DataState, deleteDate?: string): Change[] {
   const out: Change[] = []
   for (const [key, kind] of collections) {
     const a = prev[key] as Record<string, unknown>
     const b = next[key] as Record<string, unknown>
     if (a === b) continue
     for (const id in b) if (a[id] !== b[id]) out.push({ op: 'upsert', kind, id, data: b[id] })
-    for (const id in a) if (!(id in b)) out.push({ op: 'delete', kind, id })
+    for (const id in a) if (!(id in b)) out.push(deleteDate ? { op: 'upsert', kind, id, data: a[id], deleteDate } : { op: 'delete', kind, id })
   }
   if (prev.counters !== next.counters) out.push({ op: 'upsert', kind: 'meta', id: 'counters', data: next.counters })
   if (prev.settings !== next.settings) out.push({ op: 'upsert', kind: 'meta', id: 'settings', data: next.settings })
@@ -126,7 +128,8 @@ export const syncMiddleware: Middleware = (api) => (next) => (action) => {
   if (typeof a.type !== 'string' || a.meta?.fromServer) return result
   const state = api.getState() as SyncedState
   if (!state.local.ownerId) return result
-  if (a.type.startsWith('data/') && state.data !== before.data) enqueue(diff(before.data, state.data))
+  if (a.type.startsWith('data/') && state.data !== before.data)
+    enqueue(diff(before.data, state.data, actions.deleteItem.match(a) ? a.payload.date : undefined))
   // Without the witch role the server refuses grimoire rows, and one refused row would fail the whole batch.
   if (a.type.startsWith('grimoire/') && state.grimoire !== before.grimoire && state.local.roles?.includes('witch'))
     enqueue(diffGrimoire(before.grimoire, state.grimoire))
@@ -138,14 +141,14 @@ export const syncMiddleware: Middleware = (api) => (next) => (action) => {
 async function fetchAll(): Promise<{ data: DataState; grimoire: GrimoireState; empty: boolean }> {
   const rows: { kind: Kind; id: string; data: unknown }[] = []
   for (let from = 0; ; from += 1000) {
-    const { data, error } = await supabase.from('entities').select('kind,id,data').order('kind').order('id').range(from, from + 999)
+    const { data, error } = await supabase.from('entities').select('kind,id,data').is('delete_date', null).order('kind').order('id').range(from, from + 999)
     if (error) throw new Error(error.message)
     rows.push(...(data as typeof rows))
     if (data.length < 1000) break
   }
   const reviews: { id: string; candle_id: string; data: Record<string, unknown>; source: string; read: boolean; created_at: string }[] = []
   for (let from = 0; ; from += 1000) {
-    const { data, error } = await supabase.from('reviews').select('id,candle_id,data,source,read,created_at').order('created_at').range(from, from + 999)
+    const { data, error } = await supabase.from('reviews').select('id,candle_id,data,source,read,created_at').is('delete_date', null).order('created_at').range(from, from + 999)
     if (error) throw new Error(error.message)
     reviews.push(...(data as typeof reviews))
     if (data.length < 1000) break

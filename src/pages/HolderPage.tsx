@@ -1,6 +1,6 @@
 import { Box, Button, HStack, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
-import { LuArrowRight, LuDroplets, LuUndo2, LuTriangleAlert } from 'react-icons/lu'
+import { LuArrowRight, LuDroplets, LuTrash2, LuUndo2, LuTriangleAlert } from 'react-icons/lu'
 import { useNavigate, useParams } from 'react-router-dom'
 import { History } from '../components/History'
 import { DefectDialog, HolderStepDialog } from '../components/StepDialogs'
@@ -89,6 +89,20 @@ export default function HolderPage() {
             <LuTriangleAlert /> Брак
           </Button>
         )}
+        <Button
+          size="sm"
+          variant="ghost"
+          colorPalette="red"
+          onClick={() => {
+            const withCandle = candle ? ` Вместе с ним удалится свеча ${candle.id} и её отзывы.` : ''
+            if (!confirmAction(`Удалить подсвечник ${id}?${withCandle} Материалы на склад не вернутся.`)) return
+            dispatch(actions.deleteItem({ kind: 'holder', id, date: new Date().toISOString() }))
+            notify('Подсвечник удалён')
+            nav('/holders')
+          }}
+        >
+          <LuTrash2 /> Удалить
+        </Button>
       </PageHeader>
 
       <Section title={moldPurposeLabel[h.purpose].replace(/^./, (c) => c.toUpperCase())}>

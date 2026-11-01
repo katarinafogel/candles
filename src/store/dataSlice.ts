@@ -583,6 +583,22 @@ const slice = createSlice({
       c.stage = c.history[c.history.length - 1].stage as Candle['stage']
     },
 
+    /**
+     * Deletes an item at any stage. A holder and its candle are one object, so they go together,
+     * with the candle's reviews. Materials stay spent: «Назад» is the way to return them.
+     * The rows stay in the database with this date (see diff in lib/sync).
+     */
+    deleteItem(s, a: PayloadAction<{ kind: 'holder' | 'candle'; id: string; date: string }>) {
+      const { kind, id } = a.payload
+      const c = kind === 'candle' ? s.candles[id] : s.candles[s.holders[id]?.candleId ?? '']
+      const hid = kind === 'holder' ? id : c?.holderId
+      if (hid) delete s.holders[hid]
+      if (!c) return
+      delete s.candles[c.id]
+      if (c.pourId && s.pours[c.pourId]) s.pours[c.pourId].candleIds = s.pours[c.pourId].candleIds.filter((x) => x !== c.id)
+      for (const r of Object.values(s.reviews)) if (r.candleId === c.id) delete s.reviews[r.id]
+    },
+
     // ----- reviews -----
     addReviews(s, a: PayloadAction<Review[]>) {
       for (const r of a.payload) {
