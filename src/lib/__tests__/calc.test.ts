@@ -4,8 +4,15 @@ import { parseCsv, isServiceRow } from '../csv'
 import reducer, { actions, initialData } from '../../store/dataSlice'
 
 describe('calcPlaster', () => {
+  it('adds the loss reserve to the whole mix', () => {
+    const r = calcPlaster(100, { density: 2, waterPct: 25, lossPct: 5, plasticizerPct: 1, dyePct: 0, defoamerPct: 0 })
+    expect(r.totalG).toBe(210)
+    expect(r.waterG).toBe(52.5)
+    expect(r.plasterG).toBe(157.5)
+    expect(r.plasticizerG).toBe(1.58)
+  })
   it('matches «Книжка» from the sheet (250 ml, 35% water)', () => {
-    const r = calcPlaster(250, { density: 1.82, waterPct: 35, plasticizerPct: 1, dyePct: 5, defoamerPct: 0.1 })
+    const r = calcPlaster(250, { density: 1.82, waterPct: 35, lossPct: 0, plasticizerPct: 1, dyePct: 5, defoamerPct: 0.1 })
     expect(r.waterG).toBe(159.25)
     expect(r.plasterG).toBe(295.75)
     expect(r.plasticizerG).toBe(2.96)

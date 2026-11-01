@@ -156,6 +156,7 @@ export interface PlasterMix {
   defoamer: MixPart
   dye: MixPart & { color?: string; form?: 'liquid' | 'solid' }
   density: number
+  lossPct?: number
   comment: string
   holderIds: string[]
 }
@@ -318,7 +319,10 @@ export interface Review extends ReviewAnswers {
 }
 
 export interface Settings {
+  /** Not shown in the settings any more; the mix calculation still needs it. */
   plasterDensity: number
+  plasterWaterPct: number
+  plasterLossPct: number
   plasticizerPct: number
   defoamerPct: number
   plasterDyePct: number

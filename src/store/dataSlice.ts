@@ -27,6 +27,8 @@ export const SCHEMA_VERSION = 3
 
 export const defaultSettings: Settings = {
   plasterDensity: 1.82,
+  plasterWaterPct: 25,
+  plasterLossPct: 5,
   plasticizerPct: 1,
   defoamerPct: 0.1,
   plasterDyePct: 5,

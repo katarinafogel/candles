@@ -12,12 +12,12 @@ export interface PlasterCalc {
   defoamerG: number
 }
 
-/** M = ΣV × density; water = M × water%; plaster = M − water; additives are % of plaster. */
+/** M = ΣV × density × (1 + loss); water = M × water%; plaster = M − water; additives are % of plaster. */
 export function calcPlaster(
   volumeMl: number,
-  p: { density: number; waterPct: number; plasticizerPct: number; dyePct: number; defoamerPct: number },
+  p: { density: number; waterPct: number; lossPct: number; plasticizerPct: number; dyePct: number; defoamerPct: number },
 ): PlasterCalc {
-  const totalG = volumeMl * p.density
+  const totalG = volumeMl * p.density * (1 + p.lossPct / 100)
   const waterG = (totalG * p.waterPct) / 100
   const plasterG = totalG - waterG
   return {

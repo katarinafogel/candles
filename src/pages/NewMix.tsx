@@ -1,16 +1,17 @@
-import { Alert, Box, Button, Flex, HStack, IconButton, Input, SimpleGrid, Stack, Table, Text } from '@chakra-ui/react'
-import { useEffect, useMemo, useState } from 'react'
-import { LuMinus, LuPlus } from 'react-icons/lu'
+import { Box, Button, CloseButton, Flex, HStack, IconButton, Input, InputGroup, SimpleGrid, Stack, Table, Text } from '@chakra-ui/react'
+import { useMemo, useState } from 'react'
+import { LuMinus, LuPlus, LuSearch } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
 import { Chips, Field, LeafMark, notify, NumInput, PageHeader, Section, Select, TextArea, TextInput } from '../components/ui'
 import { StockHint } from '../components/StockHint'
 import { calcPlaster, fmt, round2 } from '../lib/calc'
 import { nowLocal, toIso } from '../lib/dates'
-import { materialOptions, moldUses, sortMolds } from '../lib/selectors'
+import { materialOptions, sortMolds } from '../lib/selectors'
 import { useAppDispatch, useData } from '../store'
 import { actions } from '../store/dataSlice'
 import { isPlaster, moldPurposeLabel, plasterPurposePlural, plasterPurposes } from '../lib/labels'
 import type { MixPart, PlasterPurpose } from '../types'
+import { normalize } from './Molds'
 
 type PartKey = 'water' | 'plaster' | 'plasticizer' | 'defoamer' | 'dye'
 
@@ -23,12 +24,13 @@ export default function NewMix() {
     d,
     Object.values(d.molds).filter((m) => !m.archived && isPlaster(m.purpose)),
   )
-  const uses = moldUses(d)
   const [kind, setKind] = useState<PlasterPurpose | 'all'>('all')
+  const [query, setQuery] = useState('')
 
   const [counts, setCounts] = useState<Record<string, number>>({})
   const [date, setDate] = useState(nowLocal())
-  const [waterPct, setWaterPct] = useState<number | undefined>()
+  const [waterPct, setWaterPct] = useState<number | undefined>(s.plasterWaterPct)
+  const [lossPct, setLossPct] = useState<number | undefined>(s.plasterLossPct)
   const [pct, setPct] = useState({ plasticizer: s.plasticizerPct, defoamer: s.defoamerPct, dye: s.plasterDyePct })
   const [mat, setMat] = useState<Partial<Record<PartKey, string>>>({})
   const [dyeColor, setDyeColor] = useState('')
@@ -38,22 +40,21 @@ export default function NewMix() {
 
   const picked = molds.filter((m) => counts[m.id])
   const volume = picked.reduce((a, m) => a + m.waterVolumeMl * counts[m.id], 0)
-  const waterOptions = [...new Set(picked.map((m) => m.waterPct))]
-  useEffect(() => {
-    if (waterOptions.length && (waterPct == null || !waterOptions.includes(waterPct))) setWaterPct(waterOptions[0])
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [waterOptions.join()])
+  const q = normalize(query.trim())
+  // A picked form stays in the list whatever the filter, so it can be seen and taken back.
+  const visible = molds.filter((m) => counts[m.id] || ((kind === 'all' || m.purpose === kind) && (!q || normalize(m.name).includes(q))))
 
   const calc = useMemo(
     () =>
       calcPlaster(volume, {
         density: s.plasterDensity,
-        waterPct: waterPct ?? 25,
+        waterPct: waterPct ?? 0,
+        lossPct: lossPct ?? 0,
         plasticizerPct: pct.plasticizer,
         dyePct: pct.dye,
         defoamerPct: pct.defoamer,
       }),
-    [volume, waterPct, pct, s.plasterDensity],
+    [volume, waterPct, lossPct, pct, s.plasterDensity],
   )
   const calcOf: Record<PartKey, number> = {
     water: calc.waterG,
@@ -92,6 +93,7 @@ export default function NewMix() {
           defoamer: part('defoamer', pct.defoamer),
           dye: { ...part('dye', pct.dye), color: dyeColor, form: dyeForm },
           density: s.plasterDensity,
+          lossPct: lossPct ?? 0,
           comment,
         },
       }),
@@ -103,14 +105,10 @@ export default function NewMix() {
   return (
     <>
       <PageHeader title="Создать подсвечники" back="/" />
-      <Section title="Формы">
-        {!molds.length && (
-          <Text color="fg.muted" fontSize="sm">
-            Сначала добавьте формы для подсвечников, тарелок или фигурок в разделе «Формы».
-          </Text>
-        )}
-        {molds.length > 0 && (
-          <Box mb="3">
+      <Section
+        title="Формы"
+        actions={
+          molds.length > 0 && (
             <Chips
               value={kind}
               onChange={(v) => setKind((v as typeof kind) ?? 'all')}
@@ -119,17 +117,31 @@ export default function NewMix() {
                 ...plasterPurposes.map((p) => ({ value: p, label: plasterPurposePlural[p] })),
               ]}
             />
-          </Box>
+          )
+        }
+      >
+        {!molds.length && (
+          <Text color="fg.muted" fontSize="sm">
+            Сначала добавьте формы для подсвечников, тарелок или фигурок в разделе «Формы».
+          </Text>
+        )}
+        {molds.length > 0 && (
+          <InputGroup mb="3" startElement={<LuSearch />} endElement={query && <CloseButton size="xs" onClick={() => setQuery('')} aria-label="Очистить" />}>
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Поиск по названию" />
+          </InputGroup>
         )}
         {molds.length > 0 && kind !== 'all' && !molds.some((m) => m.purpose === kind) && (
           <Text color="fg.muted" fontSize="sm" mb="2">
             Нет форм типа «{moldPurposeLabel[kind]}» в работе. Поменять тип или вернуть форму из архива можно в разделе «Формы».
           </Text>
         )}
-        <Stack gap="1">
-          {molds
-            .filter((m) => kind === 'all' || counts[m.id] || m.purpose === kind)
-            .map((m) => {
+        {q && !visible.length && (
+          <Text color="fg.muted" fontSize="sm" mb="2">
+            Ничего не найдено.
+          </Text>
+        )}
+        <Stack gap="1" maxH="296px" overflowY="auto">
+          {visible.map((m) => {
             const n = counts[m.id] ?? 0
             const set = (v: number) => setCounts({ ...counts, [m.id]: Math.max(0, Math.min(m.copies, v)) })
             return (
@@ -153,10 +165,9 @@ export default function NewMix() {
                     )}
                   </HStack>
                   <Text fontSize="xs" color="fg.muted">
-                    {m.waterVolumeMl} мл · {m.waterPct}% воды
+                    {m.waterVolumeMl} мл
                     {m.purpose !== 'holder' ? ` · ${moldPurposeLabel[m.purpose]}` : ''}
                     {m.copies > 1 ? ` · копий: ${m.copies}` : ''}
-                    {uses.get(m.id) ? ` · отлито ${uses.get(m.id)}` : ''}
                   </Text>
                 </Box>
                 {m.copies > 1 && n > 0 ? (
@@ -183,32 +194,16 @@ export default function NewMix() {
         </Text>
       </Section>
 
-      {waterOptions.length > 1 && (
-        <Alert.Root status="warning" mb="4" borderRadius="l3">
-          <Alert.Indicator />
-          <Alert.Content>
-            <Alert.Title>У выбранных форм разный % воды</Alert.Title>
-            <Alert.Description>
-              Выберите один для всего замеса или разделите его на два.
-              <Box mt="2">
-                <Chips
-                  value={String(waterPct)}
-                  onChange={(v) => v && setWaterPct(Number(v))}
-                  options={waterOptions.map((w) => ({ value: String(w), label: `${w}%` }))}
-                />
-              </Box>
-            </Alert.Description>
-          </Alert.Content>
-        </Alert.Root>
-      )}
-
       <Section title="Рецепт и расчёт">
-        <SimpleGrid columns={{ base: 1, md: 2 }} gap="4" mb="4">
+        <SimpleGrid columns={{ base: 1, md: 3 }} gap="4" mb="4">
           <Field label="Дата и время">
             <Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
           </Field>
-          <Field label="% воды" helper="подставляется из формы, можно поменять">
+          <Field label="% воды">
             <NumInput value={waterPct} onChange={setWaterPct} suffix="%" />
+          </Field>
+          <Field label="% раствора на потери">
+            <NumInput value={lossPct} onChange={setLossPct} suffix="%" />
           </Field>
         </SimpleGrid>
 

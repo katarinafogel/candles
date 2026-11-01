@@ -156,7 +156,7 @@ export function ArchiveButton({ mold, size = 'xs', inCard }: { mold: Mold; size?
   )
 }
 
-const normalize = (s: string) => s.toLowerCase().replace(/ё/g, 'е')
+export const normalize = (s: string) => s.toLowerCase().replace(/ё/g, 'е')
 
 export default function Molds() {
   const d = useData()

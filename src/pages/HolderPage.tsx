@@ -12,7 +12,7 @@ import { useAppDispatch, useData } from '../store'
 import { actions, nextHolderStage } from '../store/dataSlice'
 import type { MixPart } from '../types'
 
-export function MixRecipe({ mix }: { mix: { water: MixPart; plaster: MixPart; plasticizer: MixPart; defoamer: MixPart; dye: MixPart & { color?: string; form?: string }; comment: string } }) {
+export function MixRecipe({ mix }: { mix: { water: MixPart; plaster: MixPart; plasticizer: MixPart; defoamer: MixPart; dye: MixPart & { color?: string; form?: string }; lossPct?: number; comment: string } }) {
   const d = useData()
   const mat = (p: MixPart) => (p.materialId ? d.materials[p.materialId]?.name : undefined)
   const line = (label: string, p: MixPart, showPct = true) => (
@@ -38,6 +38,7 @@ export function MixRecipe({ mix }: { mix: { water: MixPart; plaster: MixPart; pl
         {mix.dye.color ? ` · ${mix.dye.color}` : ''}
         {mix.dye.form ? ` · ${mix.dye.form === 'liquid' ? 'жидкий' : 'твёрдый'}` : ''}
       </Row>
+      {!!mix.lossPct && <Row label="Запас на потери">{fmt(mix.lossPct)}%</Row>}
       {mix.comment && <Row label="Комментарий">{mix.comment}</Row>}
     </>
   )

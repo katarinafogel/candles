@@ -285,8 +285,11 @@ export default function Settings() {
 
       <Section title="Коэффициенты расчётов">
         <SimpleGrid columns={{ base: 1, sm: 2, md: 4 }} gap="4">
-          <Field label="Плотность гипсового раствора">
-            <NumInput value={s.plasterDensity} onChange={(v) => set({ plasterDensity: v ?? 1.82 })} suffix="г/мл" />
+          <Field label="Вода в гипсовом растворе">
+            <NumInput value={s.plasterWaterPct} onChange={(v) => set({ plasterWaterPct: v ?? 25 })} suffix="%" />
+          </Field>
+          <Field label="Запас гипсового раствора на потери">
+            <NumInput value={s.plasterLossPct} onChange={(v) => set({ plasterLossPct: v ?? 0 })} suffix="%" />
           </Field>
           <Field label="Пластификатор">
             <NumInput value={s.plasticizerPct} onChange={(v) => set({ plasticizerPct: v ?? 0 })} suffix="% гипса" />

@@ -64,7 +64,8 @@ export function fallbackUse(d: DataState, m: Material): number | undefined {
   if (plasterCats.includes(m.category)) {
     const r = calcPlaster(top.waterVolumeMl, {
       density: s.plasterDensity,
-      waterPct: top.waterPct,
+      waterPct: s.plasterWaterPct,
+      lossPct: s.plasterLossPct,
       plasticizerPct: s.plasticizerPct,
       dyePct: s.plasterDyePct,
       defoamerPct: s.defoamerPct,
