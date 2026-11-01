@@ -178,10 +178,12 @@ export type VarnishKind = 'gloss' | 'liquidGlass' | 'matte' | 'wax'
 export interface Holder {
   id: string // P-0042
   moldId: string
-  mixId: string
+  mixId?: string
+  /** Added already made: it has no mix, and nothing was taken from stock for what came before. */
+  premade?: boolean
   /** What the mold makes, copied at casting: only holders go on to dampers and a wick, the rest end at «done». */
   purpose: PlasterPurpose
-  mix: Omit<PlasterMix, 'holderIds' | 'moldIds' | 'id' | 'date'> // recipe snapshot
+  mix?: Omit<PlasterMix, 'holderIds' | 'moldIds' | 'id' | 'date'> // recipe snapshot
   dryStart: ISODate
   dryEnd?: ISODate
   varnishIn?: { materialId?: string; layers: number }
@@ -209,6 +211,8 @@ export interface Candle {
   id: string // S-0042
   holderId?: string
   moldId?: string // for molded candles (no holder)
+  /** Added already made: it has no pour, and its first stage can't be undone. */
+  premade?: boolean
   name: string
   wick: Wick
   pourId?: string

@@ -6,7 +6,7 @@ import { ArcanaCard, arcanaButton } from '../components/ArcanaCard'
 import { Check, Chips, Empty, Field, Modal, notify, NumInput, PageHeader, StarRating, TextArea, TextInput } from '../components/ui'
 import { fmt } from '../lib/calc'
 import { isPlaster, moldPurposeLabel, moldPurposePlural, wickSchemeLabel } from '../lib/labels'
-import { moldStats, sortMolds } from '../lib/selectors'
+import { moldStats, sortMolds, normalize } from '../lib/selectors'
 import { useAppDispatch, useData } from '../store'
 import { actions } from '../store/dataSlice'
 import type { Mold, MoldIcon, MoldPurpose, WickScheme } from '../types'
@@ -156,7 +156,6 @@ export function ArchiveButton({ mold, size = 'xs', inCard }: { mold: Mold; size?
   )
 }
 
-export const normalize = (s: string) => s.toLowerCase().replace(/ё/g, 'е')
 
 export default function Molds() {
   const d = useData()

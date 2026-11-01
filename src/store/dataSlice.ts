@@ -20,6 +20,7 @@ import type {
   Settings,
   VarnishKind,
   Wick,
+  WickScheme,
 } from '../types'
 import { isPlaster } from '../lib/labels'
 
@@ -455,6 +456,67 @@ const slice = createSlice({
       }
     },
 
+    /** Holders that are already made wait for a wick; dishes and figurines are done. */
+    addReadyHolders(s, a: PayloadAction<{ items: { moldId: string; count: number }[]; date: string }>) {
+      const { items, date } = a.payload
+      for (const { moldId, count } of items) {
+        const mold = s.molds[moldId]
+        if (!mold || !isPlaster(mold.purpose)) continue
+        for (let i = 0; i < count; i++) {
+          const id = nextId(s, 'P')
+          const stage = mold.purpose === 'holder' ? 'dampers' : 'done'
+          s.holders[id] = {
+            id,
+            moldId,
+            premade: true,
+            purpose: mold.purpose,
+            dryStart: date,
+            stage,
+            history: [{ stage, date, consumption: [], comment: 'добавлен готовым' }],
+          }
+        }
+      }
+    },
+
+    /** Candles that are already made. One in a holder brings that holder along, as it became a candle. */
+    addReadyCandles(
+      s,
+      a: PayloadAction<{
+        items: { moldId: string; count: number }[]
+        name: string
+        scheme?: WickScheme
+        lengthCm?: number
+        instructionId?: string
+        date: string
+      }>,
+    ) {
+      const { items, name, scheme, lengthCm, instructionId, date } = a.payload
+      for (const { moldId, count } of items) {
+        const mold = s.molds[moldId]
+        if (!mold || (mold.purpose !== 'holder' && mold.purpose !== 'candle')) continue
+        const wick = { scheme: scheme ?? mold.defaultWick?.scheme ?? 'double05', lengthCm: lengthCm ?? mold.defaultWick?.lengthCm ?? 0 }
+        for (let i = 0; i < count; i++) {
+          const holderId = mold.purpose === 'holder' ? nextId(s, 'P') : undefined
+          const c = newCandle(s, { holderId, moldId: holderId ? undefined : moldId, name: name || mold.name, wick, instructionId })
+          c.premade = true
+          c.stage = 'ready'
+          c.readyAt = date
+          c.history.push({ stage: 'ready', date, consumption: [], comment: 'добавлена готовой' })
+          if (holderId)
+            s.holders[holderId] = {
+              id: holderId,
+              moldId,
+              premade: true,
+              purpose: 'holder',
+              dryStart: date,
+              candleId: c.id,
+              stage: 'candle',
+              history: [{ stage: 'candle', date, consumption: [], comment: 'добавлен готовым', params: { candleId: c.id } }],
+            }
+        }
+      }
+    },
+
     // ----- candles -----
     createMoldedCandle(
       s,
@@ -534,6 +596,7 @@ const slice = createSlice({
     undoCandle(s, a: PayloadAction<{ id: string; date: string }>) {
       const c = s.candles[a.payload.id]
       if (!c || !c.history.length) return
+      if (c.premade && c.history.length === 1) return
       const last = c.history[c.history.length - 1]
       giveBack(s, last.consumption, a.payload.date, c.id)
       if (c.history.length === 1) {

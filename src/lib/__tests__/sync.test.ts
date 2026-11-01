@@ -4,7 +4,7 @@ vi.mock('../supabase', () => ({ supabase: {} }))
 vi.mock('localforage', () => ({ default: { setItem: async () => {}, getItem: async () => null, config: () => {} } }))
 
 const { diff } = await import('../sync')
-const { default: reducer, actions, initialData } = await import('../../store/dataSlice')
+const { default: reducer, actions, initialData, nextHolderStage } = await import('../../store/dataSlice')
 
 describe('sync diff', () => {
   it('sends only the entities a step touched, in one batch', () => {
@@ -41,6 +41,27 @@ describe('sync diff', () => {
     expect(removed.every((c) => c.deleteDate === date && c.data)).toBe(true)
     // From the holder's page the same pair goes.
     expect(reducer(s, actions.deleteItem({ kind: 'holder', id: 'P-0001', date })).candles).toEqual({})
+  })
+  it('adds ready-made items with no stock taken, and their first stage stays', () => {
+    const date = '2026-11-01T10:00:00.000Z'
+    const mold = (name: string, purpose: 'holder' | 'dish' | 'candle') => actions.upsertMold({ name, purpose, copies: 1, waterVolumeMl: 100, waterPct: 25, waxCapacityG: 50, fragrancePct: 7, comment: '', defaultWick: { scheme: 'double05', lengthCm: 12 } })
+    let s = reducer(reducer(reducer(initialData, mold('Книжка', 'holder')), mold('Блюдо', 'dish')), mold('Шар', 'candle'))
+    s = reducer(s, actions.addReadyHolders({ items: [{ moldId: 'M-001', count: 2 }, { moldId: 'M-002', count: 1 }], date }))
+    expect(Object.values(s.holders).map((h) => h.stage)).toEqual(['dampers', 'dampers', 'done'])
+    expect(nextHolderStage(s.holders['P-0001'])).toBe('wicked')
+    s = reducer(s, actions.addReadyCandles({ items: [{ moldId: 'M-001', count: 1 }, { moldId: 'M-003', count: 1 }], name: '', instructionId: 'default', date }))
+    expect(s.candles['S-0001']).toMatchObject({ stage: 'ready', readyAt: date, holderId: 'P-0004', name: 'Книжка', wick: { lengthCm: 12 } })
+    expect(s.holders['P-0004']).toMatchObject({ stage: 'candle', candleId: 'S-0001' })
+    expect(s.candles['S-0002']).toMatchObject({ stage: 'ready', moldId: 'M-003', holderId: undefined })
+    expect(reducer(s, actions.undoCandle({ id: 'S-0001', date }))).toBe(s)
+    expect(reducer(s, actions.undoHolder({ id: 'P-0004', date }))).toBe(s)
+    // Given and taken back, it returns to ready.
+    const given = reducer(s, actions.advanceCandles({ ids: ['S-0001'], date, params: { step: 'given', burnedBySelf: true, givenAt: date } }))
+    expect(reducer(given, actions.undoCandle({ id: 'S-0001', date })).candles['S-0001'].stage).toBe('ready')
+    // A ready-made holder goes on as usual and comes back.
+    const wicked = reducer(s, actions.advanceHolders({ ids: ['P-0001'], date, params: { step: 'wicked', wick: { scheme: 'double05', lengthCm: 12 }, name: 'Новая' } }))
+    expect(wicked.holders['P-0001'].stage).toBe('wicked')
+    expect(reducer(wicked, actions.undoHolder({ id: 'P-0001', date })).holders['P-0001'].stage).toBe('dampers')
   })
   it('still deletes outright when a step is undone', () => {
     const s = reducer(initialData, actions.createMoldedCandle({ moldId: 'M-001', name: '', wick: { scheme: 'single', lengthCm: 10 } as never, date: '2026-11-01T10:00:00.000Z' }))

@@ -1,7 +1,8 @@
 import { Box, Button, Flex, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
-import { LuArrowRight, LuDroplets, LuFlaskConical, LuMoon, LuTriangleAlert } from 'react-icons/lu'
+import { LuArrowRight, LuDroplets, LuFlaskConical, LuMoon, LuPlus, LuTriangleAlert } from 'react-icons/lu'
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom'
+import { ReadyHoldersDialog } from '../components/ReadyMadeDialogs'
 import { DefectDialog, HolderStepDialog } from '../components/StepDialogs'
 import { ArcanaCard, arcanaButton } from '../components/ArcanaCard'
 import { Check, Empty, LeafMark, PageHeader, Select } from '../components/ui'
@@ -74,7 +75,7 @@ export default function Holders() {
   const [sel, setSel] = useState<string[]>([])
   const [toGrimoire, setToGrimoire] = useState(false)
   const witch = useIsWitch()
-  const [dialog, setDialog] = useState<'next' | 'defect' | null>(null)
+  const [dialog, setDialog] = useState<'next' | 'defect' | 'ready' | null>(null)
 
   const all = byId(d.holders)
   const ofMold = all.filter((h) => !moldId || h.moldId === moldId)
@@ -99,6 +100,9 @@ export default function Holders() {
   return (
     <>
       <PageHeader title="Подсвечники">
+        <Button size="sm" variant="outline" onClick={() => setDialog('ready')}>
+          <LuPlus /> Добавить готовые
+        </Button>
         <Button asChild size="sm">
           <RouterLink to="/mix/new">
             <LuFlaskConical /> Создать подсвечники
@@ -189,7 +193,7 @@ export default function Holders() {
                 {drying != null && ` · ${Math.max(0, Math.floor(drying))} дн.`}
               </Text>
               <Text>
-                замес {h.mixId} · {fmtDate(h.dryStart)}
+                {h.premade ? 'добавлен готовым' : `замес ${h.mixId}`} · {fmtDate(h.dryStart)}
               </Text>
             </ArcanaCard>
           )
@@ -244,6 +248,15 @@ export default function Holders() {
         </Box>
       )}
 
+      {dialog === 'ready' && (
+        <ReadyHoldersDialog
+          onClose={() => setDialog(null)}
+          onDone={(s) => {
+            setDialog(null)
+            setFilter('stage', s)
+          }}
+        />
+      )}
       {dialog === 'next' && (
         <HolderStepDialog
           ids={selected.length ? selected : sel}

@@ -157,23 +157,25 @@ export default function CandlePage() {
         <Button size="sm" variant="outline" onClick={() => setDialog('qr')}>
           <LuQrCode /> QR
         </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            const msg =
-              c.history.length === 1
-                ? c.holderId
-                  ? 'Отклеить фитиль? Свеча удалится, подсвечник вернётся к этапу «Демпферы».'
-                  : 'Удалить эту формовую свечу? Фитиль вернётся на склад.'
-                : 'Вернуть на этап назад? Материалы этого этапа вернутся на склад.'
-            if (!confirmAction(msg)) return
-            dispatch(actions.undoCandle({ id, date: new Date().toISOString() }))
-            notify('Возвращено на этап назад')
-          }}
-        >
-          <LuUndo2 /> Назад
-        </Button>
+        {!(c.premade && c.history.length === 1) && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              const msg =
+                c.history.length === 1
+                  ? c.holderId
+                    ? 'Отклеить фитиль? Свеча удалится, подсвечник вернётся к этапу «Демпферы».'
+                    : 'Удалить эту формовую свечу? Фитиль вернётся на склад.'
+                  : 'Вернуть на этап назад? Материалы этого этапа вернутся на склад.'
+              if (!confirmAction(msg)) return
+              dispatch(actions.undoCandle({ id, date: new Date().toISOString() }))
+              notify('Возвращено на этап назад')
+            }}
+          >
+            <LuUndo2 /> Назад
+          </Button>
+        )}
         {c.stage !== 'defect' && (
           <Button size="sm" variant="outline" colorPalette="red" onClick={() => setDialog('defect')}>
             <LuTriangleAlert /> Брак
@@ -259,7 +261,7 @@ export default function CandlePage() {
           {!cost.complete && (
             <Text as="span" color="orange.300" fontSize="xs">
               {' '}
-              неполная (нет цен у части материалов)
+              {c.premade || h?.premade ? 'неполная (добавлено готовым)' : 'неполная (нет цен у части материалов)'}
             </Text>
           )}
         </Row>
@@ -314,7 +316,7 @@ export default function CandlePage() {
 
       {h && (
         <Section title={`Подсвечник ${h.id}`}>
-          <MixRecipe mix={h.mix} />
+          {h.mix && <MixRecipe mix={h.mix} />}
           <Box mt="4">
             <History entries={h.history} labels={holderStageLabel} />
           </Box>

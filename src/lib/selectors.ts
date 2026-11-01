@@ -4,6 +4,9 @@ import { calcPlaster, calcWax, isLow, stockOf } from './calc'
 export const byId = <T extends { id: string }>(r: Record<string, T>) =>
   Object.values(r).sort((a, b) => b.id.localeCompare(a.id, 'ru', { numeric: true }))
 
+/** For searching names: case and ё don't matter. */
+export const normalize = (s: string) => s.toLowerCase().replace(/ё/g, 'е')
+
 export const moldOfCandle = (d: DataState, c: Candle): Mold | undefined => {
   const mid = c.holderId ? d.holders[c.holderId]?.moldId : c.moldId
   return mid ? d.molds[mid] : undefined

@@ -139,7 +139,9 @@ export function candleCost(data: DataState, candleId: string): Cost {
   const items: Consumption[] = c.history.flatMap((h) => h.consumption)
   const h = c.holderId ? data.holders[c.holderId] : undefined
   if (h) items.push(...h.history.flatMap((e) => e.consumption))
-  return costOf(data, items)
+  const cost = costOf(data, items)
+  // What went into a ready-made item before it was added is not known.
+  return c.premade || h?.premade ? { ...cost, complete: false } : cost
 }
 
 /** Parses "27,3" as well as "27.3". */

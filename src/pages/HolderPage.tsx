@@ -111,13 +111,19 @@ export default function HolderPage() {
           <Text color={h.stage === 'defect' ? 'red.400' : 'emerald.300'}>{holderStageLabel[h.stage]}</Text>
         </Row>
         <Row label="Форма">{mold ? <Link to={`/molds/${mold.id}`}>{mold.name}</Link> : '—'}</Row>
-        <Row label="Замес">
-          {h.mixId} · {fmtDateTime(h.dryStart)}
-        </Row>
-        <Row label="Сушка">
-          {fmtDateTime(h.dryStart)} → {h.dryEnd ? fmtDateTime(h.dryEnd) : 'сохнет'}
-          {h.dryEnd && ` · ${fmt(daysBetween(h.dryStart, h.dryEnd), 1)} дн.`}
-        </Row>
+        {h.premade ? (
+          <Row label="Добавлен готовым">{fmtDateTime(h.dryStart)}</Row>
+        ) : (
+          <>
+            <Row label="Замес">
+              {h.mixId} · {fmtDateTime(h.dryStart)}
+            </Row>
+            <Row label="Сушка">
+              {fmtDateTime(h.dryStart)} → {h.dryEnd ? fmtDateTime(h.dryEnd) : 'сохнет'}
+              {h.dryEnd && ` · ${fmt(daysBetween(h.dryStart, h.dryEnd), 1)} дн.`}
+            </Row>
+          </>
+        )}
         {h.varnishIn && (
           <Row label="Лак внутри">
             {mat(h.varnishIn.materialId)} · слоёв: {h.varnishIn.layers}
@@ -164,9 +170,11 @@ export default function HolderPage() {
         )}
       </Section>
 
-      <Section title="Рецепт гипса">
-        <MixRecipe mix={h.mix} />
-      </Section>
+      {h.mix && (
+        <Section title="Рецепт гипса">
+          <MixRecipe mix={h.mix} />
+        </Section>
+      )}
 
       <Section title="История этапов">
         <Stack>

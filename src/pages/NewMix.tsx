@@ -1,17 +1,16 @@
-import { Box, Button, CloseButton, Flex, HStack, IconButton, Input, InputGroup, SimpleGrid, Stack, Table, Text } from '@chakra-ui/react'
+import { Button, Flex, Input, SimpleGrid, Stack, Table, Text } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
-import { LuMinus, LuPlus, LuSearch } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
-import { Chips, Field, LeafMark, notify, NumInput, PageHeader, Section, Select, TextArea, TextInput } from '../components/ui'
+import { Chips, Field, notify, NumInput, PageHeader, Section, Select, TextArea, TextInput } from '../components/ui'
+import { MoldPicker } from '../components/MoldPicker'
 import { StockHint } from '../components/StockHint'
 import { calcPlaster, fmt, round2 } from '../lib/calc'
 import { nowLocal, toIso } from '../lib/dates'
 import { materialOptions, sortMolds } from '../lib/selectors'
 import { useAppDispatch, useData } from '../store'
 import { actions } from '../store/dataSlice'
-import { isPlaster, moldPurposeLabel, plasterPurposePlural, plasterPurposes } from '../lib/labels'
-import type { MixPart, PlasterPurpose } from '../types'
-import { normalize } from './Molds'
+import { isPlaster, plasterPurposes } from '../lib/labels'
+import type { MixPart } from '../types'
 
 type PartKey = 'water' | 'plaster' | 'plasticizer' | 'defoamer' | 'dye'
 
@@ -24,8 +23,6 @@ export default function NewMix() {
     d,
     Object.values(d.molds).filter((m) => !m.archived && isPlaster(m.purpose)),
   )
-  const [kind, setKind] = useState<PlasterPurpose | 'all'>('all')
-  const [query, setQuery] = useState('')
 
   const [counts, setCounts] = useState<Record<string, number>>({})
   const [date, setDate] = useState(nowLocal())
@@ -40,9 +37,6 @@ export default function NewMix() {
 
   const picked = molds.filter((m) => counts[m.id])
   const volume = picked.reduce((a, m) => a + m.waterVolumeMl * counts[m.id], 0)
-  const q = normalize(query.trim())
-  // A picked form stays in the list whatever the filter, so it can be seen and taken back.
-  const visible = molds.filter((m) => counts[m.id] || ((kind === 'all' || m.purpose === kind) && (!q || normalize(m.name).includes(q))))
 
   const calc = useMemo(
     () =>
@@ -105,90 +99,8 @@ export default function NewMix() {
   return (
     <>
       <PageHeader title="Создать подсвечники" back="/" />
-      <Section
-        title="Формы"
-        actions={
-          molds.length > 0 && (
-            <Chips
-              value={kind}
-              onChange={(v) => setKind((v as typeof kind) ?? 'all')}
-              options={[
-                { value: 'all', label: 'Все' },
-                ...plasterPurposes.map((p) => ({ value: p, label: plasterPurposePlural[p] })),
-              ]}
-            />
-          )
-        }
-      >
-        {!molds.length && (
-          <Text color="fg.muted" fontSize="sm">
-            Сначала добавьте формы для подсвечников, тарелок или фигурок в разделе «Формы».
-          </Text>
-        )}
-        {molds.length > 0 && (
-          <InputGroup mb="3" startElement={<LuSearch />} endElement={query && <CloseButton size="xs" onClick={() => setQuery('')} aria-label="Очистить" />}>
-            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Поиск по названию" />
-          </InputGroup>
-        )}
-        {molds.length > 0 && kind !== 'all' && !molds.some((m) => m.purpose === kind) && (
-          <Text color="fg.muted" fontSize="sm" mb="2">
-            Нет форм типа «{moldPurposeLabel[kind]}» в работе. Поменять тип или вернуть форму из архива можно в разделе «Формы».
-          </Text>
-        )}
-        {q && !visible.length && (
-          <Text color="fg.muted" fontSize="sm" mb="2">
-            Ничего не найдено.
-          </Text>
-        )}
-        <Stack gap="1" maxH="296px" overflowY="auto">
-          {visible.map((m) => {
-            const n = counts[m.id] ?? 0
-            const set = (v: number) => setCounts({ ...counts, [m.id]: Math.max(0, Math.min(m.copies, v)) })
-            return (
-              <Flex
-                key={m.id}
-                align="center"
-                gap="3"
-                p="2"
-                borderRadius="l2"
-                bg={n ? 'emerald.subtle' : undefined}
-                cursor="pointer"
-                onClick={() => set(n ? 0 : 1)}
-              >
-                <Box flex="1">
-                  <HStack gap="2">
-                    <Text fontWeight={n ? 'semibold' : 'normal'}>{m.name}</Text>
-                    {m.rating && (
-                      <Text fontSize="xs" color="ember.300">
-                        {'★'.repeat(m.rating)}
-                      </Text>
-                    )}
-                  </HStack>
-                  <Text fontSize="xs" color="fg.muted">
-                    {m.waterVolumeMl} мл
-                    {m.purpose !== 'holder' ? ` · ${moldPurposeLabel[m.purpose]}` : ''}
-                    {m.copies > 1 ? ` · копий: ${m.copies}` : ''}
-                  </Text>
-                </Box>
-                {m.copies > 1 && n > 0 ? (
-                  <HStack onClick={(e) => e.stopPropagation()}>
-                    <IconButton size="xs" variant="outline" aria-label="меньше" onClick={() => set(n - 1)}>
-                      <LuMinus />
-                    </IconButton>
-                    <Text w="5" textAlign="center">
-                      {n}
-                    </Text>
-                    <IconButton size="xs" variant="outline" aria-label="больше" onClick={() => set(n + 1)}>
-                      <LuPlus />
-                    </IconButton>
-                  </HStack>
-                ) : (
-                  <LeafMark on={n > 0} />
-                )}
-              </Flex>
-            )
-          })}
-        </Stack>
+      <Section>
+        <MoldPicker molds={molds} kinds={plasterPurposes} counts={counts} onChange={setCounts} limitCopies />
         <Text mt="3" fontSize="sm" color="fg.muted">
           Объём по воде: <b>{fmt(volume)} мл</b> · масса замеса: <b>{fmt(calc.totalG)} г</b>
         </Text>

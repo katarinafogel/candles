@@ -2,6 +2,7 @@ import { Box, Button, Flex, HStack, Input, SimpleGrid, Stack, Text, Wrap } from 
 import { useState } from 'react'
 import { LuDroplets, LuPlus, LuPrinter, LuSparkles, LuCheck, LuTriangleAlert, LuMoon } from 'react-icons/lu'
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom'
+import { ReadyCandlesDialog } from '../components/ReadyMadeDialogs'
 import { DecorateDialog, DefectDialog } from '../components/StepDialogs'
 import { ArcanaCard } from '../components/ArcanaCard'
 import { Check, Empty, Field, IdBadge, Modal, notify, NumInput, PageHeader, Select, TextInput, Chips } from '../components/ui'
@@ -134,7 +135,7 @@ export default function Candles() {
   const [sel, setSel] = useState<string[]>([])
   const [toGrimoire, setToGrimoire] = useState(false)
   const witch = useIsWitch()
-  const [dialog, setDialog] = useState<'decor' | 'ready' | 'defect' | 'molded' | null>(null)
+  const [dialog, setDialog] = useState<'decor' | 'ready' | 'defect' | 'molded' | 'premade' | null>(null)
 
   // A holder with a wick is still a holder until it is poured; molded candles have no holder to wait on.
   const all = byId(d.candles).filter((c) => !(c.holderId && c.stage === 'wicked'))
@@ -173,6 +174,9 @@ export default function Candles() {
   return (
     <>
       <PageHeader title="Свечи">
+        <Button size="sm" variant="outline" onClick={() => setDialog('premade')}>
+          <LuPlus /> Добавить готовые
+        </Button>
         <Button size="sm" variant="outline" onClick={() => setDialog('molded')}>
           <LuPlus /> Формовая
         </Button>
@@ -332,6 +336,15 @@ export default function Candles() {
       {dialog === 'ready' && <ReadyDialog ids={selected} onClose={close} />}
       {dialog === 'defect' && <DefectDialog kind="candle" ids={selected} onClose={close} />}
       {dialog === 'molded' && <MoldedCandleDialog onClose={() => setDialog(null)} />}
+      {dialog === 'premade' && (
+        <ReadyCandlesDialog
+          onClose={() => setDialog(null)}
+          onDone={() => {
+            setDialog(null)
+            setStage('ready')
+          }}
+        />
+      )}
     </>
   )
 }
