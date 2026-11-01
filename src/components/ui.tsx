@@ -358,6 +358,38 @@ export function Modal({
   )
 }
 
+/** Cancel on the left, save on the right, always on screen while a long form scrolls. */
+export function FormActions({ onCancel, onSave, saveLabel = 'Сохранить', disabled }: { onCancel: () => void; onSave: () => void; saveLabel?: string; disabled?: boolean }) {
+  return (
+    <>
+      <Box h="72px" />
+      <Flex
+        position="fixed"
+        bottom={{ base: '72px', md: '6' }}
+        left={{ base: '4', md: 'calc(240px + 2rem)' }}
+        right="4"
+        zIndex="docked"
+        justify="space-between"
+        gap="2"
+        p="2"
+        bg="bg.panel"
+        borderWidth="1px"
+        borderColor="emerald.700"
+        borderRadius="l3"
+        shadow="lg"
+        maxW="1200px"
+      >
+        <Button variant="ghost" onClick={onCancel}>
+          Отмена
+        </Button>
+        <Button onClick={onSave} disabled={disabled}>
+          {saveLabel}
+        </Button>
+      </Flex>
+    </>
+  )
+}
+
 /** `back` is the default; a list that opened this page can pass its own address (with its tab) in `state.back`. */
 export function PageHeader({ title, children, back }: { title: ReactNode; children?: ReactNode; back?: string }) {
   const from = (useLocation().state as { back?: string } | null)?.back

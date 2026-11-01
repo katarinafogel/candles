@@ -24,6 +24,7 @@ import Home from './pages/Home'
 import Instructions from './pages/Instructions'
 import MaterialPage from './pages/MaterialPage'
 import MoldPage from './pages/MoldPage'
+import { AddCandles, AddHolders, EditCandle, EditHolder } from './pages/ItemForms'
 import Molds from './pages/Molds'
 import More from './pages/More'
 import NewMix from './pages/NewMix'
@@ -77,9 +78,13 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="holders" element={<Holders />} />
+        <Route path="holders/add" element={<AddHolders />} />
         <Route path="holders/:id" element={<HolderPage />} />
+        <Route path="holders/:id/edit" element={<EditHolder />} />
         <Route path="candles" element={<Candles />} />
+        <Route path="candles/add" element={<AddCandles />} />
         <Route path="candles/:id" element={<CandlePage />} />
+        <Route path="candles/:id/edit" element={<EditCandle />} />
         <Route path="mix/new" element={<NewMix />} />
         <Route path="pour/new" element={<NewPour />} />
         <Route path="molds" element={<Molds />} />

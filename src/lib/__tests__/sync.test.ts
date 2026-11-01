@@ -46,10 +46,10 @@ describe('sync diff', () => {
     const date = '2026-11-01T10:00:00.000Z'
     const mold = (name: string, purpose: 'holder' | 'dish' | 'candle') => actions.upsertMold({ name, purpose, copies: 1, waterVolumeMl: 100, waterPct: 25, waxCapacityG: 50, fragrancePct: 7, comment: '', defaultWick: { scheme: 'double05', lengthCm: 12 } })
     let s = reducer(reducer(reducer(initialData, mold('Книжка', 'holder')), mold('Блюдо', 'dish')), mold('Шар', 'candle'))
-    s = reducer(s, actions.addReadyHolders({ items: [{ moldId: 'M-001', count: 2 }, { moldId: 'M-002', count: 1 }], date }))
+    s = reducer(s, actions.addReadyHolders({ items: [{ moldId: 'M-001', count: 2 }, { moldId: 'M-002', count: 1 }], date, details: {} }))
     expect(Object.values(s.holders).map((h) => h.stage)).toEqual(['dampers', 'dampers', 'done'])
     expect(nextHolderStage(s.holders['P-0001'])).toBe('wicked')
-    s = reducer(s, actions.addReadyCandles({ items: [{ moldId: 'M-001', count: 1 }, { moldId: 'M-003', count: 1 }], name: '', instructionId: 'default', date }))
+    s = reducer(s, actions.addReadyCandles({ items: [{ moldId: 'M-001', count: 1 }, { moldId: 'M-003', count: 1 }], name: '', instructionId: 'default', date, decor: [], holder: {} }))
     expect(s.candles['S-0001']).toMatchObject({ stage: 'ready', readyAt: date, holderId: 'P-0004', name: 'Книжка', wick: { lengthCm: 12 } })
     expect(s.holders['P-0004']).toMatchObject({ stage: 'candle', candleId: 'S-0001' })
     expect(s.candles['S-0002']).toMatchObject({ stage: 'ready', moldId: 'M-003', holderId: undefined })

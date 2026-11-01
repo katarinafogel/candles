@@ -1,8 +1,8 @@
 import { Box, Button, HStack, Input, Stack, Text } from '@chakra-ui/react'
 import { nanoid } from '@reduxjs/toolkit'
 import { useState } from 'react'
-import { LuCheck, LuGift, LuPlus, LuQrCode, LuSparkles, LuTrash2, LuTriangleAlert, LuUndo2 } from 'react-icons/lu'
-import { useNavigate, useParams } from 'react-router-dom'
+import { LuCheck, LuGift, LuPencil, LuPlus, LuQrCode, LuSparkles, LuTrash2, LuTriangleAlert, LuUndo2 } from 'react-icons/lu'
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom'
 import { History } from '../components/History'
 import { QrBlock } from '../components/QrBlock'
 import { ReviewCard, ReviewForm } from '../components/ReviewForm'
@@ -181,6 +181,11 @@ export default function CandlePage() {
             <LuTriangleAlert /> Брак
           </Button>
         )}
+        <Button asChild size="sm" variant="outline">
+          <RouterLink to={`/candles/${id}/edit`}>
+            <LuPencil /> Редактировать
+          </RouterLink>
+        </Button>
         <Button
           size="sm"
           variant="ghost"
@@ -256,6 +261,7 @@ export default function CandlePage() {
             </Text>
           </Row>
         )}
+        {c.comment && <Row label="Комментарий">{c.comment}</Row>}
         <Row label="Себестоимость">
           {cost.total || cost.complete ? `${fmt(cost.total)} ₽` : '—'}
           {!cost.complete && (
@@ -297,7 +303,7 @@ export default function CandlePage() {
         <Section title={`Заливка ${pour.id}`}>
           <Row label="Дата">{fmtDateTime(pour.date)}</Row>
           <Row label="Воск">
-            {pour.waxes.map((w, i) => `${mat(w.materialId)} ${fmt(w.share)}% (${fmt(pour.fact.waxG[i])} г на всю заливку)`).join(' + ')}
+            {pour.waxes.map((w, i) => `${mat(w.materialId)} ${fmt(w.share)}%${pour.fact.waxG[i] ? ` (${fmt(pour.fact.waxG[i])} г на всю заливку)` : ''}`).join(' + ')}
           </Row>
           <Row label="Отдушка">
             {mat(pour.fragrance.materialId)} · {fmt(pour.fragrance.pct)}%

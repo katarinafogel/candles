@@ -1,4 +1,4 @@
-import { Button, HStack, IconButton, Input, Stack, Text } from '@chakra-ui/react'
+import { Button, Flex, HStack, IconButton, Input, Stack, Text } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
 import { LuPlus, LuTrash2 } from 'react-icons/lu'
 import { nowLocal, toIso } from '../lib/dates'
@@ -90,14 +90,14 @@ export function HolderStepDialog({ ids, onClose }: { ids: string[]; onClose: () 
       onClose={onClose}
       title={`${holderNextTitle(holders[0])} · ${n} шт.`}
       footer={
-        <>
+        <Flex w="100%" justify="space-between">
           <Button variant="ghost" onClick={onClose}>
             Отмена
           </Button>
           <Button onClick={save} disabled={!same}>
             Сохранить
           </Button>
-        </>
+        </Flex>
       }
     >
       <Stack gap="4">
@@ -259,7 +259,7 @@ export function DefectDialog({
       onClose={onClose}
       title={`Брак · ${ids.length} шт.`}
       footer={
-        <>
+        <Flex w="100%" justify="space-between">
           <Button variant="ghost" onClick={onClose}>
             Отмена
           </Button>
@@ -279,7 +279,7 @@ export function DefectDialog({
           >
             В брак
           </Button>
-        </>
+        </Flex>
       }
     >
       <Stack gap="4">
@@ -322,7 +322,7 @@ export function DecorateDialog({ ids, onClose }: { ids: string[]; onClose: () =>
       onClose={onClose}
       title={`Украсить · ${ids.length} шт.`}
       footer={
-        <>
+        <Flex w="100%" justify="space-between">
           <Button variant="ghost" onClick={onClose}>
             Отмена
           </Button>
@@ -347,7 +347,7 @@ export function DecorateDialog({ ids, onClose }: { ids: string[]; onClose: () =>
           >
             Сохранить
           </Button>
-        </>
+        </Flex>
       }
     >
       <Stack gap="4">

@@ -1,7 +1,7 @@
 import { Box, Button, HStack, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
-import { LuArrowRight, LuDroplets, LuTrash2, LuUndo2, LuTriangleAlert } from 'react-icons/lu'
-import { useNavigate, useParams } from 'react-router-dom'
+import { LuArrowRight, LuDroplets, LuPencil, LuTrash2, LuUndo2, LuTriangleAlert } from 'react-icons/lu'
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom'
 import { History } from '../components/History'
 import { DefectDialog, HolderStepDialog } from '../components/StepDialogs'
 import { confirmAction, Empty, IdBadge, Link, notify, PageHeader, Row, Section, Select } from '../components/ui'
@@ -17,7 +17,7 @@ export function MixRecipe({ mix }: { mix: { water: MixPart; plaster: MixPart; pl
   const mat = (p: MixPart) => (p.materialId ? d.materials[p.materialId]?.name : undefined)
   const line = (label: string, p: MixPart, showPct = true) => (
     <Row label={label}>
-      {fmt(p.factG)} г{showPct ? ` · ${fmt(p.pct)}%` : ''}
+      {fmt(p.factG)} г{showPct && !!p.pct ? ` · ${fmt(p.pct)}%` : ''}
       {mat(p) ? ` · ${mat(p)}` : ''}
       {p.factG !== p.calcG && (
         <Text as="span" color="fg.muted">
@@ -34,7 +34,7 @@ export function MixRecipe({ mix }: { mix: { water: MixPart; plaster: MixPart; pl
       {line('Пластификатор', mix.plasticizer)}
       {line('Пеногаситель', mix.defoamer)}
       <Row label="Краситель">
-        {fmt(mix.dye.factG)} г · {fmt(mix.dye.pct)}%{mat(mix.dye) ? ` · ${mat(mix.dye)}` : ''}
+        {fmt(mix.dye.factG)} г{mix.dye.pct ? ` · ${fmt(mix.dye.pct)}%` : ''}{mat(mix.dye) ? ` · ${mat(mix.dye)}` : ''}
         {mix.dye.color ? ` · ${mix.dye.color}` : ''}
         {mix.dye.form ? ` · ${mix.dye.form === 'liquid' ? 'жидкий' : 'твёрдый'}` : ''}
       </Row>
@@ -90,6 +90,11 @@ export default function HolderPage() {
             <LuTriangleAlert /> Брак
           </Button>
         )}
+        <Button asChild size="sm" variant="outline">
+          <RouterLink to={`/holders/${id}/edit`}>
+            <LuPencil /> Редактировать
+          </RouterLink>
+        </Button>
         <Button
           size="sm"
           variant="ghost"
@@ -124,6 +129,7 @@ export default function HolderPage() {
             </Row>
           </>
         )}
+        {h.comment && <Row label="Комментарий">{h.comment}</Row>}
         {h.varnishIn && (
           <Row label="Лак внутри">
             {mat(h.varnishIn.materialId)} · слоёв: {h.varnishIn.layers}

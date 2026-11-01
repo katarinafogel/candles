@@ -181,6 +181,7 @@ export interface Holder {
   mixId?: string
   /** Added already made: it has no mix, and nothing was taken from stock for what came before. */
   premade?: boolean
+  comment?: string
   /** What the mold makes, copied at casting: only holders go on to dampers and a wick, the rest end at «done». */
   purpose: PlasterPurpose
   mix?: Omit<PlasterMix, 'holderIds' | 'moldIds' | 'id' | 'date'> // recipe snapshot
@@ -211,8 +212,9 @@ export interface Candle {
   id: string // S-0042
   holderId?: string
   moldId?: string // for molded candles (no holder)
-  /** Added already made: it has no pour, and its first stage can't be undone. */
+  /** Added already made: nothing was taken from stock for it, and its first stage can't be undone. */
   premade?: boolean
+  comment?: string
   name: string
   wick: Wick
   pourId?: string

@@ -22,6 +22,7 @@ import type {
   Wick,
   WickScheme,
 } from '../types'
+import type { HolderDetails, PourDetails } from '../lib/itemForms'
 import { isPlaster } from '../lib/labels'
 
 export const SCHEMA_VERSION = 3
@@ -457,8 +458,8 @@ const slice = createSlice({
     },
 
     /** Holders that are already made wait for a wick; dishes and figurines are done. */
-    addReadyHolders(s, a: PayloadAction<{ items: { moldId: string; count: number }[]; date: string }>) {
-      const { items, date } = a.payload
+    addReadyHolders(s, a: PayloadAction<{ items: { moldId: string; count: number }[]; date: string; details: HolderDetails }>) {
+      const { items, date, details } = a.payload
       for (const { moldId, count } of items) {
         const mold = s.molds[moldId]
         if (!mold || !isPlaster(mold.purpose)) continue
@@ -466,6 +467,8 @@ const slice = createSlice({
           const id = nextId(s, 'P')
           const stage = mold.purpose === 'holder' ? 'dampers' : 'done'
           s.holders[id] = {
+            ...details,
+            dampers: mold.purpose === 'holder' ? details.dampers : undefined,
             id,
             moldId,
             premade: true,
@@ -478,19 +481,29 @@ const slice = createSlice({
       }
     },
 
-    /** Candles that are already made. One in a holder brings that holder along, as it became a candle. */
+    /**
+     * Candles that are already made, sharing what was entered. One in a holder brings that holder
+     * along, as it became a candle. What was entered about the wax makes one pour for the batch.
+     */
     addReadyCandles(
       s,
       a: PayloadAction<{
         items: { moldId: string; count: number }[]
+        date: string
         name: string
         scheme?: WickScheme
         lengthCm?: number
         instructionId?: string
-        date: string
+        comment?: string
+        decor: DecorUse[]
+        pour?: PourDetails
+        holder: HolderDetails
+        given?: { personId?: string; burnedBySelf: boolean; givenAt: string }
       }>,
     ) {
-      const { items, name, scheme, lengthCm, instructionId, date } = a.payload
+      const { items, date, name, scheme, lengthCm, instructionId, comment, decor, pour, holder, given } = a.payload
+      const pourId = pour ? nextId(s, 'W') : undefined
+      const candleIds: string[] = []
       for (const { moldId, count } of items) {
         const mold = s.molds[moldId]
         if (!mold || (mold.purpose !== 'holder' && mold.purpose !== 'candle')) continue
@@ -498,12 +511,22 @@ const slice = createSlice({
         for (let i = 0; i < count; i++) {
           const holderId = mold.purpose === 'holder' ? nextId(s, 'P') : undefined
           const c = newCandle(s, { holderId, moldId: holderId ? undefined : moldId, name: name || mold.name, wick, instructionId })
+          candleIds.push(c.id)
           c.premade = true
+          c.comment = comment
+          c.decor = decor
+          c.pourId = pourId
           c.stage = 'ready'
           c.readyAt = date
           c.history.push({ stage: 'ready', date, consumption: [], comment: 'добавлена готовой' })
+          if (given) {
+            Object.assign(c, given)
+            c.stage = 'given'
+            c.history.push({ stage: 'given', date: given.givenAt, consumption: [], params: { step: 'given', ...given } })
+          }
           if (holderId)
             s.holders[holderId] = {
+              ...holder,
               id: holderId,
               moldId,
               premade: true,
@@ -514,6 +537,29 @@ const slice = createSlice({
               history: [{ stage: 'candle', date, consumption: [], comment: 'добавлен готовым', params: { candleId: c.id } }],
             }
         }
+      }
+      if (pour && pourId) s.pours[pourId] = { ...pour, id: pourId, date, candleIds }
+    },
+
+    /** Corrects the record of a holder. The stage and what was taken from stock stay as they were. */
+    editHolder(s, a: PayloadAction<{ id: string; details: Partial<Holder> }>) {
+      const h = s.holders[a.payload.id]
+      if (h) Object.assign(h, a.payload.details)
+    },
+
+    /** Corrects the record of a candle and its pour, which other candles may share. */
+    editCandle(s, a: PayloadAction<{ id: string; details: Partial<Candle>; pour?: PourDetails }>) {
+      const { id, details, pour } = a.payload
+      const c = s.candles[id]
+      if (!c) return
+      Object.assign(c, details)
+      if (!pour) return
+      if (c.pourId && s.pours[c.pourId]) Object.assign(s.pours[c.pourId], pour)
+      else {
+        // A ready-made candle that had nothing known about its wax yet.
+        const pourId = nextId(s, 'W')
+        s.pours[pourId] = { ...pour, id: pourId, date: c.readyAt ?? new Date().toISOString(), candleIds: [id] }
+        c.pourId = pourId
       }
     },
 

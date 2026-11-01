@@ -5,3 +5,8 @@ export const nowLocal = () => {
   return d.toISOString().slice(0, 16)
 }
 export const toIso = (local: string) => new Date(local).toISOString()
+export const toLocal = (iso: string) => {
+  const d = new Date(iso)
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
+  return d.toISOString().slice(0, 16)
+}

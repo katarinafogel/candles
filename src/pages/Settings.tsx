@@ -72,7 +72,7 @@ function BackupRestore() {
           onClose={() => setPending(null)}
           title="Заменить данные из бэкапа?"
           footer={
-            <>
+            <Flex w="100%" justify="space-between">
               <Button variant="ghost" onClick={() => setPending(null)}>
                 Отмена
               </Button>
@@ -89,7 +89,7 @@ function BackupRestore() {
               >
                 Заменить
               </Button>
-            </>
+            </Flex>
           }
         >
           <Stack gap="1" fontSize="sm">

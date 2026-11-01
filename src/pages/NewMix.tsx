@@ -1,7 +1,7 @@
 import { Button, Flex, Input, SimpleGrid, Stack, Table, Text } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Chips, Field, notify, NumInput, PageHeader, Section, Select, TextArea, TextInput } from '../components/ui'
+import { Chips, Field, FormActions, notify, NumInput, PageHeader, Section, Select, TextArea, TextInput } from '../components/ui'
 import { MoldPicker } from '../components/MoldPicker'
 import { StockHint } from '../components/StockHint'
 import { calcPlaster, fmt, round2 } from '../lib/calc'
@@ -195,14 +195,7 @@ export default function NewMix() {
         </Field>
       </Section>
 
-      <Flex justify="flex-end" gap="2">
-        <Button variant="ghost" onClick={() => nav(-1)}>
-          Отмена
-        </Button>
-        <Button onClick={save} disabled={!picked.length}>
-          Сохранить · {picked.reduce((a, m) => a + counts[m.id], 0)} подсвечн.
-        </Button>
-      </Flex>
+      <FormActions onCancel={() => nav(-1)} onSave={save} disabled={!picked.length} saveLabel={`Сохранить · ${picked.reduce((a, m) => a + counts[m.id], 0)} подсвечн.`} />
     </>
   )
 }
