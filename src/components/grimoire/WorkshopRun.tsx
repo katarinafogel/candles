@@ -27,7 +27,7 @@ export function WorkshopRunner() {
   if (ask.kind === 'holder') return <HolderStepDialog ids={ask.ids} onClose={close} />
   if (ask.step === 'decorated') return <DecorateDialog ids={ask.ids} onClose={close} />
   if (ask.step === 'ready') return <ReadyDialog ids={ask.ids} onClose={close} />
-  if (ask.step === 'given') return <GiveDialog id={ask.ids[0]} onClose={close} onDone={close} />
+  if (ask.step === 'given') return <GiveDialog ids={ask.ids} onClose={close} onDone={close} />
   return null
 }
 

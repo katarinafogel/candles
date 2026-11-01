@@ -1,4 +1,4 @@
-import { Box, Button, HStack, Input, Stack, Text } from '@chakra-ui/react'
+import { Box, Button, Flex, HStack, Input, Stack, Text } from '@chakra-ui/react'
 import { nanoid } from '@reduxjs/toolkit'
 import { useState } from 'react'
 import { LuCheck, LuGift, LuPencil, LuPlus, LuQrCode, LuSparkles, LuTrash2, LuTriangleAlert, LuUndo2 } from 'react-icons/lu'
@@ -19,7 +19,7 @@ import { MixRecipe } from './HolderPage'
 import { ReadyDialog } from './Candles'
 import { withUndo } from '../lib/undo'
 
-export function GiveDialog({ id, onClose, onDone }: { id: string; onClose: () => void; onDone: () => void }) {
+export function GiveDialog({ ids, onClose, onDone }: { ids: string[]; onClose: () => void; onDone: () => void }) {
   const d = useData()
   const dispatch = useAppDispatch()
   const [personId, setPersonId] = useState('')
@@ -30,35 +30,40 @@ export function GiveDialog({ id, onClose, onDone }: { id: string; onClose: () =>
     <Modal
       open
       onClose={onClose}
-      title="Подарить"
+      title={ids.length > 1 ? `Подарить · ${ids.length} шт.` : 'Подарить'}
       footer={
-        <Button
-          disabled={!self && !personId && !newName.trim()}
-          onClick={() => {
-            let pid = personId || undefined
-            if (!self && !pid && newName.trim()) {
-              pid = nanoid(8)
-              dispatch(actions.upsertPerson({ id: pid, name: newName.trim(), contact: '', notes: '' }))
-            }
-            const iso = toIso(date)
-            withUndo(
-              'candle',
-              [id],
-              () =>
-                dispatch(
-                  actions.advanceCandles({
-                    ids: [id],
-                    date: iso,
-                    params: { step: 'given', personId: self ? undefined : pid, burnedBySelf: self, givenAt: iso },
-                  }),
-                ),
-              'Свеча выдана — распечатайте QR',
-            )
-            onDone()
-          }}
-        >
-          Подарить
-        </Button>
+        <Flex w="100%" justify="space-between">
+          <Button variant="ghost" onClick={onClose}>
+            Отмена
+          </Button>
+          <Button
+            disabled={!self && !personId && !newName.trim()}
+            onClick={() => {
+              let pid = personId || undefined
+              if (!self && !pid && newName.trim()) {
+                pid = nanoid(8)
+                dispatch(actions.upsertPerson({ id: pid, name: newName.trim(), contact: '', notes: '' }))
+              }
+              const iso = toIso(date)
+              withUndo(
+                'candle',
+                ids,
+                () =>
+                  dispatch(
+                    actions.advanceCandles({
+                      ids,
+                      date: iso,
+                      params: { step: 'given', personId: self ? undefined : pid, burnedBySelf: self, givenAt: iso },
+                    }),
+                  ),
+                ids.length > 1 ? `Свечи выданы: ${ids.length} — распечатайте QR` : 'Свеча выдана — распечатайте QR',
+              )
+              onDone()
+            }}
+          >
+            Подарить
+          </Button>
+        </Flex>
       }
     >
       <Stack gap="4">
@@ -336,7 +341,7 @@ export default function CandlePage() {
       {dialog === 'decor' && <DecorateDialog ids={[id]} onClose={close} />}
       {dialog === 'ready' && <ReadyDialog ids={[id]} onClose={close} />}
       {dialog === 'defect' && <DefectDialog kind="candle" ids={[id]} onClose={close} />}
-      {dialog === 'give' && <GiveDialog id={id} onClose={close} onDone={() => setDialog('qr')} />}
+      {dialog === 'give' && <GiveDialog ids={[id]} onClose={close} onDone={() => setDialog('qr')} />}
       {dialog === 'review' && <ManualReview candleId={id} onClose={close} />}
       {dialog === 'qr' && (
         <Modal open onClose={close} title={`QR · ${id}`}>
