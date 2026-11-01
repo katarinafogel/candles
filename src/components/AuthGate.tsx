@@ -41,6 +41,16 @@ function Shell({ children }: { children: ReactNode }) {
 
 function Login() {
   const [busy, setBusy] = useState(false)
+  const [withPassword, setWithPassword] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+
+  async function signIn() {
+    setBusy(true)
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+    if (error) notify('Не удалось войти', 'error', error.message)
+    setBusy(false)
+  }
 
   async function google() {
     setBusy(true)
@@ -60,6 +70,30 @@ function Login() {
         <Text fontSize="xs" color="fg.subtle" textAlign="center">
           Аккаунт создаётся при первом входе
         </Text>
+        {withPassword ? (
+          <Stack
+            as="form"
+            gap="3"
+            onSubmit={(e) => {
+              e.preventDefault()
+              void signIn()
+            }}
+          >
+            <Field label="Почта">
+              <Input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </Field>
+            <Field label="Пароль">
+              <Input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            </Field>
+            <Button type="submit" variant="outline" loading={busy} disabled={!email.trim() || !password}>
+              Войти
+            </Button>
+          </Stack>
+        ) : (
+          <Button size="xs" variant="ghost" onClick={() => setWithPassword(true)}>
+            Войти по паролю
+          </Button>
+        )}
       </Stack>
     </Shell>
   )

@@ -1,10 +1,10 @@
 import { Box, Button, Flex, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
-import { LuArrowRight, LuDroplets, LuFlaskConical, LuMoon, LuPlus, LuTriangleAlert } from 'react-icons/lu'
+import { LuArrowRight, LuDroplets, LuFlaskConical, LuMoon, LuPlus, LuTrash2, LuTriangleAlert } from 'react-icons/lu'
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { DefectDialog, HolderStepDialog } from '../components/StepDialogs'
 import { ArcanaCard, arcanaButton } from '../components/ArcanaCard'
-import { Check, Empty, LeafMark, PageHeader, Select } from '../components/ui'
+import { Check, confirmAction, Empty, LeafMark, notify, PageHeader, Select } from '../components/ui'
 import { daysBetween, fmtDate } from '../lib/calc'
 import { holderNextTitle, holderStageLabel, moldPurposeLabel, holderStageOrder, holderStageShort } from '../lib/labels'
 import { byId } from '../lib/selectors'
@@ -67,6 +67,7 @@ function VarnishLeaves({ items, size = 18, onFinish }: { items: Holder[]; size?:
 
 export default function Holders() {
   const d = useData()
+  const dispatch = useAppDispatch()
   const nav = useNavigate()
   const [sp, setSp] = useSearchParams()
   const stage = (sp.get('stage') ?? '') as HolderStage | ''
@@ -94,6 +95,15 @@ export default function Holders() {
   const canNext = selected.length > 0 && sameStage && !!selStage
   const layering = selected.length > 1 && sameStage && (selStage === 'varnishIn' || selStage === 'varnishOut')
   const allWicked = selected.length > 0 && selected.every((i) => d.holders[i].stage === 'wicked' && d.holders[i].candleId)
+  const removeSelected = () => {
+    const candles = selected.filter((i) => d.holders[i].candleId).length
+    const withCandles = candles ? ` Вместе с ними удалятся их свечи и отзывы: ${candles}.` : ''
+    if (!confirmAction(`Удалить изделия (${selected.length})?${withCandles}`)) return
+    const date = new Date().toISOString()
+    for (const id of selected) dispatch(actions.deleteItem({ kind: 'holder', id, date }))
+    notify('Удалено')
+    setSel([])
+  }
   const pour = (ids: string[]) => nav(`/pour/new?ids=${ids.map((i) => d.holders[i].candleId).join(',')}`)
 
   return (
@@ -237,9 +247,15 @@ export default function Holders() {
                 {canNext ? holderNextTitle(d.holders[selected[0]]) ?? 'Дальше' : 'Разные этапы'} · {selected.length}
               </Button>
             )}
-            <Button variant="outline" colorPalette="red" onClick={() => setDialog('defect')}>
-              <LuTriangleAlert /> Брак
-            </Button>
+            {selected.every((i) => d.holders[i].stage === 'defect') ? (
+              <Button variant="outline" colorPalette="red" onClick={removeSelected}>
+                <LuTrash2 /> Удалить · {selected.length}
+              </Button>
+            ) : (
+              <Button variant="outline" colorPalette="red" onClick={() => setDialog('defect')}>
+                <LuTriangleAlert /> Брак
+              </Button>
+            )}
             {witch && (
               <Button variant="outline" gridColumn="span 2" onClick={() => setToGrimoire(true)}>
                 <LuMoon /> В гримуар · {selected.length}

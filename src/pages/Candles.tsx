@@ -1,10 +1,10 @@
 import { Box, Button, Flex, HStack, Input, SimpleGrid, Stack, Text, Wrap } from '@chakra-ui/react'
 import { useState } from 'react'
-import { LuDroplets, LuGift, LuPlus, LuPrinter, LuSparkles, LuCheck, LuTriangleAlert, LuMoon } from 'react-icons/lu'
+import { LuDroplets, LuGift, LuPlus, LuPrinter, LuSparkles, LuCheck, LuTrash2, LuTriangleAlert, LuMoon } from 'react-icons/lu'
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { DecorateDialog, DefectDialog } from '../components/StepDialogs'
 import { ArcanaCard } from '../components/ArcanaCard'
-import { Check, Empty, Field, IdBadge, Modal, notify, NumInput, PageHeader, Select, TextInput, Chips } from '../components/ui'
+import { Check, confirmAction, Empty, Field, IdBadge, Modal, notify, NumInput, PageHeader, Select, TextInput, Chips } from '../components/ui'
 import { fmt } from '../lib/calc'
 import { nowLocal, toIso } from '../lib/dates'
 import { candleStageLabel, candleStageOrder, wickSchemeLabel } from '../lib/labels'
@@ -127,6 +127,7 @@ type Sort = 'id' | 'rating' | 'soot'
 
 export default function Candles() {
   const d = useData()
+  const dispatch = useAppDispatch()
   const nav = useNavigate()
   const [sp, setSp] = useSearchParams()
   const stage = (sp.get('stage') ?? '') as CandleStage | ''
@@ -170,6 +171,15 @@ export default function Candles() {
     setSel([])
   }
   useFollowStage(`${stage}:${JSON.stringify(f)}`, stage, filtered, setStage)
+  const removeSelected = () => {
+    const holders = selected.filter((i) => d.candles[i].holderId).length
+    const withHolders = holders ? ` Вместе с ними удалятся их подсвечники: ${holders}.` : ''
+    if (!confirmAction(`Удалить свечи (${selected.length}) и их отзывы?${withHolders} QR перестанет работать.`)) return
+    const date = new Date().toISOString()
+    for (const id of selected) dispatch(actions.deleteItem({ kind: 'candle', id, date }))
+    notify('Удалено')
+    setSel([])
+  }
 
   return (
     <>
@@ -318,9 +328,15 @@ export default function Candles() {
             <Button size="sm" variant="outline" onClick={() => nav(`/print?ids=${selected.join(',')}`)}>
               <LuPrinter /> QR-лист
             </Button>
-            <Button size="sm" variant="outline" colorPalette="red" onClick={() => setDialog('defect')}>
-              <LuTriangleAlert /> Брак
-            </Button>
+            {allIn('defect') ? (
+              <Button size="sm" variant="outline" colorPalette="red" onClick={removeSelected}>
+                <LuTrash2 /> Удалить · {selected.length}
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline" colorPalette="red" onClick={() => setDialog('defect')}>
+                <LuTriangleAlert /> Брак
+              </Button>
+            )}
             {witch && (
               <Button size="sm" variant="outline" onClick={() => setToGrimoire(true)}>
                 <LuMoon /> В гримуар
@@ -341,7 +357,16 @@ export default function Candles() {
       )}
       {dialog === 'decor' && <DecorateDialog ids={selected} onClose={close} />}
       {dialog === 'ready' && <ReadyDialog ids={selected} onClose={close} />}
-      {dialog === 'give' && <GiveDialog ids={selected} onClose={close} onDone={() => nav(`/print?ids=${selected.join(',')}`)} />}
+      {dialog === 'give' && (
+        <GiveDialog
+          ids={selected}
+          onClose={close}
+          onDone={() => {
+            window.open(`${location.pathname}#/print?ids=${selected.join(',')}`, '_blank')
+            close()
+          }}
+        />
+      )}
       {dialog === 'defect' && <DefectDialog kind="candle" ids={selected} onClose={close} />}
       {dialog === 'molded' && <MoldedCandleDialog onClose={() => setDialog(null)} />}
     </>

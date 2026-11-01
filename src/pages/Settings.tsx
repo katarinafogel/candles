@@ -2,12 +2,13 @@ import { Box, Button, Flex, HStack, Input, SimpleGrid, Stack, Table, Text } from
 import { useRef, useState } from 'react'
 import { LuDownload, LuFileUp, LuLogOut, LuUpload } from 'react-icons/lu'
 import { RolesAdmin } from '../components/RolesAdmin'
-import { Field, Modal, notify, NumInput, PageHeader, Row, Section, Select, TextInput } from '../components/ui'
+import { confirmAction, Field, Modal, notify, NumInput, PageHeader, Row, Section, Select, TextInput } from '../components/ui'
+import { testAccountEmail } from '../lib/config'
 import { downloadBackup, readBackup, type BackupSummary } from '../lib/backup'
 import { fmtDateTime } from '../lib/calc'
 import { publicBase } from '../lib/config'
 import { supabase } from '../lib/supabase'
-import { pendingCount, stopSync } from '../lib/sync'
+import { pendingCount, stopSync, resetTestAccount } from '../lib/sync'
 import {
   applyCandleRows,
   matchCandles,
@@ -375,6 +376,29 @@ export default function Settings() {
       {isAdmin && (
         <Section title="Роли мастеров">
           <RolesAdmin />
+        </Section>
+      )}
+
+      {email === testAccountEmail && (
+        <Section title="Тестовый аккаунт">
+          <Text fontSize="sm" color="fg.muted" mb="3">
+            Сотрёт из базы всё, что есть в этом аккаунте, включая удалённые свечи и подсвечники. Вход и адрес мастера останутся.
+          </Text>
+          <Button
+            variant="outline"
+            colorPalette="red"
+            onClick={async () => {
+              if (!confirmAction('Стереть все данные тестового аккаунта? Вернуть их будет нельзя.')) return
+              try {
+                await resetTestAccount()
+                notify('Тестовый аккаунт обнулён')
+              } catch (e) {
+                notify('Не удалось обнулить', 'error', (e as Error).message)
+              }
+            }}
+          >
+            Обнулить аккаунт
+          </Button>
         </Section>
       )}
 

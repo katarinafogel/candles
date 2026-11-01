@@ -13,6 +13,7 @@ import { localActions } from '../store/localSlice'
 import { diffGrimoire, grimoireCollections, isGrimoireRow, rowsToGrimoire, type GrimoireKind } from '../grimoire/rows'
 import type { GrimoireState } from '../grimoire/types'
 import type { DataState, Review } from '../types'
+import { testAccountEmail } from './config'
 import { migrate } from './migrate'
 import { supabase } from './supabase'
 
@@ -63,7 +64,7 @@ export const fromServer = <A extends UnknownAction>(a: A) => ({ ...a, meta: { fr
 // ---------- queue ----------
 
 interface StoreLike {
-  getState: () => { data: DataState; grimoire: GrimoireState; local: { ownerId?: string | null; roles?: string[] } }
+  getState: () => { data: DataState; grimoire: GrimoireState; local: { ownerId?: string | null; email?: string | null; roles?: string[] } }
   dispatch: (a: UnknownAction) => unknown
 }
 
@@ -274,6 +275,26 @@ export async function stopSync() {
   store.dispatch(fromServer(actions.replaceAll(initialData)))
   store.dispatch(fromServer(grimoireActions.replaceAll(initialGrimoire)))
   report({ error: undefined })
+}
+
+/** Erases everything the test account has, for real: unlike a deleted candle nothing stays. The profile stays, or it would have to sign up again. */
+export async function resetTestAccount() {
+  if (!store) return
+  const { ownerId, email } = store.getState().local
+  if (!ownerId || email !== testAccountEmail) throw new Error('Обнулить можно только тестовый аккаунт')
+  // What is waiting to be sent must not come back after the wipe.
+  pending.clear()
+  clearTimeout(flushTimer)
+  await flushing
+  await saveQueue()
+  report({})
+  for (const table of ['entities', 'reviews']) {
+    const { error } = await supabase.from(table).delete().eq('owner_id', ownerId)
+    if (error) throw new Error(error.message)
+  }
+  store.dispatch(fromServer(actions.replaceAll(initialData)))
+  store.dispatch(fromServer(grimoireActions.replaceAll(initialGrimoire)))
+  await load()
 }
 
 export const pendingCount = () => pending.size

@@ -29,7 +29,7 @@ export default function PrintQr() {
     <Box minH="100dvh" bg="white" color="black" p="6">
       <style>{'@media print { .no-print { display: none !important } @page { margin: 10mm } }'}</style>
       <HStack className="no-print" mb="6" gap="3" wrap="wrap" bg="#0b1512" p="3" borderRadius="l3" color="white">
-        <Button variant="ghost" colorPalette="gray" color="white" onClick={() => nav(-1)}>
+        <Button variant="ghost" colorPalette="gray" color="white" onClick={() => (window.history.length > 1 ? nav(-1) : window.close())}>
           ← Назад
         </Button>
         <Text fontSize="sm">Размер кода:</Text>

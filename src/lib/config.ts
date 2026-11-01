@@ -1,5 +1,8 @@
 import type { Settings } from '../types'
 
+/** The account for trying things out: only it can wipe itself clean. */
+export const testAccountEmail = 'ww@ww.ww'
+
 export function publicBase(s?: Settings) {
   const base = s?.publicUrl || `${location.origin}${location.pathname}`
   return base.replace(/[?#].*$/, '').replace(/\/?$/, '/')
