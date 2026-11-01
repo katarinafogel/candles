@@ -2,6 +2,7 @@ import { Box, Button, Flex, Stack, Text } from '@chakra-ui/react'
 import { LuChevronRight, LuDownload } from 'react-icons/lu'
 import { Link as RouterLink } from 'react-router-dom'
 import { moreItems } from '../components/Layout'
+import { SignOutRow } from '../components/SignOut'
 import { PageHeader } from '../components/ui'
 import { downloadBackup } from '../lib/backup'
 import { useAppDispatch, useData } from '../store'
@@ -33,6 +34,7 @@ export default function More() {
             </Flex>
           </RouterLink>
         ))}
+        <SignOutRow icon />
       </Stack>
       <Button
         w="100%"

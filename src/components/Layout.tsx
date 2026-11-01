@@ -3,6 +3,7 @@ import { useEffect, type ReactNode } from 'react'
 import { LuBox, LuEllipsis, LuFlame, LuHouse, LuLayers, LuLayoutGrid, LuMessageSquare, LuScrollText, LuSettings, LuSparkles, LuUsers, LuWarehouse } from 'react-icons/lu'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Eucalyptus, MoonPhases, MoonSlice, Sparkle } from './Magic'
+import { SignOutSideLink } from './SignOut'
 import { SyncBadge } from './SyncBadge'
 import { useAppDispatch, useAppSelector } from '../store'
 import { localActions } from '../store/localSlice'
@@ -134,6 +135,7 @@ export default function Layout() {
           {secondary.map((i) => (
             <SideLink key={i.to} item={i} badge={i.to === '/reviews' ? unread : undefined} />
           ))}
+          <SignOutSideLink />
         </Stack>
         <Flex justify="center" gap="3" mt="4" color="ember.300" opacity=".5">
           <Sparkle size={8} />

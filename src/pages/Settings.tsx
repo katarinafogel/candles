@@ -8,7 +8,7 @@ import { downloadBackup, readBackup, type BackupSummary } from '../lib/backup'
 import { fmtDateTime } from '../lib/calc'
 import { publicBase } from '../lib/config'
 import { supabase } from '../lib/supabase'
-import { pendingCount, stopSync, resetTestAccount } from '../lib/sync'
+import { signOut, resetTestAccount } from '../lib/sync'
 import {
   applyCandleRows,
   matchCandles,
@@ -360,12 +360,7 @@ export default function Settings() {
             <Button
               variant="outline"
               colorPalette="red"
-              onClick={async () => {
-                const n = pendingCount()
-                if (n && !window.confirm(`${n} изменений ещё не отправлены на сервер и пропадут. Всё равно выйти?`)) return
-                await stopSync()
-                await supabase.auth.signOut()
-              }}
+              onClick={() => void signOut()}
             >
               <LuLogOut /> Выйти
             </Button>

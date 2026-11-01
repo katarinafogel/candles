@@ -11,6 +11,7 @@ import { builtInPractices } from '../../grimoire/wheel'
 import { useAppDispatch, useAppSelector, useIsWitch } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 import { Eucalyptus, MoonPhases, MoonSlice, Sparkle } from '../Magic'
+import { SignOutSideLink } from '../SignOut'
 import { SyncBadge } from '../SyncBadge'
 import { FeedbackPrompt } from './Feedback'
 import { QuickAddButton } from './QuickAdd'
@@ -126,6 +127,7 @@ export default function GrimoireLayout() {
               )}
             </NavLink>
           ))}
+          <SignOutSideLink />
         </Stack>
         <Eucalyptus width={120} mx="auto" mt="10" opacity={0.45} />
       </Box>

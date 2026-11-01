@@ -5,6 +5,7 @@ import { Link as RouterLink } from 'react-router-dom'
 import { useState } from 'react'
 import { AgentKeys } from '../../components/grimoire/AgentKeys'
 import { PushSettings } from '../../components/grimoire/PushSettings'
+import { SignOutRow } from '../../components/SignOut'
 import { Check, Chips, confirmAction, Field, NumInput, PageHeader, Section, Stat, TextInput } from '../../components/ui'
 import { useBalance, useToday } from '../../grimoire/act'
 import { dayCoins } from '../../grimoire/coins'
@@ -96,6 +97,7 @@ export default function GrimoireMore() {
             </Flex>
           </RouterLink>
         ))}
+        <SignOutRow />
       </Stack>
 
       <Section title="Навь">

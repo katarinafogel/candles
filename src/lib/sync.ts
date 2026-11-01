@@ -277,6 +277,14 @@ export async function stopSync() {
   report({ error: undefined })
 }
 
+/** Leaves the account; warns first if changes haven't reached the server. */
+export async function signOut() {
+  const n = pending.size
+  if (n && !window.confirm(`${n} изменений ещё не отправлены на сервер и пропадут. Всё равно выйти?`)) return
+  await stopSync()
+  await supabase.auth.signOut()
+}
+
 /** Erases everything the test account has, for real: unlike a deleted candle nothing stays. The profile stays, or it would have to sign up again. */
 export async function resetTestAccount() {
   if (!store) return
@@ -296,8 +304,6 @@ export async function resetTestAccount() {
   store.dispatch(fromServer(grimoireActions.replaceAll(initialGrimoire)))
   await load()
 }
-
-export const pendingCount = () => pending.size
 
 export function initSync(s: StoreLike) {
   store = s
