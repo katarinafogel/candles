@@ -1,7 +1,7 @@
 // «Новое дело»: the card's fields with only the title required, the buttons pinned to the bottom.
 // «Ещё одно» adds and starts over in the same place, «Добавить» adds and closes.
 // Enter in the title or Cmd/Ctrl+Enter anywhere — «Добавить», Cmd/Ctrl+Shift+Enter — «Ещё одно».
-import { Button, Stack } from '@chakra-ui/react'
+import { Button, HStack, Stack } from '@chakra-ui/react'
 import { useRef, useState } from 'react'
 import { useToday } from '../../grimoire/act'
 import { defaultDraft, draftToFields, type NewTaskCtx, type TaskDraft } from '../../grimoire/newTask'
@@ -10,7 +10,7 @@ import { useAppDispatch } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 import { confirmAction, Modal, notify } from '../ui'
 import { usePlanGuard } from './PlanGuard'
-import { TaskFields } from './TaskFields'
+import { TaskFields, useFieldBlocks } from './TaskFields'
 
 /** `fields` go into every deed added here (a book's deeds carry its projectId); `onAdded` — after each one. */
 export function NewTaskDialog({
@@ -34,6 +34,8 @@ export function NewTaskDialog({
   const latest = useRef(draft)
   latest.current = draft
   const title = useRef<HTMLInputElement>(null)
+  const change = (p: Partial<Task>) => setDraft((x) => ({ ...x, ...p }))
+  const blocks = useFieldBlocks(draft, change)
   const [guard, guardDialog] = usePlanGuard()
   const empty = !draft.title.trim()
 
@@ -50,6 +52,7 @@ export function NewTaskDialog({
         if (!again) return onClose()
         notify(`Добавлено: ${f.title}`)
         setDraft(defaultDraft(ctx, today))
+        blocks.reset(defaultDraft(ctx, today))
         title.current?.focus()
       },
       { stars: f.stars },
@@ -70,14 +73,17 @@ export function NewTaskDialog({
       size="lg"
       initialFocusEl={() => title.current}
       footer={
-        <>
-          <Button variant="outline" flex={{ base: '1', md: 'initial' }} mr={{ md: 'auto' }} disabled={empty} onClick={() => add(true)}>
-            Ещё одно
-          </Button>
-          <Button flex={{ base: '1', md: 'initial' }} disabled={empty} onClick={() => add(false)}>
-            Добавить
-          </Button>
-        </>
+        <Stack gap="3" w="full">
+          {blocks.toolbar}
+          <HStack gap="2">
+            <Button variant="outline" flex={{ base: '1', md: 'initial' }} mr={{ md: 'auto' }} disabled={empty} onClick={() => add(true)}>
+              Ещё одно
+            </Button>
+            <Button flex={{ base: '1', md: 'initial' }} disabled={empty} onClick={() => add(false)}>
+              Добавить
+            </Button>
+          </HStack>
+        </Stack>
       }
     >
       {guardDialog}
@@ -91,7 +97,7 @@ export function NewTaskDialog({
           setTimeout(() => add(again))
         }}
       >
-        <TaskFields value={draft} onChange={(p) => setDraft((x) => ({ ...x, ...p }))} titleRef={title} onTitleEnter={() => add(false)} />
+        <TaskFields value={draft} onChange={change} shown={blocks.shown} titleRef={title} onTitleEnter={() => add(false)} />
       </Stack>
     </Modal>
   )

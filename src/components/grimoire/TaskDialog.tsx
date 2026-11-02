@@ -16,7 +16,7 @@ import { Chips, confirmAction, Field, Modal, TextArea, TextInput } from '../ui'
 import { WordChip } from './EmotionWheel'
 import { FrogIcon } from './Marks'
 import { usePlanGuard } from './PlanGuard'
-import { TaskFields } from './TaskFields'
+import { TaskFields, useFieldBlocks } from './TaskFields'
 import { WorkshopItems } from './WorkshopItems'
 import { NextStepOffer } from './FromWorkshop'
 import { useReorder } from './useReorder'
@@ -38,6 +38,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
   const [to, setTo] = useState<string>(addDays(today, 1))
   const [text, setText] = useState('')
   const set = (p: Partial<Task>) => setT((x) => ({ ...x, ...p }))
+  const blocks = useFieldBlocks(live, set, live.parentId ? ['project'] : [])
   const open = isOpenTask(live)
   const w = words(g.meta)
   const steps = stepsOf(g, live.id)
@@ -85,24 +86,27 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
         Назад
       </Button>
     ) : (
-      <>
-        <Button
-          variant="ghost"
-          colorPalette="red"
-          mr="auto"
-          onClick={() => {
-            if (confirmAction('Удалить дело насовсем?')) {
-              dispatch(A.deleteTask(live.id))
-              onClose()
-            }
-          }}
-        >
-          Удалить
-        </Button>
-        <Button onClick={save} disabled={!t.title.trim()}>
-          Сохранить
-        </Button>
-      </>
+      <Stack gap="3" w="full">
+        {blocks.toolbar}
+        <HStack gap="2">
+          <Button
+            variant="ghost"
+            colorPalette="red"
+            mr="auto"
+            onClick={() => {
+              if (confirmAction('Удалить дело насовсем?')) {
+                dispatch(A.deleteTask(live.id))
+                onClose()
+              }
+            }}
+          >
+            Удалить
+          </Button>
+          <Button onClick={save} disabled={!t.title.trim()}>
+            Сохранить
+          </Button>
+        </HStack>
+      </Stack>
     )
 
   return (
@@ -303,7 +307,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
             navigate(to)
           }} />
 
-          <TaskFields value={t} onChange={set} scar={open} />
+          <TaskFields value={t} onChange={set} scar={open} shown={blocks.shown} />
 
           {open && (
             <>
