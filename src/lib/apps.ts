@@ -8,7 +8,7 @@ import { useLocation } from 'react-router-dom'
 export type AppId = 'workshop' | 'grimoire'
 
 export const apps: Record<AppId, { name: string; short: string; start: string; manifest: string; touchIcon: string; icon: string }> = {
-  workshop: { name: 'Мастерская свечей', short: 'Свечи', start: '/', manifest: './manifest.webmanifest', touchIcon: './apple-touch-icon.png', icon: './icon.svg' },
+  workshop: { name: 'Гримуар', short: 'Свечи', start: '/', manifest: './manifest.webmanifest', touchIcon: './apple-touch-icon.png', icon: './icon.svg' },
   grimoire: { name: 'Гримуар дел', short: 'Гримуар', start: '/g', manifest: './manifest-grimoire.webmanifest', touchIcon: './apple-touch-icon-grimoire.png', icon: './icon-grimoire.svg' },
 }
 

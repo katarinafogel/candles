@@ -120,7 +120,7 @@ export default function Layout() {
         <Flex align="center" gap="3" mb="3" px="1">
           <MoonSlice size={38} />
           <Text fontFamily="heading" fontWeight="semibold" fontSize="2xl" lineHeight="1" color="ember.100">
-            Мастерская свечей
+            Гримуар
           </Text>
         </Flex>
         <MoonPhases size={12} gap="2.5" color="ember.200" px="2" mb="5" />
@@ -155,7 +155,7 @@ export default function Layout() {
             <Flex align="center" gap="2">
               <MoonSlice size={26} />
               <Text fontFamily="heading" fontWeight="semibold" fontSize="lg" color="ember.100">
-                Мастерская свечей
+                Гримуар
               </Text>
             </Flex>
             <SyncBadge />
