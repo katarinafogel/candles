@@ -2,7 +2,6 @@
 // the most used first, matching what is being typed.
 import { Box, HStack, Input, Stack } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
-import { LuX } from 'react-icons/lu'
 import { suggestTags, tagsByUse } from '../../grimoire/tags'
 import { useAppSelector } from '../../store'
 import { Tag } from './Marks'
@@ -22,15 +21,12 @@ export function TagInput({ value, onChange }: { value: string[]; onChange: (tags
   }
 
   return (
-    <Stack gap="2">
+    <Stack gap="2" w="full">
       {value.length > 0 && (
         <HStack gap="1.5" wrap="wrap">
           {value.map((t) => (
             <Box as="button" key={t} onClick={() => onChange(value.filter((x) => x !== t))} aria-label={`Убрать тег ${t}`} cursor="pointer" display="inline-flex" alignItems="center" gap="0.5">
               <Tag name={t} />
-              <Box color="fg.subtle" fontSize="xs">
-                <LuX />
-              </Box>
             </Box>
           ))}
         </HStack>

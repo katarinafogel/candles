@@ -48,6 +48,9 @@ export interface WorkshopLink {
   lost?: boolean
 }
 
+/** Difficulty, one to five stars. */
+export type Stars = 1 | 2 | 3 | 4 | 5
+
 export interface Task {
   id: string
   title: string
@@ -57,8 +60,10 @@ export interface Task {
   dueAt?: string
   /** The day it is chosen for. Empty means the task waits in the backlog. */
   doOn?: DayKey
+  /** The time on `doOn` to do it, HH:mm. */
+  doAt?: string
   slot?: TaskSlot
-  stars: 1 | 2 | 3
+  stars: Stars
   dread: 0 | 1 | 2 | 3
   want?: Want
   ownerKind?: TaskOwnerKind
@@ -133,7 +138,7 @@ export interface Habit {
   schedule: HabitSchedule
   /** check: done or not; count: a number with a goal (8 glasses, 20 pages). */
   mark: { kind: 'check' } | { kind: 'count'; goal: number; unit?: string }
-  stars: 1 | 2 | 3
+  stars: Stars
   dread: 0 | 1 | 2 | 3
   activeFrom?: DayKey
   activeTo?: DayKey
@@ -322,10 +327,10 @@ export interface GrimoireMeta {
 export interface Spell {
   id: string
   title: string
-  stars: 1 | 2 | 3
+  stars: Stars
   dread: 0 | 1 | 2 | 3
   tags: string[]
-  steps: { title: string; stars: 1 | 2 | 3; dread: 0 | 1 | 2 | 3 }[]
+  steps: { title: string; stars: Stars; dread: 0 | 1 | 2 | 3 }[]
   createdAt: ISODateTime
 }
 

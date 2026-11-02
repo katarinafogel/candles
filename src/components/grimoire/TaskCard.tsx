@@ -126,13 +126,14 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
             borderRadius="full"
             fontSize="2xs"
             lineHeight="1.2"
-            title="дедлайн"
+            title="сделать до"
             bg={`color-mix(in srgb, ${dueDay(t.dueAt)! <= today ? 'var(--star-on) 28%' : 'var(--card-fg) 14%'}, var(--card-solid))`}
           >
             <LuCalendarClock />
             <Deadline dueAt={t.dueAt} today={today} size="2xs" />
           </HStack>
         )}
+        {t.doAt && t.doOn && !done && <Text>в {t.doAt}</Text>}
         {eating && <Text color="var(--star-on)">съесть сегодня</Text>}
         {t.status === 'partial' && <Text lineClamp={1}>часть сделана{t.partialNote ? `: ${t.partialNote}` : ''}</Text>}
         {t.status === 'inProgress' && <Text>в работе</Text>}

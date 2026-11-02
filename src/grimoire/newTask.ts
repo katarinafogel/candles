@@ -25,7 +25,7 @@ export function defaultDraft(ctx: NewTaskCtx, today: DayKey): TaskDraft {
   }
 }
 
-const textKeys = ['note', 'whyText', 'enough', 'stopAt', 'ifStuck', 'rewardText', 'zone'] as const
+const textKeys = ['note', 'whyText', 'enough', 'stopAt', 'ifStuck', 'zone'] as const
 const listKeys = ['why', 'costs', 'personIds'] as const
 
 /** The draft as addTask fields: trimmed, without empty strings and lists; a planned deed gets «доп» by default. */
@@ -40,8 +40,10 @@ export function draftToFields(draft: TaskDraft): Partial<Task> & { title: string
   }
   if (!f.doOn) {
     delete f.doOn
+    delete f.doAt
     delete f.slot
   } else if (!f.slot) f.slot = 'extra'
+  if (!f.doAt) delete f.doAt
   if (!f.dueAt) delete f.dueAt
   if (f.estimateMin == null) delete f.estimateMin
   if (!f.evenInNav) delete f.evenInNav

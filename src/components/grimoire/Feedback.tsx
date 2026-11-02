@@ -127,13 +127,13 @@ export function FeedbackPrompt() {
                   как далось:
                 </Text>
               )}
-              <Button size="xs" variant="outline" onClick={() => save({ stars: clamp(task.stars - 1, 1, 3), dread: clamp(task.dread - 1, 0, 3) })}>
+              <Button size="xs" variant="outline" onClick={() => save({ stars: clamp(task.stars - 1, 1, 5), dread: clamp(task.dread - 1, 0, 3) })}>
                 легче, чем думала
               </Button>
               <Button size="xs" variant="outline" onClick={() => save({ stars: task.stars, dread: task.dread })}>
                 как думала
               </Button>
-              <Button size="xs" variant="outline" onClick={() => save({ stars: clamp(task.stars + 1, 1, 3), dread: clamp(task.dread + 1, 0, 3) })}>
+              <Button size="xs" variant="outline" onClick={() => save({ stars: clamp(task.stars + 1, 1, 5), dread: clamp(task.dread + 1, 0, 3) })}>
                 тяжелее
               </Button>
               <Button size="xs" variant="ghost" onClick={() => setDetail(true)}>

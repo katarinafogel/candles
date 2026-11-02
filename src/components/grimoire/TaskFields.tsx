@@ -1,14 +1,15 @@
 // The fields of a deed, from the title to the end of «подробнее»: shared by the card (editing) and
 // the «Новое дело» form, so a new field is added in one place.
-import { Button, HStack, Input, Stack } from '@chakra-ui/react'
-import type { Ref } from 'react'
-import { LuChevronDown, LuChevronUp } from 'react-icons/lu'
-import { useToday } from '../../grimoire/act'
-import { humanDay } from '../../grimoire/days'
+import { Button, HStack, IconButton, Input, Stack } from '@chakra-ui/react'
+import { nanoid } from '@reduxjs/toolkit'
+import { useState, type Ref } from 'react'
+import { LuChevronDown, LuChevronUp, LuPlus } from 'react-icons/lu'
 import { costOptions, ownerKindLabel, slotLabel, wantLabel, whyOptions } from '../../grimoire/labels'
 import type { TaskDraft } from '../../grimoire/newTask'
 import type { Task, TaskOwnerKind, TaskSlot, Want } from '../../grimoire/types'
-import { useAppSelector } from '../../store'
+import { useAppDispatch, useAppSelector } from '../../store'
+import { actions } from '../../store/dataSlice'
+import { grimoireActions as A } from '../../store/grimoireSlice'
 import { Check, Chips, Field, NumInput, Select, TextArea, TextInput } from '../ui'
 import { MarkPicker } from './Marks'
 import { ScarNote } from './ScarNote'
@@ -35,7 +36,7 @@ export function TaskFields({
   onTitleEnter?: () => void
   scar?: boolean
 }) {
-  const today = useToday()
+  const dispatch = useAppDispatch()
   const g = useAppSelector((s) => s.grimoire)
   const people = useAppSelector((s) => s.data.people)
   // Books to put the deed in: those being read, and the one it is in already, whatever its state.
@@ -60,22 +61,27 @@ export function TaskFields({
       <Field label="Сложность">
         <MarkPicker kind="stars" value={t.stars} onChange={(v) => set({ stars: v as Task['stars'] })} />
       </Field>
-      <Field label="Нехотение" helper={t.dread === 3 ? 'чудовище: в план само не полезет' : undefined}>
+      <Field label="Нехотение">
         <MarkPicker kind="dread" value={t.dread} onChange={(v) => set({ dread: v as Task['dread'] })} />
       </Field>
       <HStack gap="3" align="flex-start" wrap="wrap">
         <Field label="Тип" flex="1" minW="160px">
           <Chips value={t.type} onChange={(v) => set({ type: (v as Task['type']) ?? 'deed' })} options={[{ value: 'deed', label: 'дело' }, { value: 'joy', label: 'радость' }]} />
         </Field>
-        <Field label="Очерёдность" flex="2" minW="220px">
+        <Field label="Приоритет" flex="2" minW="220px">
           <Chips value={t.slot} onChange={(v) => set({ slot: v as TaskSlot | undefined })} options={Object.entries(slotLabel).map(([value, label]) => ({ value: value as TaskSlot, label }))} />
         </Field>
       </HStack>
       <HStack gap="3" wrap="wrap">
-        <Field label="Когда делать" flex="1" minW="150px" helper={t.doOn ? humanDay(t.doOn, today) : 'пусто — в бэклоге'}>
-          <Input type="date" value={t.doOn ?? ''} onChange={(e) => set({ doOn: e.target.value || undefined })} />
+        <Field label="Когда делать" flex="1" minW="150px">
+          <Input type="date" value={t.doOn ?? ''} onChange={(e) => set(e.target.value ? { doOn: e.target.value } : { doOn: undefined, doAt: undefined })} />
         </Field>
-        <Field label="Дедлайн" flex="1" minW="150px" helper="только реальный срок">
+        <Field label="Время" w="110px">
+          <Input type="time" value={t.doAt ?? ''} disabled={!t.doOn} onChange={(e) => set({ doAt: e.target.value || undefined })} />
+        </Field>
+      </HStack>
+      <HStack gap="3" wrap="wrap">
+        <Field label="Сделать до" flex="1" minW="150px">
           <Input type="date" value={t.dueAt?.slice(0, 10) ?? ''} onChange={(e) => set({ dueAt: e.target.value ? e.target.value + (t.dueAt?.slice(10) ?? '') : undefined })} />
         </Field>
         <Field label="Время" w="110px">
@@ -85,26 +91,44 @@ export function TaskFields({
       <Field label="Теги" helper="Enter или запятая добавляет, тап по тегу убирает">
         <TagInput value={t.tags} onChange={(tags) => set({ tags })} />
       </Field>
-      {!t.parentId && (books.length > 0 || t.projectId) && (
-        <Field label="Книга" helper="дело будет жить на её страницах">
-          <Select
-            value={t.projectId}
-            onChange={(v) => set({ projectId: v || undefined })}
-            placeholder="без книги"
-            options={books.map((p) => ({ value: p.id, label: `${p.sigil ?? '🌿'} ${p.title}` }))}
-          />
-        </Field>
-      )}
-      {Object.keys(people).length > 0 && (
-        <Field label="Люди">
-          <Stack gap="2">
-            <Chips multi value={t.personIds ?? []} onChange={(v) => set({ personIds: (v as string[]) ?? [] })} options={Object.values(people).map((p) => ({ value: p.id, label: p.name }))} />
-            {scar && <ScarNote personIds={t.personIds ?? []} />}
+      {!t.parentId && (
+        <Field label="Проект" helper="дело будет жить на страницах этой книги">
+          <Stack gap="2" w="full">
+            {books.length > 0 && (
+              <Select
+                value={t.projectId}
+                onChange={(v) => set({ projectId: v || undefined })}
+                placeholder="без проекта"
+                options={books.map((p) => ({ value: p.id, label: `${p.sigil ?? '🌿'} ${p.title}` }))}
+              />
+            )}
+            <AddByName
+              placeholder="новый проект"
+              onAdd={(title) => {
+                const id = nanoid()
+                dispatch(A.upsertProject({ project: { id, title, status: 'active' } }))
+                set({ projectId: id })
+              }}
+            />
           </Stack>
         </Field>
       )}
-      <Field label="Награда" helper="своя настоящая, покажется в момент выполнения">
-        <TextInput value={t.rewardText ?? ''} onChange={(v) => set({ rewardText: v || undefined })} placeholder="кофе на вынос" />
+      <Field label="Люди" helper="с кем связано дело">
+        <Stack gap="2" w="full">
+          {Object.keys(people).length > 0 && (
+            <Chips multi value={t.personIds ?? []} onChange={(v) => set({ personIds: (v as string[]) ?? [] })} options={Object.values(people).map((p) => ({ value: p.id, label: p.name }))} />
+          )}
+          <AddByName
+            placeholder="новый человек"
+            onAdd={(name) => {
+              const known = Object.values(people).find((p) => p.name.toLowerCase() === name.toLowerCase())
+              const id = known?.id ?? nanoid(8)
+              if (!known) dispatch(actions.upsertPerson({ id, name, contact: '', notes: '' }))
+              if (!(t.personIds ?? []).includes(id)) set({ personIds: [...(t.personIds ?? []), id] })
+            }}
+          />
+          {scar && <ScarNote personIds={t.personIds ?? []} />}
+        </Stack>
       </Field>
       <Field label="Заметка">
         <TextArea value={t.note ?? ''} onChange={(v) => set({ note: v || undefined })} />
@@ -187,5 +211,34 @@ export function TaskFields({
         </Stack>
       )}
     </>
+  )
+}
+
+/** A name typed and added with Enter or «+»: a new person or project right from the form. */
+function AddByName({ placeholder, onAdd }: { placeholder: string; onAdd: (name: string) => void }) {
+  const [name, setName] = useState('')
+  const add = () => {
+    if (!name.trim()) return
+    onAdd(name.trim())
+    setName('')
+  }
+  return (
+    <HStack gap="2" w="full">
+      <Input
+        size="sm"
+        value={name}
+        placeholder={placeholder}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey && name.trim()) {
+            e.preventDefault()
+            add()
+          }
+        }}
+      />
+      <IconButton size="sm" variant="outline" aria-label={placeholder} disabled={!name.trim()} onClick={add}>
+        <LuPlus />
+      </IconButton>
+    </HStack>
   )
 }

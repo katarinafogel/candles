@@ -32,7 +32,7 @@ export function StarMark({ filled = true, color, size = 14 }: { filled?: boolean
 export function Stars({ n, size = 12 }: { n: number; size?: number }) {
   return (
     // Cards of other colors set --star-on so the stars stay readable on them.
-    <HStack gap="0" color="var(--star-on, var(--chakra-colors-ember-300))" aria-label={`сложность ${n} из 3`}>
+    <HStack gap="0" color="var(--star-on, var(--chakra-colors-ember-300))" aria-label={`сложность ${n} из 5`}>
       {Array.from({ length: n }, (_, i) => (
         <Box key={i} display="inline-flex">
           {star(true, `${size}px`)}
@@ -57,9 +57,39 @@ export function Dread({ n, size = 12, calm }: { n: number; size?: number; calm?:
   )
 }
 
-/** Tap to choose 1–3 (stars) or 0–3 (dread, the weather icon over its label); the label says what the number means. */
+/** Difficulty as a scale of five stars: tapping the third sets 3. */
+function StarScale({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  return (
+    <HStack gap="0.5" role="radiogroup" aria-label="Сложность">
+      {[1, 2, 3, 4, 5].map((v) => {
+        const on = value >= v
+        return (
+          <Box
+            as="button"
+            key={v}
+            role="radio"
+            aria-checked={value === v}
+            aria-label={`сложность ${v} из 5`}
+            p="1"
+            lineHeight="0"
+            cursor="pointer"
+            color={on ? 'ember.300' : 'fg.subtle'}
+            filter={on ? 'drop-shadow(0 0 4px rgba(224,164,85,.45))' : undefined}
+            _hover={{ color: 'ember.200' }}
+            onClick={() => onChange(v)}
+          >
+            <StarMark filled={on} color="currentColor" size={24} />
+          </Box>
+        )
+      })}
+    </HStack>
+  )
+}
+
+/** Tap to choose 1–5 (stars, a scale) or 0–3 (dread, the weather icon over its label). */
 export function MarkPicker({ kind, value, onChange }: { kind: 'stars' | 'dread'; value: number; onChange: (v: number) => void }) {
-  const values = kind === 'stars' ? [1, 2, 3] : [0, 1, 2, 3]
+  if (kind === 'stars') return <StarScale value={value} onChange={onChange} />
+  const values = [0, 1, 2, 3]
   return (
     <HStack gap="1" wrap="wrap">
       {values.map((v) => {
@@ -76,16 +106,16 @@ export function MarkPicker({ kind, value, onChange }: { kind: 'stars' | 'dread';
             borderColor={on ? 'ember.500' : 'border'}
             bg={on ? 'ember.subtle' : 'transparent'}
             display="flex"
-            flexDirection={kind === 'dread' ? 'column' : 'row'}
+            flexDirection="column"
             alignItems="center"
-            gap={kind === 'dread' ? '0.5' : '1.5'}
+            gap="0.5"
             minH="9"
-            minW={kind === 'dread' ? '16' : undefined}
+            minW="16"
             aria-pressed={on}
           >
-            {kind === 'stars' ? <Stars n={v} size={14} /> : <Dread n={v} size={16} calm />}
+            <Dread n={v} size={16} calm />
             <Text fontSize="xs" color={on ? 'ember.100' : 'fg.muted'}>
-              {kind === 'stars' ? `${v}` : dreadLabel[v]}
+              {dreadLabel[v]}
             </Text>
           </Box>
         )
