@@ -14,21 +14,21 @@ import { Field, notify } from './ui'
 
 function Shell({ children }: { children: ReactNode }) {
   return (
-    <Center minH="100dvh" px="4" py="10">
+    <Center minH="100dvh" px="4" py="6">
       <Container maxW="400px" p="0">
-        <Flex direction="column" align="center" mb="8" gap="3" position="relative">
-          <Eucalyptus width={110} position="absolute" top="-70px" left="-30px" opacity={0.5} />
-          <Eucalyptus width={80} flip position="absolute" top="-60px" right="-10px" opacity={0.35} />
-          <MoonSlice size={72} />
-          <Heading size="4xl" fontWeight="semibold" color="ember.50">
+        <Flex direction="column" align="center" mb="5" gap="2" position="relative">
+          <Eucalyptus width={80} position="absolute" top="-50px" left="-20px" opacity={0.5} />
+          <Eucalyptus width={60} flip position="absolute" top="-44px" right="-6px" opacity={0.35} />
+          <MoonSlice size={48} />
+          <Heading size="3xl" fontWeight="semibold" color="ember.50">
             Гримуар
           </Heading>
-          <MoonPhases size={12} gap="2.5" color="ember.200" />
+          <MoonPhases size={10} gap="2" color="ember.200" />
           <Text color="fg.muted" fontSize="sm" textAlign="center">
             Открывая гримуар, представься
           </Text>
         </Flex>
-        <Box p="6" borderWidth="1px" borderColor="border" bg="bg.subtle" borderRadius="l3">
+        <Box p="4" borderWidth="1px" borderColor="border" bg="bg.subtle" borderRadius="l3">
           {children}
         </Box>
         <Text textAlign="center" mt="4" fontSize="xs">
