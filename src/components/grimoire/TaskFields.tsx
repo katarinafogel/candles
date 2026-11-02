@@ -1,12 +1,12 @@
-// The fields of a deed, from the title to the end of «подробнее»: shared by the card (editing) and
-// the «Новое дело» form, so a new field is added in one place.
+// The fields of a deed, all shown at once: shared by the card (editing) and the «Новое дело» form,
+// so a new field is added in one place.
 import { Button, HStack, IconButton, Input, Stack } from '@chakra-ui/react'
 import { nanoid } from '@reduxjs/toolkit'
 import { useState, type Ref } from 'react'
-import { LuChevronDown, LuChevronUp, LuPlus } from 'react-icons/lu'
+import { LuPlus, LuX } from 'react-icons/lu'
 import { costOptions, ownerKindLabel, slotLabel, wantLabel, whyOptions } from '../../grimoire/labels'
 import type { TaskDraft } from '../../grimoire/newTask'
-import type { Task, TaskOwnerKind, TaskSlot, Want } from '../../grimoire/types'
+import type { ChecklistItem, Task, TaskOwnerKind, TaskSlot, Want } from '../../grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { actions } from '../../store/dataSlice'
 import { grimoireActions as A } from '../../store/grimoireSlice'
@@ -15,23 +15,16 @@ import { MarkPicker } from './Marks'
 import { ScarNote } from './ScarNote'
 import { TagInput } from './TagInput'
 
-/**
- * `more` is kept outside: the card's «Уменьшить» opens it. `scar` shows the note about people
- * (the card hides it on closed deeds); `onTitleEnter` — Enter in the title.
- */
+/** `scar` shows the note about people (the card hides it on closed deeds); `onTitleEnter` — Enter in the title. */
 export function TaskFields({
   value: t,
   onChange: set,
-  more,
-  onMore,
   titleRef,
   onTitleEnter,
   scar = true,
 }: {
   value: TaskDraft
   onChange: (patch: Partial<Task>) => void
-  more: boolean
-  onMore: (more: boolean) => void
   titleRef?: Ref<HTMLInputElement>
   onTitleEnter?: () => void
   scar?: boolean
@@ -133,82 +126,57 @@ export function TaskFields({
       <Field label="Заметка">
         <TextArea value={t.note ?? ''} onChange={(v) => set({ note: v || undefined })} />
       </Field>
-
-      <Button variant="ghost" size="sm" alignSelf="flex-start" onClick={() => onMore(!more)}>
-        {more ? <LuChevronUp /> : <LuChevronDown />} Подробнее
-      </Button>
-      {more && (
-        <Stack gap="4">
-          <Field label="Хочу / надо" helper="отдельно от нехотения: можно хотеть и бояться">
-            <Chips value={t.want} onChange={(v) => set({ want: v as Want | undefined })} options={Object.entries(wantLabel).map(([value, label]) => ({ value: value as Want, label }))} />
-          </Field>
-          <Field label="Чья обязанность">
-            <Chips value={t.ownerKind} onChange={(v) => set({ ownerKind: v as TaskOwnerKind | undefined })} options={Object.entries(ownerKindLabel).map(([value, label]) => ({ value: value as TaskOwnerKind, label }))} />
-          </Field>
-          <Field label="Почему важно">
-            <Chips multi value={t.why ?? []} onChange={(v) => set({ why: (v as string[]) ?? [] })} options={whyOptions.map((x) => ({ value: x, label: x }))} />
-          </Field>
-          <TextInput value={t.whyText ?? ''} onChange={(v) => set({ whyText: v || undefined })} placeholder="своими словами" />
-          <Field label="Стоимость сил">
-            <Chips multi value={t.costs ?? []} onChange={(v) => set({ costs: (v as string[]) ?? [] })} options={costOptions.map((x) => ({ value: x, label: x }))} />
-          </Field>
-          <Field label="Достаточный результат">
-            <TextInput value={t.enough ?? ''} onChange={(v) => set({ enough: v || undefined })} placeholder="одна полка разобрана" />
-          </Field>
-          <Field label="Где остановиться">
-            <TextInput value={t.stopAt ?? ''} onChange={(v) => set({ stopAt: v || undefined })} placeholder="остальные не трогать" />
-          </Field>
-          <Field label="Если упрусь">
-            <TextInput value={t.ifStuck ?? ''} onChange={(v) => set({ ifStuck: v || undefined })} />
-          </Field>
-          <HStack gap="3" align="flex-start" wrap="wrap">
-            <Field label="Подготовка" helper="по пункту на строку" flex="1" minW="200px">
-              <TextArea value={(t.prep ?? []).join('\n')} onChange={(v) => set({ prep: v ? v.split('\n') : undefined })} placeholder="достать принадлежности" />
-            </Field>
-            <Field label="Завершение" helper="по пункту на строку" flex="1" minW="200px">
-              <TextArea value={(t.wrapUp ?? []).join('\n')} onChange={(v) => set({ wrapUp: v ? v.split('\n') : undefined })} placeholder="вынести мусор" />
-            </Field>
-          </HStack>
-          <HStack gap="3" wrap="wrap">
-            <Field label="Оценка времени" helper="всегда примерно" flex="1" minW="150px">
-              <NumInput value={t.estimateMin} onChange={(v) => set({ estimateMin: v })} suffix="мин" />
-            </Field>
-          </HStack>
-          <Check checked={!!t.evenInNav} onChange={(v) => set({ evenInNav: v || undefined })}>
-            Напоминать даже в нави
-          </Check>
-          <Field label="Повтор" helper="для бытовых дел без трекера: сделала — дело вернётся само">
-            <Chips
-              value={t.repeat?.kind}
-              onChange={(v) =>
-                set({
-                  repeat:
-                    v === 'daily' ? { kind: 'daily' } : v === 'weekdays' ? { kind: 'weekdays', days: [1] } : v === 'everyN' ? { kind: 'everyN', n: 7 } : v === 'monthly' ? { kind: 'monthly' } : undefined,
-                })
-              }
-              options={[
-                { value: 'daily', label: 'каждый день' },
-                { value: 'weekdays', label: 'дни недели' },
-                { value: 'everyN', label: 'раз в N дней' },
-                { value: 'monthly', label: 'каждый месяц' },
-              ]}
-            />
-          </Field>
-          {t.repeat?.kind === 'weekdays' && (
-            <Chips
-              multi
-              value={t.repeat.days.map(String)}
-              onChange={(v) => set({ repeat: { kind: 'weekdays', days: ((v as string[]) ?? []).map(Number).sort() } })}
-              options={['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'].map((n, i) => ({ value: String(i + 1), label: n }))}
-            />
-          )}
-          {t.repeat?.kind === 'everyN' && (
-            <NumInput value={t.repeat.n} onChange={(v) => set({ repeat: { kind: 'everyN', n: Math.max(1, Math.round(v ?? 1)) } })} suffix="дней" width="160px" />
-          )}
-          <Field label="Зона дома">
-            <Chips value={t.zone} onChange={(v) => set({ zone: v as string | undefined })} options={g.meta.zones.map((z) => ({ value: z, label: z }))} />
-          </Field>
-        </Stack>
+      <Field label="Чеклист" helper="подзадачи: отмечай по ходу дела">
+        <Checklist items={t.checklist ?? []} onChange={(checklist) => set({ checklist: checklist.length ? checklist : undefined })} />
+      </Field>
+      <Field label="Хочу / надо" helper="отдельно от нехотения: можно хотеть и бояться">
+        <Chips value={t.want} onChange={(v) => set({ want: v as Want | undefined })} options={Object.entries(wantLabel).map(([value, label]) => ({ value: value as Want, label }))} />
+      </Field>
+      <Field label="Чья обязанность">
+        <Chips value={t.ownerKind} onChange={(v) => set({ ownerKind: v as TaskOwnerKind | undefined })} options={Object.entries(ownerKindLabel).map(([value, label]) => ({ value: value as TaskOwnerKind, label }))} />
+      </Field>
+      <Field label="Почему важно">
+        <Chips multi value={t.why ?? []} onChange={(v) => set({ why: (v as string[]) ?? [] })} options={whyOptions.map((x) => ({ value: x, label: x }))} />
+      </Field>
+      <TextInput value={t.whyText ?? ''} onChange={(v) => set({ whyText: v || undefined })} placeholder="своими словами" />
+      <Field label="Стоимость сил">
+        <Chips multi value={t.costs ?? []} onChange={(v) => set({ costs: (v as string[]) ?? [] })} options={costOptions.map((x) => ({ value: x, label: x }))} />
+      </Field>
+      <HStack gap="3" wrap="wrap">
+        <Field label="Оценка времени" helper="всегда примерно" flex="1" minW="150px">
+          <NumInput value={t.estimateMin} onChange={(v) => set({ estimateMin: v })} suffix="мин" />
+        </Field>
+      </HStack>
+      <Check checked={!!t.evenInNav} onChange={(v) => set({ evenInNav: v || undefined })}>
+        Напоминать даже в нави
+      </Check>
+      <Field label="Повтор">
+        <Chips
+          value={t.repeat?.kind}
+          onChange={(v) =>
+            set({
+              repeat:
+                v === 'daily' ? { kind: 'daily' } : v === 'weekdays' ? { kind: 'weekdays', days: [1] } : v === 'everyN' ? { kind: 'everyN', n: 7 } : v === 'monthly' ? { kind: 'monthly' } : undefined,
+            })
+          }
+          options={[
+            { value: 'daily', label: 'каждый день' },
+            { value: 'weekdays', label: 'дни недели' },
+            { value: 'everyN', label: 'раз в N дней' },
+            { value: 'monthly', label: 'каждый месяц' },
+          ]}
+        />
+      </Field>
+      {t.repeat?.kind === 'weekdays' && (
+        <Chips
+          multi
+          value={t.repeat.days.map(String)}
+          onChange={(v) => set({ repeat: { kind: 'weekdays', days: ((v as string[]) ?? []).map(Number).sort() } })}
+          options={['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'].map((n, i) => ({ value: String(i + 1), label: n }))}
+        />
+      )}
+      {t.repeat?.kind === 'everyN' && (
+        <NumInput value={t.repeat.n} onChange={(v) => set({ repeat: { kind: 'everyN', n: Math.max(1, Math.round(v ?? 1)) } })} suffix="дней" width="160px" />
       )}
     </>
   )
@@ -240,5 +208,31 @@ function AddByName({ placeholder, onAdd }: { placeholder: string; onAdd: (name: 
         <LuPlus />
       </IconButton>
     </HStack>
+  )
+}
+
+/** Subtasks of one deed: tick, rename, remove; a new one is typed below and added with Enter. */
+function Checklist({ items, onChange }: { items: ChecklistItem[]; onChange: (items: ChecklistItem[]) => void }) {
+  const put = (id: string, patch: Partial<ChecklistItem>) => onChange(items.map((x) => (x.id === id ? { ...x, ...patch } : x)))
+  return (
+    <Stack gap="1.5" w="full">
+      {items.map((x) => (
+        <HStack key={x.id} gap="2">
+          <Check checked={!!x.done} onChange={(done) => put(x.id, { done: done || undefined })} />
+          <Input
+            size="sm"
+            variant="flushed"
+            value={x.text}
+            onChange={(e) => put(x.id, { text: e.target.value })}
+            textDecoration={x.done ? 'line-through' : undefined}
+            color={x.done ? 'fg.subtle' : 'fg'}
+          />
+          <IconButton size="xs" variant="ghost" aria-label="Убрать подзадачу" onClick={() => onChange(items.filter((y) => y.id !== x.id))}>
+            <LuX />
+          </IconButton>
+        </HStack>
+      ))}
+      <AddByName placeholder="новая подзадача" onAdd={(text) => onChange([...items, { id: nanoid(6), text }])} />
+    </Stack>
   )
 }

@@ -25,7 +25,7 @@ export function defaultDraft(ctx: NewTaskCtx, today: DayKey): TaskDraft {
   }
 }
 
-const textKeys = ['note', 'whyText', 'enough', 'stopAt', 'ifStuck', 'zone'] as const
+const textKeys = ['note', 'whyText'] as const
 const listKeys = ['why', 'costs', 'personIds'] as const
 
 /** The draft as addTask fields: trimmed, without empty strings and lists; a planned deed gets «доп» by default. */
@@ -33,11 +33,9 @@ export function draftToFields(draft: TaskDraft): Partial<Task> & { title: string
   const f: Partial<Task> & { title: string } = { ...draft, title: draft.title.trim().slice(0, 200) }
   for (const k of textKeys) if (!f[k]?.trim()) delete f[k]
   for (const k of listKeys) if (!f[k]?.length) delete f[k]
-  for (const k of ['prep', 'wrapUp'] as const) {
-    const items = (f[k] ?? []).map((x) => x.trim()).filter(Boolean)
-    if (items.length) f[k] = items
-    else delete f[k]
-  }
+  const checklist = (f.checklist ?? []).map((x) => ({ ...x, text: x.text.trim() })).filter((x) => x.text)
+  if (checklist.length) f.checklist = checklist
+  else delete f.checklist
   if (!f.doOn) {
     delete f.doOn
     delete f.doAt

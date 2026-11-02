@@ -33,7 +33,6 @@ export function NewTaskDialog({
   // The latest draft for the keyboard shortcuts: a tag typed into TagInput lands in the same keypress.
   const latest = useRef(draft)
   latest.current = draft
-  const [more, setMore] = useState(false)
   const title = useRef<HTMLInputElement>(null)
   const [guard, guardDialog] = usePlanGuard()
   const empty = !draft.title.trim()
@@ -51,7 +50,6 @@ export function NewTaskDialog({
         if (!again) return onClose()
         notify(`Добавлено: ${f.title}`)
         setDraft(defaultDraft(ctx, today))
-        setMore(false)
         title.current?.focus()
       },
       { stars: f.stars },
@@ -93,7 +91,7 @@ export function NewTaskDialog({
           setTimeout(() => add(again))
         }}
       >
-        <TaskFields value={draft} onChange={(p) => setDraft((x) => ({ ...x, ...p }))} more={more} onMore={setMore} titleRef={title} onTitleEnter={() => add(false)} />
+        <TaskFields value={draft} onChange={(p) => setDraft((x) => ({ ...x, ...p }))} titleRef={title} onTitleEnter={() => add(false)} />
       </Stack>
     </Modal>
   )

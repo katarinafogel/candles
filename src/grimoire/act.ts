@@ -47,8 +47,7 @@ export function complete(t: Task, partial = false) {
   }
   const { tone } = g().meta
   const { title, word } = praise(partial ? 'partial' : isFrog(t) ? 'frog' : t.type === 'joy' ? 'joy' : 'done', tone.praise)
-  const parts = [word, t.enough && !partial ? `достаточно: ${t.enough}` : ''].filter(Boolean)
-  withUndo(title, () => store.dispatch(A.completeTask({ id: t.id, partial })), parts.join(' · ') || undefined)
+  withUndo(title, () => store.dispatch(A.completeTask({ id: t.id, partial })), word || undefined)
   // Habits are ticked daily; asking each time would be noise.
   if (!partial && !t.habitId) feedback.ask(t.id, 'done')
   // A frog gets a slightly brighter answer: a double buzz instead of one.

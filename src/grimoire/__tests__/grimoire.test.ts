@@ -681,8 +681,8 @@ describe('new deed form', async () => {
     expect(defaultDraft({ fields: { projectId: 'p1', source: 'project' }, title: 'окна' }, MON)).toMatchObject({ title: 'окна', projectId: 'p1', source: 'project' })
   })
   it('trims, drops empty fields and keeps symbols as plain text', () => {
-    const f = draftToFields({ title: '  купить #2 **☠ ', stars: 2, dread: 1, tags: [], type: 'deed', note: ' ', why: [], personIds: [], prep: ['достать', ' ', ''], wrapUp: [''] })
-    expect(f).toEqual({ title: 'купить #2 **☠', stars: 2, dread: 1, tags: [], type: 'deed', prep: ['достать'] })
+    const f = draftToFields({ title: '  купить #2 **☠ ', stars: 2, dread: 1, tags: [], type: 'deed', note: ' ', why: [], personIds: [], checklist: [{ id: 'a', text: ' купить ' }, { id: 'b', text: ' ' }] })
+    expect(f).toEqual({ title: 'купить #2 **☠', stars: 2, dread: 1, tags: [], type: 'deed', checklist: [{ id: 'a', text: 'купить' }] })
   })
   it('puts a planned deed into «доп» and takes the slot off a backlog one', () => {
     const base: import('../newTask').TaskDraft = { title: 'x', stars: 1, dread: 0, tags: [], type: 'deed' }

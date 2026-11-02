@@ -111,6 +111,7 @@ export function MarkPicker({ kind, value, onChange }: { kind: 'stars' | 'dread';
             gap="0.5"
             minH="9"
             minW="16"
+            cursor="pointer"
             aria-pressed={on}
           >
             <Dread n={v} size={16} calm />

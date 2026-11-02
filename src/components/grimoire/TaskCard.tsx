@@ -134,6 +134,11 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
           </HStack>
         )}
         {t.doAt && t.doOn && !done && <Text>в {t.doAt}</Text>}
+        {!!t.checklist?.length && (
+          <Text>
+            ☑ {t.checklist.filter((x) => x.done).length}/{t.checklist.length}
+          </Text>
+        )}
         {eating && <Text color="var(--star-on)">съесть сегодня</Text>}
         {t.status === 'partial' && <Text lineClamp={1}>часть сделана{t.partialNote ? `: ${t.partialNote}` : ''}</Text>}
         {t.status === 'inProgress' && <Text>в работе</Text>}

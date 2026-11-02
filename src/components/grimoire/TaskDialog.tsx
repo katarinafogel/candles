@@ -33,7 +33,6 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
   const live = g.tasks[task.id] ?? task
   const navigate = useNavigate()
   const [t, setT] = useState<Task>(live)
-  const [more, setMore] = useState(false)
   const [mode, setMode] = useState<Mode>('edit')
   const [reason, setReason] = useState<PostponeReason | undefined>()
   const [to, setTo] = useState<string>(addDays(today, 1))
@@ -261,9 +260,6 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
                 <Button size="xs" onClick={() => setMode('split')}>
                   Расколоть
                 </Button>
-                <Button size="xs" variant="outline" onClick={() => setMore(true)}>
-                  Уменьшить
-                </Button>
                 <Button size="xs" variant="outline" onClick={() => setMode('spawn')}>
                   Изменить способ
                 </Button>
@@ -307,7 +303,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
             navigate(to)
           }} />
 
-          <TaskFields value={t} onChange={set} more={more} onMore={setMore} scar={open} />
+          <TaskFields value={t} onChange={set} scar={open} />
 
           {open && (
             <>

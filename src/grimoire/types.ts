@@ -50,10 +50,18 @@ export interface WorkshopLink {
 /** Difficulty, one to three stars. */
 export type Stars = 1 | 2 | 3
 
+/** A subtask in a deed's checklist. */
+export interface ChecklistItem {
+  id: string
+  text: string
+  done?: boolean
+}
+
 export interface Task {
   id: string
   title: string
   note?: string
+  checklist?: ChecklistItem[]
   type: TaskType
   /** A real deadline only: date, optionally with time (YYYY-MM-DD or YYYY-MM-DDTHH:mm). */
   dueAt?: string
