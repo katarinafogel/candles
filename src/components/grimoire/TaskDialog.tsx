@@ -307,7 +307,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
             navigate(to)
           }} />
 
-          <TaskFields value={t} onChange={set} scar={open} shown={blocks.shown} />
+          <TaskFields value={t} onChange={set} scar={open} shown={blocks.shown} opened={blocks.opened} />
 
           {open && (
             <>

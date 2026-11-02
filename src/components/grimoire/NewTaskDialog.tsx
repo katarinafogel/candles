@@ -97,7 +97,7 @@ export function NewTaskDialog({
           setTimeout(() => add(again))
         }}
       >
-        <TaskFields value={draft} onChange={change} shown={blocks.shown} titleRef={title} onTitleEnter={() => add(false)} />
+        <TaskFields value={draft} onChange={change} shown={blocks.shown} opened={blocks.opened} titleRef={title} onTitleEnter={() => add(false)} />
       </Stack>
     </Modal>
   )

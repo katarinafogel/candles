@@ -1,8 +1,9 @@
-// The fields of a deed, all shown at once: shared by the card (editing) and the «Новое дело» form,
-// so a new field is added in one place.
-import { HStack, IconButton, Input, Stack } from '@chakra-ui/react'
+// The fields of a deed: shared by the card (editing) and the «Новое дело» form, so a new field is added
+// in one place. The main ones are always there; the optional blocks (project, people, note, time,
+// deadline, repeat, checklist) are turned on by round buttons and go to the end in the order chosen.
+import { Badge, Box, HStack, IconButton, Input, Stack, Text } from '@chakra-ui/react'
 import { nanoid } from '@reduxjs/toolkit'
-import { useState, type ReactNode, type Ref } from 'react'
+import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react'
 import { LuBookOpen, LuCalendarClock, LuClockAlert, LuListChecks, LuPen, LuPlus, LuRepeat, LuUser, LuX } from 'react-icons/lu'
 import { costOptions, ownerKindLabel, slotLabel, wantLabel, whyOptions } from '../../grimoire/labels'
 import type { TaskDraft } from '../../grimoire/newTask'
@@ -10,9 +11,10 @@ import type { ChecklistItem, Task, TaskOwnerKind, TaskSlot, Want } from '../../g
 import { useAppDispatch, useAppSelector } from '../../store'
 import { actions } from '../../store/dataSlice'
 import { grimoireActions as A } from '../../store/grimoireSlice'
-import { Check, Chips, Field, NumInput, Select, TextArea, TextInput } from '../ui'
+import { Check, Chips, Field, NumInput, TextArea, TextInput } from '../ui'
 import { MarkPicker } from './Marks'
 import { ScarNote } from './ScarNote'
+import { SuggestInput } from './SuggestInput'
 import { TagInput } from './TagInput'
 
 /** Optional blocks of the form, each behind its round button above the footer. */
@@ -48,12 +50,18 @@ function filled(t: Partial<Task>): Set<Block> {
  */
 export function useFieldBlocks(t: Partial<Task>, set: (patch: Partial<Task>) => void, hide: Block[] = []) {
   const [shown, setShown] = useState(() => filled(t))
+  // The block just turned on: the form scrolls to it once it is drawn.
+  const [opened, setOpened] = useState<Block>()
   const toggle = (b: (typeof blocks)[number]) => {
     const next = new Set(shown)
     if (next.has(b.key)) {
       next.delete(b.key)
       set(b.clear)
-    } else next.add(b.key)
+      setOpened(undefined)
+    } else {
+      next.add(b.key)
+      setOpened(b.key)
+    }
     setShown(next)
   }
   const toolbar = (
@@ -63,26 +71,57 @@ export function useFieldBlocks(t: Partial<Task>, set: (patch: Partial<Task>) => 
         .map((b) => {
           const on = shown.has(b.key)
           return (
-            <IconButton
-              key={b.key}
-              aria-label={b.label}
-              title={b.label}
-              aria-pressed={on}
-              borderRadius="full"
-              size="sm"
-              variant="outline"
-              borderColor={on ? 'ember.500' : 'border'}
-              bg={on ? 'ember.subtle' : 'transparent'}
-              color={on ? 'ember.200' : 'fg.muted'}
-              onClick={() => toggle(b)}
-            >
-              {b.icon}
-            </IconButton>
+            <Box key={b.key} position="relative" className="group">
+              <IconButton
+                aria-label={b.label}
+                aria-pressed={on}
+                borderRadius="full"
+                size="sm"
+                variant="outline"
+                borderColor={on ? 'ember.500' : 'border'}
+                bg={on ? 'ember.subtle' : 'transparent'}
+                color={on ? 'ember.200' : 'fg.muted'}
+                onClick={() => toggle(b)}
+              >
+                {b.icon}
+              </IconButton>
+              {/* What the button means, over it while the pointer is there. */}
+              <Text
+                role="tooltip"
+                position="absolute"
+                bottom="calc(100% + 6px)"
+                left="50%"
+                transform="translateX(-50%)"
+                whiteSpace="nowrap"
+                fontSize="xs"
+                px="2"
+                py="1"
+                borderRadius="l2"
+                bg="bg.emphasized"
+                color="fg"
+                shadow="md"
+                pointerEvents="none"
+                opacity="0"
+                transition="opacity .12s"
+                zIndex="1"
+                css={{ '.group:hover > &': { opacity: 1 } }}
+              >
+                {b.label}
+              </Text>
+            </Box>
           )
         })}
     </HStack>
   )
-  return { shown, toolbar, reset: (d: Partial<Task>) => setShown(filled(d)) }
+  return {
+    shown,
+    opened,
+    toolbar,
+    reset: (d: Partial<Task>) => {
+      setShown(filled(d))
+      setOpened(undefined)
+    },
+  }
 }
 
 /** `scar` shows the note about people (the card hides it on closed deeds); `onTitleEnter` — Enter in the title. */
@@ -93,6 +132,7 @@ export function TaskFields({
   onTitleEnter,
   scar = true,
   shown,
+  opened,
 }: {
   value: TaskDraft
   onChange: (patch: Partial<Task>) => void
@@ -101,12 +141,132 @@ export function TaskFields({
   scar?: boolean
   /** The optional blocks turned on by the round buttons (`useFieldBlocks`). */
   shown: Set<Block>
+  /** The block just turned on, to scroll to. */
+  opened?: Block
 }) {
   const dispatch = useAppDispatch()
   const g = useAppSelector((s) => s.grimoire)
   const people = useAppSelector((s) => s.data.people)
   // Books to put the deed in: those being read, and the one it is in already, whatever its state.
   const books = Object.values(g.projects).filter((p) => p.status === 'active' || p.status === 'paused' || p.id === t.projectId)
+  const project = t.projectId ? g.projects[t.projectId] : undefined
+  const end = useRef<Record<string, HTMLDivElement | null>>({})
+  useEffect(() => {
+    if (opened) end.current[opened]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [opened])
+
+  const view: Record<Block, ReactNode> = {
+    time: (
+      <HStack gap="3" wrap="wrap">
+        <Field label="Когда делать" flex="1" minW="150px">
+          <Input type="date" value={t.doOn ?? ''} onChange={(e) => set(e.target.value ? { doOn: e.target.value } : { doOn: undefined, doAt: undefined })} />
+        </Field>
+        <Field label="Время" w="110px">
+          <Input type="time" value={t.doAt ?? ''} disabled={!t.doOn} onChange={(e) => set({ doAt: e.target.value || undefined })} />
+        </Field>
+      </HStack>
+    ),
+    due: (
+      <HStack gap="3" wrap="wrap">
+        <Field label="Сделать до" flex="1" minW="150px">
+          <Input type="date" value={t.dueAt?.slice(0, 10) ?? ''} onChange={(e) => set({ dueAt: e.target.value ? e.target.value + (t.dueAt?.slice(10) ?? '') : undefined })} />
+        </Field>
+        <Field label="Время" w="110px">
+          <Input type="time" value={t.dueAt?.slice(11, 16) ?? ''} disabled={!t.dueAt} onChange={(e) => set({ dueAt: t.dueAt!.slice(0, 10) + (e.target.value ? `T${e.target.value}` : '') })} />
+        </Field>
+      </HStack>
+    ),
+    project: t.parentId ? null : (
+      <Field label="Проект" helper={project ? 'у дела один проект: тап по нему убирает' : 'начни писать название — подскажу, Enter создаст новый'}>
+        {project ? (
+          <Chip onRemove={() => set({ projectId: undefined })}>
+            {project.sigil ?? '🌿'} {project.title}
+          </Chip>
+        ) : (
+          <SuggestInput
+            placeholder="проект"
+            options={books.map((p) => ({ value: p.id, label: p.title, view: <Text fontSize="sm">{p.sigil ?? '🌿'} {p.title}</Text> }))}
+            onPick={(id) => set({ projectId: id })}
+            onCreate={(title) => {
+              const id = nanoid()
+              dispatch(A.upsertProject({ project: { id, title, status: 'active' } }))
+              set({ projectId: id })
+            }}
+          />
+        )}
+      </Field>
+    ),
+    people: (
+      <Field label="Люди" helper="с кем связано дело; начни писать имя — подскажу, Enter добавит нового">
+        <Stack gap="2" w="full">
+          {(t.personIds ?? []).length > 0 && (
+            <HStack gap="1.5" wrap="wrap">
+              {(t.personIds ?? []).map((id) => (
+                <Chip key={id} onRemove={() => set({ personIds: (t.personIds ?? []).filter((x) => x !== id) })}>
+                  {people[id]?.name ?? '?'}
+                </Chip>
+              ))}
+            </HStack>
+          )}
+          <SuggestInput
+            placeholder="имя"
+            options={Object.values(people)
+              .filter((p) => !(t.personIds ?? []).includes(p.id))
+              .map((p) => ({ value: p.id, label: p.name }))}
+            onPick={(id) => set({ personIds: [...(t.personIds ?? []), id] })}
+            onCreate={(name) => {
+              const id = nanoid(8)
+              dispatch(actions.upsertPerson({ id, name, contact: '', notes: '' }))
+              set({ personIds: [...(t.personIds ?? []), id] })
+            }}
+          />
+          {scar && <ScarNote personIds={t.personIds ?? []} />}
+        </Stack>
+      </Field>
+    ),
+    note: (
+      <Field label="Заметка">
+        <TextArea value={t.note ?? ''} onChange={(v) => set({ note: v || undefined })} />
+      </Field>
+    ),
+    checklist: (
+      <Field label="Чеклист" helper={`подзадачи: отмечай по ходу дела, не больше ${maxChecklist}`}>
+        <Checklist items={t.checklist ?? []} onChange={(checklist) => set({ checklist: checklist.length ? checklist : undefined })} />
+      </Field>
+    ),
+    repeat: (
+      <Stack gap="2">
+        <Field label="Повтор">
+          <Chips
+            value={t.repeat?.kind}
+            onChange={(v) =>
+              set({
+                repeat:
+                  v === 'daily' ? { kind: 'daily' } : v === 'weekdays' ? { kind: 'weekdays', days: [1] } : v === 'everyN' ? { kind: 'everyN', n: 7 } : v === 'monthly' ? { kind: 'monthly' } : undefined,
+              })
+            }
+            options={[
+              { value: 'daily', label: 'каждый день' },
+              { value: 'weekdays', label: 'дни недели' },
+              { value: 'everyN', label: 'раз в N дней' },
+              { value: 'monthly', label: 'каждый месяц' },
+            ]}
+          />
+        </Field>
+        {t.repeat?.kind === 'weekdays' && (
+          <Chips
+            multi
+            value={t.repeat.days.map(String)}
+            onChange={(v) => set({ repeat: { kind: 'weekdays', days: ((v as string[]) ?? []).map(Number).sort() } })}
+            options={['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'].map((n, i) => ({ value: String(i + 1), label: n }))}
+          />
+        )}
+        {t.repeat?.kind === 'everyN' && (
+          <NumInput value={t.repeat.n} onChange={(v) => set({ repeat: { kind: 'everyN', n: Math.max(1, Math.round(v ?? 1)) } })} suffix="дней" width="160px" />
+        )}
+      </Stack>
+    ),
+  }
 
   return (
     <>
@@ -138,82 +298,9 @@ export function TaskFields({
           <Chips value={t.slot} onChange={(v) => set({ slot: v as TaskSlot | undefined })} options={Object.entries(slotLabel).map(([value, label]) => ({ value: value as TaskSlot, label }))} />
         </Field>
       </HStack>
-      {shown.has('time') && (
-        <HStack gap="3" wrap="wrap">
-          <Field label="Когда делать" flex="1" minW="150px">
-            <Input type="date" value={t.doOn ?? ''} onChange={(e) => set(e.target.value ? { doOn: e.target.value } : { doOn: undefined, doAt: undefined })} />
-          </Field>
-          <Field label="Время" w="110px">
-            <Input type="time" value={t.doAt ?? ''} disabled={!t.doOn} onChange={(e) => set({ doAt: e.target.value || undefined })} />
-          </Field>
-        </HStack>
-      )}
-      {shown.has('due') && (
-        <HStack gap="3" wrap="wrap">
-          <Field label="Сделать до" flex="1" minW="150px">
-            <Input type="date" value={t.dueAt?.slice(0, 10) ?? ''} onChange={(e) => set({ dueAt: e.target.value ? e.target.value + (t.dueAt?.slice(10) ?? '') : undefined })} />
-          </Field>
-          <Field label="Время" w="110px">
-            <Input type="time" value={t.dueAt?.slice(11, 16) ?? ''} disabled={!t.dueAt} onChange={(e) => set({ dueAt: t.dueAt!.slice(0, 10) + (e.target.value ? `T${e.target.value}` : '') })} />
-          </Field>
-        </HStack>
-      )}
       <Field label="Теги" helper="Enter или запятая добавляет, тап по тегу убирает">
         <TagInput value={t.tags} onChange={(tags) => set({ tags })} />
       </Field>
-      {shown.has('project') && !t.parentId && (
-        <Field label="Проект" helper="у дела один проект: оно будет жить на страницах этой книги">
-          <Stack gap="2" w="full">
-            {books.length > 0 && (
-              <Select
-                value={t.projectId}
-                onChange={(v) => set({ projectId: v || undefined })}
-                placeholder="без проекта"
-                options={books.map((p) => ({ value: p.id, label: `${p.sigil ?? '🌿'} ${p.title}` }))}
-              />
-            )}
-            {!t.projectId && (
-              <AddByName
-                placeholder="новый проект"
-                onAdd={(title) => {
-                  const id = nanoid()
-                  dispatch(A.upsertProject({ project: { id, title, status: 'active' } }))
-                  set({ projectId: id })
-                }}
-              />
-            )}
-          </Stack>
-        </Field>
-      )}
-      {shown.has('people') && (
-        <Field label="Люди" helper="с кем связано дело">
-          <Stack gap="2" w="full">
-            {Object.keys(people).length > 0 && (
-              <Chips multi value={t.personIds ?? []} onChange={(v) => set({ personIds: (v as string[]) ?? [] })} options={Object.values(people).map((p) => ({ value: p.id, label: p.name }))} />
-            )}
-            <AddByName
-              placeholder="новый человек"
-              onAdd={(name) => {
-                const known = Object.values(people).find((p) => p.name.toLowerCase() === name.toLowerCase())
-                const id = known?.id ?? nanoid(8)
-                if (!known) dispatch(actions.upsertPerson({ id, name, contact: '', notes: '' }))
-                if (!(t.personIds ?? []).includes(id)) set({ personIds: [...(t.personIds ?? []), id] })
-              }}
-            />
-            {scar && <ScarNote personIds={t.personIds ?? []} />}
-          </Stack>
-        </Field>
-      )}
-      {shown.has('note') && (
-        <Field label="Заметка">
-          <TextArea value={t.note ?? ''} onChange={(v) => set({ note: v || undefined })} />
-        </Field>
-      )}
-      {shown.has('checklist') && (
-        <Field label="Чеклист" helper="подзадачи: отмечай по ходу дела">
-          <Checklist items={t.checklist ?? []} onChange={(checklist) => set({ checklist: checklist.length ? checklist : undefined })} />
-        </Field>
-      )}
       <Field label="Хочу / надо" helper="отдельно от нехотения: можно хотеть и бояться">
         <Chips value={t.want} onChange={(v) => set({ want: v as Want | undefined })} options={Object.entries(wantLabel).map(([value, label]) => ({ value: value as Want, label }))} />
       </Field>
@@ -227,50 +314,22 @@ export function TaskFields({
       <Field label="Стоимость сил">
         <Chips multi value={t.costs ?? []} onChange={(v) => set({ costs: (v as string[]) ?? [] })} options={costOptions.map((x) => ({ value: x, label: x }))} />
       </Field>
-      <HStack gap="3" wrap="wrap">
-        <Field label="Оценка времени" helper="всегда примерно" flex="1" minW="150px">
-          <NumInput value={t.estimateMin} onChange={(v) => set({ estimateMin: v })} suffix="мин" />
-        </Field>
-      </HStack>
       <Check checked={!!t.evenInNav} onChange={(v) => set({ evenInNav: v || undefined })}>
         Напоминать даже в нави
       </Check>
-      {shown.has('repeat') && (
-        <Field label="Повтор">
-          <Chips
-            value={t.repeat?.kind}
-            onChange={(v) =>
-              set({
-                repeat:
-                  v === 'daily' ? { kind: 'daily' } : v === 'weekdays' ? { kind: 'weekdays', days: [1] } : v === 'everyN' ? { kind: 'everyN', n: 7 } : v === 'monthly' ? { kind: 'monthly' } : undefined,
-              })
-            }
-            options={[
-              { value: 'daily', label: 'каждый день' },
-              { value: 'weekdays', label: 'дни недели' },
-              { value: 'everyN', label: 'раз в N дней' },
-              { value: 'monthly', label: 'каждый месяц' },
-            ]}
-          />
-        </Field>
-      )}
-      {shown.has('repeat') && t.repeat?.kind === 'weekdays' && (
-        <Chips
-          multi
-          value={t.repeat.days.map(String)}
-          onChange={(v) => set({ repeat: { kind: 'weekdays', days: ((v as string[]) ?? []).map(Number).sort() } })}
-          options={['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'].map((n, i) => ({ value: String(i + 1), label: n }))}
-        />
-      )}
-      {shown.has('repeat') && t.repeat?.kind === 'everyN' && (
-        <NumInput value={t.repeat.n} onChange={(v) => set({ repeat: { kind: 'everyN', n: Math.max(1, Math.round(v ?? 1)) } })} suffix="дней" width="160px" />
+      {[...shown].map((k) =>
+        view[k] ? (
+          <Box key={k} ref={(el: HTMLDivElement | null) => (end.current[k] = el)} scrollMarginBlock="4">
+            {view[k]}
+          </Box>
+        ) : null,
       )}
     </>
   )
 }
 
-/** A name typed and added with Enter or «+»: a new person or project right from the form. */
-function AddByName({ placeholder, onAdd }: { placeholder: string; onAdd: (name: string) => void }) {
+/** A line typed and added with Enter or «+» (a subtask). */
+function AddByName({ placeholder, onAdd, disabled }: { placeholder: string; onAdd: (name: string) => void; disabled?: boolean }) {
   const [name, setName] = useState('')
   const add = () => {
     if (!name.trim()) return
@@ -283,6 +342,7 @@ function AddByName({ placeholder, onAdd }: { placeholder: string; onAdd: (name: 
         size="sm"
         value={name}
         placeholder={placeholder}
+        disabled={disabled}
         onChange={(e) => setName(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey && name.trim()) {
@@ -298,11 +358,26 @@ function AddByName({ placeholder, onAdd }: { placeholder: string; onAdd: (name: 
   )
 }
 
-/** Subtasks of one deed: tick, rename, remove; a new one is typed below and added with Enter. */
+const maxChecklist = 20
+
+/** A chosen person or project: tap to take it off. */
+function Chip({ children, onRemove }: { children: ReactNode; onRemove: () => void }) {
+  return (
+    <Box as="button" onClick={onRemove} cursor="pointer" display="inline-flex" aria-label="Убрать">
+      <Badge variant="subtle" colorPalette="ember" borderRadius="full" px="2.5" py="1" fontSize="sm" fontWeight="normal">
+        {children}
+      </Badge>
+    </Box>
+  )
+}
+
+/** Subtasks of one deed: the field for a new one stays on top, new ones go to the end of the list. */
 function Checklist({ items, onChange }: { items: ChecklistItem[]; onChange: (items: ChecklistItem[]) => void }) {
   const put = (id: string, patch: Partial<ChecklistItem>) => onChange(items.map((x) => (x.id === id ? { ...x, ...patch } : x)))
+  const full = items.length >= maxChecklist
   return (
     <Stack gap="1.5" w="full">
+      <AddByName placeholder={full ? `уже ${maxChecklist} подзадач` : 'новая подзадача'} disabled={full} onAdd={(text) => !full && onChange([...items, { id: nanoid(6), text }])} />
       {items.map((x) => (
         <HStack key={x.id} gap="2">
           <Check checked={!!x.done} onChange={(done) => put(x.id, { done: done || undefined })} />
@@ -319,7 +394,6 @@ function Checklist({ items, onChange }: { items: ChecklistItem[]; onChange: (ite
           </IconButton>
         </HStack>
       ))}
-      <AddByName placeholder="новая подзадача" onAdd={(text) => onChange([...items, { id: nanoid(6), text }])} />
     </Stack>
   )
 }

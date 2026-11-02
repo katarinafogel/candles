@@ -398,7 +398,7 @@ describe('wheel of the year', () => {
 })
 
 describe('tags', async () => {
-  const { tagPalette, tagPalettes, tagsByUse, suggestTags } = await import('../tags')
+  const { tagPalette, tagPalettes, tagsByUse } = await import('../tags')
   const g = {
     tasks: {
       a: { tags: ['дом', 'бумаги'] },
@@ -413,11 +413,8 @@ describe('tags', async () => {
     expect(tagPalette('дом', { дом: 'purple' })).toBe('purple')
     expect(tagPalette('дом', { дом: 'nonsense' })).toBe(tagPalette('дом', {}))
   })
-  it('suggests the most used tags first, without those already on the deed', () => {
+  it('puts the most used tags first', () => {
     expect(tagsByUse(g)).toEqual(['дом', 'бумаги', 'дача'])
-    expect(suggestTags('д', tagsByUse(g))).toEqual(['дом', 'дача'])
-    expect(suggestTags('#Д', tagsByUse(g), ['дом'])).toEqual(['дача'])
-    expect(suggestTags('дом', tagsByUse(g))).toEqual([])
   })
 })
 
@@ -689,5 +686,15 @@ describe('new deed form', async () => {
     expect(draftToFields({ ...base, doOn: MON })).toMatchObject({ doOn: MON, slot: 'extra' })
     expect(draftToFields({ ...base, doOn: MON, slot: 'main' }).slot).toBe('main')
     expect(draftToFields({ ...base, slot: 'main' })).not.toHaveProperty('slot')
+  })
+})
+
+describe('suggestions while typing', async () => {
+  const { matchSuggestions } = await import('../../components/grimoire/SuggestInput')
+  const opts = ['Аня', 'Мама', 'Ксюша Ан'].map((x) => ({ value: x, label: x }))
+  it('shows nothing until something is typed, the start of a name first', () => {
+    expect(matchSuggestions('', opts)).toEqual([])
+    expect(matchSuggestions('ан', opts).map((x) => x.value)).toEqual(['Аня', 'Ксюша Ан'])
+    expect(matchSuggestions('зз', opts)).toEqual([])
   })
 })

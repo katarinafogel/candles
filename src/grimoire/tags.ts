@@ -21,9 +21,3 @@ export function tagsByUse(g: Pick<GrimoireState, 'tasks'>): string[] {
   for (const t of Object.values(g.tasks)) for (const x of t.tags) n.set(x, (n.get(x) ?? 0) + 1)
   return [...n.keys()].sort((a, b) => n.get(b)! - n.get(a)! || a.localeCompare(b, 'ru'))
 }
-
-/** Tags starting with what is typed (case-insensitive), without those already on the deed. */
-export function suggestTags(prefix: string, tags: string[], exclude: string[] = [], limit = 6): string[] {
-  const q = prefix.replace(/^#/, '').toLowerCase()
-  return tags.filter((t) => t.startsWith(q) && t !== q && !exclude.includes(t)).slice(0, limit)
-}
