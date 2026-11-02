@@ -340,7 +340,15 @@ export function Modal({
       <Portal>
         <Dialog.Backdrop />
         <Dialog.Positioner>
-          <Dialog.Content bg="bg.panel" borderWidth="1px" borderColor="border" backgroundImage="radial-gradient(30rem 16rem at 100% 0%, rgba(224,164,85,.07), transparent 70%)">
+          {/* Full screen on a phone: keep the title and the cross below the notch, the footer above the home bar. */}
+          <Dialog.Content
+            bg="bg.panel"
+            borderWidth="1px"
+            borderColor="border"
+            backgroundImage="radial-gradient(30rem 16rem at 100% 0%, rgba(224,164,85,.07), transparent 70%)"
+            pt={{ mdDown: 'env(safe-area-inset-top)' }}
+            pb={{ mdDown: 'env(safe-area-inset-bottom)' }}
+          >
             <Dialog.Header>
               <Dialog.Title fontFamily="heading" fontSize="2xl" fontWeight="semibold" color="ember.100">
                 {title}
@@ -349,7 +357,7 @@ export function Modal({
             <Dialog.Body>{children}</Dialog.Body>
             {footer && <Dialog.Footer>{footer}</Dialog.Footer>}
             <Dialog.CloseTrigger asChild>
-              <CloseButton size="sm" />
+              <CloseButton size="sm" top={{ mdDown: 'calc(8px + env(safe-area-inset-top))' }} />
             </Dialog.CloseTrigger>
           </Dialog.Content>
         </Dialog.Positioner>
