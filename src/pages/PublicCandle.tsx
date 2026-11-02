@@ -315,7 +315,7 @@ export default function PublicCandle() {
   }
 
   return (
-    <Container maxW="560px" px="4" py="8" pb="16">
+    <Container maxW="560px" px="4" pt="calc(32px + env(safe-area-inset-top))" pb="16">
       <Stack gap="8">
         <Box textAlign="center">
           <Flex justify="center" mb="3">

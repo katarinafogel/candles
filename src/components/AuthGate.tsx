@@ -14,7 +14,7 @@ import { Field, notify } from './ui'
 
 function Shell({ children }: { children: ReactNode }) {
   return (
-    <Center minH="100dvh" px="4" py="6">
+    <Center minH="100dvh" px="4" py="6" pt="calc(24px + env(safe-area-inset-top))">
       <Container maxW="400px" p="0">
         <Flex direction="column" align="center" mb="5" gap="2" position="relative">
           <Eucalyptus width={80} position="absolute" top="-50px" left="-20px" opacity={0.5} />

@@ -150,7 +150,7 @@ export default function Layout() {
           <Eucalyptus width={110} transform="scaleY(-1) rotate(-14deg)" mr="-40px" />
           <Eucalyptus width={170} transform="scaleY(-1) rotate(8deg)" />
         </Box>
-        <Box position="relative" zIndex="1" px={{ base: '4', md: '8' }} pt={{ base: '4', md: '8' }} pb={{ base: '24', md: '10' }} maxW="1200px">
+        <Box position="relative" zIndex="1" px={{ base: '4', md: '8' }} pt={{ base: 'calc(16px + env(safe-area-inset-top))', md: '8' }} pb={{ base: '24', md: '10' }} maxW="1200px">
           <Flex display={{ base: 'flex', md: 'none' }} justify="space-between" align="center" mb="3" gap="3">
             <Flex align="center" gap="2">
               <MoonSlice size={26} />

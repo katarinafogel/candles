@@ -65,7 +65,7 @@ export default function Apps() {
   const witch = useIsWitch()
   const list: AppId[] = witch ? ['workshop', 'grimoire'] : ['workshop']
   return (
-    <Container maxW="760px" px="4" py={{ base: '6', md: '10' }}>
+    <Container maxW="760px" px="4" py={{ base: '6', md: '10' }} pt={{ base: 'calc(24px + env(safe-area-inset-top))', md: '10' }}>
       <Stack gap="6">
         <Flex align="center" gap="3">
           <Button variant="ghost" size="sm" px="2" aria-label="Назад" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}>
