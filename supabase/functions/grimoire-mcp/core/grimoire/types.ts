@@ -79,8 +79,6 @@ export interface Task {
   /** A workshop deed (the quest over the items): its step, and whether the next one was offered. */
   workshopStep?: { kind: WorkshopKind; step: string; offered?: boolean }
   rewardText?: string
-  /** Coins added by hand on top of the formula. */
-  extraCoins?: number
   repeat?: Repeat
   /** The first task of a repeating series; every repeat points to it. */
   repeatOf?: string
@@ -99,8 +97,6 @@ export interface Task {
   createdAt: ISODateTime
   doneAt?: ISODateTime
   doneDay?: DayKey
-  /** «Начать понемногу» was paid for this task already. */
-  startedPaid?: boolean
   postponements: Postponement[]
   /** Postponements that count for the frog: later days and morning-review returns; reset when unfrogged. */
   postponeCount?: number
@@ -142,10 +138,6 @@ export interface Habit {
   activeFrom?: DayKey
   activeTo?: DayKey
   status: 'active' | 'paused' | 'archived'
-  /** Extra shields bought with coins, on top of one free skip a week. */
-  shields: number
-  /** Streak milestones already paid, so a bonus is never paid twice. */
-  paidMilestones?: number[]
   jarId?: string
   /** «Отложить 1000 ₽»: what each tick puts into `jarId`. */
   jarAmount?: number
@@ -186,18 +178,6 @@ export interface WheelPractice {
   source?: string
   builtIn?: boolean
   hidden?: boolean
-}
-
-export interface CoinTx {
-  id: string
-  at: ISODateTime
-  day: DayKey
-  amount: number
-  reason: string
-  /** What the entry is for; `undo` entries reverse an earlier payment for the same ref. */
-  tag: 'done' | 'partial' | 'started' | 'complex' | 'project' | 'streak' | 'undo' | 'manual' | 'journal' | 'wish' | 'jar'
-  refKind?: 'task' | 'habit' | 'wish' | 'jar' | 'journal' | 'project' | 'manual'
-  refId?: string
 }
 
 /** Kept for the later stages; the MVP only stores and syncs them. */
@@ -264,8 +244,6 @@ export interface Jar {
   wishId?: string
   projectId?: string
   createdAt?: ISODateTime
-  /** 50 and 100 (%): the coins for filling half and all of it were paid once. */
-  paidMilestones?: number[]
 }
 
 export interface JarTx {
@@ -278,26 +256,12 @@ export interface JarTx {
   habitLogId?: string
 }
 
-export interface CoinRules {
-  base: number
-  dreadFactor: number
-  onTimeBonus: number
-  complexBonus: number
-  projectBonus: number
-  streakBonus: { days: number; coins: number }[]
-  startedCoins: number
-  wishBonus: number
-  /** A frog pays the formula times this, rounded up. */
-  frogFactor: number
-}
-
 export interface NavPeriod {
   from: ISODateTime
   to?: ISODateTime
 }
 
 export interface GrimoireMeta {
-  coins: CoinRules
   /** Hour (0–23) when «today» ends, for owls: 4 means the day lasts until 4:00. */
   dayBoundaryHour: number
   /** The owner's time zone (IANA), saved by the app, so the agent counts days the same way. */
@@ -331,7 +295,7 @@ export interface GrimoireMeta {
    * afternoon check, the evening (at `eveningAt`), deadlines and sabbats. An empty time is off.
    */
   notify: { morning: string; afternoon: string; evening: boolean; deadlines: boolean; sabbats: boolean }
-  /** How a done deed is answered: the praise in the toast and the spark that flies to the coins. */
+  /** How a done deed is answered: the praise in the toast and the buzz of the phone. */
   tone: { praise: 'quiet' | 'normal' | 'warm'; motion: 'off' | 'soft' | 'bright' }
   /** Sabbat cards: the text is the witch's own tradition, so it is editable. */
   sabbatNotes: Partial<Record<Sabbat, string>>
@@ -422,7 +386,6 @@ export interface GrimoireState {
   journal: Record<string, JournalEntry>
   jars: Record<string, Jar>
   jarTxs: Record<string, JarTx>
-  coinTxs: Record<string, CoinTx>
   personNotes: Record<string, PersonNotes>
   cycles: Record<string, CycleEntry>
   meta: GrimoireMeta

@@ -185,7 +185,7 @@ export default function ProjectBook() {
                   <Box color="#a0703a">
                     <Sparkle size={12} />
                   </Box>
-                  <Text fontSize="sm">Книга прочитана{project.doneAt ? ` ${humanDay(project.doneAt.slice(0, 10), today)}` : ''}. Бонус {g.meta.coins.projectBonus} уже в сокровищнице.</Text>
+                  <Text fontSize="sm">Книга прочитана{project.doneAt ? ` ${humanDay(project.doneAt.slice(0, 10), today)}` : ''}.</Text>
                 </HStack>
               ) : null}
               <Box>

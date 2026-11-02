@@ -11,9 +11,9 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const targets = ['grimoire-mcp', 'grimoire-push'].map((fn) => join(root, 'supabase/functions', fn, 'core'))
 const files = [
   'grimoire/agent.ts',
-  'grimoire/coins.ts',
   'grimoire/days.ts',
   'grimoire/emotions.ts',
+  'grimoire/frog.ts',
   'grimoire/habits.ts',
   'grimoire/notify.ts',
   'grimoire/parse.ts',

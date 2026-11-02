@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { LuChevronDown, LuChevronUp, LuGripVertical, LuLink, LuX } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
 import { cancel, complete, reopen, start, toBacklog, useToday, withUndo } from '../../grimoire/act'
-import { baseCoins, isFrog, taskCoins } from '../../grimoire/coins'
+import { isFrog } from '../../grimoire/frog'
 import { addDays, daysBetween, humanDay } from '../../grimoire/days'
 import {
   costOptions,
@@ -64,7 +64,6 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
     .filter((x) => x.id !== live.id && !x.habitId && isOpenTask(x) && !live.blockedBy?.includes(x.id) && !holds.some((h) => h.id === x.id))
     .sort((a, b) => (a.doOn ?? '9999').localeCompare(b.doOn ?? '9999') || a.title.localeCompare(b.title, 'ru'))
   const origin = live.spawnedFrom ? g.tasks[live.spawnedFrom] : undefined
-  const coins = taskCoins(t, today, g.meta.coins)
 
   // The frog fields and the «ждёт» links change through their own buttons while the card is open;
   // the form never writes them back.
@@ -107,7 +106,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
           colorPalette="red"
           mr="auto"
           onClick={() => {
-            if (confirmAction('Удалить дело насовсем? Монеты за него останутся в журнале.')) {
+            if (confirmAction('Удалить дело насовсем?')) {
               dispatch(A.deleteTask(live.id))
               onClose()
             }
@@ -144,7 +143,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
 
       {mode === 'partial' && (
         <Stack gap="4">
-          <Field label="Что именно сделано" helper="даёт половину монет">
+          <Field label="Что именно сделано">
             <TextInput value={text} onChange={setText} placeholder="посылка упакована, не отправлена" />
           </Field>
           <Button onClick={() => act(() => { dispatch(A.updateTask({ id: live.id, partialNote: text || undefined })); complete({ ...t, partialNote: text }, true) })}>
@@ -168,7 +167,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
       {mode === 'spawn' && (
         <Stack gap="4">
           <Text fontSize="sm" color="fg.muted">
-            В процессе выросло другое дело. «{live.title}» подождёт, пока хвост не закроется, а за каждое звено монеты начисляются отдельно.
+            В процессе выросло другое дело. «{live.title}» подождёт, пока хвост не закроется.
           </Text>
           <Field label="Что потянуло">
             <TextInput value={text} onChange={setText} placeholder="Узнать, какая нужна лампочка" />
@@ -226,16 +225,13 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
         <Stack gap="4">
           {open && (
             <Wrap gap="2">
-              <Button size="sm" onClick={(e) => {
-                const from = e.currentTarget
-                act(() => complete(t, false, from))
-              }}>
-                Сделано · +{coins.total}
+              <Button size="sm" onClick={() => act(() => complete(t))}>
+                Сделано
               </Button>
               <Button size="sm" variant="outline" onClick={() => setMode('partial')}>
                 Сделана часть
               </Button>
-              {live.status !== 'inProgress' && !live.startedPaid && (
+              {live.status !== 'inProgress' && (
                 <Button size="sm" variant="outline" onClick={() => act(() => start(live))}>
                   Начать понемногу
                 </Button>
@@ -297,7 +293,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
               <HStack gap="2" mb="2" color="green.300">
                 <FrogIcon size={18} />
                 <Text fontSize="sm" color="fg">
-                  Жаба: награда в {String(g.meta.coins.frogFactor).replace('.', ',')} раза больше.
+                  Это жаба.
                   {(live.postponeCount ?? 0) > 0 ? ` Откладывалась ${live.postponeCount} раз.` : ''}
                 </Text>
               </HStack>
@@ -331,12 +327,9 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
           <Field label="Сложность">
             <MarkPicker kind="stars" value={t.stars} onChange={(v) => set({ stars: v as Task['stars'] })} />
           </Field>
-          <Field label="Нехотение" helper={t.dread === 3 ? 'чудовище: награда больше, но в план само не полезет' : undefined}>
+          <Field label="Нехотение" helper={t.dread === 3 ? 'чудовище: в план само не полезет' : undefined}>
             <MarkPicker kind="dread" value={t.dread} onChange={(v) => set({ dread: v as Task['dread'] })} />
           </Field>
-          <Text fontSize="xs" color="fg.muted" mt="-2">
-            {baseCoins(t, g.meta.coins)} 🪙 за выполнение{coins.onTime ? ` + ${coins.onTime} в срок` : ''}
-          </Text>
           <HStack gap="3" align="flex-start" wrap="wrap">
             <Field label="Тип" flex="1" minW="160px">
               <Chips value={t.type} onChange={(v) => set({ type: (v as Task['type']) ?? 'deed' })} options={[{ value: 'deed', label: 'дело' }, { value: 'joy', label: 'радость' }]} />
@@ -422,9 +415,6 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
               <HStack gap="3" wrap="wrap">
                 <Field label="Оценка времени" helper="всегда примерно" flex="1" minW="150px">
                   <NumInput value={t.estimateMin} onChange={(v) => set({ estimateMin: v })} suffix="мин" />
-                </Field>
-                <Field label="Монеты сверху" flex="1" minW="150px">
-                  <NumInput value={t.extraCoins} onChange={(v) => set({ extraCoins: v })} />
                 </Field>
               </HStack>
               <Check checked={!!t.evenInNav} onChange={(v) => set({ evenInNav: v || undefined })}>

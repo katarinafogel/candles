@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { AgentError, agentTools, runTool } from '../agent'
-import { balance } from '../coins'
 import { dayKeyIn } from '../days'
 import { habitTaskId } from '../habits'
 import { diffGrimoire, rowsToGrimoire } from '../rows'
@@ -37,8 +36,8 @@ describe('agent tools', () => {
 
   it('adds a deed from a quick line and plans it', () => {
     let { state, result } = run(base, 'grimoire_add_task', { line: 'помыть окна **☠☠ #дом !пт' })
-    const t = (result as { task: { id: string; dueAt: string; stars: number; dread: number; coins: number } }).task
-    expect(t).toMatchObject({ dueAt: '2026-10-30', stars: 2, dread: 2, coins: 40 + 5 })
+    const t = (result as { task: { id: string; dueAt: string; stars: number; dread: number } }).task
+    expect(t).toMatchObject({ dueAt: '2026-10-30', stars: 2, dread: 2 })
     ;({ state } = run(state, 'grimoire_plan_task', { id: t.id, day: '2026-10-26', slot: 'main' }))
     const today = run(state, 'grimoire_today').result as { day: string; plan: { main: { id: string }[] } }
     expect(today.day).toBe('2026-10-26')
@@ -53,16 +52,13 @@ describe('agent tools', () => {
     expect(Object.keys(state.tasks)).toHaveLength(2)
   })
 
-  it('completes with coins by the same rules as the app and takes them back on reopen', () => {
+  it('completes by the same rules as the app and reopens', () => {
     let { state, result } = run(base, 'grimoire_add_task', { title: 'зуб', stars: 3, dread: 3, dueAt: '2026-10-27' })
     const id = (result as { task: { id: string } }).task.id
-    const done = run(state, 'grimoire_complete_task', { id })
-    // A monster is a frog: 75 · 1,5 rounded up, plus 5 on time.
-    expect((done.result as { coins: number }).coins).toBe(113 + 5)
-    state = done.state
+    ;({ state } = run(state, 'grimoire_complete_task', { id }))
     expect(state.tasks[id]).toMatchObject({ status: 'done', doneDay: '2026-10-26' })
     ;({ state } = run(state, 'grimoire_reopen_task', { id }))
-    expect(balance(state.coinTxs)).toBe(0)
+    expect(state.tasks[id].status).toBe('open')
   })
 
   it('warns when a deed would take the day past its stars, and links «ждёт другое дело»', () => {
@@ -106,7 +102,6 @@ describe('agent tools', () => {
       stars: 1 as const,
       dread: 0 as const,
       status: 'active' as const,
-      shields: 0,
       createdAt: '2026-10-20T00:00:00Z',
     }
     let state: GrimoireState = { ...base, habits: { h: habit } }

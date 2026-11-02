@@ -5,7 +5,7 @@ import { emotionWords, petalOrder, wordPetals, type Petal } from './emotions.ts'
 import type { CycleEntry, DayKey, GrimoireState, JournalEntry, Sabbat, Task } from './types.ts'
 import { cycleDay, cycleStats, periodsOf, phaseOrder, type CyclePhase } from './cycle.ts'
 import { moonPhase, sabbatOrder, wheelNow } from './wheel.ts'
-import { isFrog } from './coins.ts'
+import { isFrog } from './frog.ts'
 
 /** Fewer marks than this in a period — «пока мало записей». */
 export const minMarks = 10

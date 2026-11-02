@@ -1,6 +1,6 @@
 // Rituals (habit trackers). An active habit puts a task into the day scroll on each scheduled day;
 // ticking the task is the mark in the tracker. Streaks follow the schedule, not calendar days:
-// one skip a week is forgiven («оберег»), extra shields can be bought, and days in «навь» freeze
+// one skip a week is forgiven («оберег»), and days in «навь» freeze
 // the streak instead of breaking it.
 import { addDays, daysBetween, weekStart, weekday } from './days.ts'
 import type { DayKey, GrimoireMeta, Habit, HabitLog } from './types.ts'
@@ -56,7 +56,6 @@ export function streak(h: Habit, logs: Record<string, HabitLog>, today: DayKey, 
   let run = 0
   let best = 0
   let freeUsedWeek: string | undefined
-  let bought = h.shields
   if (h.schedule.kind === 'timesPerWeek') {
     const n = h.schedule.n
     let week = weekStart(start)
@@ -85,8 +84,6 @@ export function streak(h: Habit, logs: Record<string, HabitLog>, today: DayKey, 
         // still possible today
       } else if (freeUsedWeek !== weekStart(d)) {
         freeUsedWeek = weekStart(d)
-      } else if (bought > 0) {
-        bought--
       } else {
         run = 0
       }
@@ -105,9 +102,4 @@ export function streak(h: Habit, logs: Record<string, HabitLog>, today: DayKey, 
   }
   if (h.schedule.kind === 'timesPerWeek') due = Math.min(due, Math.round((30 / 7) * h.schedule.n))
   return { current: run, best, last30: due ? Math.min(1, made / due) : 0 }
-}
-
-/** Milestones (7, 30, 100 days…) reached by a streak and not paid yet. */
-export function newMilestones(h: Habit, current: number, rules: { days: number; coins: number }[]) {
-  return rules.filter((m) => current >= m.days && !(h.paidMilestones ?? []).includes(m.days))
 }

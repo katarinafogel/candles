@@ -30,7 +30,7 @@ export function WorkshopItems({ quest, onLeave }: { quest: Task; onLeave: () => 
     workshopRun.ask({ kind, step, ids, defect })
   }
   const undo = (id: string) => {
-    if (!confirmAction(`Откатить «${title.toLowerCase()}» у ${id}? Материалы вернутся на склад, монеты за пункт спишутся.`)) return
+    if (!confirmAction(`Откатить «${title.toLowerCase()}» у ${id}? Материалы вернутся на склад.`)) return
     const date = new Date().toISOString()
     store.dispatch(kind === 'holder' ? actions.undoHolder({ id, date }) : actions.undoCandle({ id, date }))
   }

@@ -9,7 +9,6 @@ import { useTaskDialog } from '../../components/grimoire/TaskDialog'
 import { cardColumns, TaskCard } from '../../components/grimoire/TaskCard'
 import { Empty, Modal, PageHeader, Section } from '../../components/ui'
 import { cancel, toBacklog, useToday, withUndo } from '../../grimoire/act'
-import { dayCoins } from '../../grimoire/coins'
 import { addDays, dayKey, days, daysBetween, humanDay } from '../../grimoire/days'
 import { slotLabel } from '../../grimoire/labels'
 import { backlog, dayPlan, dayStars, deadlinesSoon, evenInNav, isBlocked, joysAhead, toReview, words } from '../../grimoire/selectors'
@@ -257,7 +256,6 @@ export default function Scroll() {
   const wheel = wheelNow(today, meta.hemisphere)
   const soon = deadlinesSoon(g, today, addDays(today, 3)).filter((t) => t.doOn !== today)
   const navReminders = meta.nav.active ? evenInNav(g, addDays(today, 3)) : []
-  const coinsToday = dayCoins(g.coinTxs, today)
   const openToday = plan.all.filter((t) => t.status !== 'done')
   const wishesNear = Object.values(g.wishes).filter((x) => x.status === 'dream' && x.sabbat === wheel.current.sabbat).length
   // The coming sabbat shows up two weeks ahead; for three days after one, a word on how it went.
@@ -284,7 +282,7 @@ export default function Scroll() {
             </Box>
             <Text>Ты в нави{meta.nav.since ? ` с ${humanDay(meta.nav.since.slice(0, 10), today)}` : ''}.</Text>
             <Text fontSize="sm" color="fg.muted" maxW="420px">
-              Серии и бонусы заморожены, привычки молчат, плана нет. Монеты и копилки на месте. Возвращайся, когда захочешь.
+              Серии заморожены, привычки молчат, плана нет. Копилки на месте. Возвращайся, когда захочешь.
             </Text>
             <Button onClick={() => dispatch(A.setNav({ active: false }))}>Вернуться в явь</Button>
           </Stack>
@@ -383,7 +381,7 @@ export default function Scroll() {
             Сегодня
           </Text>
           <Text fontSize="sm" color="fg.muted">
-            Сделано {plan.all.filter((t) => t.status === 'done').length + plan.habits.filter((t) => t.status === 'done').length} · монет за день {coinsToday > 0 ? `+${coinsToday}` : coinsToday}
+            Сделано {plan.all.filter((t) => t.status === 'done').length + plan.habits.filter((t) => t.status === 'done').length}
           </Text>
           <DayStars today={today} />
           <EveningCall today={today} />

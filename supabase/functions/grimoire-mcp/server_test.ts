@@ -53,11 +53,9 @@ Deno.test('adds, completes and reads back through storage', async () => {
   const id = add.result.structuredContent.task.id as string
   assert(s.rows.has(`task:${id}`))
   const done = await (await handle(post({ jsonrpc: '2.0', id: 4, method: 'tools/call', params: { name: 'grimoire_complete_task', arguments: { id } } }), s, NOW)).json()
-  // dread 3 makes it a frog: 10 · 3 · 2.5 = 75, times 1.5 rounded up.
-  assertEquals(done.result.structuredContent.coins, 113)
+  assertEquals(done.result.structuredContent.task.status, 'done')
   const today = await (await handle(post({ jsonrpc: '2.0', id: 5, method: 'tools/call', params: { name: 'grimoire_today', arguments: {} } }), s, NOW)).json()
   assertEquals(today.result.structuredContent.day, '2026-10-26')
-  assertEquals(today.result.structuredContent.coins.balance, 113)
 })
 
 Deno.test('a bad argument is a tool error, not a crash', async () => {

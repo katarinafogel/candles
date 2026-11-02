@@ -1,10 +1,10 @@
 // The agent's tools: what an assistant may read and do in the grimoire, as plain functions over the
-// grimoire state. Every change goes through the same reducer as the app (coins, streaks, chains,
+// grimoire state. Every change goes through the same reducer as the app (streaks, chains,
 // repeats), so the assistant can't skip a rule by writing rows directly. The server
 // (supabase/functions/grimoire-mcp) only loads the state, runs a tool and saves what changed.
 import { nanoid } from '@reduxjs/toolkit'
 import reducer, { grimoireActions as A } from '../store/grimoireSlice.ts'
-import { balance, dayCoins, isFrog, taskCoins } from './coins.ts'
+import { isFrog } from './frog.ts'
 import { addDays, dayKeyIn, isDayKey } from './days.ts'
 import { habitLogId, habitTaskId, isDone, isScheduled, navTest, streak } from './habits.ts'
 import { cleanWords, emotionWords, mirrorFactors } from './emotions.ts'
@@ -142,7 +142,6 @@ function view(t: Task, c: Ctx, full = false) {
     ...(t.eatOn ? { eatOn: t.eatOn } : {}),
     ...(t.projectId && g.projects[t.projectId] ? { project: g.projects[t.projectId].title } : {}),
     ...(t.personIds?.length && c.people ? { people: t.personIds.map((id) => c.people![id]?.name).filter(Boolean) } : {}),
-    ...(isOpenTask(t) ? { coins: taskCoins(t, c.today, g.meta.coins).total } : {}),
   }
   if (!full) return out
   return {
@@ -158,7 +157,7 @@ function view(t: Task, c: Ctx, full = false) {
   }
 }
 
-/** Fields the assistant may set on a deed (ids, statuses and coins go through actions). */
+/** Fields the assistant may set on a deed (ids and statuses go through actions). */
 const taskFieldSchema = {
   title: { type: 'string', maxLength: 200 },
   note: { type: 'string' },
@@ -232,7 +231,7 @@ const tools: (ToolDef & { run: Run })[] = [
   {
     name: 'grimoire_today',
     description:
-      'Сегодняшний свиток: план (главное → дополнительное → необязательное → ритуалы), что осталось со вчера для утреннего разбора, радости впереди, сроки рядом, буксующие, монеты, колесо года, состояние нави. Вызывай первым в каждой сводке. Если хозяйка в нави (nav.active) — не предлагай план и не проверяй дела.',
+      'Сегодняшний свиток: план (главное → дополнительное → необязательное → ритуалы), что осталось со вчера для утреннего разбора, радости впереди, сроки рядом, буксующие, колесо года, состояние нави. Вызывай первым в каждой сводке. Если хозяйка в нави (nav.active) — не предлагай план и не проверяй дела.',
     inputSchema: { type: 'object', properties: {}, additionalProperties: false },
     writes: true,
     run: (_a, c) => {
@@ -251,7 +250,6 @@ const tools: (ToolDef & { run: Run })[] = [
         timeZone: g.meta.timeZone ?? null,
         nav: { active: g.meta.nav.active, since: g.meta.nav.since ?? null, note: navNote(c) ?? null, agent: g.meta.nav.agent ?? 'hello' },
         evenInNav: evenInNav(g, addDays(c.today, 3)).map(v),
-        coins: { balance: balance(g.coinTxs), today: dayCoins(g.coinTxs, c.today) },
         planLimit: g.meta.planLimit,
         dayStars: (() => {
           const st = dayStars(g, c.today)
@@ -276,7 +274,7 @@ const tools: (ToolDef & { run: Run })[] = [
   },
   {
     name: 'grimoire_day_summary',
-    description: 'Итог дня: что сделано, что перенесено и почему, сколько монет, хвосты, записи зеркала. Для вечерней сводки.',
+    description: 'Итог дня: что сделано, что перенесено и почему, хвосты, записи зеркала. Для вечерней сводки.',
     inputSchema: { type: 'object', properties: { day: { ...day, description: 'по умолчанию сегодня' } }, additionalProperties: false },
     writes: false,
     run: (a, c) => {
@@ -290,7 +288,6 @@ const tools: (ToolDef & { run: Run })[] = [
         leftInPlan: all.filter((t) => t.doOn === d && isOpenTask(t) && !t.habitId).map((t) => view(t, c)),
         postponed: all.flatMap((t) => t.postponements.filter((p) => p.day === d).map((p) => ({ id: t.id, title: t.title, to: p.to ?? 'бэклог', reason: p.reason ?? null }))),
         tailsGrown: all.filter((t) => t.spawnedFrom && t.createdAt.slice(0, 10) === d).map((t) => ({ id: t.id, title: t.title, from: g.tasks[t.spawnedFrom!]?.title })),
-        coins: dayCoins(g.coinTxs, d),
         journal: Object.values(g.journal).filter((e) => e.day === d),
       }
     },
@@ -391,7 +388,7 @@ const tools: (ToolDef & { run: Run })[] = [
   },
   {
     name: 'grimoire_complete_task',
-    description: 'Отметить дело сделанным (монеты по формуле, бонус в срок, квест и мечта закроются сами, повтор вернётся). partial — сделана часть, половина монет. Делай это только когда хозяйка сказала, что сделала.',
+    description: 'Отметить дело сделанным (квест и мечта закроются сами, повтор вернётся). partial — сделана часть. Делай это только когда хозяйка сказала, что сделала.',
     inputSchema: {
       type: 'object',
       properties: { id: { type: 'string' }, partial: { type: 'boolean' }, note: { type: 'string', description: 'что именно сделано (для части)' } },
@@ -401,14 +398,13 @@ const tools: (ToolDef & { run: Run })[] = [
     writes: true,
     run: (a, c) => {
       const t = task(c, a.id)
-      const before = balance(c.get().coinTxs)
       c.apply(A.completeTask.type, { id: t.id, partial: !!a.partial, note: str(a, 'note'), at: c.at, day: c.today })
-      return { task: view(c.get().tasks[t.id], c), coins: balance(c.get().coinTxs) - before, reward: t.rewardText ?? null }
+      return { task: view(c.get().tasks[t.id], c), reward: t.rewardText ?? null }
     },
   },
   {
     name: 'grimoire_reopen_task',
-    description: 'Вернуть сделанное (или частично сделанное) дело в работу; монеты списываются обратной записью.',
+    description: 'Вернуть сделанное (или частично сделанное) дело в работу.',
     inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'], additionalProperties: false },
     writes: true,
     run: (a, c) => {
@@ -419,7 +415,7 @@ const tools: (ToolDef & { run: Run })[] = [
   },
   {
     name: 'grimoire_start_task',
-    description: '«Начать понемногу»: честно начатое дело приносит немного монет один раз, даже если не доделано.',
+    description: '«Начать понемногу»: дело в работе, даже если не доделано.',
     inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'], additionalProperties: false },
     writes: true,
     run: (a, c) => {
@@ -482,7 +478,7 @@ const tools: (ToolDef & { run: Run })[] = [
   },
   {
     name: 'grimoire_cancel_task',
-    description: 'Отпустить дело как ненужное: без монет и без штрафа.',
+    description: 'Отпустить дело как ненужное: без штрафа.',
     inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'], additionalProperties: false },
     writes: true,
     destructive: true,
@@ -520,7 +516,7 @@ const tools: (ToolDef & { run: Run })[] = [
   },
   {
     name: 'grimoire_spawn_task',
-    description: '«Потянуло за собой»: из дела выросло новое. Новое звено занимает его место в плане, исходное ждёт, пока хвост не закроется. Монеты за каждое звено отдельно.',
+    description: '«Потянуло за собой»: из дела выросло новое. Новое звено занимает его место в плане, исходное ждёт, пока хвост не закроется.',
     inputSchema: { type: 'object', properties: { fromId: { type: 'string' }, title: { type: 'string' } }, required: ['fromId', 'title'], additionalProperties: false },
     writes: true,
     run: (a, c) => {
@@ -532,7 +528,7 @@ const tools: (ToolDef & { run: Run })[] = [
   },
   {
     name: 'grimoire_split_task',
-    description: '«Расколоть» большое или буксующее дело на шаги (решить / подготовить / сделать / связаться / ждать / найти информацию / купить). В план идёт только первый шаг; когда закрыт последний, квест закрывается сам с бонусом.',
+    description: '«Расколоть» большое или буксующее дело на шаги (решить / подготовить / сделать / связаться / ждать / найти информацию / купить). В план идёт только первый шаг; когда закрыт последний, квест закрывается сам.',
     inputSchema: { type: 'object', properties: { id: { type: 'string' }, steps: { type: 'array', items: { type: 'string' }, minItems: 1 } }, required: ['id', 'steps'], additionalProperties: false },
     writes: true,
     run: (a, c) => {
@@ -595,7 +591,7 @@ const tools: (ToolDef & { run: Run })[] = [
   {
     name: 'grimoire_add_journal',
     description:
-      'Запись в зеркало: до трёх слов из словаря эмоций (ключи вида anger.1 или dyad.awe), энергия 1–5, факторы «что влияет», текст. type evening — вечерняя страница (что получилось, что отложила и почему, за что благодарна). Слово эмоции записывай только после того, как хозяйка его подтвердила; монет за записи нет.',
+      'Запись в зеркало: до трёх слов из словаря эмоций (ключи вида anger.1 или dyad.awe), энергия 1–5, факторы «что влияет», текст. type evening — вечерняя страница (что получилось, что отложила и почему, за что благодарна). Слово эмоции записывай только после того, как хозяйка его подтвердила.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -706,7 +702,7 @@ export function runTool(name: string, args: Args | undefined, ctx: AgentContext)
 }
 
 /** Shown to the assistant when it connects (MCP `instructions`). */
-export const agentInstructions = `Это «Гримуар дел» — личный планировщик ведьмы. Задача гримуара не управлять делами, а снизить сопротивление: противное дело делать выгодно и немного смешно.
+export const agentInstructions = `Это «Гримуар дел» — личный планировщик ведьмы. Задача гримуара не управлять делами, а снизить сопротивление: противное дело делать легче и немного смешно.
 
 Как работать:
 - Каждую сводку начинай с grimoire_today. Если nav.active — хозяйка в нави: никаких планов, проверок и напоминаний; nav.agent = hello — только мягкое «я тут», silent — ничего. Единственное исключение — дела из evenInNav.
@@ -715,6 +711,5 @@ export const agentInstructions = `Это «Гримуар дел» — личн�
 - Меняй дела только по словам хозяйки: «сделала», «перенеси», «добавь». Не отмечай выполненным то, о чём она не сказала.
 - Буксующее дело (stuck) — повод расколоть, уменьшить, отпустить или свериться с «хочу / надо» и «чья обязанность», а не напомнить ещё раз.
 - Чудовища (dread 3) сами в план не лезут: предлагай их только когда хозяйка готова.
-- Жаба (frog) — дело, которое очень не хочется или которое откладывали 3+ раза; платит в полтора раза больше. Когда энергии хватает, можно предложить одну жабу на день, без стыда и без списка «позора».
-- Монеты начисляются сами по формуле; руками их не считай.`
+- Жаба (frog) — дело, которое очень не хочется или которое откладывали 3+ раза. Когда энергии хватает, можно предложить одну жабу на день, без стыда и без списка «позора».`
 

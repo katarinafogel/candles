@@ -1,16 +1,16 @@
 // The grimoire's own shell in the workshop's style: side menu on a computer, bottom tabs on a phone,
-// «Другие проекты» at the end of the menu, coins in the header and the floating «+».
+// «Другие проекты» at the end of the menu and the floating «+».
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
 import { useEffect, type ReactNode } from 'react'
 import { LuBookOpen, LuCalendarDays, LuEllipsis, LuFlame, LuGem, LuLibrary, LuMoon, LuScrollText, LuLayoutGrid, LuPiggyBank, LuSparkles, LuSun, LuUsers } from 'react-icons/lu'
 import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
-import { useBalance, useToday } from '../../grimoire/act'
+import { useToday } from '../../grimoire/act'
 import { daysBetween } from '../../grimoire/days'
 import { words } from '../../grimoire/selectors'
 import { builtInPractices } from '../../grimoire/wheel'
 import { useAppDispatch, useAppSelector, useIsWitch } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
-import { Eucalyptus, MoonPhases, MoonSlice, Sparkle } from '../Magic'
+import { Eucalyptus, MoonPhases, MoonSlice } from '../Magic'
 import { SignOutSideLink } from '../SignOut'
 import { SyncBadge } from '../SyncBadge'
 import { FeedbackPrompt } from './Feedback'
@@ -20,19 +20,6 @@ interface NavItem {
   to: string
   label: string
   icon: ReactNode
-}
-
-function Coins() {
-  const coins = useBalance()
-  return (
-    <NavLink to="/g/more">
-      {/* data-coins: where the spark of a done deed flies. */}
-      <Flex data-coins align="center" gap="1" color="ember.200" fontFamily="heading" fontSize="xl" fontWeight="semibold" title="монеты">
-        <Sparkle size={11} />
-        {coins}
-      </Flex>
-    </NavLink>
-  )
 }
 
 /** Once a day after the account is loaded: habit tasks for today, and the starter practices once. */
@@ -101,12 +88,11 @@ export default function GrimoireLayout() {
           </Text>
         </Flex>
         <MoonPhases size={12} gap="2.5" color="ember.200" px="2" mb="4" />
-        <Flex mb="4" px="2" justify="space-between" align="center">
+        <Box mb="4" px="2">
           <SyncBadge />
-          <Coins />
-        </Flex>
+        </Box>
         <Stack gap="1">
-          {[...items, ...extra, { ...more, label: 'Ещё: монеты, навь, настройки' }, { to: '/apps', label: 'Другие проекты', icon: <LuLayoutGrid /> }].map((i) => (
+          {[...items, ...extra, { ...more, label: 'Ещё: навь, настройки' }, { to: '/apps', label: 'Другие проекты', icon: <LuLayoutGrid /> }].map((i) => (
             <NavLink key={i.to} to={i.to} end={i.to === '/g'}>
               {({ isActive }) => (
                 <Flex
@@ -141,10 +127,7 @@ export default function GrimoireLayout() {
                 Гримуар дел
               </Text>
             </Flex>
-            <Flex align="center" gap="3">
-              <SyncBadge />
-              <Coins />
-            </Flex>
+            <SyncBadge />
           </Flex>
           {meta.nav.active && loc.pathname !== '/g' && (
             <Box mb="3" px="3" py="2" borderRadius="l2" bg="bg.muted" fontSize="xs" color="fg.muted">

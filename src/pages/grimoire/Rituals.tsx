@@ -3,8 +3,8 @@ import { Box, Button, Flex, HStack, IconButton, Input, SimpleGrid, Stack, Text }
 import { useMemo, useState } from 'react'
 import { LuMinus, LuPencil, LuPlus } from 'react-icons/lu'
 import { MarkPicker } from '../../components/grimoire/Marks'
-import { Chips, confirmAction, Empty, Field, Modal, notify, NumInput, PageHeader, Section, Select, TextInput } from '../../components/ui'
-import { useBalance, useToday } from '../../grimoire/act'
+import { Chips, confirmAction, Empty, Field, Modal, NumInput, PageHeader, Section, Select, TextInput } from '../../components/ui'
+import { useToday } from '../../grimoire/act'
 import { addDays, dayKey, weekStart } from '../../grimoire/days'
 import { habitLogId, habitTaskId, isDone, isScheduled, navTest, streak } from '../../grimoire/habits'
 import { words } from '../../grimoire/selectors'
@@ -12,7 +12,6 @@ import type { DayKey, Habit, HabitSchedule } from '../../grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 
-const SHIELD_PRICE = 50
 const dayNames = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс']
 
 function scheduleText(s: HabitSchedule) {
@@ -21,7 +20,7 @@ function scheduleText(s: HabitSchedule) {
   return s.days.map((d) => dayNames[d - 1]).join(', ')
 }
 
-type Draft = Omit<Habit, 'id' | 'createdAt' | 'shields'> & Partial<Pick<Habit, 'id' | 'createdAt' | 'shields'>>
+type Draft = Omit<Habit, 'id' | 'createdAt'> & Partial<Pick<Habit, 'id' | 'createdAt'>>
 
 const blank: Draft = { title: '', schedule: { kind: 'daily' }, mark: { kind: 'check' }, stars: 1, dread: 0, status: 'active' }
 
@@ -189,7 +188,6 @@ function YearOfMoons({ h, today, inNav }: { h: Habit; today: DayKey; inNav: (d: 
 function HabitCard({ h, today, onEdit }: { h: Habit; today: DayKey; onEdit: () => void }) {
   const dispatch = useAppDispatch()
   const g = useAppSelector((s) => s.grimoire)
-  const coins = useBalance()
   const inNav = useMemo(() => navTest(g.meta, (iso) => dayKey(new Date(iso), g.meta.dayBoundaryHour)), [g.meta])
   const st = streak(h, g.habitLogs, today, inNav)
   const log = g.habitLogs[habitLogId(h.id, today)]
@@ -244,19 +242,8 @@ function HabitCard({ h, today, onEdit }: { h: Habit; today: DayKey; onEdit: () =
           </HStack>
         )}
         <Text fontSize="xs" color="fg.subtle" ml="auto">
-          оберегов: 1 в неделю{h.shields ? ` + ${h.shields}` : ''}
+          оберег: 1 пропуск в неделю
         </Text>
-        <Button
-          size="xs"
-          variant="ghost"
-          disabled={coins < SHIELD_PRICE}
-          onClick={() => {
-            dispatch(A.buyShield({ habitId: h.id, price: SHIELD_PRICE }))
-            notify(`Оберег куплен · −${SHIELD_PRICE} 🪙`)
-          }}
-        >
-          купить оберег · {SHIELD_PRICE}
-        </Button>
       </Flex>
     </Box>
   )

@@ -1,6 +1,6 @@
 // Deeds of the workshop: a quest «Расписать подсвечники» with one step per item. A step is never
 // ticked by hand — it is ticked when the item takes that step in the workshop (from the grimoire or
-// right there), so the stock, the stage history and the coins all go one way.
+// right there), so the stock and the stage history go one way.
 import { holderStageOrder } from '../lib/labels'
 import { nextHolderStage } from '../store/dataSlice'
 import type { Candle, CandleStage, DataState, Holder } from '../types'

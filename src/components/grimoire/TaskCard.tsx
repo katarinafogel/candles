@@ -6,7 +6,7 @@ import { Box, Flex, HStack, Text } from '@chakra-ui/react'
 import { useRef, useState } from 'react'
 import { LuCalendarClock, LuFlame, LuHourglass, LuLink, LuMoon, LuSparkles, LuSun } from 'react-icons/lu'
 import { complete, reopen, toBacklog } from '../../grimoire/act'
-import { isFrog, taskCoins } from '../../grimoire/coins'
+import { isFrog } from '../../grimoire/frog'
 import { dueDay } from '../../grimoire/days'
 import { cardTone, isBlocked, stepsOf } from '../../grimoire/selectors'
 import type { DayKey, Task } from '../../grimoire/types'
@@ -37,20 +37,16 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
   const steps = stepsOf(g, t.id).filter((s) => s.status !== 'cancelled')
   const stepsDone = steps.filter((s) => s.status === 'done').length
   const project = t.projectId && !inBook ? g.projects[t.projectId] : undefined
-  const coins = done ? 0 : taskCoins(t, today, g.meta.coins).total
   const [dx, setDx] = useState(0)
   const start = useRef<{ x: number; y: number } | null>(null)
 
-  const card = useRef<HTMLDivElement>(null)
-
   function tick() {
     if (done) return reopen(t)
-    complete(t, false, card.current)
+    complete(t)
   }
 
   return (
     <Box
-      ref={card}
       position="relative"
       h="100%"
       // Done: not crossed out, just paler (on top of the card's own dim).
@@ -92,15 +88,6 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
           <Box as="button" aria-label={done ? 'Вернуть' : 'Сделано'} onClick={tick} display="inline-flex">
             <LeafMark on={done} />
           </Box>
-        }
-        corner={
-          coins > 0 ? (
-            // A solid pill like the tags, in the card's star colour, so it never melts into the vines.
-            <HStack gap="0.5" title="награда" px="1.5" py="0.5" borderRadius="full" fontSize="2xs" lineHeight="1" bg="color-mix(in srgb, var(--star-on) 28%, var(--card-solid))" borderWidth="1px" borderColor="color-mix(in srgb, var(--star-on) 45%, transparent)">
-              <Sparkle size={7} />
-              <Text as="span">{coins}</Text>
-            </HStack>
-          ) : undefined
         }
         title={
           <>

@@ -1,15 +1,13 @@
-// «Ещё»: the coin journal (the balance is its sum), «уйти в навь», and the grimoire's settings.
-import { Box, Button, Flex, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/react'
+// «Ещё»: «уйти в навь» and the grimoire's settings.
+import { Box, Button, Flex, HStack, Stack, Text } from '@chakra-ui/react'
 import { LuChevronRight } from 'react-icons/lu'
 import { Link as RouterLink } from 'react-router-dom'
-import { useState } from 'react'
 import { AgentKeys } from '../../components/grimoire/AgentKeys'
 import { PushSettings } from '../../components/grimoire/PushSettings'
 import { SignOutRow } from '../../components/SignOut'
-import { Check, Chips, confirmAction, Field, NumInput, PageHeader, Section, Stat, TextInput } from '../../components/ui'
-import { useBalance, useToday } from '../../grimoire/act'
-import { dayCoins } from '../../grimoire/coins'
-import { addDays, humanDay } from '../../grimoire/days'
+import { Check, Chips, confirmAction, Field, NumInput, PageHeader, Section, TextInput } from '../../components/ui'
+import { useToday } from '../../grimoire/act'
+import { humanDay } from '../../grimoire/days'
 import { words } from '../../grimoire/selectors'
 import { tagPalette, tagPalettes, tagsByUse } from '../../grimoire/tags'
 import { Tag } from '../../components/grimoire/Marks'
@@ -66,14 +64,7 @@ export default function GrimoireMore() {
   const dispatch = useAppDispatch()
   const g = useAppSelector((s) => s.grimoire)
   const today = useToday()
-  const coins = useBalance()
   const meta = g.meta
-  const w = words(meta)
-  const [limit, setLimit] = useState(50)
-  const txs = Object.values(g.coinTxs).sort((a, b) => b.at.localeCompare(a.at))
-  let week = 0
-  for (let i = 0; i < 7; i++) week += dayCoins(g.coinTxs, addDays(today, -i))
-  const [manual, setManual] = useState<{ amount?: number; reason: string }>({ reason: '' })
 
   return (
     <>
@@ -102,7 +93,7 @@ export default function GrimoireMore() {
 
       <Section title="Навь">
         <Text fontSize="sm" color="fg.muted" mb="3">
-          Если ты в нави, делать что-то в яви нельзя. Серии и бонусы замораживаются, привычки молчат, план пуст. Реальные сроки никуда не деваются, монеты и копилки на месте. Без вопросов и причин.
+          Если ты в нави, делать что-то в яви нельзя. Серии замораживаются, привычки молчат, план пуст. Реальные сроки никуда не деваются, копилки на месте. Без вопросов и причин.
         </Text>
         <Button variant={meta.nav.active ? 'solid' : 'outline'} onClick={() => dispatch(A.setNav({ active: !meta.nav.active }))}>
           {meta.nav.active ? 'Вернуться в явь' : 'Уйти в навь'}
@@ -120,54 +111,6 @@ export default function GrimoireMore() {
         )}
       </Section>
 
-      <Section title={w.treasury}>
-        <SimpleGrid columns={{ base: 2, md: 3 }} gap="3" mb="4">
-          <Stat label="монет всего" value={coins} />
-          <Stat label="за неделю" value={week} />
-          <Stat label="сегодня" value={dayCoins(g.coinTxs, today)} />
-        </SimpleGrid>
-        <Text fontSize="xs" color="fg.subtle" mb="3">
-          Тратить монеты пока негде: лавка наград появится, когда придумаешь, на что. Сейчас можно купить оберег для ритуала.
-        </Text>
-        <HStack gap="2" mb="4" align="flex-end" wrap="wrap">
-          <Field label="Вручную" w="120px">
-            <NumInput value={manual.amount} onChange={(v) => setManual({ ...manual, amount: v })} placeholder="±" />
-          </Field>
-          <Field label="За что" flex="1" minW="160px">
-            <TextInput value={manual.reason} onChange={(v) => setManual({ ...manual, reason: v })} placeholder="потратила на серию сериала" />
-          </Field>
-          <Button
-            disabled={!manual.amount || !manual.reason.trim()}
-            onClick={() => {
-              dispatch(A.addCoins({ amount: manual.amount!, reason: manual.reason.trim() }))
-              setManual({ reason: '' })
-            }}
-          >
-            Записать
-          </Button>
-        </HStack>
-        <Stack gap="0">
-          {txs.slice(0, limit).map((x) => (
-            <Flex key={x.id} justify="space-between" gap="3" py="1.5" borderBottomWidth="1px" borderColor="border.muted" fontSize="sm">
-              <Box minW="0">
-                <Text lineClamp={1}>{x.reason}</Text>
-                <Text fontSize="xs" color="fg.subtle">
-                  {humanDay(x.day, today)}
-                </Text>
-              </Box>
-              <Text color={x.amount > 0 ? 'ember.200' : 'fg.muted'} whiteSpace="nowrap">
-                {x.amount > 0 ? '+' : ''}
-                {x.amount}
-              </Text>
-            </Flex>
-          ))}
-        </Stack>
-        {txs.length > limit && (
-          <Button size="xs" variant="ghost" mt="2" onClick={() => setLimit(limit + 100)}>
-            Показать ещё
-          </Button>
-        )}
-      </Section>
 
       <Section title="Уведомления">
         <PushSettings />
@@ -201,21 +144,17 @@ export default function GrimoireMore() {
               { value: 'warm', label: 'тепло' },
             ]} />
           </Field>
-          <Field label="Анимации" helper="искра летит с карточки в монеты; «нет» — и без вибрации">
-            <Chips value={meta.tone.motion} onChange={(v) => v && dispatch(A.updateMeta({ tone: { ...meta.tone, motion: v as typeof meta.tone.motion } }))} options={[
+          <Field label="Вибрация" helper="телефон отзывается на сделанное дело, на жабу — дважды">
+            <Chips value={meta.tone.motion === 'off' ? 'off' : 'soft'} onChange={(v) => v && dispatch(A.updateMeta({ tone: { ...meta.tone, motion: v as typeof meta.tone.motion } }))} options={[
               { value: 'off', label: 'нет' },
-              { value: 'soft', label: 'мягко' },
-              { value: 'bright', label: 'ярко' },
+              { value: 'soft', label: 'да' },
             ]} />
           </Field>
           <Field label="Звёзд на день" helper="сколько сложности план дня держит спокойно; сверх — красные звёзды в свитке; 0 — не показывать">
             <NumInput value={meta.dayStars} onChange={(v) => dispatch(A.updateMeta({ dayStars: Math.max(0, Math.round(v ?? 0)) }))} suffix="★" width="140px" />
           </Field>
-          <Field label="Жабы" helper="дело с нехотением 3 или отложенное столько раз становится жабой и платит больше">
-            <HStack gap="3" wrap="wrap">
-              <NumInput value={meta.frogPostpones} onChange={(v) => dispatch(A.updateMeta({ frogPostpones: Math.max(1, Math.round(v ?? 3)) }))} suffix="переносов" width="170px" />
-              <NumInput value={meta.coins.frogFactor} onChange={(v) => dispatch(A.updateMeta({ coins: { ...meta.coins, frogFactor: Math.max(1, v ?? 1.5) } }))} suffix="× награда" width="170px" />
-            </HStack>
+          <Field label="Жабы" helper="дело с нехотением 3 или отложенное столько раз становится жабой">
+            <NumInput value={meta.frogPostpones} onChange={(v) => dispatch(A.updateMeta({ frogPostpones: Math.max(1, Math.round(v ?? 3)) }))} suffix="переносов" width="170px" />
           </Field>
           <Field label="Чувство у дела" helper="«С каким чувством берёшься?» при «Начать понемногу» и «Как теперь?» после «Сделала»">
             <Chips value={meta.emotionAsk ?? 'hard'} onChange={(v) => v && dispatch(A.updateMeta({ emotionAsk: v as typeof meta.emotionAsk }))} options={[
@@ -236,7 +175,7 @@ export default function GrimoireMore() {
             Цикл: показывать ассистенту (фаза в утреннем плане)
           </Check>
           <Check checked={meta.streaksOn} onChange={(v) => dispatch(A.updateMeta({ streaksOn: v }))}>
-            Серии и бонусы за них
+            Серии привычек
           </Check>
           <Check checked={meta.gameWords} onChange={(v) => dispatch(A.updateMeta({ gameWords: v }))}>
             Игровые названия (свиток, квест, ритуал)
@@ -248,31 +187,6 @@ export default function GrimoireMore() {
             <TextInput value={meta.zones.join(', ')} onChange={(v) => dispatch(A.updateMeta({ zones: v.split(',').map((x) => x.trim()).filter(Boolean) }))} />
           </Field>
           <TagColors />
-          <Box>
-            <Text fontSize="sm" color="fg.muted" mb="2">
-              Формула: монеты = {meta.coins.base} · сложность · (1 + {meta.coins.dreadFactor} · нехотение) + бонусы
-            </Text>
-            <SimpleGrid columns={{ base: 2, md: 3 }} gap="3">
-              <Field label="База">
-                <NumInput value={meta.coins.base} onChange={(v) => dispatch(A.updateMeta({ coins: { ...meta.coins, base: v ?? 10 } }))} />
-              </Field>
-              <Field label="Вес нехотения">
-                <NumInput value={meta.coins.dreadFactor} onChange={(v) => dispatch(A.updateMeta({ coins: { ...meta.coins, dreadFactor: v ?? 0.5 } }))} />
-              </Field>
-              <Field label="В срок">
-                <NumInput value={meta.coins.onTimeBonus} onChange={(v) => dispatch(A.updateMeta({ coins: { ...meta.coins, onTimeBonus: v ?? 0 } }))} />
-              </Field>
-              <Field label="Квест целиком">
-                <NumInput value={meta.coins.complexBonus} onChange={(v) => dispatch(A.updateMeta({ coins: { ...meta.coins, complexBonus: v ?? 0 } }))} />
-              </Field>
-              <Field label="Начать понемногу">
-                <NumInput value={meta.coins.startedCoins} onChange={(v) => dispatch(A.updateMeta({ coins: { ...meta.coins, startedCoins: v ?? 0 } }))} />
-              </Field>
-              <Field label="Мечта сбылась">
-                <NumInput value={meta.coins.wishBonus} onChange={(v) => dispatch(A.updateMeta({ coins: { ...meta.coins, wishBonus: v ?? 0 } }))} />
-              </Field>
-            </SimpleGrid>
-          </Box>
           <Button
             size="sm"
             variant="outline"

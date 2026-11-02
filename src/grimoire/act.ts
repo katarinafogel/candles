@@ -1,10 +1,9 @@
-// Grimoire steps with feedback: a toast with coins and the personal reward, and «Отменить».
+// Grimoire steps with feedback: a toast with praise and the personal reward, and «Отменить».
 import { useEffect, useState } from 'react'
 import { notify } from '../components/ui'
 import { store, useAppSelector } from '../store'
 import { grimoireActions as A, today } from '../store/grimoireSlice'
-import { balance, isFrog, taskCoins } from './coins'
-import { flySpark, praise } from './fly'
+import { isFrog } from './frog'
 import { isHard } from './mirrorStats'
 import { workshopRun } from './workshopRun'
 import type { GrimoireState, Task } from './types'
@@ -30,21 +29,26 @@ export function withUndo(title: string, change: () => void, description?: string
   })
 }
 
-const coinsWord = (n: number) => `${n > 0 ? '+' : ''}${n} 🪙`
+const warmWords = ['Ведьма в ударе!', 'Ещё одна страница гримуара заполнена.', 'Котёл кипит, дело сделано.', 'Луна одобряет.', 'Так держать.']
 
-/** Closes a deed with its toast; `from` — the card or button the spark flies from into the coins. */
-export function complete(t: Task, partial = false, from?: Element | null) {
+/** The toast for a done deed, by «Похвала»: quiet and normal — just the word, warm — a kind line too. */
+function praise(kind: 'done' | 'joy' | 'frog' | 'partial', level: GrimoireState['meta']['tone']['praise']) {
+  const title = { done: 'Сделано', joy: 'Радость прожита', frog: level === 'quiet' ? 'Жаба съедена' : '🐸 Жаба съедена!', partial: 'Часть сделана' }[kind]
+  const word = level === 'warm' && kind !== 'partial' ? warmWords[Math.floor(Math.random() * warmWords.length)] : undefined
+  return { title, word }
+}
+
+/** Closes a deed with its toast. */
+export function complete(t: Task, partial = false) {
   // A workshop deed is done in the workshop: its step dialog opens, and the deed ticks itself after.
   if (!partial && (t.workshop || t.workshopStep)) {
     const items = t.workshop ? [t.workshop] : Object.values(g().tasks).filter((x) => x.parentId === t.id && x.workshop && x.status !== 'done' && x.status !== 'cancelled').map((x) => x.workshop!)
     if (items.length) return workshopRun.ask({ kind: items[0].kind, step: items[0].step, ids: items.map((x) => x.id) })
   }
-  const { tone, coins: rules } = g().meta
-  const coins = taskCoins(t, today(), rules, partial).total
-  const { title, word } = praise(partial ? 'partial' : isFrog(t) ? 'frog' : t.type === 'joy' ? 'joy' : 'done', coinsWord(coins), tone.praise)
+  const { tone } = g().meta
+  const { title, word } = praise(partial ? 'partial' : isFrog(t) ? 'frog' : t.type === 'joy' ? 'joy' : 'done', tone.praise)
   const parts = [word, t.rewardText && !partial ? `награда: ${t.rewardText}` : '', t.enough && !partial ? `достаточно: ${t.enough}` : ''].filter(Boolean)
   withUndo(title, () => store.dispatch(A.completeTask({ id: t.id, partial })), parts.join(' · ') || undefined)
-  if (!partial) flySpark(from, tone.motion)
   // Habits are ticked daily; asking each time would be noise.
   if (!partial && !t.habitId) feedback.ask(t.id, 'done')
   // A frog gets a slightly brighter answer: a double buzz instead of one.
@@ -54,7 +58,7 @@ export function complete(t: Task, partial = false, from?: Element | null) {
 
 /** «Начать понемногу», and «С каким чувством берёшься?» when the settings ask it for this deed. */
 export function start(t: Task) {
-  withUndo(`Начато · +${g().meta.coins.startedCoins} 🪙`, () => store.dispatch(A.startTask({ id: t.id })))
+  withUndo('Начато', () => store.dispatch(A.startTask({ id: t.id })))
   if (asksEmotion(t, g().meta.emotionAsk)) feedback.ask(t.id, 'start')
 }
 
@@ -64,9 +68,7 @@ export const asksEmotion = (t: Task, ask: GrimoireState['meta']['emotionAsk'] = 
 
 export const reopen = (t: Task) => withUndo('Вернула в работу', () => store.dispatch(A.reopenTask({ id: t.id })))
 export const toBacklog = (ids: string[], title = 'В бэклоге') => withUndo(title, () => store.dispatch(A.toBacklog(ids)))
-export const cancel = (t: Task) => withUndo('Отпущено без монет и без штрафа', () => store.dispatch(A.cancelTask(t.id)))
-
-export const useBalance = () => useAppSelector((s) => balance(s.grimoire.coinTxs))
+export const cancel = (t: Task) => withUndo('Отпущено без штрафа', () => store.dispatch(A.cancelTask(t.id)))
 
 /** Today in the grimoire's terms; re-checks every minute and when the app comes back to the screen. */
 export function useToday() {

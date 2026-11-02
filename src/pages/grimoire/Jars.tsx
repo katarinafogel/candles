@@ -1,6 +1,5 @@
 // «Копилки»: goals in real money with a log of what went in and out. The app only counts — it never
-// touches the money; coins and rubles never mix (the coins have their own page). A jar fills like a
-// glass; at half and full it pays its coins once (+25 / +100).
+// touches the money. A jar fills like a glass and is «собрана» when full.
 import { Box, Button, Flex, HStack, IconButton, Input, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { LuPlus, LuTrash2 } from 'react-icons/lu'
@@ -325,7 +324,7 @@ export default function Jars() {
         </Button>
       </PageHeader>
       <Text fontSize="sm" color="fg.muted" mb="3">
-        Настоящие деньги: гримуар их только считает. Монеты гримуара — отдельно, в «Ещё».
+        Настоящие деньги: гримуар их только считает.
       </Text>
       {done.length > 0 && (
         <Box mb="3">
