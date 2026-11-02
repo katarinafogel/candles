@@ -1,7 +1,9 @@
-import { Box, Button, Center, Container, Flex, Heading, Input, Spinner, Stack, Text } from '@chakra-ui/react'
+import { Box, Button, Center, Container, Flex, Heading, IconButton, Input, Separator, Spinner, Stack, Text } from '@chakra-ui/react'
 import type { Session } from '@supabase/supabase-js'
 import { useEffect, useState, type ReactNode } from 'react'
 import { FcGoogle } from 'react-icons/fc'
+import { useLocation } from 'react-router-dom'
+import { appOf, applyApp, setTitleOverride } from '../lib/apps'
 import { publicBase } from '../lib/config'
 import { authRedirect, supabase, supabaseConfigured } from '../lib/supabase'
 import { startSync } from '../lib/sync'
@@ -19,11 +21,11 @@ function Shell({ children }: { children: ReactNode }) {
           <Eucalyptus width={80} flip position="absolute" top="-60px" right="-10px" opacity={0.35} />
           <MoonSlice size={72} />
           <Heading size="4xl" fontWeight="semibold" color="ember.50">
-            Мастерская свечей
+            Гримуар
           </Heading>
           <MoonPhases size={12} gap="2.5" color="ember.200" />
           <Text color="fg.muted" fontSize="sm" textAlign="center">
-            Производственный журнал: замесы, заливки, склад и отзывы
+            Открывая гримуар, представься
           </Text>
         </Flex>
         <Box p="6" borderWidth="1px" borderColor="border" bg="bg.subtle" borderRadius="l3">
@@ -40,60 +42,82 @@ function Shell({ children }: { children: ReactNode }) {
 }
 
 function Login() {
+  const { pathname } = useLocation()
   const [busy, setBusy] = useState(false)
-  const [withPassword, setWithPassword] = useState(false)
+  const [googleBusy, setGoogleBusy] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+
+  // The sign-in page is shared by both projects and carries the grimoire's name in the tab.
+  useEffect(() => {
+    setTitleOverride('Гримуар')
+    applyApp(appOf(pathname))
+    return () => {
+      setTitleOverride(null)
+      applyApp(appOf(pathname))
+    }
+  }, [pathname])
 
   async function signIn() {
     setBusy(true)
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
-    if (error) notify('Не удалось войти', 'error', error.message)
+    if (error) notify('Гримуар тебя не узнал. Проверь почту и слово-ключ', 'error', error.code === 'invalid_credentials' ? undefined : error.message)
     setBusy(false)
   }
 
   async function google() {
-    setBusy(true)
+    setGoogleBusy(true)
     const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: authRedirect() } })
     if (error) {
       notify('Не удалось начать вход через Google', 'error', error.message)
-      setBusy(false)
+      setGoogleBusy(false)
     }
   }
 
   return (
     <Shell>
       <Stack gap="4">
-        <Button size="lg" variant="outline" onClick={google} loading={busy}>
-          <FcGoogle /> Войти через Google
-        </Button>
-        <Text fontSize="xs" color="fg.subtle" textAlign="center">
-          Аккаунт создаётся при первом входе
-        </Text>
-        {withPassword ? (
-          <Stack
-            as="form"
-            gap="3"
-            onSubmit={(e) => {
-              e.preventDefault()
-              void signIn()
-            }}
-          >
-            <Field label="Почта">
-              <Input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
-            </Field>
-            <Field label="Пароль">
-              <Input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            </Field>
-            <Button type="submit" variant="outline" loading={busy} disabled={!email.trim() || !password}>
-              Войти
-            </Button>
-          </Stack>
-        ) : (
-          <Button size="xs" variant="ghost" onClick={() => setWithPassword(true)}>
-            Войти по паролю
+        <Stack
+          as="form"
+          gap="3"
+          onSubmit={(e) => {
+            e.preventDefault()
+            void signIn()
+          }}
+        >
+          <Field label="Почта">
+            <Input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </Field>
+          <Field label="Слово-ключ">
+            <Input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          </Field>
+          <Button type="submit" size="lg" mt="1" loading={busy} loadingText="Узнаю тебя…" disabled={!email.trim() || !password}>
+            Представиться
           </Button>
-        )}
+          <Text fontSize="xs" color="fg.subtle" textAlign="center">
+            Новых ведьм гримуар запомнит сам
+          </Text>
+        </Stack>
+        <Flex align="center" gap="3">
+          <Separator flex="1" />
+          <Text fontSize="xs" color="fg.subtle">
+            или
+          </Text>
+          <Separator flex="1" />
+        </Flex>
+        <Center>
+          <IconButton
+            size="lg"
+            variant="outline"
+            rounded="full"
+            aria-label="Войти через Google"
+            title="Войти через Google"
+            onClick={google}
+            loading={googleBusy}
+          >
+            <FcGoogle />
+          </IconButton>
+        </Center>
       </Stack>
     </Shell>
   )

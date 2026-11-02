@@ -24,13 +24,20 @@ function setHref(id: string, href: string) {
   if (el && el.getAttribute('href') !== href) el.setAttribute('href', href)
 }
 
+let titleOverride: string | null = null
+
+/** A tab title that wins over the project's own while set (the shared sign-in page). */
+export function setTitleOverride(title: string | null) {
+  titleOverride = title
+}
+
 export function applyApp(app: AppId) {
   const a = apps[app]
   setHref('app-manifest', a.manifest)
   setHref('app-touch-icon', a.touchIcon)
   setHref('app-icon', a.icon)
   document.getElementById('app-title')?.setAttribute('content', a.short)
-  document.title = a.name
+  document.title = titleOverride ?? a.name
 }
 
 /** Keeps the manifest, icon and title in step with the project on screen. */
