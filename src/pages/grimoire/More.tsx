@@ -183,9 +183,6 @@ export default function GrimoireMore() {
           <Field label="Круги бестиария" helper="через запятую">
             <TextInput value={(meta.circles ?? []).join(', ')} onChange={(v) => dispatch(A.updateMeta({ circles: v.split(',').map((x) => x.trim()).filter(Boolean) }))} />
           </Field>
-          <Field label="Зоны дома" helper="через запятую">
-            <TextInput value={meta.zones.join(', ')} onChange={(v) => dispatch(A.updateMeta({ zones: v.split(',').map((x) => x.trim()).filter(Boolean) }))} />
-          </Field>
           <TagColors />
           <Button
             size="sm"

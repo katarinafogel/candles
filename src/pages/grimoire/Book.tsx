@@ -1,4 +1,4 @@
-// The book of deeds: every task with filters by state, tags, zone and deadline.
+// The book of deeds: every task with filters by state, tags and deadline.
 import { Box, Button, Flex, HStack, Input, SimpleGrid, Stack, Tabs, Text } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -44,7 +44,6 @@ export default function Book() {
   const [spells, setSpells] = useState(false)
   const [fromWorkshop, setFromWorkshop] = useState(false)
   const [tags, setTags] = useState<string[]>([])
-  const [zone, setZone] = useState<string>()
   const [sort, setSort] = useState<Sort>('due')
   const w = words(g.meta)
 
@@ -74,12 +73,11 @@ export default function Book() {
     xs = xs.filter(
       (t) =>
         (!needle || t.title.toLowerCase().includes(needle) || (t.note ?? '').toLowerCase().includes(needle)) &&
-        tags.every((x) => t.tags.includes(x)) &&
-        (!zone || t.zone === zone),
+        tags.every((x) => t.tags.includes(x)),
     )
     // Done deeds go to the end of the list; the chosen order holds inside each part.
     return view === 'done' ? xs : [...xs].sort((a, b) => Number(a.status === 'done') - Number(b.status === 'done') || sorters[sort](a, b))
-  }, [g, view, q, tags, zone, sort, today])
+  }, [g, view, q, tags, sort, today])
 
   // «Чистый лист» leftovers stand apart at the top of the backlog until planned or unpacked.
   const packed = view === 'backlog' ? list.filter((t) => t.later) : []
@@ -124,14 +122,6 @@ export default function Book() {
           )}
         </HStack>
         {tagList.length > 0 && <Chips multi value={tags} onChange={(v) => setTags((v as string[]) ?? [])} options={tagList.map((t) => ({ value: t, label: `#${t}` }))} />}
-        {g.meta.zones.length > 0 && (
-          <Flex align="center" gap="2" wrap="wrap">
-            <Text fontSize="xs" color="fg.muted">
-              одно место:
-            </Text>
-            <Chips value={zone} onChange={(v) => setZone(v as string | undefined)} options={g.meta.zones.map((z) => ({ value: z, label: z }))} />
-          </Flex>
-        )}
       </Stack>
       {packed.length > 0 && (
         <Box mb="5" p="3" borderRadius="l3" borderWidth="1px" borderStyle="dashed" borderColor="border.emphasized">
