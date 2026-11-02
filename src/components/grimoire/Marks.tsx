@@ -32,7 +32,7 @@ export function StarMark({ filled = true, color, size = 14 }: { filled?: boolean
 export function Stars({ n, size = 12 }: { n: number; size?: number }) {
   return (
     // Cards of other colors set --star-on so the stars stay readable on them.
-    <HStack gap="0" color="var(--star-on, var(--chakra-colors-ember-300))" aria-label={`сложность ${n} из 5`}>
+    <HStack gap="0" color="var(--star-on, var(--chakra-colors-ember-300))" aria-label={`сложность ${n} из 3`}>
       {Array.from({ length: n }, (_, i) => (
         <Box key={i} display="inline-flex">
           {star(true, `${size}px`)}
@@ -57,11 +57,11 @@ export function Dread({ n, size = 12, calm }: { n: number; size?: number; calm?:
   )
 }
 
-/** Difficulty as a scale of five stars: tapping the third sets 3. */
+/** Difficulty as a scale of three stars: tapping the second sets 2. */
 function StarScale({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
     <HStack gap="0.5" role="radiogroup" aria-label="Сложность">
-      {[1, 2, 3, 4, 5].map((v) => {
+      {[1, 2, 3].map((v) => {
         const on = value >= v
         return (
           <Box
@@ -69,7 +69,7 @@ function StarScale({ value, onChange }: { value: number; onChange: (v: number) =
             key={v}
             role="radio"
             aria-checked={value === v}
-            aria-label={`сложность ${v} из 5`}
+            aria-label={`сложность ${v} из 3`}
             p="1"
             lineHeight="0"
             cursor="pointer"
@@ -86,7 +86,7 @@ function StarScale({ value, onChange }: { value: number; onChange: (v: number) =
   )
 }
 
-/** Tap to choose 1–5 (stars, a scale) or 0–3 (dread, the weather icon over its label). */
+/** Tap to choose 1–3 (stars, a scale) or 0–3 (dread, the weather icon over its label). */
 export function MarkPicker({ kind, value, onChange }: { kind: 'stars' | 'dread'; value: number; onChange: (v: number) => void }) {
   if (kind === 'stars') return <StarScale value={value} onChange={onChange} />
   const values = [0, 1, 2, 3]

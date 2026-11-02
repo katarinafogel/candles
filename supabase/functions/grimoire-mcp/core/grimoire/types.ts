@@ -48,8 +48,8 @@ export interface WorkshopLink {
   lost?: boolean
 }
 
-/** Difficulty, one to five stars. */
-export type Stars = 1 | 2 | 3 | 4 | 5
+/** Difficulty, one to three stars. */
+export type Stars = 1 | 2 | 3
 
 export interface Task {
   id: string
