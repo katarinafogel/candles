@@ -262,7 +262,7 @@ export async function startSync(userId: string, email?: string) {
   pending.clear()
   const saved = (await localforage.getItem<Change[]>(queueKey()).catch(() => null)) ?? []
   // coin_tx: the old coin journal, no longer accepted by the database (0011_drop_coins.sql).
-  for (const c of saved) if (c.kind !== 'coin_tx') pending.set(`${c.kind}:${c.id}`, c)
+  for (const c of saved) if ((c.kind as string) !== 'coin_tx') pending.set(`${c.kind}:${c.id}`, c)
   report({})
   await load()
 }
