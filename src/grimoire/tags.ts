@@ -27,12 +27,3 @@ export function suggestTags(prefix: string, tags: string[], exclude: string[] = 
   const q = prefix.replace(/^#/, '').toLowerCase()
   return tags.filter((t) => t.startsWith(q) && t !== q && !exclude.includes(t)).slice(0, limit)
 }
-
-/** The «#ta» being typed at the end of a quick-add line, if any. */
-export function typingTag(line: string): string | undefined {
-  const m = /(?:^|\s)#([^\s#]*)$/.exec(line)
-  return m ? m[1] : undefined
-}
-
-/** The line with the tag being typed completed, ready for the next word. */
-export const completeTag = (line: string, tag: string) => line.replace(/#[^\s#]*$/, `#${tag} `)

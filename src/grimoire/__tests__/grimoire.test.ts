@@ -398,7 +398,7 @@ describe('wheel of the year', () => {
 })
 
 describe('tags', async () => {
-  const { tagPalette, tagPalettes, tagsByUse, suggestTags, typingTag, completeTag } = await import('../tags')
+  const { tagPalette, tagPalettes, tagsByUse, suggestTags } = await import('../tags')
   const g = {
     tasks: {
       a: { tags: ['дом', 'бумаги'] },
@@ -418,12 +418,6 @@ describe('tags', async () => {
     expect(suggestTags('д', tagsByUse(g))).toEqual(['дом', 'дача'])
     expect(suggestTags('#Д', tagsByUse(g), ['дом'])).toEqual(['дача'])
     expect(suggestTags('дом', tagsByUse(g))).toEqual([])
-  })
-  it('finds and completes the tag being typed at the end of the line', () => {
-    expect(typingTag('помыть окна #до')).toBe('до')
-    expect(typingTag('помыть #')).toBe('')
-    expect(typingTag('помыть #дом окна')).toBeUndefined()
-    expect(completeTag('помыть окна #до', 'дом')).toBe('помыть окна #дом ')
   })
 })
 
@@ -675,5 +669,25 @@ describe('push notifications', async () => {
   it('names the sabbat on its eve', () => {
     const m = N.morningMessage(initialGrimoire, '2026-10-30')
     expect(m!.body).toContain('Завтра Самайн')
+  })
+})
+
+describe('new deed form', async () => {
+  const { defaultDraft, draftToFields } = await import('../newTask')
+
+  it('starts in the backlog, on today from the day scroll, in the book from a book', () => {
+    expect(defaultDraft({}, MON)).toEqual({ title: '', stars: 1, dread: 0, tags: [], type: 'deed' })
+    expect(defaultDraft({ planToday: true }, MON)).toMatchObject({ doOn: MON, slot: 'extra' })
+    expect(defaultDraft({ fields: { projectId: 'p1', source: 'project' }, title: 'окна' }, MON)).toMatchObject({ title: 'окна', projectId: 'p1', source: 'project' })
+  })
+  it('trims, drops empty fields and keeps symbols as plain text', () => {
+    const f = draftToFields({ title: '  купить #2 **☠ ', stars: 2, dread: 1, tags: [], type: 'deed', note: ' ', why: [], personIds: [], prep: ['достать', ' ', ''], wrapUp: [''] })
+    expect(f).toEqual({ title: 'купить #2 **☠', stars: 2, dread: 1, tags: [], type: 'deed', prep: ['достать'] })
+  })
+  it('puts a planned deed into «доп» and takes the slot off a backlog one', () => {
+    const base: import('../newTask').TaskDraft = { title: 'x', stars: 1, dread: 0, tags: [], type: 'deed' }
+    expect(draftToFields({ ...base, doOn: MON })).toMatchObject({ doOn: MON, slot: 'extra' })
+    expect(draftToFields({ ...base, doOn: MON, slot: 'main' }).slot).toBe('main')
+    expect(draftToFields({ ...base, slot: 'main' })).not.toHaveProperty('slot')
   })
 })

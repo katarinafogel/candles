@@ -321,6 +321,7 @@ export function Modal({
   children,
   footer,
   size = 'md',
+  initialFocusEl,
 }: {
   open: boolean
   onClose: () => void
@@ -328,11 +329,15 @@ export function Modal({
   children: ReactNode
   footer?: ReactNode
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
+  /** The field to put the cursor in when the dialog opens. */
+  initialFocusEl?: () => HTMLElement | null
 }) {
+  useVisualViewport(open)
   return (
     <Dialog.Root
       open={open}
       onOpenChange={(e) => !e.open && onClose()}
+      initialFocusEl={initialFocusEl}
       size={{ mdDown: 'full', md: size }}
       scrollBehavior="inside"
       placement="center"
@@ -348,6 +353,12 @@ export function Modal({
             backgroundImage="radial-gradient(30rem 16rem at 100% 0%, rgba(224,164,85,.07), transparent 70%)"
             pt={{ mdDown: 'env(safe-area-inset-top)' }}
             pb={{ mdDown: 'env(safe-area-inset-bottom)' }}
+            // Safari does not shrink the page under the keyboard: size the sheet by the visible part,
+            // so the footer stays above the keyboard.
+            h={{ mdDown: 'var(--vv-height, 100dvh)' }}
+            minH={{ mdDown: 'var(--vv-height, 100dvh)' }}
+            maxH={{ mdDown: 'var(--vv-height, 100dvh)' }}
+            top={{ mdDown: 'var(--vv-top, 0px)' }}
           >
             <Dialog.Header>
               <Dialog.Title fontFamily="heading" fontSize="2xl" fontWeight="semibold" color="ember.100">
@@ -364,6 +375,26 @@ export function Modal({
       </Portal>
     </Dialog.Root>
   )
+}
+
+/** Keeps --vv-height / --vv-top on <html> in step with the visible viewport while a dialog is open. */
+function useVisualViewport(on: boolean) {
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!on || !vv) return
+    const root = document.documentElement.style
+    const update = () => {
+      root.setProperty('--vv-height', `${vv.height}px`)
+      root.setProperty('--vv-top', `${vv.offsetTop}px`)
+    }
+    update()
+    vv.addEventListener('resize', update)
+    vv.addEventListener('scroll', update)
+    return () => {
+      vv.removeEventListener('resize', update)
+      vv.removeEventListener('scroll', update)
+    }
+  }, [on])
 }
 
 /** Cancel on the left, save on the right, always on screen while a long form scrolls. */

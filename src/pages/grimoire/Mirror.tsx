@@ -6,6 +6,7 @@ import { Box, Button, Flex, HStack, Stack, Tabs, Text } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { EmotionWheel, WordChip } from '../../components/grimoire/EmotionWheel'
+import { Dread, Stars } from '../../components/grimoire/Marks'
 import { WordCard } from '../../components/grimoire/WordCard'
 import { Chips, Empty, PageHeader, Section, Select, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
@@ -106,9 +107,14 @@ function EntryCard({ e, onOpen, onWord }: { e: JournalEntry; onOpen: () => void;
         </Flex>
       )}
       {e.type === 'taskFeedback' && task && e.realStars != null && (
-        <Text fontSize="xs" color="fg.muted" mt="1">
-          ожидание: ★{task.stars} ☠{task.dread} → на деле ★{e.realStars} ☠{e.realDread}
-        </Text>
+        <HStack fontSize="xs" color="fg.muted" mt="1" gap="1.5" wrap="wrap">
+          <Text>ожидание:</Text>
+          <Stars n={task.stars} size={11} />
+          <Dread n={task.dread} size={12} calm />
+          <Text>→ на деле</Text>
+          <Stars n={e.realStars} size={11} />
+          <Dread n={e.realDread ?? 0} size={12} calm />
+        </HStack>
       )}
       {(!!e.factors?.length || !!e.people?.length) && (
         <Text fontSize="xs" color="fg.muted" mt="1">

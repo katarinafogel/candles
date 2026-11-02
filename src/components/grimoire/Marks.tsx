@@ -1,7 +1,7 @@
-// Small marks of a deed: candle-glow stars for difficulty, skulls for dread (never confused with stars),
-// a calm deadline, tags.
+// Small marks of a deed: candle-glow stars for difficulty, weather for dread — one icon that changes
+// (sun, cloud, rain, storm) in cool lilac-grey, so it never mixes with the warm stars — a calm deadline, tags.
 import { Badge, Box, HStack, Text } from '@chakra-ui/react'
-import { LuSkull } from 'react-icons/lu'
+import { LuCloud, LuCloudLightning, LuCloudRain, LuSun } from 'react-icons/lu'
 import { dueDay, humanDay } from '../../grimoire/days'
 import { dreadLabel } from '../../grimoire/labels'
 import { tagPalette } from '../../grimoire/tags'
@@ -42,20 +42,22 @@ export function Stars({ n, size = 12 }: { n: number; size?: number }) {
   )
 }
 
-export function Dread({ n, size = 12 }: { n: number; size?: number }) {
-  if (!n) return null
+const weather = [LuSun, LuCloud, LuCloudRain, LuCloudLightning]
+/** Lilac-grey for laziness and «не хочу», a deeper violet for the monster. */
+const weatherColor = ['#a59fb5', '#a59fb5', '#a59fb5', '#b18ff0']
+
+/** One weather icon for the dread; «норм» (0) is drawn only in the picker (`calm`). */
+export function Dread({ n, size = 12, calm }: { n: number; size?: number; calm?: boolean }) {
+  if (!n && !calm) return null
+  const Icon = weather[n]
   return (
-    <HStack gap="0" color={n === 3 ? 'red.300' : 'fg.muted'} aria-label={`нехотение: ${dreadLabel[n]}`} title={dreadLabel[n]}>
-      {Array.from({ length: n }, (_, i) => (
-        <Box key={i} display="inline-flex" fontSize={`${size}px`}>
-          <LuSkull />
-        </Box>
-      ))}
-    </HStack>
+    <Box display="inline-flex" fontSize={`${size}px`} color={weatherColor[n]} aria-label={`нехотение: ${dreadLabel[n]}`} title={dreadLabel[n]}>
+      <Icon strokeWidth={n === 3 ? 2.4 : 2} />
+    </Box>
   )
 }
 
-/** Tap to choose 1–3 (stars) or 0–3 (dread); the label under it says what the number means. */
+/** Tap to choose 1–3 (stars) or 0–3 (dread, the weather icon over its label); the label says what the number means. */
 export function MarkPicker({ kind, value, onChange }: { kind: 'stars' | 'dread'; value: number; onChange: (v: number) => void }) {
   const values = kind === 'stars' ? [1, 2, 3] : [0, 1, 2, 3]
   return (
@@ -74,12 +76,14 @@ export function MarkPicker({ kind, value, onChange }: { kind: 'stars' | 'dread';
             borderColor={on ? 'ember.500' : 'border'}
             bg={on ? 'ember.subtle' : 'transparent'}
             display="flex"
+            flexDirection={kind === 'dread' ? 'column' : 'row'}
             alignItems="center"
-            gap="1.5"
+            gap={kind === 'dread' ? '0.5' : '1.5'}
             minH="9"
+            minW={kind === 'dread' ? '16' : undefined}
             aria-pressed={on}
           >
-            {kind === 'stars' ? <Stars n={v} size={14} /> : v ? <Dread n={v} size={14} /> : null}
+            {kind === 'stars' ? <Stars n={v} size={14} /> : <Dread n={v} size={16} calm />}
             <Text fontSize="xs" color={on ? 'ember.100' : 'fg.muted'}>
               {kind === 'stars' ? `${v}` : dreadLabel[v]}
             </Text>

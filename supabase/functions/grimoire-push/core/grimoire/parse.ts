@@ -1,5 +1,6 @@
 // GENERATED from src/grimoire/parse.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
-// Quick add: one line becomes a task.
+// One line becomes a task — the syntax the assistant (MCP connector, agent.ts) uses; the app's own forms
+// have plain fields and never parse these symbols.
 //   «помыть окна **☠☠ #дом !пт»  → 2 stars, dread 2, tag «дом», deadline on Friday
 //   «кино с @аня +радость»       → a joy linked to the person «Аня»
 // Tokens: * stars (1–3), ☠ dread (0–3), #tag, !deadline (пн…вс, сегодня, завтра, послезавтра,
