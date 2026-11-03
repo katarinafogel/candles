@@ -55,6 +55,39 @@ function mirroredPalettes() {
   return vars
 }
 
+/** A palette's steps as `--chakra-colors-*` overrides. */
+function paletteVars(name: string, scale: Record<string, string>) {
+  return Object.fromEntries(Object.entries(scale).map(([step, value]) => [`--chakra-colors-${name}-${step}`, value]))
+}
+
+// The light design system's palette, light to dark.
+export const paper = {
+  cream: '#F1DDBF',
+  taupe: '#CABEAD',
+  stone: '#A29E9A',
+  slate: '#525E75',
+  pine: '#657980',
+  eucalyptus: '#78938A',
+  sage: '#85A78E',
+  leaf: '#92BA92',
+  mint: '#AECCAE',
+  mist: '#C9DDC9',
+}
+
+// Its accent scales, already in mirrored order (50 is the darkest): sage for «emerald», cream and
+// taupe deepening to brown for «ember». The ends past the palette are its own colours, darkened or
+// washed out, so headings and text stay readable on white.
+const paperScales = {
+  emerald: {
+    50: '#27332f', 100: '#34443d', 200: '#465c50', 300: '#577262', 400: '#5d7d67', 500: paper.sage,
+    600: paper.leaf, 700: paper.mint, 800: paper.mist, 900: '#e2ece2', 950: '#f2f7f2',
+  },
+  ember: {
+    50: '#3b3128', 100: '#4f4337', 200: '#685a4a', 300: '#8a7660', 400: '#a8916f', 500: '#bba98f',
+    600: paper.taupe, 700: '#ddcbb1', 800: paper.cream, 900: '#f7ebda', 950: '#fbf5ec',
+  },
+}
+
 // Night workshop: warm charcoal and dark wood, a faint star field and a candle glow off to the side.
 const starField = [
   'radial-gradient(1px 1px at 12% 18%, rgba(246,220,174,.55) 50%, transparent 51%)',
@@ -110,46 +143,48 @@ export const themes: Record<ThemeId, Theme> = {
       '--g-joy-mark': '#f4efe6',
     },
   },
-  // White paper: the same sage and beeswax, ink-dark text.
+  // White paper in the light palette (see `paper` above): slate ink, sage accents, cream and taupe.
   paper: {
     label: 'бумага',
     scheme: 'light',
     meta: '#ffffff',
     vars: {
       ...mirroredPalettes(),
+      ...paletteVars('emerald', paperScales.emerald),
+      ...paletteVars('ember', paperScales.ember),
       '--g-bg': '#ffffff',
-      '--g-bg-subtle': '#faf8f4',
-      '--g-bg-muted': '#f3efe8',
-      '--g-bg-emphasized': '#e9e3d9',
+      '--g-bg-subtle': '#fcf8f2',
+      '--g-bg-muted': '#f8efe2',
+      '--g-bg-emphasized': paper.cream,
       '--g-bg-panel': '#ffffff',
       '--g-bg-nav': 'rgba(255, 255, 255, 0.94)',
       '--g-bg-veil': 'rgba(255, 255, 255, 0.72)',
-      '--g-border': '#e7e0d5',
-      '--g-border-muted': '#f0ebe3',
-      '--g-border-emphasized': '#d4c9b9',
-      '--g-fg': '#211b15',
-      '--g-fg-muted': '#6b5f50',
-      '--g-fg-subtle': '#998d7d',
+      '--g-border': '#e8dfd2',
+      '--g-border-muted': '#f1ebe2',
+      '--g-border-emphasized': paper.taupe,
+      '--g-fg': '#3a4357',
+      '--g-fg-muted': paper.slate,
+      '--g-fg-subtle': '#8a8682',
       '--g-emerald-contrast': '#ffffff',
-      '--g-ember-contrast': '#ffffff',
-      '--g-glow': 'rgba(201, 133, 58, 0.4)',
-      '--g-glow-soft': 'rgba(224, 164, 85, 0.08)',
-      '--g-shade': 'rgba(60, 40, 20, 0.18)',
-      '--g-selection': 'rgba(224, 164, 85, 0.3)',
-      '--g-scrollbar': '#d4c9b9',
-      '--g-scrollbar-hover': '#b5a891',
+      '--g-ember-contrast': '#2f271f',
+      '--g-glow': 'rgba(133, 167, 142, 0.45)',
+      '--g-glow-soft': 'rgba(241, 221, 191, 0.35)',
+      '--g-shade': 'rgba(82, 94, 117, 0.18)',
+      '--g-selection': 'rgba(174, 204, 174, 0.5)',
+      '--g-scrollbar': paper.taupe,
+      '--g-scrollbar-hover': paper.stone,
       '--g-backdrop': 'none',
       '--g-backdrop-size': 'auto',
-      '--g-ink': 'rgba(90, 70, 45, 0.5)',
-      '--g-ink-faint': 'rgba(90, 70, 45, 0.06)',
-      '--g-ink-bright': '#7f4f23',
+      '--g-ink': 'rgba(82, 94, 117, 0.45)',
+      '--g-ink-faint': 'rgba(82, 94, 117, 0.06)',
+      '--g-ink-bright': paper.slate,
       '--g-hollow': 'rgba(255, 255, 255, 0.9)',
-      '--g-label': '#211b15',
-      '--g-hub': '#faf8f4',
+      '--g-label': '#3a4357',
+      '--g-hub': '#fcf8f2',
       '--g-chip': 'rgba(255, 255, 255, 0.95)',
-      '--g-chip-fg': '#3d2f22',
-      '--g-moon-dark': 'rgba(60, 40, 20, 0.12)',
-      '--g-joy-mark': '#c9b48a',
+      '--g-chip-fg': '#3a4357',
+      '--g-moon-dark': 'rgba(82, 94, 117, 0.12)',
+      '--g-joy-mark': paper.stone,
     },
   },
 }
