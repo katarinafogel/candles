@@ -229,17 +229,19 @@ export function TextArea(props: { value: string; onChange: (v: string) => void; 
   )
 }
 
-/** Tap-to-choose options; tapping the chosen one clears it. */
+/** Tap-to-choose options; tapping the chosen one clears it. `children` go last in the row (a «+»). */
 export function Chips<T extends string>({
   value,
   onChange,
   options,
   multi,
+  children,
 }: {
   value: T | T[] | undefined
   onChange: (v: T | T[] | undefined) => void
   options: { value: T; label: string }[]
   multi?: boolean
+  children?: ReactNode
 }) {
   const list = Array.isArray(value) ? value : value ? [value] : []
   return (
@@ -261,6 +263,7 @@ export function Chips<T extends string>({
           </Button>
         )
       })}
+      {children}
     </Wrap>
   )
 }

@@ -5,9 +5,9 @@ import { Badge, Box, HStack, IconButton, Input, Stack, Text } from '@chakra-ui/r
 import { nanoid } from '@reduxjs/toolkit'
 import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react'
 import { LuBookOpen, LuCalendarClock, LuClockAlert, LuHash, LuListChecks, LuPen, LuPlus, LuRepeat, LuUser, LuX } from 'react-icons/lu'
-import { costOptions, ownerKindLabel, slotLabel, wantLabel, whyOptions } from '../../grimoire/labels'
+import { costOptions, slotLabel, wantLabel, whyOptions } from '../../grimoire/labels'
 import type { TaskDraft } from '../../grimoire/newTask'
-import type { ChecklistItem, Task, TaskOwnerKind, TaskSlot, Want } from '../../grimoire/types'
+import type { ChecklistItem, Task, TaskSlot, Want } from '../../grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { actions } from '../../store/dataSlice'
 import { grimoireActions as A } from '../../store/grimoireSlice'
@@ -152,6 +152,8 @@ export function TaskFields({
   // Books to put the deed in: those being read, and the one it is in already, whatever its state.
   const books = Object.values(g.projects).filter((p) => p.status === 'active' || p.status === 'paused' || p.id === t.projectId)
   const project = t.projectId ? g.projects[t.projectId] : undefined
+  // «Своими словами» opens with the «+» after the reasons, or by itself when there is a text already.
+  const [ownWhy, setOwnWhy] = useState(!!t.whyText)
   const end = useRef<Record<string, HTMLDivElement | null>>({})
   useEffect(() => {
     if (opened) end.current[opened]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -308,14 +310,28 @@ export function TaskFields({
       <Field label="Хочу / надо" helper="отдельно от нехотения: можно хотеть и бояться">
         <Chips value={t.want} onChange={(v) => set({ want: v as Want | undefined })} options={Object.entries(wantLabel).map(([value, label]) => ({ value: value as Want, label }))} />
       </Field>
-      <Field label="Чья обязанность">
-        <Chips value={t.ownerKind} onChange={(v) => set({ ownerKind: v as TaskOwnerKind | undefined })} options={Object.entries(ownerKindLabel).map(([value, label]) => ({ value: value as TaskOwnerKind, label }))} />
-      </Field>
       <Field label="Почему важно">
-        <Chips multi value={t.why ?? []} onChange={(v) => set({ why: (v as string[]) ?? [] })} options={whyOptions.map((x) => ({ value: x, label: x }))} />
+        <Stack gap="2" w="full">
+          <Chips multi value={t.why ?? []} onChange={(v) => set({ why: (v as string[]) ?? [] })} options={whyOptions.map((x) => ({ value: x, label: x }))}>
+            <IconButton
+              size="sm"
+              borderRadius="full"
+              variant={ownWhy ? 'solid' : 'outline'}
+              aria-label="Своими словами"
+              title="Своими словами"
+              aria-pressed={ownWhy}
+              onClick={() => {
+                if (ownWhy) set({ whyText: undefined })
+                setOwnWhy(!ownWhy)
+              }}
+            >
+              <LuPlus />
+            </IconButton>
+          </Chips>
+          {ownWhy && <TextInput value={t.whyText ?? ''} onChange={(v) => set({ whyText: v || undefined })} placeholder="своими словами" />}
+        </Stack>
       </Field>
-      <TextInput value={t.whyText ?? ''} onChange={(v) => set({ whyText: v || undefined })} placeholder="своими словами" />
-      <Field label="Стоимость сил">
+      <Field label="Ресурс" helper="что дело забирает">
         <Chips multi value={t.costs ?? []} onChange={(v) => set({ costs: (v as string[]) ?? [] })} options={costOptions.map((x) => ({ value: x, label: x }))} />
       </Field>
       <Check checked={!!t.evenInNav} onChange={(v) => set({ evenInNav: v || undefined })}>

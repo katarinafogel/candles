@@ -37,8 +37,9 @@ export const sourceLabel: Record<TaskSource, string> = {
   workshop: 'мастерская',
 }
 
-export const whyOptions = ['реальный срок', 'последствия', 'мешает жить', 'открывает дорогу']
-export const costOptions = ['нужно решение', 'общение', 'подготовка', 'выход из дома']
+export const whyOptions = ['пугает последствиями', 'мешает жить', 'открывает дорогу']
+/** «Ресурс»: what the deed takes. */
+export const costOptions = ['общение', 'выбор', 'выход из дома', 'деньги', 'много шагов']
 
 /** Step types offered by «Расколоть». */
 export const stepKinds = ['решить', 'подготовить', 'сделать', 'связаться', 'ждать', 'найти информацию', 'купить']
