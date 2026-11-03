@@ -44,6 +44,8 @@ const config = defineConfig({
       ),
     },
     semanticTokens: {
+      // No shadows anywhere: dialogs, menus and popovers stay flat, outlined by their borders.
+      shadows: Object.fromEntries(['xs', 'sm', 'md', 'lg', 'xl', '2xl', 'inner', 'inset'].map((k) => [k, { value: 'none' }])),
       colors: {
         emerald: {
           contrast: v('emerald-contrast'),

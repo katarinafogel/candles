@@ -229,7 +229,6 @@ export default function Holders() {
             borderWidth="1px"
             borderColor="emerald.700"
             borderRadius="l3"
-            shadow="lg"
             maxW="560px"
             mx="auto"
           >

@@ -358,7 +358,7 @@ export function ArcanaCard({
       boxShadow={
         selected
           ? `0 0 0 2px ${p.star}, 0 0 26px -4px ${p.glow}`
-          : '0 10px 28px -14px rgba(0,0,0,.75), inset 0 0 0 1px rgba(255,255,255,.06)'
+          : 'inset 0 0 0 1px rgba(255,255,255,.06)'
       }
       transition="transform .18s ease, box-shadow .18s ease"
       _hover={onClick ? { transform: 'translateY(-2px)' } : undefined}
@@ -392,7 +392,7 @@ export function ArcanaCard({
           <Emblem tone={tone} p={p} />
         </Box>
         {figure && (
-          <Box mb="2" lineHeight="0" filter="drop-shadow(0 2px 4px rgba(0,0,0,.18))">
+          <Box mb="2" lineHeight="0">
             {figure}
           </Box>
         )}

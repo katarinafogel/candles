@@ -93,7 +93,7 @@ export function SuggestInput({
         onBlur={() => commitOnBlur && create(text)}
       />
       {hits.length > 0 && (
-        <Stack gap="0" role="listbox" borderWidth="1px" borderColor="border" borderRadius="l2" bg="bg.muted" py="1" shadow="md">
+        <Stack gap="0" role="listbox" borderWidth="1px" borderColor="border" borderRadius="l2" bg="bg.muted" py="1">
           {hits.map((h, i) => (
             <Box
               as="button"

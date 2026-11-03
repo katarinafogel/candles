@@ -83,7 +83,7 @@ function MonthCard({ m, today, holidays, busy, feel, born, onDay, refFor }: { m:
       borderRadius="10px"
       background={monthBg(m)}
       color={p.fg}
-      boxShadow="0 10px 28px -14px rgba(0,0,0,.75), inset 0 0 0 1px rgba(255,255,255,.06)"
+      boxShadow="inset 0 0 0 1px rgba(255,255,255,.06)"
       scrollMarginTop="16px"
       css={{ '--card-solid': deep(sabbats[m.from].color), '--chakra-colors-fg': p.fg, '--chakra-colors-fg-muted': p.muted, '--chakra-colors-fg-subtle': p.subtle }}
     >

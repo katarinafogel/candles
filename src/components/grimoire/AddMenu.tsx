@@ -63,33 +63,45 @@ export function AddMenu() {
         bottom={{ base: 'calc(76px + env(safe-area-inset-bottom))', md: '8' }}
         zIndex="calc(var(--chakra-z-index-overlay) + 1)"
         align="flex-end"
-        gap="3"
+        gap="4"
       >
-        {items.map((i, n) => (
-          <Flex
-            as="button"
-            key={i.kind}
-            align="center"
-            gap="4"
-            mr="1"
-            cursor="pointer"
-            aria-hidden={!open}
-            tabIndex={open ? 0 : -1}
-            opacity={open ? 1 : 0}
-            transform={open ? 'none' : 'translateY(16px) scale(0.9)'}
-            pointerEvents={open ? 'auto' : 'none'}
-            transition="opacity 0.18s, transform 0.18s"
-            transitionDelay={`${(open ? items.length - 1 - n : 0) * 40}ms`}
-            onClick={() => pick(i.kind)}
-          >
-            <Text minW="32" textAlign="center" px="5" py="1.5" borderRadius="full" bg="white" color="black" fontSize="xl" shadow="sm">
-              {i.label}
-            </Text>
-            <Flex w="14" h="14" align="center" justify="center" borderRadius="full" bg="ember.solid" color="ember.contrast" opacity={0.75} shadow="md">
-              <Icon name={i.icon} size={30} />
+        <Stack
+          gap="1"
+          p="2"
+          bg="bg.panel"
+          borderWidth="1px"
+          borderColor="border"
+          borderRadius="2xl"
+          aria-hidden={!open}
+          opacity={open ? 1 : 0}
+          transform={open ? 'none' : 'translateY(16px) scale(0.95)'}
+          transformOrigin="bottom right"
+          pointerEvents={open ? 'auto' : 'none'}
+          transition="opacity 0.18s, transform 0.18s"
+        >
+          {items.map((i) => (
+            <Flex
+              as="button"
+              key={i.kind}
+              align="center"
+              justify="space-between"
+              gap="6"
+              pl="4"
+              pr="1"
+              py="1"
+              borderRadius="full"
+              cursor="pointer"
+              tabIndex={open ? 0 : -1}
+              _hover={{ bg: 'bg.muted' }}
+              onClick={() => pick(i.kind)}
+            >
+              <Text fontSize="lg">{i.label}</Text>
+              <Flex w="12" h="12" align="center" justify="center" borderRadius="full" bg="ember.subtle" color="ember.fg">
+                <Icon name={i.icon} size={26} />
+              </Flex>
             </Flex>
-          </Flex>
-        ))}
+          ))}
+        </Stack>
         <Box
           as="button"
           aria-label="Добавить"
@@ -100,7 +112,6 @@ export function AddMenu() {
           color="ember.solid"
           // The plus is cut out of the circle: a white disc behind keeps it white on any page.
           bg="radial-gradient(circle, white 55%, transparent 56%)"
-          filter="drop-shadow(0 8px 16px var(--g-shade))"
           onClick={() => setOpen(!open)}
         >
           <Icon name="plus-circle-fill" size={76} />

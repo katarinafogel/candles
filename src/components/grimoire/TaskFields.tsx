@@ -101,7 +101,6 @@ export function useFieldBlocks(t: Partial<Task>, set: (patch: Partial<Task>) => 
                 borderRadius="l2"
                 bg="bg.emphasized"
                 color="fg"
-                shadow="md"
                 pointerEvents="none"
                 opacity="0"
                 transition="opacity .12s"

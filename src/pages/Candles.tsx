@@ -304,7 +304,7 @@ export default function Candles() {
 
       {selected.length > 0 && (
         <Box position="fixed" bottom={{ base: '72px', md: '6' }} left={{ base: '4', md: 'calc(240px + 2rem)' }} right="4" zIndex="docked">
-          <Flex gap="2" p="2" bg="bg.panel" borderWidth="1px" borderColor="emerald.700" borderRadius="l3" shadow="lg" maxW="720px" mx="auto" wrap="wrap" justify="center">
+          <Flex gap="2" p="2" bg="bg.panel" borderWidth="1px" borderColor="emerald.700" borderRadius="l3" maxW="720px" mx="auto" wrap="wrap" justify="center">
             {allIn('wicked') && (
               <Button size="sm" onClick={() => nav(`/pour/new?ids=${selected.join(',')}`)}>
                 <LuDroplets /> Залить · {selected.length}

@@ -47,7 +47,7 @@ export function BookCover({ project, progress, tied = true }: { project: Project
         inset="0 3% 2% 0"
         borderRadius="4px 8px 8px 4px"
         background={`radial-gradient(60% 40% at 30% 20%, color-mix(in srgb, ${c.leather} 70%, #fff 12%), transparent 70%), radial-gradient(30% 22% at 78% 72%, rgba(0,0,0,.35), transparent 70%), radial-gradient(18% 14% at 22% 82%, rgba(255,255,255,.06), transparent 70%), linear-gradient(160deg, color-mix(in srgb, ${c.leather} 85%, #fff 8%) 0%, ${c.leather} 45%, color-mix(in srgb, ${c.leather} 70%, #000) 100%)`}
-        boxShadow="0 14px 30px -16px rgba(0,0,0,.9), inset 0 0 0 1px rgba(255,255,255,.05), inset -6px 0 14px -8px rgba(0,0,0,.6)"
+        boxShadow="inset 0 0 0 1px rgba(255,255,255,.05), inset -6px 0 14px -8px rgba(0,0,0,.6)"
         overflow="hidden"
       >
         <Box position="absolute" top="0" bottom="0" left="0" w="11%" bg="linear-gradient(90deg, rgba(0,0,0,.45), rgba(0,0,0,.15) 70%, rgba(255,255,255,.05))" />

@@ -42,7 +42,6 @@ export function Toaster() {
             color="fg"
             borderWidth="1px"
             borderColor={t.type === 'error' ? 'red.700' : t.type === 'warning' ? 'orange.700' : 'border.emphasized'}
-            boxShadow="0 10px 30px -10px var(--g-shade), 0 0 24px -12px var(--g-glow)"
             css={{ '--toast-trigger-bg': 'transparent' }}
           >
             {t.type === 'loading' ? (
@@ -418,7 +417,6 @@ export function FormActions({ onCancel, onSave, saveLabel = 'Сохранить'
         borderWidth="1px"
         borderColor="emerald.700"
         borderRadius="l3"
-        shadow="lg"
         maxW="1200px"
       >
         <Button variant="ghost" onClick={onCancel}>
@@ -470,7 +468,6 @@ export function Section({ title, children, actions, dense }: { title?: ReactNode
       borderRadius="l3"
       mb="4"
       backdropFilter="blur(2px)"
-      boxShadow="0 1px 0 var(--g-ink-faint) inset, 0 8px 24px -16px var(--g-shade)"
     >
       {(title || actions) && (
         <Card.Header pb="0" px={dense ? '3' : undefined} pt={dense ? '3' : undefined}>

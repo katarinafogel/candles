@@ -155,7 +155,6 @@ export default function ProjectBook() {
           borderRadius="6px"
           borderWidth="6px"
           borderColor={c.leather}
-          boxShadow="0 18px 40px -20px rgba(0,0,0,.9)"
           className="quiet-scroll"
           opacity={stage === 'open' ? 1 : 0}
           transition="opacity .4s"
