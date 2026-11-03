@@ -1,12 +1,30 @@
-// Line icons from the «Dazzle Line Icons» set (svgrepo), one file each in ./svg, drawn in
-// currentColor so they take the text colour. A new icon: drop its .svg here and it shows up.
-const files = import.meta.glob('./svg/*.svg', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
+// Icons from svgrepo, one file each, a folder per set, drawn in currentColor so they take the
+// text colour. A new icon: drop its .svg into its set's folder and it shows up; names are unique
+// across sets.
+const files = import.meta.glob('./*/*.svg', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
 
-export const icons: Record<string, string> = Object.fromEntries(
-  Object.entries(files)
-    .map(([path, svg]) => [path.slice(6, -4), svg] as const)
-    .sort(([a], [b]) => a.localeCompare(b)),
-)
+export interface IconSet {
+  id: string
+  label: string
+  link: string
+  names: string[]
+}
+
+const sets: Omit<IconSet, 'names'>[] = [
+  { id: 'dazzle', label: 'Dazzle Line', link: 'https://www.svgrepo.com/collection/dazzle-line-icons/1' },
+  { id: 'magic', label: 'Magic Glyph', link: 'https://www.svgrepo.com/collection/magic-glyph-icons/' },
+]
+
+const parsed = Object.entries(files)
+  .map(([path, svg]) => {
+    const [, set, file] = path.split('/')
+    return { set, name: file.slice(0, -4), svg }
+  })
+  .sort((a, b) => a.name.localeCompare(b.name))
+
+export const icons: Record<string, string> = Object.fromEntries(parsed.map((i) => [i.name, i.svg]))
+
+export const iconSets: IconSet[] = sets.map((s) => ({ ...s, names: parsed.filter((i) => i.set === s.id).map((i) => i.name) }))
 
 export type IconName = keyof typeof icons
 

@@ -59,7 +59,7 @@ npm run build
 
 ## UI-кит
 
-Витрина компонентов проекта — `/ui` (`src/pages/UiKit.tsx`). Иконки — из набора [Dazzle Line Icons](https://www.svgrepo.com/collection/dazzle-line-icons/1), лежат по одной в `src/icons/svg/` (цвет `currentColor`), в коде — `<Icon name="cauldron" />` из `src/icons`. Новая иконка: скачать `https://www.svgrepo.com/show/<id>/<имя>.svg` в эту папку и заменить `#000000` на `currentColor`.
+Витрина компонентов проекта — `/ui` (`src/pages/UiKit.tsx`). Иконки — из наборов [Dazzle Line Icons](https://www.svgrepo.com/collection/dazzle-line-icons/1) (`src/icons/dazzle/`, выборка) и [Magic Glyph Icons](https://www.svgrepo.com/collection/magic-glyph-icons/) (`src/icons/magic/`, весь набор), по одной в файле, цвет `currentColor`; в коде — `<Icon name="cauldron" />` из `src/icons`. Новая иконка: скачать `https://www.svgrepo.com/show/<id>/<имя>.svg` в папку набора и заменить `#000000` на `currentColor`; имена не должны повторяться между наборами.
 
 ## Где что
 

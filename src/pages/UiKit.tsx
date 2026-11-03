@@ -3,7 +3,7 @@
 import { Box, Flex, Grid, Heading, Stack, Text } from '@chakra-ui/react'
 import { useState, type ReactNode } from 'react'
 import { notify } from '../components/ui'
-import { Icon, icons } from '../icons'
+import { Icon, iconSets } from '../icons'
 
 interface Section {
   id: string
@@ -21,8 +21,26 @@ function Icons() {
     )
   }
   return (
+    <Stack gap="8">
+      {iconSets.map((set) => (
+        <Box key={set.id}>
+          <Text mb="3" color="fg.muted">
+            <a href={set.link} target="_blank" rel="noreferrer">
+              {set.label}
+            </a>{' '}
+            · {set.names.length}
+          </Text>
+          <IconGrid names={set.names} copy={copy} />
+        </Box>
+      ))}
+    </Stack>
+  )
+}
+
+function IconGrid({ names, copy }: { names: string[]; copy: (name: string) => void }) {
+  return (
     <Grid templateColumns="repeat(auto-fill, minmax(112px, 1fr))" gap="0" borderTopWidth="1px" borderLeftWidth="1px" borderColor="border">
-      {Object.keys(icons).map((name) => (
+      {names.map((name) => (
         <Stack key={name} align="center" gap="2" p="4" borderRightWidth="1px" borderBottomWidth="1px" borderColor="border">
           <Box color="ember.200">
             <Icon name={name} size={28} />
