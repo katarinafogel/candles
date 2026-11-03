@@ -6,6 +6,7 @@ import { nanoid } from '@reduxjs/toolkit'
 import { useMemo, useState } from 'react'
 import { LuPlus, LuX } from 'react-icons/lu'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { CycleMark } from '../../components/grimoire/Cycle'
 import { EmotionPicker, WordChip } from '../../components/grimoire/EmotionWheel'
 import { matchPeople } from '../../components/grimoire/QuickAdd'
 import { WordCard } from '../../components/grimoire/WordCard'
@@ -191,6 +192,7 @@ export default function MirrorEntry() {
   const today = useToday()
   const entry = id && id !== 'new' && id !== 'evening' ? g.journal[id] : undefined
   const evening = id === 'evening' || entry?.type === 'evening'
+  const cycleShown = g.meta.gender === 'f' && !!g.meta.cycleOn
   const source = params.get('source') as JournalEntry['source'] | null
   const [e, setE] = useState<Partial<JournalEntry>>(
     () => entry ?? { taskId: params.get('task') ?? undefined, words: params.get('word') ? [params.get('word')!] : undefined },
@@ -276,6 +278,11 @@ export default function MirrorEntry() {
           {evening && (
             <Section title="Эмоции дня">
               <DayStrip entries={todays} />
+            </Section>
+          )}
+          {evening && cycleShown && (
+            <Section title="Цикл">
+              <CycleMark />
             </Section>
           )}
           {evening && (

@@ -8,9 +8,10 @@ import { publicBase } from '../lib/config'
 import { authRedirect, supabase, supabaseConfigured } from '../lib/supabase'
 import { startSync } from '../lib/sync'
 import { useAppDispatch, useAppSelector, useData } from '../store'
+import { grimoireActions as A } from '../store/grimoireSlice'
 import { localActions } from '../store/localSlice'
 import { Eucalyptus, MoonPhases, MoonSlice } from './Magic'
-import { Field, notify } from './ui'
+import { Chips, Field, notify } from './ui'
 
 function Shell({ children }: { children: ReactNode }) {
   return (
@@ -138,6 +139,7 @@ function Onboarding({ session }: { session: Session }) {
   const [slug, setSlug] = useState(slugify(session.user.email ?? ''))
   const [free, setFree] = useState<boolean | null>(null)
   const [busy, setBusy] = useState(false)
+  const [gender, setGender] = useState<'f' | 'm'>()
   const valid = /^[a-z0-9][a-z0-9-]{2,29}$/.test(slug)
   const d = useData()
 
@@ -156,6 +158,7 @@ function Onboarding({ session }: { session: Session }) {
     const { error } = await supabase.from('profiles').insert({ user_id: session.user.id, slug, name: name.trim() })
     setBusy(false)
     if (error) return notify('Не получилось сохранить', 'error', error.code === '23505' ? 'Этот адрес уже занят' : error.message)
+    dispatch(A.updateMeta({ gender }))
     dispatch(localActions.setProfile({ slug, name: name.trim() }))
   }
 
@@ -179,7 +182,13 @@ function Onboarding({ session }: { session: Session }) {
         >
           <Input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} />
         </Field>
-        <Button onClick={save} disabled={!valid || free !== true || !name.trim()} loading={busy}>
+        <Field label="Пол">
+          <Chips value={gender} onChange={(v) => setGender(v as 'f' | 'm' | undefined)} options={[
+            { value: 'f', label: 'женский' },
+            { value: 'm', label: 'мужской' },
+          ]} />
+        </Field>
+        <Button onClick={save} disabled={!valid || free !== true || !name.trim() || !gender} loading={busy}>
           Продолжить
         </Button>
       </Stack>

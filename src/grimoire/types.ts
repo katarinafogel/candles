@@ -298,6 +298,10 @@ export interface GrimoireMeta {
   spells: Spell[]
   /** The bestiary's circles: семья, друзья… — an editable list. */
   circles: string[]
+  /** Asked on the first sign-in; the cycle can be turned on only for «f». */
+  gender?: 'f' | 'm'
+  /** The cycle is kept: its mark on the evening page. */
+  cycleOn?: boolean
   /** The cycle is shown to the assistant (phase in the morning plan); off — it never leaves the app. */
   cycleToAgent: boolean
   /** «Лёгкий план» taken for this day: the day's stars limit is halved. */

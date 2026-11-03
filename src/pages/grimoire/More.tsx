@@ -171,9 +171,22 @@ export default function GrimoireMore() {
               style={{ background: 'transparent', color: 'inherit', border: '1px solid var(--chakra-colors-border)', borderRadius: 6, padding: '6px 8px', colorScheme: 'dark', width: 120 }}
             />
           </Field>
-          <Check checked={meta.cycleToAgent ?? true} onChange={(v) => dispatch(A.updateMeta({ cycleToAgent: v }))}>
-            Цикл: показывать ассистенту (фаза в утреннем плане)
-          </Check>
+          <Field label="Пол">
+            <Chips value={meta.gender} onChange={(v) => dispatch(A.updateMeta(v === 'f' ? { gender: 'f' } : { gender: v as 'm' | undefined, cycleOn: false }))} options={[
+              { value: 'f', label: 'женский' },
+              { value: 'm', label: 'мужской' },
+            ]} />
+          </Field>
+          {meta.gender === 'f' && (
+            <Check checked={!!meta.cycleOn} onChange={(v) => dispatch(A.updateMeta({ cycleOn: v }))}>
+              Цикл
+            </Check>
+          )}
+          {meta.gender === 'f' && meta.cycleOn && (
+            <Check checked={meta.cycleToAgent ?? true} onChange={(v) => dispatch(A.updateMeta({ cycleToAgent: v }))}>
+              Цикл: показывать ассистенту (фаза в утреннем плане)
+            </Check>
+          )}
           <Check checked={meta.streaksOn} onChange={(v) => dispatch(A.updateMeta({ streaksOn: v }))}>
             Серии привычек
           </Check>

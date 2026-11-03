@@ -16,7 +16,6 @@ import type { Sabbat, Task, TaskSlot } from '../../grimoire/types'
 import { isFullMoon, moonPhase, moonPhaseNames, sabbats, wheelNow } from '../../grimoire/wheel'
 import { upcomingDates } from '../../grimoire/people'
 import { WorkshopOffers } from '../../components/grimoire/FromWorkshop'
-import { CycleChip, CycleDialog, CycleHint } from '../../components/grimoire/Cycle'
 import { MoonIcon } from '../../components/grimoire/MoonIcon'
 import { WheelPick } from '../../components/grimoire/WheelPick'
 import { sabbatTag, SabbatNoteDialog } from './Wheel'
@@ -234,7 +233,6 @@ export default function Scroll() {
   const [pick, setPick] = useState<TaskSlot>()
   const [survival, setSurvival] = useState(false)
   const [wheelPick, setWheelPick] = useState(false)
-  const [cycleOpen, setCycleOpen] = useState(false)
   const [noteFor, setNoteFor] = useState<Sabbat>()
   const meta = g.meta
   const w = words(meta)
@@ -316,10 +314,8 @@ export default function Scroll() {
           <Text>
             {dateTitle(today)} · {moonPhaseNames[moonPhase(today)]}
           </Text>
-          <CycleChip onOpen={() => setCycleOpen(true)} />
         </HStack>
       </PageHeader>
-      {cycleOpen && <CycleDialog onClose={() => setCycleOpen(false)} />}
 
       {welcome ? (
         <Welcome items={review} today={today} away={meta.awayDays ?? 0} navDays={welcome === 'nav' ? navDays : undefined} />
@@ -339,7 +335,6 @@ export default function Scroll() {
       )}
 
       <WorkshopOffers />
-      <CycleHint today={today} />
       <SimpleGrid columns={{ base: 1, md: 2 }} gap="3" mb="4">
         <Box p="3" borderRadius="l3" borderWidth="1px" borderColor="border" bg="bg.subtle">
           <Text fontFamily="heading" fontSize="lg" color="ember.100" mb="1">
