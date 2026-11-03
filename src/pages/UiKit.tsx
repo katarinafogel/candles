@@ -25,9 +25,13 @@ function Icons() {
       {iconSets.map((set) => (
         <Box key={set.id}>
           <Text mb="3" color="fg.muted">
-            <a href={set.link} target="_blank" rel="noreferrer">
-              {set.label}
-            </a>{' '}
+            {set.link ? (
+              <a href={set.link} target="_blank" rel="noreferrer">
+                {set.label}
+              </a>
+            ) : (
+              set.label
+            )}{' '}
             · {set.names.length}
           </Text>
           <IconGrid names={set.names} copy={copy} />

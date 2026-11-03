@@ -6,13 +6,15 @@ const files = import.meta.glob('./*/*.svg', { query: '?raw', import: 'default', 
 export interface IconSet {
   id: string
   label: string
-  link: string
+  link?: string
   names: string[]
 }
 
 const sets: Omit<IconSet, 'names'>[] = [
   { id: 'dazzle', label: 'Dazzle Line', link: 'https://www.svgrepo.com/collection/dazzle-line-icons/1' },
   { id: 'magic', label: 'Magic Glyph', link: 'https://www.svgrepo.com/collection/magic-glyph-icons/' },
+  // Single icons picked from svgrepo one by one.
+  { id: 'misc', label: 'Разные' },
 ]
 
 const parsed = Object.entries(files)
