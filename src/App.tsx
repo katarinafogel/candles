@@ -36,6 +36,7 @@ import Reviews from './pages/Reviews'
 import Settings from './pages/Settings'
 import Stock from './pages/Stock'
 import Apps from './pages/Apps'
+import UiKit from './pages/UiKit'
 import { useAppManifest } from './lib/apps'
 import { useWorkshopSync, WorkshopRunner } from './components/grimoire/WorkshopRun'
 
@@ -48,6 +49,8 @@ export default function App() {
     <Routes>
       {/* The recipient's page lives outside the master layout. */}
       <Route path="/c/:slug/:id" element={<PublicCandle />} />
+      {/* The component showcase: no data, so no sign-in. */}
+      <Route path="/ui" element={<UiKit />} />
       <Route
         element={
           <AuthGate>
