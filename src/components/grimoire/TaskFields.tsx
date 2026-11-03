@@ -1,10 +1,10 @@
 // The fields of a deed: shared by the card (editing) and the «Новое дело» form, so a new field is added
 // in one place. The main ones are always there; the optional blocks (project, people, note, time,
-// deadline, repeat, checklist) are turned on by round buttons and go to the end in the order chosen.
+// deadline, repeat, checklist, tags) are turned on by round buttons and go to the end in the order chosen.
 import { Badge, Box, HStack, IconButton, Input, Stack, Text } from '@chakra-ui/react'
 import { nanoid } from '@reduxjs/toolkit'
 import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react'
-import { LuBookOpen, LuCalendarClock, LuClockAlert, LuListChecks, LuPen, LuPlus, LuRepeat, LuUser, LuX } from 'react-icons/lu'
+import { LuBookOpen, LuCalendarClock, LuClockAlert, LuHash, LuListChecks, LuPen, LuPlus, LuRepeat, LuUser, LuX } from 'react-icons/lu'
 import { costOptions, ownerKindLabel, slotLabel, wantLabel, whyOptions } from '../../grimoire/labels'
 import type { TaskDraft } from '../../grimoire/newTask'
 import type { ChecklistItem, Task, TaskOwnerKind, TaskSlot, Want } from '../../grimoire/types'
@@ -18,11 +18,12 @@ import { SuggestInput } from './SuggestInput'
 import { TagInput } from './TagInput'
 
 /** Optional blocks of the form, each behind its round button above the footer. */
-export type Block = 'project' | 'people' | 'note' | 'time' | 'due' | 'repeat' | 'checklist'
+export type Block = 'project' | 'people' | 'tags' | 'note' | 'time' | 'due' | 'repeat' | 'checklist'
 
 const blocks: { key: Block; label: string; icon: ReactNode; clear: Partial<Task> }[] = [
   { key: 'project', label: 'Проект', icon: <LuBookOpen />, clear: { projectId: undefined } },
   { key: 'people', label: 'Люди', icon: <LuUser />, clear: { personIds: undefined } },
+  { key: 'tags', label: 'Теги', icon: <LuHash />, clear: { tags: [] } },
   { key: 'note', label: 'Заметка', icon: <LuPen />, clear: { note: undefined } },
   { key: 'time', label: 'Когда делать', icon: <LuCalendarClock />, clear: { doOn: undefined, doAt: undefined } },
   { key: 'due', label: 'Сделать до', icon: <LuClockAlert />, clear: { dueAt: undefined } },
@@ -35,6 +36,7 @@ function filled(t: Partial<Task>): Set<Block> {
   const has: Record<Block, unknown> = {
     project: t.projectId,
     people: t.personIds?.length,
+    tags: t.tags?.length,
     note: t.note,
     time: t.doOn,
     due: t.dueAt,
@@ -224,6 +226,11 @@ export function TaskFields({
         </Stack>
       </Field>
     ),
+    tags: (
+      <Field label="Теги" helper="Enter или запятая добавляет, тап по тегу убирает">
+        <TagInput value={t.tags} onChange={(tags) => set({ tags })} />
+      </Field>
+    ),
     note: (
       <Field label="Заметка">
         <TextArea value={t.note ?? ''} onChange={(v) => set({ note: v || undefined })} />
@@ -298,9 +305,6 @@ export function TaskFields({
           <Chips value={t.slot} onChange={(v) => set({ slot: v as TaskSlot | undefined })} options={Object.entries(slotLabel).map(([value, label]) => ({ value: value as TaskSlot, label }))} />
         </Field>
       </HStack>
-      <Field label="Теги" helper="Enter или запятая добавляет, тап по тегу убирает">
-        <TagInput value={t.tags} onChange={(tags) => set({ tags })} />
-      </Field>
       <Field label="Хочу / надо" helper="отдельно от нехотения: можно хотеть и бояться">
         <Chips value={t.want} onChange={(v) => set({ want: v as Want | undefined })} options={Object.entries(wantLabel).map(([value, label]) => ({ value: value as Want, label }))} />
       </Field>
