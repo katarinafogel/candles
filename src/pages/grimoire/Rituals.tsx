@@ -262,11 +262,7 @@ export default function Rituals() {
 
   return (
     <>
-      <PageHeader title={w.rituals}>
-        <Button size="sm" onClick={() => setEdit({ ...blank, activeFrom: today })}>
-          <LuPlus /> Новый
-        </Button>
-      </PageHeader>
+      <PageHeader title={w.rituals} />
       {g.meta.nav.active && (
         <Section>
           <Text fontSize="sm" color="fg.muted">

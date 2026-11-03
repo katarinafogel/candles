@@ -2,7 +2,6 @@
 // Read books stand on their own shelf; archived ones are a quiet list at the bottom.
 import { Box, Button, Flex, HStack, Input, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
-import { LuPlus } from 'react-icons/lu'
 import { Link as RouterLink } from 'react-router-dom'
 import { BookCover, bookColors } from '../../components/grimoire/BookCover'
 import { Chips, Empty, Field, Modal, PageHeader, Section, TextArea, TextInput } from '../../components/ui'
@@ -115,18 +114,13 @@ function Shelf({ books }: { books: Project[] }) {
 export default function Projects() {
   const projects = useAppSelector((s) => s.grimoire.projects)
   const meta = useAppSelector((s) => s.grimoire.meta)
-  const [adding, setAdding] = useState(false)
   const list = Object.values(projects).sort((a, b) => a.createdAt.localeCompare(b.createdAt))
   const reading = list.filter((p) => p.status === 'active' || p.status === 'paused')
   const read = list.filter((p) => p.status === 'done').sort((a, b) => (b.doneAt ?? '').localeCompare(a.doneAt ?? ''))
   const archived = list.filter((p) => p.status === 'archived')
   return (
     <>
-      <PageHeader title={words(meta).projects}>
-        <Button size="sm" onClick={() => setAdding(true)}>
-          <LuPlus /> Новая книга
-        </Button>
-      </PageHeader>
+      <PageHeader title={words(meta).projects} />
       <Section title="На полке">
         {reading.length ? <Shelf books={reading} /> : <Empty>Полка пуста. Большое дело — ремонт, переезд, курс — заводится как книга, а его дела живут на её страницах.</Empty>}
       </Section>
@@ -145,7 +139,6 @@ export default function Projects() {
           ))}
         </Flex>
       )}
-      {adding && <ProjectDialog project={{ title: '' }} onClose={() => setAdding(false)} />}
     </>
   )
 }

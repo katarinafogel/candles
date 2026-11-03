@@ -1,22 +1,25 @@
 // The floating «+» on every grimoire screen: a tap rolls out what can be added — a wish, a book,
-// a ritual or a deed — over a dimmed page; a tap on the page, Esc or the «+» again rolls it back.
+// a ritual, a person, a mirror entry or a deed — over a dimmed page; a tap on the page, Esc or the «+» again rolls it back.
 // On the day scroll a new deed goes into today's plan.
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useToday } from '../../grimoire/act'
 import { Icon, type IconName } from '../../icons'
+import { NewPerson } from '../../pages/grimoire/Bestiary'
 import { ProjectDialog } from '../../pages/grimoire/Projects'
 import { blank as blankRitual, HabitDialog } from '../../pages/grimoire/Rituals'
 import { WishDialog } from '../../pages/grimoire/Wishes'
 import { NewTaskDialog } from './NewTaskDialog'
 
-type Kind = 'wish' | 'project' | 'ritual' | 'deed'
+type Kind = 'wish' | 'project' | 'ritual' | 'person' | 'entry' | 'deed'
 
 const items: { kind: Kind; label: string; icon: IconName }[] = [
   { kind: 'wish', label: 'Желание', icon: 'star-alt-3' },
   { kind: 'project', label: 'Проект', icon: 'book-open' },
   { kind: 'ritual', label: 'Ритуал', icon: 'moon' },
+  { kind: 'person', label: 'Человек', icon: 'circle-user' },
+  { kind: 'entry', label: 'Запись', icon: 'pen-nib' },
   { kind: 'deed', label: 'Дело', icon: 'leaf-2' },
 ]
 
@@ -25,6 +28,7 @@ export function AddMenu() {
   const [adding, setAdding] = useState<Kind>()
   const today = useToday()
   const onScroll = useLocation().pathname === '/g'
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (!open) return
@@ -35,7 +39,9 @@ export function AddMenu() {
 
   const pick = (k: Kind) => {
     setOpen(false)
-    setAdding(k)
+    // A mirror entry is written on its own page.
+    if (k === 'entry') navigate('/g/mirror/new')
+    else setAdding(k)
   }
   const done = () => setAdding(undefined)
 
@@ -103,6 +109,7 @@ export function AddMenu() {
       {adding === 'wish' && <WishDialog wish={{ title: '' }} onClose={done} />}
       {adding === 'project' && <ProjectDialog project={{ title: '' }} onClose={done} />}
       {adding === 'ritual' && <HabitDialog habit={{ ...blankRitual, activeFrom: today }} onClose={done} />}
+      {adding === 'person' && <NewPerson onClose={done} />}
       {adding === 'deed' && <NewTaskDialog planToday={onScroll} onClose={done} />}
     </>
   )

@@ -108,7 +108,7 @@ function Lines({ personId, list, title, placeholder, lines, extra, hint }: { per
   )
 }
 
-function NewPerson({ onClose }: { onClose: () => void }) {
+export function NewPerson({ onClose }: { onClose: () => void }) {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const [name, setName] = useState('')
@@ -133,18 +133,13 @@ export default function Bestiary() {
   const today = useToday()
   const [q, setQ] = useState('')
   const [circle, setCircle] = useState<string>()
-  const [adding, setAdding] = useState(false)
   const soon = upcomingDates(g.personNotes, today, 30).filter((d) => people[d.personId])
   const list = Object.values(people)
     .filter((p) => (!q || `${p.name} ${g.personNotes[p.id]?.nickname ?? ''}`.toLowerCase().includes(q.toLowerCase())) && (!circle || g.personNotes[p.id]?.circle === circle))
     .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
   return (
     <>
-      <PageHeader title="Бестиарий">
-        <Button size="sm" onClick={() => setAdding(true)}>
-          <LuPlus /> Человек
-        </Button>
-      </PageHeader>
+      <PageHeader title="Бестиарий" />
       {soon.length > 0 && (
         <Section title="Ближайшие даты">
           <Stack gap="1">
@@ -191,7 +186,6 @@ export default function Bestiary() {
       ) : (
         <Empty>{Object.keys(people).length ? 'Под этот фильтр никого нет.' : 'Пока никого. Люди мастерской появятся здесь же.'}</Empty>
       )}
-      {adding && <NewPerson onClose={() => setAdding(false)} />}
     </>
   )
 }
