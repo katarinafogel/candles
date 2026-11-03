@@ -8,7 +8,7 @@ import { grimoireActions as A } from '../../store/grimoireSlice'
 import { Check, Field, notify } from '../ui'
 
 function TimeField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  return <Input size="sm" type="time" w="120px" value={value} onChange={(e) => onChange(e.target.value)} style={{ colorScheme: 'dark' }} />
+  return <Input size="sm" type="time" w="120px" value={value} onChange={(e) => onChange(e.target.value)} />
 }
 
 export function PushSettings() {

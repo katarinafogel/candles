@@ -80,7 +80,7 @@ export default function GrimoireLayout() {
 
   return (
     <Flex minH="100dvh">
-      <Box as="nav" display={{ base: 'none', md: 'block' }} w="240px" flexShrink={0} borderRightWidth="1px" borderColor="border" bg="rgba(24, 21, 18, 0.92)" position="sticky" top="0" h="100dvh" overflowY="auto" className="quiet-scroll" p="4">
+      <Box as="nav" display={{ base: 'none', md: 'block' }} w="240px" flexShrink={0} borderRightWidth="1px" borderColor="border" bg="bg.nav" position="sticky" top="0" h="100dvh" overflowY="auto" className="quiet-scroll" p="4">
         <Flex align="center" gap="3" mb="3" px="1">
           <MoonSlice size={38} tone="stone" />
           <Text fontFamily="heading" fontWeight="semibold" fontSize="2xl" lineHeight="1" color="ember.100">
@@ -141,7 +141,7 @@ export default function GrimoireLayout() {
       <QuickAddButton />
       <FeedbackPrompt />
 
-      <Flex as="nav" display={{ base: 'flex', md: 'none' }} position="fixed" bottom="0" left="0" right="0" bg="rgba(24, 21, 18, 0.94)" backdropFilter="blur(8px)" borderTopWidth="1px" borderColor="border" pb="env(safe-area-inset-bottom)" zIndex="sticky">
+      <Flex as="nav" display={{ base: 'flex', md: 'none' }} position="fixed" bottom="0" left="0" right="0" bg="bg.nav" backdropFilter="blur(8px)" borderTopWidth="1px" borderColor="border" pb="env(safe-area-inset-bottom)" zIndex="sticky">
         {[...items, more].map((i) => (
           <NavLink key={i.to} to={i.to} end={i.to === '/g'} style={{ flex: 1 }}>
             {({ isActive: active }) => {

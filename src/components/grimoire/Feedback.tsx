@@ -108,7 +108,7 @@ export function FeedbackPrompt() {
 
   return (
     <Box position="fixed" left={{ base: '4', md: '264px' }} right={{ base: '4', md: 'auto' }} bottom={{ base: 'calc(80px + env(safe-area-inset-bottom))', md: '8' }} zIndex="sticky" maxW="460px">
-      <Box p="3" borderRadius="l3" borderWidth="1px" borderColor="border.emphasized" bg="bg.panel" boxShadow="0 10px 30px -10px rgba(0,0,0,.8)" onPointerDown={() => (touched.current = true)}>
+      <Box p="3" borderRadius="l3" borderWidth="1px" borderColor="border.emphasized" bg="bg.panel" boxShadow="0 10px 30px -10px var(--g-shade)" onPointerDown={() => (touched.current = true)}>
         <Flex justify="space-between" align="center" mb="2" gap="2">
           <Text fontSize="sm">
             {title}{' '}

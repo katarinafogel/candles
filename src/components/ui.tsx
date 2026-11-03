@@ -42,7 +42,7 @@ export function Toaster() {
             color="fg"
             borderWidth="1px"
             borderColor={t.type === 'error' ? 'red.700' : t.type === 'warning' ? 'orange.700' : 'border.emphasized'}
-            boxShadow="0 10px 30px -10px rgba(0,0,0,.7), 0 0 24px -12px rgba(224,164,85,.35)"
+            boxShadow="0 10px 30px -10px var(--g-shade), 0 0 24px -12px var(--g-glow)"
             css={{ '--toast-trigger-bg': 'transparent' }}
           >
             {t.type === 'loading' ? (
@@ -177,7 +177,7 @@ export function LeafMark({ on, size = 22 }: { on: boolean; size?: number }) {
       flexShrink={0}
       // Cards of other colors set --leaf-on / --leaf-off so the leaf stays readable on them.
       color={on ? 'var(--leaf-on, var(--chakra-colors-ember-300))' : 'var(--leaf-off, var(--chakra-colors-ember-700))'}
-      filter={on ? 'drop-shadow(0 0 4px var(--leaf-glow, rgba(224,164,85,.45)))' : undefined}
+      filter={on ? 'drop-shadow(0 0 4px var(--leaf-glow, var(--g-glow)))' : undefined}
       transition="color .15s, filter .15s"
     >
       <Leaf on={on} size={size} />
@@ -293,7 +293,7 @@ export function StarRating({
             p="0.5"
             lineHeight="0"
             color={on ? 'var(--star-on, var(--chakra-colors-ember-300))' : 'fg.subtle'}
-            filter={on ? 'drop-shadow(0 0 4px rgba(224,164,85,.45))' : undefined}
+            filter={on ? 'drop-shadow(0 0 4px var(--g-glow))' : undefined}
             _hover={{ color: 'ember.200' }}
             cursor="pointer"
             onClick={(e: React.MouseEvent) => {
@@ -353,7 +353,7 @@ export function Modal({
             bg="bg.panel"
             borderWidth="1px"
             borderColor="border"
-            backgroundImage="radial-gradient(30rem 16rem at 100% 0%, rgba(224,164,85,.07), transparent 70%)"
+            backgroundImage="radial-gradient(30rem 16rem at 100% 0%, var(--g-glow-soft), transparent 70%)"
             pt={{ mdDown: 'env(safe-area-inset-top)' }}
             pb={{ mdDown: 'env(safe-area-inset-bottom)' }}
             // Safari does not shrink the page under the keyboard: size the sheet by the visible part,
@@ -470,7 +470,7 @@ export function Section({ title, children, actions, dense }: { title?: ReactNode
       borderRadius="l3"
       mb="4"
       backdropFilter="blur(2px)"
-      boxShadow="0 1px 0 rgba(255,240,215,.03) inset, 0 8px 24px -16px rgba(0,0,0,.6)"
+      boxShadow="0 1px 0 var(--g-ink-faint) inset, 0 8px 24px -16px var(--g-shade)"
     >
       {(title || actions) && (
         <Card.Header pb="0" px={dense ? '3' : undefined} pt={dense ? '3' : undefined}>
@@ -511,7 +511,7 @@ export function Stat({ label, value, to, tone }: { label: string; value: ReactNo
       borderWidth="1px"
       borderColor={tone === 'warn' ? 'orange.700' : 'border'}
       bg="bg.subtle"
-      backgroundImage="radial-gradient(12rem 6rem at 0% 0%, rgba(224,164,85,.07), transparent 70%)"
+      backgroundImage="radial-gradient(12rem 6rem at 0% 0%, var(--g-glow-soft), transparent 70%)"
       _hover={to ? { borderColor: 'ember.600' } : undefined}
       height="100%"
     >

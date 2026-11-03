@@ -109,7 +109,7 @@ export default function Layout() {
         flexShrink={0}
         borderRightWidth="1px"
         borderColor="border"
-        bg="rgba(24, 21, 18, 0.92)"
+        bg="bg.nav"
         position="sticky"
         top="0"
         h="100dvh"
@@ -171,7 +171,7 @@ export default function Layout() {
         bottom="0"
         left="0"
         right="0"
-        bg="rgba(24, 21, 18, 0.94)"
+        bg="bg.nav"
         backdropFilter="blur(8px)"
         borderTopWidth="1px"
         borderColor="border"

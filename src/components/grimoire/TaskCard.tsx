@@ -75,7 +75,7 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
     >
       {/* What the swipe will do, said over the card. */}
       {Math.abs(dx) > 30 && (
-        <Flex position="absolute" inset="0" zIndex="1" align="center" justify="center" pointerEvents="none" borderRadius="10px" bg="rgba(0,0,0,.45)" color="ember.100" fontSize="sm">
+        <Flex position="absolute" inset="0" zIndex="1" align="center" justify="center" pointerEvents="none" borderRadius="10px" bg="bg.veil" color="ember.100" fontSize="sm">
           {dx > 0 ? (done ? 'вернуть' : 'сделано') : 'в бэклог'}
         </Flex>
       )}

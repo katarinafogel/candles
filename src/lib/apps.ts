@@ -4,6 +4,7 @@
 // projects page.
 import { useEffect, useSyncExternalStore } from 'react'
 import { useLocation } from 'react-router-dom'
+import { applyTheme, grimoireTheme } from '../themes'
 
 export type AppId = 'workshop' | 'grimoire'
 
@@ -38,6 +39,7 @@ export function applyApp(app: AppId) {
   setHref('app-icon', a.icon)
   document.getElementById('app-title')?.setAttribute('content', a.short)
   document.title = titleOverride ?? a.name
+  applyTheme(app === 'grimoire' ? grimoireTheme() : 'night')
 }
 
 /** Keeps the manifest, icon and title in step with the project on screen. */

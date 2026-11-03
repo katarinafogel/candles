@@ -1,0 +1,198 @@
+import { defaultConfig } from '@chakra-ui/react'
+
+// Themes as sets of CSS variables on <html data-theme="…">. Every surface colour the app paints with
+// is a `--g-*` variable here; theme.ts points Chakra's semantic tokens (bg, fg, border, …) at them.
+//
+// Palette shades are used by role, not by lightness: 50–300 are text and highlights, 400–500 are
+// solids, 600–900 are borders and deep fills (the app was drawn on a dark background). A light theme
+// therefore mirrors every palette (50↔950, 100↔900, …), so `ember.100` stays a readable accent and
+// `ember.700` a soft border on white. Chakra's own dark-mode recipes rely on the same mirror, which is
+// why <html> keeps class="dark" in every theme and only `color-scheme` follows the theme.
+
+export type ThemeId = 'night' | 'paper'
+
+export interface Theme {
+  label: string
+  scheme: 'dark' | 'light'
+  /** Browser chrome colour: <meta name="theme-color">. */
+  meta: string
+  vars: Record<string, string>
+}
+
+// Accent palettes. Eucalyptus sage keeps the name «emerald» so pages need no changes; «ember» is the
+// candle glow used for stars, ratings and highlights.
+export const palettes: Record<string, Record<string, string>> = {
+  emerald: {
+    50: '#f1f5ef', 100: '#dfe8da', 200: '#c6d6be', 300: '#aac19f', 400: '#8ea883', 500: '#728d67',
+    600: '#5a7251', 700: '#475a40', 800: '#384633', 900: '#2c3729', 950: '#181e16',
+  },
+  ember: {
+    50: '#fdf7ec', 100: '#faebd0', 200: '#f6dcae', 300: '#ecc27f', 400: '#e0a455', 500: '#c9853a',
+    600: '#a7692c', 700: '#7f4f23', 800: '#5a3a1c', 900: '#3d2814', 950: '#22160b',
+  },
+}
+
+const steps = ['50', '100', '200', '300', '400', '500', '600', '700', '800', '900', '950']
+
+/** `--chakra-colors-<palette>-<step>` overrides that turn every palette upside down. */
+function mirroredPalettes() {
+  const chakra = defaultConfig.theme?.tokens?.colors as Record<string, Record<string, { value: string }>>
+  const all: Record<string, Record<string, string>> = { ...palettes }
+  const alpha = ['whiteAlpha', 'blackAlpha']
+  for (const [name, scale] of Object.entries(chakra)) {
+    if (name in all || alpha.includes(name) || typeof scale !== 'object' || !scale['500']) continue
+    all[name] = Object.fromEntries(steps.map((s) => [s, scale[s].value]))
+  }
+  const vars: Record<string, string> = {}
+  for (const [name, scale] of Object.entries(all)) {
+    steps.forEach((s, i) => (vars[`--chakra-colors-${name}-${s}`] = scale[steps[steps.length - 1 - i]]))
+  }
+  // Translucent white highlights become translucent black ones and back.
+  for (const s of steps) {
+    vars[`--chakra-colors-white-alpha-${s}`] = chakra.blackAlpha[s].value
+    vars[`--chakra-colors-black-alpha-${s}`] = chakra.whiteAlpha[s].value
+  }
+  return vars
+}
+
+// Night workshop: warm charcoal and dark wood, a faint star field and a candle glow off to the side.
+const starField = [
+  'radial-gradient(1px 1px at 12% 18%, rgba(246,220,174,.55) 50%, transparent 51%)',
+  'radial-gradient(1px 1px at 78% 9%, rgba(246,220,174,.45) 50%, transparent 51%)',
+  'radial-gradient(1.5px 1.5px at 64% 32%, rgba(246,220,174,.35) 50%, transparent 51%)',
+  'radial-gradient(1px 1px at 33% 56%, rgba(223,232,218,.35) 50%, transparent 51%)',
+  'radial-gradient(1px 1px at 88% 71%, rgba(246,220,174,.4) 50%, transparent 51%)',
+  'radial-gradient(1.5px 1.5px at 22% 84%, rgba(223,232,218,.3) 50%, transparent 51%)',
+  'radial-gradient(1px 1px at 51% 93%, rgba(246,220,174,.35) 50%, transparent 51%)',
+  'radial-gradient(60rem 40rem at 105% 110%, rgba(224,164,85,.10), transparent 60%)',
+  'radial-gradient(50rem 36rem at -10% -10%, rgba(135,163,123,.08), transparent 60%)',
+].join(',')
+
+export const themes: Record<ThemeId, Theme> = {
+  night: {
+    label: 'ночь',
+    scheme: 'dark',
+    meta: '#13110f',
+    vars: {
+      '--g-bg': '#13110f',
+      '--g-bg-subtle': 'rgba(32, 28, 24, 0.88)',
+      '--g-bg-muted': '#26211c',
+      '--g-bg-emphasized': '#322b24',
+      '--g-bg-panel': '#1d1915',
+      '--g-bg-nav': 'rgba(24, 21, 18, 0.93)',
+      '--g-bg-veil': 'rgba(0, 0, 0, 0.45)',
+      '--g-border': '#352d25',
+      '--g-border-muted': '#2a241e',
+      '--g-border-emphasized': '#4a3e32',
+      '--g-fg': '#ece4d6',
+      '--g-fg-muted': '#b5a891',
+      '--g-fg-subtle': '#7f735f',
+      '--g-emerald-contrast': '#161a14',
+      '--g-ember-contrast': '#22160b',
+      '--g-glow': 'rgba(224, 164, 85, 0.45)',
+      '--g-glow-soft': 'rgba(224, 164, 85, 0.07)',
+      '--g-shade': 'rgba(0, 0, 0, 0.7)',
+      '--g-selection': 'rgba(224, 164, 85, 0.35)',
+      '--g-scrollbar': '#4a3e32',
+      '--g-scrollbar-hover': '#6a5743',
+      '--g-backdrop': starField,
+      '--g-backdrop-size': '420px 420px, 420px 420px, 420px 420px, 420px 420px, 420px 420px, 420px 420px, 420px 420px, 100% 100%, 100% 100%',
+      // Line art and fills drawn in SVG: jars, the emotion wheel, the moon's dark side.
+      '--g-ink': 'rgba(246, 230, 200, 0.5)',
+      '--g-ink-faint': 'rgba(246, 230, 200, 0.08)',
+      '--g-ink-bright': '#fff6dc',
+      '--g-hollow': 'rgba(20, 16, 12, 0.85)',
+      '--g-label': '#fff8ea',
+      '--g-hub': '#1a1612',
+      '--g-chip': 'rgba(30, 25, 20, 0.92)',
+      '--g-chip-fg': '#f3e8d6',
+      '--g-moon-dark': 'rgba(255, 255, 255, 0.12)',
+      '--g-joy-mark': '#f4efe6',
+    },
+  },
+  // White paper: the same sage and beeswax, ink-dark text.
+  paper: {
+    label: 'бумага',
+    scheme: 'light',
+    meta: '#ffffff',
+    vars: {
+      ...mirroredPalettes(),
+      '--g-bg': '#ffffff',
+      '--g-bg-subtle': '#faf8f4',
+      '--g-bg-muted': '#f3efe8',
+      '--g-bg-emphasized': '#e9e3d9',
+      '--g-bg-panel': '#ffffff',
+      '--g-bg-nav': 'rgba(255, 255, 255, 0.94)',
+      '--g-bg-veil': 'rgba(255, 255, 255, 0.72)',
+      '--g-border': '#e7e0d5',
+      '--g-border-muted': '#f0ebe3',
+      '--g-border-emphasized': '#d4c9b9',
+      '--g-fg': '#211b15',
+      '--g-fg-muted': '#6b5f50',
+      '--g-fg-subtle': '#998d7d',
+      '--g-emerald-contrast': '#ffffff',
+      '--g-ember-contrast': '#ffffff',
+      '--g-glow': 'rgba(201, 133, 58, 0.4)',
+      '--g-glow-soft': 'rgba(224, 164, 85, 0.08)',
+      '--g-shade': 'rgba(60, 40, 20, 0.18)',
+      '--g-selection': 'rgba(224, 164, 85, 0.3)',
+      '--g-scrollbar': '#d4c9b9',
+      '--g-scrollbar-hover': '#b5a891',
+      '--g-backdrop': 'none',
+      '--g-backdrop-size': 'auto',
+      '--g-ink': 'rgba(90, 70, 45, 0.5)',
+      '--g-ink-faint': 'rgba(90, 70, 45, 0.06)',
+      '--g-ink-bright': '#7f4f23',
+      '--g-hollow': 'rgba(255, 255, 255, 0.9)',
+      '--g-label': '#211b15',
+      '--g-hub': '#faf8f4',
+      '--g-chip': 'rgba(255, 255, 255, 0.95)',
+      '--g-chip-fg': '#3d2f22',
+      '--g-moon-dark': 'rgba(60, 40, 20, 0.12)',
+      '--g-joy-mark': '#c9b48a',
+    },
+  },
+}
+
+/** The grimoire's theme; the workshop always stays at night. */
+export const defaultGrimoireTheme: ThemeId = 'paper'
+const key = 'grimoire-theme'
+
+export function grimoireTheme(): ThemeId {
+  try {
+    const saved = localStorage.getItem(key)
+    if (saved && saved in themes) return saved as ThemeId
+  } catch {
+    // Storage blocked: fall back to the default.
+  }
+  return defaultGrimoireTheme
+}
+
+export function setGrimoireTheme(id: ThemeId) {
+  try {
+    localStorage.setItem(key, id)
+  } catch {
+    // Storage blocked: the theme still applies for this visit.
+  }
+  applyTheme(id)
+}
+
+export function applyTheme(id: ThemeId) {
+  const root = document.documentElement
+  if (root.dataset.theme === id) return
+  root.dataset.theme = id
+  root.style.colorScheme = themes[id].scheme
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themes[id].meta)
+}
+
+/**
+ * Puts every theme's variables on the page. A plain <style> outside Chakra's cascade layers, because
+ * the palette overrides must beat Chakra's own `@layer tokens`; night is also on bare :root.
+ */
+export function installThemes() {
+  const block = (sel: string, t: Theme) => `${sel}{color-scheme:${t.scheme};${Object.entries(t.vars).map(([k, val]) => `${k}:${val}`).join(';')}}`
+  const style = document.createElement('style')
+  style.id = 'themes'
+  style.textContent = [block(':root', themes.night), ...Object.entries(themes).map(([id, t]) => block(`:root[data-theme=${id}]`, t))].join('\n')
+  document.head.prepend(style)
+}

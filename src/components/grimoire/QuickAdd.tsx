@@ -71,7 +71,7 @@ export function QuickAddButton() {
           w="14"
           h="14"
           colorPalette="ember"
-          boxShadow="0 8px 24px -8px rgba(0,0,0,.8), 0 0 24px -6px rgba(224,164,85,.5)"
+          boxShadow="0 8px 24px -8px var(--g-shade), 0 0 24px -6px var(--g-glow)"
           onClick={() => setOpen(true)}
         >
           <LuPlus />

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" class="dark" style="color-scheme: dark">
+<html lang="ru" class="dark" data-theme="night" style="color-scheme: dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -16,6 +16,13 @@
       ;(function () {
         var app = new URLSearchParams(location.search).get('app') || (location.hash.indexOf('#/g') === 0 ? 'grimoire' : 'workshop')
         if (app !== 'grimoire') return
+        // The grimoire's theme before the first paint (src/themes.ts: grimoireTheme, applyTheme).
+        var theme = 'paper'
+        try { theme = localStorage.getItem('grimoire-theme') || theme } catch (e) {}
+        var root = document.documentElement
+        root.dataset.theme = theme
+        root.style.colorScheme = theme === 'night' ? 'dark' : 'light'
+        document.querySelector('meta[name="theme-color"]').content = theme === 'night' ? '#13110f' : '#ffffff'
         document.getElementById('app-manifest').href = './manifest-grimoire.webmanifest'
         document.getElementById('app-touch-icon').href = './apple-touch-icon-grimoire.png'
         document.getElementById('app-icon').href = './icon-grimoire.svg'

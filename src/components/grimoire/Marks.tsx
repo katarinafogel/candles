@@ -74,7 +74,7 @@ function StarScale({ value, onChange }: { value: number; onChange: (v: number) =
             lineHeight="0"
             cursor="pointer"
             color={on ? 'ember.300' : 'fg.subtle'}
-            filter={on ? 'drop-shadow(0 0 4px rgba(224,164,85,.45))' : undefined}
+            filter={on ? 'drop-shadow(0 0 4px var(--g-glow))' : undefined}
             _hover={{ color: 'ember.200' }}
             onClick={() => onChange(v)}
           >

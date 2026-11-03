@@ -67,8 +67,8 @@ function BodyMap({ value, onChange }: { value: string[]; onChange: (v: string[])
     tabIndex: 0,
     onClick: () => flip(k),
     onKeyDown: (e: React.KeyboardEvent) => (e.key === 'Enter' || e.key === ' ') && flip(k),
-    fill: on(k) ? 'var(--chakra-colors-ember-300)' : 'rgba(246,230,200,.08)',
-    stroke: on(k) ? '#fff6dc' : 'rgba(246,230,200,.45)',
+    fill: on(k) ? 'var(--chakra-colors-ember-300)' : 'var(--g-ink-faint)',
+    stroke: on(k) ? 'var(--g-ink-bright)' : 'var(--g-ink)',
     strokeWidth: 1.5,
     style: { cursor: 'pointer', outline: 'none' },
   })
@@ -169,7 +169,7 @@ function DayStrip({ entries }: { entries: JournalEntry[] }) {
     <Box>
       <Box position="relative" h="22px" borderRadius="full" bg="bg.muted">
         {marks.map((m, i) => (
-          <Box key={i} position="absolute" top="50%" left={`${Math.min(98, left[i])}%`} w="12px" h="12px" ml="-6px" mt="-6px" borderRadius="full" bg={wordColor(m.k)} borderWidth="1px" borderColor="rgba(20,16,12,.8)" title={`${m.at.toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' })} · ${emotionWords[m.k].word}`} />
+          <Box key={i} position="absolute" top="50%" left={`${Math.min(98, left[i])}%`} w="12px" h="12px" ml="-6px" mt="-6px" borderRadius="full" bg={wordColor(m.k)} borderWidth="1px" borderColor="var(--g-hollow)" title={`${m.at.toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' })} · ${emotionWords[m.k].word}`} />
         ))}
       </Box>
       <Flex justify="space-between" fontSize="2xs" color="fg.subtle" mt="1">
@@ -359,7 +359,7 @@ export default function MirrorEntry() {
               value={toLocalInput(at)}
               max={toLocalInput(new Date().toISOString())}
               onChange={(ev) => ev.target.value && setAt(new Date(ev.target.value).toISOString())}
-              style={{ background: 'transparent', color: 'inherit', border: '1px solid var(--chakra-colors-border)', borderRadius: 6, padding: '6px 8px', colorScheme: 'dark' }}
+              style={{ background: 'transparent', color: 'inherit', border: '1px solid var(--chakra-colors-border)', borderRadius: 6, padding: '6px 8px' }}
             />
           </Field>
           <Flex gap="2" wrap="wrap">

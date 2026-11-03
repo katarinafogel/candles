@@ -3,7 +3,7 @@
 import { moonCycle } from '../../grimoire/wheel'
 import type { DayKey } from '../../grimoire/types'
 
-export function MoonIcon({ day, size = 14, lit = 'currentColor', dark = 'rgba(255,255,255,.12)' }: { day: DayKey; size?: number; lit?: string; dark?: string }) {
+export function MoonIcon({ day, size = 14, lit = 'currentColor', dark = 'var(--g-moon-dark)' }: { day: DayKey; size?: number; lit?: string; dark?: string }) {
   const c = moonCycle(day)
   const r = 10
   // The terminator is a half-ellipse: its width goes r → 0 → r from new to quarter to full.

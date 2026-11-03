@@ -182,7 +182,7 @@ function DayStars({ today }: { today: string }) {
   const st = dayStars(g, today)
   if (!st.limit && !st.total) return null
   const marks: { color: string; filled: boolean }[] = []
-  for (let i = 0; i < st.joy; i++) marks.push({ color: '#f4efe6', filled: true })
+  for (let i = 0; i < st.joy; i++) marks.push({ color: 'var(--g-joy-mark)', filled: true })
   for (let i = 0; i < st.deed; i++) marks.push({ color: st.limit && marks.length >= st.limit ? 'red.400' : 'ember.300', filled: true })
   while (marks.length < st.limit) marks.push({ color: 'ember.700', filled: false })
   return (

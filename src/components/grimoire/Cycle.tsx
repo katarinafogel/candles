@@ -12,7 +12,7 @@ const ddmm = (d: string) => `${d.slice(8)}.${d.slice(5, 7)}`
 
 function DateInput({ value, max, onChange }: { value: string; max?: string; onChange: (v: string) => void }) {
   return (
-    <Input size="sm" type="date" w="160px" value={value} max={max} onChange={(e) => e.target.value && onChange(e.target.value)} style={{ colorScheme: 'dark' }} />
+    <Input size="sm" type="date" w="160px" value={value} max={max} onChange={(e) => e.target.value && onChange(e.target.value)} />
   )
 }
 

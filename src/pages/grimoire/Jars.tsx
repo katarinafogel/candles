@@ -28,8 +28,8 @@ function JarGlass({ pct }: { pct: number }) {
       <g clipPath="url(#jar-inside)">
         <rect x="0" y={86 - h} width="60" height={h} fill={pct >= 100 ? '#e0b04f' : '#c99a5b'} opacity=".85" style={{ transition: 'y .6s, height .6s' }} />
       </g>
-      <path d="M14 22h32c3 0 5 2 5 5v52c0 4-3 7-7 7H16c-4 0-7-3-7-7V27c0-3 2-5 5-5z" fill="none" stroke="rgba(246,230,200,.55)" strokeWidth="1.5" />
-      <path d="M15 30v40" stroke="rgba(255,255,255,.25)" strokeWidth="2" strokeLinecap="round" />
+      <path d="M14 22h32c3 0 5 2 5 5v52c0 4-3 7-7 7H16c-4 0-7-3-7-7V27c0-3 2-5 5-5z" fill="none" stroke="var(--g-ink)" strokeWidth="1.5" />
+      <path d="M15 30v40" stroke="var(--g-ink-faint)" strokeWidth="2" strokeLinecap="round" />
     </svg>
   )
 }

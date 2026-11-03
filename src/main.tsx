@@ -9,8 +9,10 @@ import App from './App'
 import { Toaster } from './components/ui'
 import { persistor, store } from './store'
 import { system } from './theme'
+import { installThemes } from './themes'
 
 registerSW({ immediate: true })
+installThemes()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

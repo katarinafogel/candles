@@ -75,7 +75,7 @@ function Segment({ wordKey, d, label, place, selected, tint, onTap, onLong }: { 
   const color = wordColor(wordKey)
   return (
     <g role="button" tabIndex={0} aria-label={label} aria-pressed={selected} style={{ cursor: 'pointer', outline: 'none' }} {...press} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onTap()}>
-      <path d={d} fill={color} fillOpacity={tint} stroke={selected ? '#fff6dc' : 'rgba(20,16,12,.85)'} strokeWidth={selected ? 3 : 1.2} />
+      <path d={d} fill={color} fillOpacity={tint} stroke={selected ? 'var(--g-ink-bright)' : 'var(--g-hollow)'} strokeWidth={selected ? 3 : 1.2} />
       <text
         x={place.x}
         y={place.y}
@@ -85,8 +85,8 @@ function Segment({ wordKey, d, label, place, selected, tint, onTap, onLong }: { 
         fontSize={place.fs}
         textLength={place.squeeze}
         lengthAdjust="spacingAndGlyphs"
-        fill="#fff8ea"
-        stroke="rgba(18,14,10,.85)"
+        fill="var(--g-label)"
+        stroke="var(--g-hollow)"
         strokeWidth="3"
         paintOrder="stroke"
         style={{ pointerEvents: 'none', fontWeight: selected ? 700 : 500 }}
@@ -148,7 +148,7 @@ export function EmotionWheel({
           const on = selected.includes(key)
           return <DyadLabel key={key} wordKey={key} x={x} y={y} on={on} dim={tint ? tint(key) : 1} onTap={() => onWord(key)} onLong={onInfo && (() => onInfo(key))} />
         })}
-        <circle r={R0 - 3} fill="#1a1612" stroke="rgba(246,230,200,.35)" />
+        <circle r={R0 - 3} fill="var(--g-hub)" stroke="var(--g-ink)" />
       </svg>
       <Flex position="absolute" left="50%" top="50%" transform="translate(-50%, -50%)" color="ember.200" pointerEvents={center ? 'auto' : 'none'}>
         {center ?? <Sparkle size={14} />}
@@ -163,8 +163,8 @@ function DyadLabel({ wordKey, x, y, on, dim, onTap, onLong }: { wordKey: string;
   const width = w.length * 6.2 + 12
   return (
     <g role="button" tabIndex={0} aria-label={w} aria-pressed={on} style={{ cursor: 'pointer', outline: 'none' }} opacity={0.45 + dim * 0.55} {...press} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onTap()}>
-      <rect x={x - width / 2} y={y - 9} width={width} height={18} rx="9" fill={on ? '#fff6dc' : 'rgba(30,25,20,.92)'} stroke={on ? '#fff6dc' : 'rgba(246,230,200,.4)'} />
-      <text x={x} y={y + 0.5} textAnchor="middle" dominantBaseline="middle" fontSize="10" fill={on ? '#1b1814' : '#f3e8d6'} style={{ pointerEvents: 'none' }}>
+      <rect x={x - width / 2} y={y - 9} width={width} height={18} rx="9" fill={on ? 'var(--g-ink-bright)' : 'var(--g-chip)'} stroke={on ? 'var(--g-ink-bright)' : 'var(--g-ink)'} />
+      <text x={x} y={y + 0.5} textAnchor="middle" dominantBaseline="middle" fontSize="10" fill={on ? 'var(--g-hub)' : 'var(--g-chip-fg)'} style={{ pointerEvents: 'none' }}>
         {w}
       </text>
     </g>
