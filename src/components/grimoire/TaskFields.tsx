@@ -5,9 +5,9 @@ import { Badge, Box, HStack, IconButton, Input, Slider, Stack, Switch, Text } fr
 import { nanoid } from '@reduxjs/toolkit'
 import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react'
 import { LuBookOpen, LuCalendarClock, LuClockAlert, LuCloud, LuHash, LuListChecks, LuPen, LuPlus, LuRepeat, LuUser, LuX } from 'react-icons/lu'
-import { costOptions, slotLabel, wantLabel, whyOptions } from '../../grimoire/labels'
+import { costOptions, slotLabel, whyOptions } from '../../grimoire/labels'
 import type { TaskDraft } from '../../grimoire/newTask'
-import type { ChecklistItem, Task, TaskSlot, Want } from '../../grimoire/types'
+import type { ChecklistItem, Task, TaskSlot } from '../../grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { actions } from '../../store/dataSlice'
 import { grimoireActions as A } from '../../store/grimoireSlice'
@@ -56,6 +56,11 @@ export function useFieldBlocks(t: Partial<Task>, set: (patch: Partial<Task>) => 
   const [shown, setShown] = useState(() => filled(t))
   // The block just turned on: the form scrolls to it once it is drawn.
   const [opened, setOpened] = useState<Block>()
+  // A joy has no dread: its button is off and locked.
+  const locked: Block[] = t.type === 'joy' ? ['dread'] : []
+  useEffect(() => {
+    if (t.type === 'joy' && shown.has('dread')) setShown((x) => new Set([...x].filter((k) => k !== 'dread')))
+  }, [t.type, shown])
   const toggle = (b: (typeof blocks)[number]) => {
     const next = new Set(shown)
     if (next.has(b.key)) {
@@ -74,6 +79,7 @@ export function useFieldBlocks(t: Partial<Task>, set: (patch: Partial<Task>) => 
         .filter((b) => !hide.includes(b.key))
         .map((b) => {
           const on = shown.has(b.key)
+          const off = locked.includes(b.key)
           return (
             <Box key={b.key} position="relative" className="group">
               <IconButton
@@ -85,6 +91,7 @@ export function useFieldBlocks(t: Partial<Task>, set: (patch: Partial<Task>) => 
                 borderColor={on ? 'ember.500' : 'border'}
                 bg={on ? 'ember.subtle' : 'transparent'}
                 color={on ? 'ember.200' : 'fg.muted'}
+                disabled={off}
                 onClick={() => toggle(b)}
               >
                 {b.icon}
@@ -165,7 +172,7 @@ export function TaskFields({
   }, [opened])
 
   const view: Record<Block, ReactNode> = {
-    dread: (
+    dread: t.type === 'joy' ? null : (
       <Field label="Нехотение">
         <MarkPicker kind="dread" value={t.dread} onChange={(v) => set({ dread: v as Task['dread'] })} />
       </Field>
@@ -306,21 +313,13 @@ export function TaskFields({
       <Check checked={!!t.evenInNav} onChange={(v) => set({ evenInNav: v || undefined })}>
         Напоминать даже в нави
       </Check>
-      <Field label="Сложность">
+      <HStack gap="6" wrap="wrap" align="center">
         <MarkPicker kind="stars" value={t.stars} onChange={(v) => set({ stars: v as Task['stars'] })} />
-      </Field>
-      <Switch.Root colorPalette="ember" checked={t.type === 'joy'} onCheckedChange={(e) => set({ type: e.checked ? 'joy' : 'deed' })} cursor="pointer">
-        <Switch.HiddenInput />
-        <Switch.Control>
-          <Switch.Thumb />
-        </Switch.Control>
-        <Switch.Label>Радость</Switch.Label>
-      </Switch.Root>
+        <TwoWay left="дело" right="радость" value={t.type === 'joy' ? 'right' : 'left'} onChange={(v) => set(v === 'right' ? { type: 'joy', want: undefined, dread: 0 } : { type: 'deed' })} />
+        {t.type !== 'joy' && <TwoWay left="хочу" right="надо" value={t.want === 'need' ? 'right' : 'left'} onChange={(v) => set({ want: v === 'right' ? 'need' : 'want' })} />}
+      </HStack>
       <Field label="Приоритет">
         <PrioritySlider value={t.slot} onChange={(slot) => set({ slot })} />
-      </Field>
-      <Field label="Хочу / надо" helper="отдельно от нехотения: можно хотеть и бояться">
-        <Chips value={t.want} onChange={(v) => set({ want: v as Want | undefined })} options={Object.entries(wantLabel).map(([value, label]) => ({ value: value as Want, label }))} />
       </Field>
       <Field label="Ресурс">
         <Stack gap="2" w="full">
@@ -405,6 +404,27 @@ function AddByName({ placeholder, onAdd, disabled }: { placeholder: string; onAd
 }
 
 const maxChecklist = 20
+
+/** Two choices on one switch: the side the knob is on is the chosen one, the other is dimmed. */
+function TwoWay({ left, right, value, onChange }: { left: string; right: string; value: 'left' | 'right'; onChange: (v: 'left' | 'right') => void }) {
+  const side = (v: 'left' | 'right', label: string) => (
+    <Text as="button" fontSize="sm" cursor="pointer" color={value === v ? 'fg' : 'fg.subtle'} fontWeight={value === v ? 'medium' : 'normal'} onClick={() => onChange(v)}>
+      {label}
+    </Text>
+  )
+  return (
+    <HStack gap="2">
+      {side('left', left)}
+      <Switch.Root colorPalette="ember" checked={value === 'right'} onCheckedChange={(e) => onChange(e.checked ? 'right' : 'left')} cursor="pointer" aria-label={`${left} или ${right}`}>
+        <Switch.HiddenInput />
+        <Switch.Control bg="bg.emphasized" _checked={{ bg: 'bg.emphasized' }}>
+          <Switch.Thumb bg="ember.300" />
+        </Switch.Control>
+      </Switch.Root>
+      {side('right', right)}
+    </HStack>
+  )
+}
 
 /** Priority from none to «главное»; the chosen step is named over the slider. */
 const priority: (TaskSlot | undefined)[] = [undefined, 'optional', 'extra', 'main']

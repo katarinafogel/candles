@@ -38,7 +38,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
   const [to, setTo] = useState<string>(addDays(today, 1))
   const [text, setText] = useState('')
   const set = (p: Partial<Task>) => setT((x) => ({ ...x, ...p }))
-  const blocks = useFieldBlocks(live, set, live.parentId ? ['project'] : [])
+  const blocks = useFieldBlocks(t, set, live.parentId ? ['project'] : [])
   const open = isOpenTask(live)
   const w = words(g.meta)
   const steps = stepsOf(g, live.id)
