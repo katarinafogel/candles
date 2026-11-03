@@ -49,7 +49,6 @@ function Page({ children, n, id, wideOnly }: { children: ReactNode; n: number; i
       minH={{ base: '62vh', md: '560px' }}
       color="#3a2c1e"
       background={`radial-gradient(120% 80% at ${left ? '100%' : '0%'} 50%, rgba(120,90,50,.18), transparent 55%), linear-gradient(180deg, #efe3c8, #e6d6b3)`}
-      boxShadow={left ? 'inset -14px 0 18px -14px rgba(60,40,20,.55)' : 'inset 14px 0 18px -14px rgba(60,40,20,.55)'}
       css={{
         // The page is light paper: plain text on it is dark ink.
         '--chakra-colors-fg': '#3a2c1e',

@@ -18,7 +18,6 @@ export interface Palette {
   star: string
   hover: string
   leafOff: string
-  glow: string
   /** Lines of the shape icons. */
   ink: string
 }
@@ -34,7 +33,6 @@ export const palettes: Record<ArcanaTone, Palette> = {
     star: '#f4e4c1',
     hover: 'rgba(214, 205, 244, .12)',
     leafOff: '#9d95cc',
-    glow: 'rgba(244, 228, 193, .5)',
     ink: '#8f86c9',
   },
   pearl: {
@@ -47,7 +45,6 @@ export const palettes: Record<ArcanaTone, Palette> = {
     star: '#b48a5c',
     hover: 'rgba(150, 126, 100, .12)',
     leafOff: '#b9a68e',
-    glow: 'rgba(180, 138, 92, .45)',
     ink: '#a88d70',
   },
   olive: {
@@ -60,7 +57,6 @@ export const palettes: Record<ArcanaTone, Palette> = {
     star: '#f7e6b0',
     hover: 'rgba(240, 220, 160, .14)',
     leafOff: '#d8c88e',
-    glow: 'rgba(247, 230, 176, .55)',
     ink: '#b7a35d',
   },
   // Marsh green with a frog in the corner.
@@ -74,7 +70,6 @@ export const palettes: Record<ArcanaTone, Palette> = {
     star: '#e4efb5',
     hover: 'rgba(196, 222, 150, .12)',
     leafOff: '#8fae6f',
-    glow: 'rgba(200, 230, 140, .5)',
     ink: '#8fb06a',
   },
   // Light mother-of-pearl with a soft iridescence; drawn with gradients only.
@@ -88,7 +83,6 @@ export const palettes: Record<ArcanaTone, Palette> = {
     star: '#7e4f3e',
     hover: 'rgba(150, 120, 140, .1)',
     leafOff: '#8f7b84',
-    glow: 'rgba(199, 135, 159, .4)',
     ink: '#a78a98',
   },
   // Deep bordeaux with gold lines.
@@ -102,7 +96,6 @@ export const palettes: Record<ArcanaTone, Palette> = {
     star: '#f1d394',
     hover: 'rgba(222, 184, 108, .12)',
     leafOff: '#c79a72',
-    glow: 'rgba(241, 211, 148, .5)',
     ink: '#c9a060',
   },
   // Cold silver: the everyday deeds, quiet so the other colours stand out.
@@ -116,7 +109,6 @@ export const palettes: Record<ArcanaTone, Palette> = {
     star: '#e8d6ad',
     hover: 'rgba(206, 214, 226, .1)',
     leafOff: '#9aa2ae',
-    glow: 'rgba(232, 214, 173, .4)',
     ink: '#a3acba',
   },
 }
@@ -355,12 +347,8 @@ export function ArcanaCard({
       cursor={onClick ? 'pointer' : undefined}
       onClick={onClick}
       opacity={dim ? 0.62 : 1}
-      boxShadow={
-        selected
-          ? `0 0 0 2px ${p.star}, 0 0 26px -4px ${p.glow}`
-          : 'inset 0 0 0 1px rgba(255,255,255,.06)'
-      }
-      transition="transform .18s ease, box-shadow .18s ease"
+      outline={selected ? `2px solid ${p.star}` : undefined}
+      transition="transform .18s ease"
       _hover={onClick ? { transform: 'translateY(-2px)' } : undefined}
       css={{
         '--card-fg': p.fg,
@@ -370,7 +358,6 @@ export function ArcanaCard({
         '--card-ink': p.ink,
         '--leaf-on': p.star,
         '--leaf-off': p.leafOff,
-        '--leaf-glow': p.glow,
         '--star-on': p.star,
         '--chakra-colors-fg': p.fg,
         '--chakra-colors-fg-muted': p.muted,
@@ -388,7 +375,7 @@ export function ArcanaCard({
           </Box>
         </Flex>
         {/* A fixed card is short of room: its emblem is a little smaller. */}
-        <Box mt={fixed ? '0' : '1'} mb={fixed ? '1' : '2'} filter={`drop-shadow(0 0 10px ${p.glow})`} transform={fixed ? 'scale(.8)' : undefined}>
+        <Box mt={fixed ? '0' : '1'} mb={fixed ? '1' : '2'} transform={fixed ? 'scale(.8)' : undefined}>
           <Emblem tone={tone} p={p} />
         </Box>
         {figure && (

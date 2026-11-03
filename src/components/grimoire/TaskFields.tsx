@@ -438,7 +438,6 @@ function PriorityScale({ value, onChange }: { value?: TaskSlot; onChange: (slot:
             lineHeight="0"
             cursor="pointer"
             color={on ? 'ember.300' : 'fg.subtle'}
-            filter={on ? 'drop-shadow(0 0 4px var(--g-glow))' : undefined}
             _hover={{ color: 'ember.200' }}
             onClick={() => onChange(value === slot ? undefined : slot)}
           >

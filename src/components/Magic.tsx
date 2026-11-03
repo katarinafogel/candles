@@ -118,7 +118,7 @@ export function Divider(props: FlexProps) {
   )
 }
 
-/** A gold leaf: an outline when off, filled and glowing when on. Used instead of checkbox squares. */
+/** A gold leaf: an outline when off, filled when on. Used instead of checkbox squares. */
 export function Leaf({ on, size = 22 }: { on: boolean; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">

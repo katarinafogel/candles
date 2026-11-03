@@ -174,7 +174,6 @@ function YearOfMoons({ h, today, inNav }: { h: Habit; today: DayKey; inNav: (d: 
                   borderWidth={!done && sched && !future ? '1px' : 0}
                   borderColor={log?.skipped ? 'fg.subtle' : 'border.emphasized'}
                   opacity={nav ? 0.3 : sched && !future ? 1 : 0.35}
-                  boxShadow={done ? '0 0 4px var(--g-glow)' : undefined}
                 />
               )
             })}

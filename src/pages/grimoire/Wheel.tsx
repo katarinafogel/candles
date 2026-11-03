@@ -51,15 +51,6 @@ function WheelSvg({ today, hemisphere, selected, onSelect, marks }: { today: str
   return (
     <Box maxW="440px" mx="auto" w="100%">
       <svg viewBox={`0 0 ${SIZE} ${SIZE}`} width="100%" role="group" aria-label="Колесо года">
-        <defs>
-          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="6" result="b" />
-            <feMerge>
-              <feMergeNode in="b" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
         <circle cx={C} cy={C} r={R + 4} fill="none" stroke="var(--chakra-colors-ember-800)" strokeWidth="1" />
         {sabbatOrder.map((s, i) => {
           const info = sabbats[s]
@@ -79,7 +70,7 @@ function WheelSvg({ today, hemisphere, selected, onSelect, marks }: { today: str
               onClick={() => onSelect(s)}
               onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelect(s)}
             >
-              <path d={sectorPath(i)} fill={info.color} fillOpacity={isSel ? 0.55 : isNow ? 0.4 : 0.2} stroke={isSel ? 'var(--chakra-colors-ember-200)' : 'var(--chakra-colors-border-emphasized)'} strokeWidth={isSel ? 2 : 1} filter={isNow ? 'url(#glow)' : undefined} />
+              <path d={sectorPath(i)} fill={info.color} fillOpacity={isSel ? 0.55 : isNow ? 0.4 : 0.2} stroke={isSel ? 'var(--chakra-colors-ember-200)' : 'var(--chakra-colors-border-emphasized)'} strokeWidth={isSel ? 2 : 1} />
               <text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize="18">
                 {info.symbol}
               </text>

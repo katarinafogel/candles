@@ -1,6 +1,6 @@
 // A project as an old leather book, drawn in code: a worn dark cover, torn page edges, a cord wound
 // round it with a crystal pendant, and an embossed sigil (a blade of grass until one is chosen).
-// The crystal fills with light as the deeds get done and glows whole at 100%; on pause it is dim.
+// The crystal fills with light as the deeds get done and is lit whole at 100%; on pause it is dim.
 import { Box, Text } from '@chakra-ui/react'
 import { useId } from 'react'
 import type { Project } from '../../grimoire/types'
@@ -47,7 +47,6 @@ export function BookCover({ project, progress, tied = true }: { project: Project
         inset="0 3% 2% 0"
         borderRadius="4px 8px 8px 4px"
         background={`radial-gradient(60% 40% at 30% 20%, color-mix(in srgb, ${c.leather} 70%, #fff 12%), transparent 70%), radial-gradient(30% 22% at 78% 72%, rgba(0,0,0,.35), transparent 70%), radial-gradient(18% 14% at 22% 82%, rgba(255,255,255,.06), transparent 70%), linear-gradient(160deg, color-mix(in srgb, ${c.leather} 85%, #fff 8%) 0%, ${c.leather} 45%, color-mix(in srgb, ${c.leather} 70%, #000) 100%)`}
-        boxShadow="inset 0 0 0 1px rgba(255,255,255,.05), inset -6px 0 14px -8px rgba(0,0,0,.6)"
         overflow="hidden"
       >
         <Box position="absolute" top="0" bottom="0" left="0" w="11%" bg="linear-gradient(90deg, rgba(0,0,0,.45), rgba(0,0,0,.15) 70%, rgba(255,255,255,.05))" />
@@ -57,10 +56,10 @@ export function BookCover({ project, progress, tied = true }: { project: Project
 
         {/* Embossed sigil and title. */}
         <Box position="absolute" left="16%" right="7%" top="13%" display="flex" flexDirection="column" alignItems="center" gap="2" textAlign="center">
-          <Box filter="drop-shadow(0 1px 0 rgba(255,255,255,.12)) drop-shadow(0 -1px 0 rgba(0,0,0,.5))" lineHeight="1" fontSize={{ base: '28px', md: '34px' }} opacity=".9">
+          <Box lineHeight="1" fontSize={{ base: '28px', md: '34px' }} opacity=".9">
             {project.sigil ? <span style={{ filter: 'sepia(.7) saturate(.6) brightness(.95)' }}>{project.sigil}</span> : <Grass color={emboss} />}
           </Box>
-          <Text fontFamily="heading" fontWeight="semibold" fontSize={{ base: 'md', md: 'lg' }} lineHeight="1.15" color={emboss} textShadow="0 1px 0 rgba(255,255,255,.1), 0 -1px 0 rgba(0,0,0,.55)" lineClamp={3} wordBreak="break-word" px="1">
+          <Text fontFamily="heading" fontWeight="semibold" fontSize={{ base: 'md', md: 'lg' }} lineHeight="1.15" color={emboss} lineClamp={3} wordBreak="break-word" px="1">
             {project.title}
           </Text>
         </Box>
@@ -86,7 +85,7 @@ export function BookCover({ project, progress, tied = true }: { project: Project
             <circle cx="15" cy="8.5" r="1.6" fill="none" stroke="#c9b48a" strokeWidth="1" />
             {/* The crystal: dull glass, its lit part, then facets on top. */}
             <path d="M15 10l8 9-3 22-5 4-5-4-3-22z" fill={c.crystal} fillOpacity={paused ? 0.12 : 0.22} stroke={c.crystal} strokeOpacity={paused ? 0.35 : 0.8} strokeWidth=".9" />
-            <path d="M15 10l8 9-3 22-5 4-5-4-3-22z" fill={c.crystal} fillOpacity={paused ? 0.25 : 0.9} clipPath={`url(#${clip})`} style={full && !paused ? { filter: `drop-shadow(0 0 5px ${c.crystal})` } : undefined} />
+            <path d="M15 10l8 9-3 22-5 4-5-4-3-22z" fill={c.crystal} fillOpacity={paused ? 0.25 : 0.9} clipPath={`url(#${clip})`} />
             <path d="M7 19h16M15 10v35M10 41l5-22 5 22" fill="none" stroke="rgba(255,255,255,.45)" strokeWidth=".6" />
           </svg>
         </Box>

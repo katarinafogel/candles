@@ -13,7 +13,7 @@ import { grimoireActions as A } from '../../store/grimoireSlice'
 
 const statusLabel: Record<Jar['status'], string> = { saving: 'копим', collected: 'собрана', spent: 'потрачена', closed: 'закрыта' }
 
-/** A glass that fills by the share collected; the liquid rises with a soft glow when full. */
+/** A glass that fills by the share collected; the liquid rises and turns gold when full. */
 function JarGlass({ pct }: { pct: number }) {
   const h = 70 * (pct / 100)
   return (

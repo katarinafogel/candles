@@ -1,4 +1,4 @@
-// Small marks of a deed: candle-glow stars for difficulty, weather for dread — one icon that changes
+// Small marks of a deed: candle-coloured stars for difficulty, weather for dread — one icon that changes
 // (sun, cloud, rain, storm) in cool lilac-grey, so it never mixes with the warm stars — a calm deadline, tags.
 import { Badge, Box, HStack, Text } from '@chakra-ui/react'
 import { LuCloud, LuCloudLightning, LuCloudRain, LuSun } from 'react-icons/lu'
@@ -74,7 +74,6 @@ function StarScale({ value, onChange }: { value: number; onChange: (v: number) =
             lineHeight="0"
             cursor="pointer"
             color={on ? 'ember.300' : 'fg.subtle'}
-            filter={on ? 'drop-shadow(0 0 4px var(--g-glow))' : undefined}
             _hover={{ color: 'ember.200' }}
             onClick={() => onChange(v)}
           >

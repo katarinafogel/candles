@@ -34,7 +34,6 @@ const palette: Palette = {
   star: '#f4e4c1',
   hover: 'rgba(246, 230, 200, .12)',
   leafOff: 'rgba(246, 230, 200, .5)',
-  glow: 'rgba(244, 228, 193, .5)',
   ink: 'rgba(246, 230, 200, .6)',
 }
 
@@ -83,7 +82,6 @@ function MonthCard({ m, today, holidays, busy, feel, born, onDay, refFor }: { m:
       borderRadius="10px"
       background={monthBg(m)}
       color={p.fg}
-      boxShadow="inset 0 0 0 1px rgba(255,255,255,.06)"
       scrollMarginTop="16px"
       css={{ '--card-solid': deep(sabbats[m.from].color), '--chakra-colors-fg': p.fg, '--chakra-colors-fg-muted': p.muted, '--chakra-colors-fg-subtle': p.subtle }}
     >
@@ -147,7 +145,7 @@ function MonthCard({ m, today, holidays, busy, feel, born, onDay, refFor }: { m:
                   <Text fontSize="xs" lineHeight="1" fontWeight={isToday ? 'bold' : undefined} color={isToday || sabbat ? p.star : p.fg}>
                     {+d.slice(8)}
                   </Text>
-                  <Box filter={full ? `drop-shadow(0 0 4px ${p.glow})` : undefined}>
+                  <Box>
                     {sabbat ? (
                       <Text fontSize="sm" lineHeight="18px" h="18px">
                         {sabbats[sabbat].symbol}

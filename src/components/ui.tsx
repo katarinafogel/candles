@@ -176,7 +176,6 @@ export function LeafMark({ on, size = 22 }: { on: boolean; size?: number }) {
       flexShrink={0}
       // Cards of other colors set --leaf-on / --leaf-off so the leaf stays readable on them.
       color={on ? 'var(--leaf-on, var(--chakra-colors-ember-300))' : 'var(--leaf-off, var(--chakra-colors-ember-700))'}
-      filter={on ? 'drop-shadow(0 0 4px var(--leaf-glow, var(--g-glow)))' : undefined}
       transition="color .15s, filter .15s"
     >
       <Leaf on={on} size={size} />
@@ -292,7 +291,6 @@ export function StarRating({
             p="0.5"
             lineHeight="0"
             color={on ? 'var(--star-on, var(--chakra-colors-ember-300))' : 'fg.subtle'}
-            filter={on ? 'drop-shadow(0 0 4px var(--g-glow))' : undefined}
             _hover={{ color: 'ember.200' }}
             cursor="pointer"
             onClick={(e: React.MouseEvent) => {

@@ -45,7 +45,6 @@ function SideLink({ item, badge }: { item: NavItem; badge?: number }) {
           borderRadius="l2"
           color={isActive ? 'ember.200' : 'fg.muted'}
           bg={isActive ? 'ember.subtle' : 'transparent'}
-          boxShadow={isActive ? 'inset 2px 0 0 {colors.ember.400}' : undefined}
           _hover={{ bg: 'bg.muted', color: 'fg' }}
           fontWeight={isActive ? 'semibold' : 'normal'}
         >

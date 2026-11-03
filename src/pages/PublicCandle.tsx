@@ -77,7 +77,6 @@ function BurnTracker({ id, sessions, setSessions }: { id: string; sessions: Sess
           fontSize="xl"
           variant={open ? 'outline' : 'solid'}
           colorPalette="ember"
-          boxShadow={open ? undefined : '0 0 32px -6px rgba(224,164,85,.55)'}
           onClick={() => (open ? setAskOut(true) : save([...sessions, { start: Date.now() }]))}
         >
           {open ? <LuWind /> : <LuFlame />} {open ? 'Потушить' : 'Зажечь'}
