@@ -34,8 +34,10 @@ const config = defineConfig({
   theme: {
     tokens: {
       fonts: {
-        heading: { value: "'Cormorant Garamond', 'Cormorant', Georgia, 'Times New Roman', serif" },
-        body: { value: "'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" },
+        // Per project, see fontSets in themes.ts.
+        heading: { value: 'var(--g-font-heading)' },
+        body: { value: 'var(--g-font-body)' },
+        hand: { value: 'var(--g-font-hand)' },
       },
       colors: Object.fromEntries(
         Object.entries(palettes).map(([name, scale]) => [name, Object.fromEntries(Object.entries(scale).map(([s, value]) => [s, { value }]))]),

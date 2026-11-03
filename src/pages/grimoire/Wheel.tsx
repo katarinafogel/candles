@@ -83,7 +83,7 @@ function WheelSvg({ today, hemisphere, selected, onSelect, marks }: { today: str
               <text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize="18">
                 {info.symbol}
               </text>
-              <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fill="var(--chakra-colors-fg)" fontSize="13" fontFamily="'Cormorant Garamond', Georgia, serif" fontWeight="600">
+              <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fill="var(--chakra-colors-fg)" fontSize="13" style={{ fontFamily: 'var(--g-font-heading)' }} fontWeight="600">
                 {info.name}
               </text>
               {(m.want > 0 || m.lived > 0) && (
@@ -115,7 +115,7 @@ function WheelSvg({ today, hemisphere, selected, onSelect, marks }: { today: str
         <circle cx={C} cy={C} r={r - 6} fill="#4b3424" />
         <circle cx={C} cy={C} r={r - 10} fill="#b88a5c" />
         <circle cx={C} cy={C} r={r - 22} fill="none" stroke="#9a7049" strokeWidth=".8" />
-        <text x={C} y={C - 6} textAnchor="middle" fontSize="26" fontFamily="'Cormorant Garamond', Georgia, serif" fontWeight="700" fill="#1b1814">
+        <text x={C} y={C - 6} textAnchor="middle" fontSize="26" style={{ fontFamily: 'var(--g-font-heading)' }} fontWeight="700" fill="#1b1814">
           {now.daysToNext}
         </text>
         <text x={C} y={C + 14} textAnchor="middle" fontSize="9" fill="#1b1814">

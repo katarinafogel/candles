@@ -85,7 +85,7 @@ export function FeedbackPrompt() {
     return (
       <Modal open onClose={() => feedback.clear()} title={title} footer={<Button onClick={() => save({ stars, dread }, note)}>Записать</Button>}>
         <Stack gap="4">
-          <Text fontSize="sm" color="fg.muted">
+          <Text fontFamily="hand" color="fg.muted">
             «{task.title}»
           </Text>
           {words && (

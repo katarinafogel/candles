@@ -154,6 +154,26 @@ export const themes: Record<ThemeId, Theme> = {
   },
 }
 
+// Fonts belong to the project, not to the colour theme: <html data-app="grimoire"> gets its own set.
+// «hand» is the handwriting for quotes and decorative lines; Gogol is ParaType's free font, served
+// from public/fonts (it isn't on Google Fonts), the others come from Google Fonts in index.html.
+export const fontSets: Record<'workshop' | 'grimoire', Record<'heading' | 'body' | 'hand', string>> = {
+  workshop: {
+    heading: "'Cormorant Garamond', 'Cormorant', Georgia, 'Times New Roman', serif",
+    body: "'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+    hand: "'Cormorant Garamond', Georgia, serif",
+  },
+  grimoire: {
+    heading: "'Spectral SC', Georgia, 'Times New Roman', serif",
+    body: "'Shantell Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+    hand: "'Gogol', 'Shantell Sans', cursive",
+  },
+}
+
+const fontVars = (set: Record<string, string>) => Object.fromEntries(Object.entries(set).map(([k, val]) => [`--g-font-${k}`, val]))
+
+const gogol = "@font-face{font-family:'Gogol';src:url(./fonts/Gogol.woff2) format('woff2'),url(./fonts/Gogol.ttf) format('truetype');font-display:swap}"
+
 /** The grimoire's theme; the workshop always stays at night. */
 export const defaultGrimoireTheme: ThemeId = 'paper'
 const key = 'grimoire-theme'
@@ -187,12 +207,20 @@ export function applyTheme(id: ThemeId) {
 
 /**
  * Puts every theme's variables on the page. A plain <style> outside Chakra's cascade layers, because
- * the palette overrides must beat Chakra's own `@layer tokens`; night is also on bare :root.
+ * the palette overrides must beat Chakra's own `@layer tokens`; night and the workshop's fonts are
+ * also on bare :root.
  */
 export function installThemes() {
-  const block = (sel: string, t: Theme) => `${sel}{color-scheme:${t.scheme};${Object.entries(t.vars).map(([k, val]) => `${k}:${val}`).join(';')}}`
+  const decl = (vars: Record<string, string>) => Object.entries(vars).map(([k, val]) => `${k}:${val}`).join(';')
+  const block = (sel: string, t: Theme) => `${sel}{color-scheme:${t.scheme};${decl(t.vars)}}`
   const style = document.createElement('style')
   style.id = 'themes'
-  style.textContent = [block(':root', themes.night), ...Object.entries(themes).map(([id, t]) => block(`:root[data-theme=${id}]`, t))].join('\n')
+  style.textContent = [
+    gogol,
+    block(':root', themes.night),
+    ...Object.entries(themes).map(([id, t]) => block(`:root[data-theme=${id}]`, t)),
+    `:root{${decl(fontVars(fontSets.workshop))}}`,
+    `:root[data-app=grimoire]{${decl(fontVars(fontSets.grimoire))}}`,
+  ].join('\n')
   document.head.prepend(style)
 }

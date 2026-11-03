@@ -403,7 +403,7 @@ export default function Scroll() {
               <Text fontSize="xs" color="fg.subtle">
                 В прошлый {sabbats[memoryFor.sabbat].name} ({memory.day.slice(0, 4)}) ты писала:
               </Text>
-              <Text fontSize="sm" fontStyle="italic" whiteSpace="pre-wrap" lineClamp={4}>
+              <Text fontFamily="hand" fontSize="md" whiteSpace="pre-wrap" lineClamp={4}>
                 «{memory.text}»
               </Text>
             </Box>

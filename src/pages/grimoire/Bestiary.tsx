@@ -177,7 +177,7 @@ export default function Bestiary() {
                 <Box p="3" borderRadius="l2" borderWidth="1px" borderColor="border" bg="bg.subtle" _hover={{ bg: 'bg.muted' }}>
                   <HStack gap="2" wrap="wrap">
                     <Text fontWeight="semibold">{p.name}</Text>
-                    {n?.nickname && <Text color="fg.muted">«{n.nickname}»</Text>}
+                    {n?.nickname && <Text fontFamily="hand" color="fg.muted">«{n.nickname}»</Text>}
                     {n?.circle && <Badge variant="outline">{n.circle}</Badge>}
                   </HStack>
                   <Text fontSize="xs" color="fg.muted" mt="0.5">
