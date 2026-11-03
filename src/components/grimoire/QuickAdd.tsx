@@ -1,10 +1,9 @@
 // A plain field for a new deed on the book pages: Enter adds it with the defaults (backlog, one star,
-// «норм»), the sliders open the full «Новое дело» form with the text as its title. The floating «+»
-// opens the form at once. No symbols are parsed here: «купить #2» stays as written.
-import { Box, Button, HStack, IconButton, Input } from '@chakra-ui/react'
+// «норм»), the sliders open the full «Новое дело» form with the text as its title. No symbols are
+// parsed here: «купить #2» stays as written.
+import { HStack, IconButton, Input } from '@chakra-ui/react'
 import { useRef, useState } from 'react'
-import { LuCornerDownLeft, LuPlus, LuSlidersHorizontal } from 'react-icons/lu'
-import { useLocation } from 'react-router-dom'
+import { LuCornerDownLeft, LuSlidersHorizontal } from 'react-icons/lu'
 import type { Task } from '../../grimoire/types'
 import { store, useAppDispatch } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
@@ -54,30 +53,5 @@ export function QuickAdd({ fields: extra }: { fields?: Partial<Task> }) {
       </IconButton>
       {full && <NewTaskDialog initialTitle={line} fields={extra} onClose={() => setFull(false)} onAdded={() => setLine('')} />}
     </HStack>
-  )
-}
-
-/** The floating «+» on every grimoire screen opens «Новое дело». On the day scroll the deed goes into today's plan. */
-export function QuickAddButton() {
-  const [open, setOpen] = useState(false)
-  const onScroll = useLocation().pathname === '/g'
-  return (
-    <>
-      <Box position="fixed" right={{ base: '4', md: '8' }} bottom={{ base: 'calc(76px + env(safe-area-inset-bottom))', md: '8' }} zIndex="sticky">
-        <Button
-          aria-label="Новое дело"
-          borderRadius="full"
-          size="lg"
-          w="14"
-          h="14"
-          colorPalette="ember"
-          boxShadow="0 8px 24px -8px var(--g-shade), 0 0 24px -6px var(--g-glow)"
-          onClick={() => setOpen(true)}
-        >
-          <LuPlus />
-        </Button>
-      </Box>
-      {open && <NewTaskDialog planToday={onScroll} onClose={() => setOpen(false)} />}
-    </>
   )
 }

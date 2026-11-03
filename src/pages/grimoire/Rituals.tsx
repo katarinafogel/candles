@@ -22,9 +22,9 @@ function scheduleText(s: HabitSchedule) {
 
 type Draft = Omit<Habit, 'id' | 'createdAt'> & Partial<Pick<Habit, 'id' | 'createdAt'>>
 
-const blank: Draft = { title: '', schedule: { kind: 'daily' }, mark: { kind: 'check' }, stars: 1, dread: 0, status: 'active' }
+export const blank: Draft = { title: '', schedule: { kind: 'daily' }, mark: { kind: 'check' }, stars: 1, dread: 0, status: 'active' }
 
-function HabitDialog({ habit, onClose }: { habit: Draft; onClose: () => void }) {
+export function HabitDialog({ habit, onClose }: { habit: Draft; onClose: () => void }) {
   const dispatch = useAppDispatch()
   const [h, setH] = useState<Draft>(habit)
   const set = (p: Partial<Draft>) => setH({ ...h, ...p })

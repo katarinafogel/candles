@@ -32,7 +32,7 @@ export function span(fromIso: string, toIso: string) {
 
 type Draft = Partial<Wish> & { title: string }
 
-function WishDialog({ wish, onClose }: { wish: Draft; onClose: () => void }) {
+export function WishDialog({ wish, onClose }: { wish: Draft; onClose: () => void }) {
   const dispatch = useAppDispatch()
   const [w, setW] = useState<Draft>(wish)
   return (

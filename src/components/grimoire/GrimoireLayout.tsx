@@ -1,5 +1,5 @@
 // The grimoire's own shell in the workshop's style: side menu on a computer, bottom tabs on a phone,
-// «Другие проекты» at the end of the menu and the floating «+».
+// «Другие проекты» at the end of the menu and the floating «+» with its menu.
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
 import { useEffect, type ReactNode } from 'react'
 import { LuBookOpen, LuCalendarDays, LuEllipsis, LuFlame, LuGem, LuLibrary, LuMoon, LuScrollText, LuLayoutGrid, LuPiggyBank, LuSparkles, LuSun, LuUsers } from 'react-icons/lu'
@@ -14,7 +14,7 @@ import { Eucalyptus, MoonPhases, MoonSlice } from '../Magic'
 import { SignOutSideLink } from '../SignOut'
 import { SyncBadge } from '../SyncBadge'
 import { FeedbackPrompt } from './Feedback'
-import { QuickAddButton } from './QuickAdd'
+import { AddMenu } from './AddMenu'
 
 interface NavItem {
   to: string
@@ -138,7 +138,7 @@ export default function GrimoireLayout() {
         </Box>
       </Box>
 
-      <QuickAddButton />
+      <AddMenu />
       <FeedbackPrompt />
 
       <Flex as="nav" display={{ base: 'flex', md: 'none' }} position="fixed" bottom="0" left="0" right="0" bg="bg.nav" backdropFilter="blur(8px)" borderTopWidth="1px" borderColor="border" pb="env(safe-area-inset-bottom)" zIndex="sticky">
