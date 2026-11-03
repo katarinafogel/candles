@@ -154,6 +154,9 @@ export function TaskFields({
   const project = t.projectId ? g.projects[t.projectId] : undefined
   // «Своими словами» opens with the «+» after the reasons, or by itself when there is a text already.
   const [ownWhy, setOwnWhy] = useState(!!t.whyText)
+  // «Ресурс»: the «+» opens a field for her own; Enter adds it as one more chosen chip.
+  const [ownCost, setOwnCost] = useState(false)
+  const [cost, setCost] = useState('')
   const end = useRef<Record<string, HTMLDivElement | null>>({})
   useEffect(() => {
     if (opened) end.current[opened]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -181,7 +184,7 @@ export function TaskFields({
       </HStack>
     ),
     project: t.parentId ? null : (
-      <Field label="Проект" helper={project ? 'у дела один проект: тап по нему убирает' : 'начни писать название — подскажу, Enter создаст новый'}>
+      <Field label="Проект">
         {project ? (
           <Chip onRemove={() => set({ projectId: undefined })}>
             {project.sigil ?? '🌿'} {project.title}
@@ -201,7 +204,7 @@ export function TaskFields({
       </Field>
     ),
     people: (
-      <Field label="Люди" helper="с кем связано дело; начни писать имя — подскажу, Enter добавит нового">
+      <Field label="Люди">
         <Stack gap="2" w="full">
           {(t.personIds ?? []).length > 0 && (
             <HStack gap="1.5" wrap="wrap">
@@ -239,7 +242,7 @@ export function TaskFields({
       </Field>
     ),
     checklist: (
-      <Field label="Чеклист" helper={`подзадачи: отмечай по ходу дела, не больше ${maxChecklist}`}>
+      <Field label="Чеклист">
         <Checklist items={t.checklist ?? []} onChange={(checklist) => set({ checklist: checklist.length ? checklist : undefined })} />
       </Field>
     ),
@@ -313,26 +316,43 @@ export function TaskFields({
       <Field label="Почему важно">
         <Stack gap="2" w="full">
           <Chips multi value={t.why ?? []} onChange={(v) => set({ why: (v as string[]) ?? [] })} options={whyOptions.map((x) => ({ value: x, label: x }))}>
-            <IconButton
-              size="sm"
-              borderRadius="full"
-              variant={ownWhy ? 'solid' : 'outline'}
-              aria-label="Своими словами"
-              title="Своими словами"
-              aria-pressed={ownWhy}
+            <PlusToggle
+              label="Своими словами"
+              on={ownWhy}
               onClick={() => {
                 if (ownWhy) set({ whyText: undefined })
                 setOwnWhy(!ownWhy)
               }}
-            >
-              <LuPlus />
-            </IconButton>
+            />
           </Chips>
           {ownWhy && <TextInput value={t.whyText ?? ''} onChange={(v) => set({ whyText: v || undefined })} placeholder="своими словами" />}
         </Stack>
       </Field>
-      <Field label="Ресурс" helper="что дело забирает">
-        <Chips multi value={t.costs ?? []} onChange={(v) => set({ costs: (v as string[]) ?? [] })} options={costOptions.map((x) => ({ value: x, label: x }))} />
+      <Field label="Ресурс">
+        <Stack gap="2" w="full">
+          <Chips
+            multi
+            value={t.costs ?? []}
+            onChange={(v) => set({ costs: (v as string[]) ?? [] })}
+            options={[...costOptions, ...(t.costs ?? []).filter((x) => !costOptions.includes(x))].map((x) => ({ value: x, label: x }))}
+          >
+            <PlusToggle label="Свой ресурс" on={ownCost} onClick={() => setOwnCost(!ownCost)} />
+          </Chips>
+          {ownCost && (
+            <Input
+              value={cost}
+              placeholder="свой ресурс"
+              onChange={(e) => setCost(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter' || !cost.trim() || e.nativeEvent.isComposing) return
+                e.preventDefault()
+                const x = cost.trim().toLowerCase()
+                if (!(t.costs ?? []).includes(x)) set({ costs: [...(t.costs ?? []), x] })
+                setCost('')
+              }}
+            />
+          )}
+        </Stack>
       </Field>
       <Check checked={!!t.evenInNav} onChange={(v) => set({ evenInNav: v || undefined })}>
         Напоминать даже в нави
@@ -379,6 +399,15 @@ function AddByName({ placeholder, onAdd, disabled }: { placeholder: string; onAd
 }
 
 const maxChecklist = 20
+
+/** The round «+» at the end of a row of chips that opens a field for her own words. */
+function PlusToggle({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {
+  return (
+    <IconButton size="sm" borderRadius="full" variant={on ? 'solid' : 'outline'} aria-label={label} title={label} aria-pressed={on} onClick={onClick}>
+      <LuPlus />
+    </IconButton>
+  )
+}
 
 /** A chosen person or project: tap to take it off. */
 function Chip({ children, onRemove }: { children: ReactNode; onRemove: () => void }) {
