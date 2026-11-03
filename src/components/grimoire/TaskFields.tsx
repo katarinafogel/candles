@@ -1,11 +1,11 @@
 // The fields of a deed: shared by the card (editing) and the «Новое дело» form, so a new field is added
-// in one place. The main ones are always there; the optional blocks (dread, project, people, note, time,
+// in one place. The main ones are always there; the optional blocks (project, people, note, time,
 // deadline, repeat, checklist, tags) are turned on by round buttons and go to the end in the order chosen.
 import { Badge, Box, HStack, IconButton, Input, Slider, Stack, Switch, Text } from '@chakra-ui/react'
 import { nanoid } from '@reduxjs/toolkit'
 import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react'
-import { LuBookOpen, LuCalendarClock, LuClockAlert, LuCloud, LuHash, LuListChecks, LuPen, LuPlus, LuRepeat, LuUser, LuX } from 'react-icons/lu'
-import { costOptions, slotLabel, whyOptions } from '../../grimoire/labels'
+import { LuBookOpen, LuCalendarClock, LuChevronUp, LuClockAlert, LuHash, LuListChecks, LuPen, LuPlus, LuRepeat, LuUser, LuX } from 'react-icons/lu'
+import { costOptions, dreadLabel, slotLabel, whyOptions } from '../../grimoire/labels'
 import type { TaskDraft } from '../../grimoire/newTask'
 import type { ChecklistItem, Task, TaskSlot } from '../../grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
@@ -18,10 +18,9 @@ import { SuggestInput } from './SuggestInput'
 import { TagInput } from './TagInput'
 
 /** Optional blocks of the form, each behind its round button above the footer. */
-export type Block = 'dread' | 'project' | 'people' | 'tags' | 'note' | 'time' | 'due' | 'repeat' | 'checklist'
+export type Block = 'project' | 'people' | 'tags' | 'note' | 'time' | 'due' | 'repeat' | 'checklist'
 
 const blocks: { key: Block; label: string; icon: ReactNode; clear: Partial<Task> }[] = [
-  { key: 'dread', label: 'Нехотение', icon: <LuCloud />, clear: { dread: 0 } },
   { key: 'project', label: 'Проект', icon: <LuBookOpen />, clear: { projectId: undefined } },
   { key: 'people', label: 'Люди', icon: <LuUser />, clear: { personIds: undefined } },
   { key: 'tags', label: 'Теги', icon: <LuHash />, clear: { tags: [] } },
@@ -35,7 +34,6 @@ const blocks: { key: Block; label: string; icon: ReactNode; clear: Partial<Task>
 /** The blocks that hold something: shown from the start. */
 function filled(t: Partial<Task>): Set<Block> {
   const has: Record<Block, unknown> = {
-    dread: t.dread,
     project: t.projectId,
     people: t.personIds?.length,
     tags: t.tags?.length,
@@ -56,11 +54,6 @@ export function useFieldBlocks(t: Partial<Task>, set: (patch: Partial<Task>) => 
   const [shown, setShown] = useState(() => filled(t))
   // The block just turned on: the form scrolls to it once it is drawn.
   const [opened, setOpened] = useState<Block>()
-  // A joy has no dread: its button is off and locked.
-  const locked: Block[] = t.type === 'joy' ? ['dread'] : []
-  useEffect(() => {
-    if (t.type === 'joy' && shown.has('dread')) setShown((x) => new Set([...x].filter((k) => k !== 'dread')))
-  }, [t.type, shown])
   const toggle = (b: (typeof blocks)[number]) => {
     const next = new Set(shown)
     if (next.has(b.key)) {
@@ -79,7 +72,6 @@ export function useFieldBlocks(t: Partial<Task>, set: (patch: Partial<Task>) => 
         .filter((b) => !hide.includes(b.key))
         .map((b) => {
           const on = shown.has(b.key)
-          const off = locked.includes(b.key)
           return (
             <Box key={b.key} position="relative" className="group">
               <IconButton
@@ -91,7 +83,6 @@ export function useFieldBlocks(t: Partial<Task>, set: (patch: Partial<Task>) => 
                 borderColor={on ? 'ember.500' : 'border'}
                 bg={on ? 'ember.subtle' : 'transparent'}
                 color={on ? 'ember.200' : 'fg.muted'}
-                disabled={off}
                 onClick={() => toggle(b)}
               >
                 {b.icon}
@@ -172,11 +163,6 @@ export function TaskFields({
   }, [opened])
 
   const view: Record<Block, ReactNode> = {
-    dread: t.type === 'joy' ? null : (
-      <Field label="Нехотение">
-        <MarkPicker kind="dread" value={t.dread} onChange={(v) => set({ dread: v as Task['dread'] })} />
-      </Field>
-    ),
     time: (
       <HStack gap="3" wrap="wrap">
         <Field label="Когда делать" flex="1" minW="150px">
@@ -316,10 +302,17 @@ export function TaskFields({
       <HStack gap="6" wrap="wrap" align="center">
         <MarkPicker kind="stars" value={t.stars} onChange={(v) => set({ stars: v as Task['stars'] })} />
         <TwoWay left="дело" right="радость" value={t.type === 'joy' ? 'right' : 'left'} onChange={(v) => set(v === 'right' ? { type: 'joy', want: undefined, dread: 0 } : { type: 'deed' })} />
-        {t.type !== 'joy' && <TwoWay left="хочу" right="надо" value={t.want === 'need' ? 'right' : 'left'} onChange={(v) => set({ want: v === 'right' ? 'need' : 'want' })} />}
+        {t.type !== 'joy' && (
+          <TwoWay left="хочу" right="надо" value={t.want === 'need' ? 'right' : 'left'} onChange={(v) => set(v === 'right' ? { want: 'need' } : { want: 'want', dread: 0 })} />
+        )}
       </HStack>
+      {t.type !== 'joy' && t.want === 'need' && (
+        <Field label="Нехотение">
+          <DreadSlider value={t.dread} onChange={(dread) => set({ dread })} />
+        </Field>
+      )}
       <Field label="Приоритет">
-        <PrioritySlider value={t.slot} onChange={(slot) => set({ slot })} />
+        <PriorityScale value={t.slot} onChange={(slot) => set({ slot })} />
       </Field>
       <Field label="Ресурс">
         <Stack gap="2" w="full">
@@ -426,21 +419,52 @@ function TwoWay({ left, right, value, onChange }: { left: string; right: string;
   )
 }
 
-/** Priority from none to «главное»; the chosen step is named over the slider. */
-const priority: (TaskSlot | undefined)[] = [undefined, 'optional', 'extra', 'main']
-function PrioritySlider({ value, onChange }: { value?: TaskSlot; onChange: (slot: TaskSlot | undefined) => void }) {
-  const at = priority.indexOf(value)
+/** Priority as a scale of three arrows: one — необязательное, two — дополнительное, three — главное. Tapping the chosen one clears it. */
+const priority: TaskSlot[] = ['optional', 'extra', 'main']
+function PriorityScale({ value, onChange }: { value?: TaskSlot; onChange: (slot: TaskSlot | undefined) => void }) {
+  const at = value ? priority.indexOf(value) + 1 : 0
+  return (
+    <HStack gap="0.5" role="radiogroup" aria-label="Приоритет">
+      {priority.map((slot, i) => {
+        const on = at > i
+        return (
+          <Box
+            as="button"
+            key={slot}
+            role="radio"
+            aria-checked={value === slot}
+            aria-label={slotLabel[slot]}
+            title={slotLabel[slot]}
+            p="1"
+            lineHeight="0"
+            cursor="pointer"
+            color={on ? 'ember.300' : 'fg.subtle'}
+            filter={on ? 'drop-shadow(0 0 4px rgba(224,164,85,.45))' : undefined}
+            _hover={{ color: 'ember.200' }}
+            onClick={() => onChange(value === slot ? undefined : slot)}
+          >
+            <LuChevronUp size={26} strokeWidth={on ? 2.6 : 2} />
+          </Box>
+        )
+      })}
+    </HStack>
+  )
+}
+
+/** How much she does not want a «надо» deed: 0–3 on a slider that turns bluer the heavier it is. */
+const dreadBlue = ['#a59fb5', '#8f9bd0', '#6f8fe6', '#4b7bff']
+function DreadSlider({ value, onChange }: { value: number; onChange: (v: Task['dread']) => void }) {
   return (
     <Stack gap="1" w="full" maxW="sm">
-      <Text fontSize="sm" color={value ? 'ember.200' : 'fg.muted'}>
-        {value ? slotLabel[value] : 'без приоритета'}
+      <Text fontSize="sm" color={dreadBlue[value]}>
+        {dreadLabel[value]}
       </Text>
-      <Slider.Root min={0} max={3} step={1} value={[at]} onValueChange={(e) => onChange(priority[e.value[0]])} colorPalette="ember" aria-label={['Приоритет']}>
+      <Slider.Root min={0} max={3} step={1} value={[value]} onValueChange={(e) => onChange(e.value[0] as Task['dread'])} aria-label={['Нехотение']}>
         <Slider.Control>
           <Slider.Track>
-            <Slider.Range />
+            <Slider.Range bg={dreadBlue[value]} />
           </Slider.Track>
-          <Slider.Thumb index={0} cursor="grab">
+          <Slider.Thumb index={0} cursor="grab" borderColor={dreadBlue[value]} bg="bg.panel">
             <Slider.HiddenInput />
           </Slider.Thumb>
         </Slider.Control>
