@@ -1,10 +1,10 @@
 // The fields of a deed: shared by the card (editing) and the «Новое дело» form, so a new field is added
-// in one place. The main ones are always there; the optional blocks (project, people, note, time,
+// in one place. The main ones are always there; the optional blocks (dread, project, people, note, time,
 // deadline, repeat, checklist, tags) are turned on by round buttons and go to the end in the order chosen.
-import { Badge, Box, HStack, IconButton, Input, Stack, Text } from '@chakra-ui/react'
+import { Badge, Box, HStack, IconButton, Input, Slider, Stack, Switch, Text } from '@chakra-ui/react'
 import { nanoid } from '@reduxjs/toolkit'
 import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react'
-import { LuBookOpen, LuCalendarClock, LuClockAlert, LuHash, LuListChecks, LuPen, LuPlus, LuRepeat, LuUser, LuX } from 'react-icons/lu'
+import { LuBookOpen, LuCalendarClock, LuClockAlert, LuCloud, LuHash, LuListChecks, LuPen, LuPlus, LuRepeat, LuUser, LuX } from 'react-icons/lu'
 import { costOptions, slotLabel, wantLabel, whyOptions } from '../../grimoire/labels'
 import type { TaskDraft } from '../../grimoire/newTask'
 import type { ChecklistItem, Task, TaskSlot, Want } from '../../grimoire/types'
@@ -18,9 +18,10 @@ import { SuggestInput } from './SuggestInput'
 import { TagInput } from './TagInput'
 
 /** Optional blocks of the form, each behind its round button above the footer. */
-export type Block = 'project' | 'people' | 'tags' | 'note' | 'time' | 'due' | 'repeat' | 'checklist'
+export type Block = 'dread' | 'project' | 'people' | 'tags' | 'note' | 'time' | 'due' | 'repeat' | 'checklist'
 
 const blocks: { key: Block; label: string; icon: ReactNode; clear: Partial<Task> }[] = [
+  { key: 'dread', label: 'Нехотение', icon: <LuCloud />, clear: { dread: 0 } },
   { key: 'project', label: 'Проект', icon: <LuBookOpen />, clear: { projectId: undefined } },
   { key: 'people', label: 'Люди', icon: <LuUser />, clear: { personIds: undefined } },
   { key: 'tags', label: 'Теги', icon: <LuHash />, clear: { tags: [] } },
@@ -34,6 +35,7 @@ const blocks: { key: Block; label: string; icon: ReactNode; clear: Partial<Task>
 /** The blocks that hold something: shown from the start. */
 function filled(t: Partial<Task>): Set<Block> {
   const has: Record<Block, unknown> = {
+    dread: t.dread,
     project: t.projectId,
     people: t.personIds?.length,
     tags: t.tags?.length,
@@ -163,6 +165,11 @@ export function TaskFields({
   }, [opened])
 
   const view: Record<Block, ReactNode> = {
+    dread: (
+      <Field label="Нехотение">
+        <MarkPicker kind="dread" value={t.dread} onChange={(v) => set({ dread: v as Task['dread'] })} />
+      </Field>
+    ),
     time: (
       <HStack gap="3" wrap="wrap">
         <Field label="Когда делать" flex="1" minW="150px">
@@ -296,37 +303,24 @@ export function TaskFields({
           enterKeyHint={onTitleEnter ? 'done' : undefined}
         />
       </Field>
+      <Check checked={!!t.evenInNav} onChange={(v) => set({ evenInNav: v || undefined })}>
+        Напоминать даже в нави
+      </Check>
       <Field label="Сложность">
         <MarkPicker kind="stars" value={t.stars} onChange={(v) => set({ stars: v as Task['stars'] })} />
       </Field>
-      <Field label="Нехотение">
-        <MarkPicker kind="dread" value={t.dread} onChange={(v) => set({ dread: v as Task['dread'] })} />
+      <Switch.Root colorPalette="ember" checked={t.type === 'joy'} onCheckedChange={(e) => set({ type: e.checked ? 'joy' : 'deed' })} cursor="pointer">
+        <Switch.HiddenInput />
+        <Switch.Control>
+          <Switch.Thumb />
+        </Switch.Control>
+        <Switch.Label>Радость</Switch.Label>
+      </Switch.Root>
+      <Field label="Приоритет">
+        <PrioritySlider value={t.slot} onChange={(slot) => set({ slot })} />
       </Field>
-      <HStack gap="3" align="flex-start" wrap="wrap">
-        <Field label="Тип" flex="1" minW="160px">
-          <Chips value={t.type} onChange={(v) => set({ type: (v as Task['type']) ?? 'deed' })} options={[{ value: 'deed', label: 'дело' }, { value: 'joy', label: 'радость' }]} />
-        </Field>
-        <Field label="Приоритет" flex="2" minW="220px">
-          <Chips value={t.slot} onChange={(v) => set({ slot: v as TaskSlot | undefined })} options={Object.entries(slotLabel).map(([value, label]) => ({ value: value as TaskSlot, label }))} />
-        </Field>
-      </HStack>
       <Field label="Хочу / надо" helper="отдельно от нехотения: можно хотеть и бояться">
         <Chips value={t.want} onChange={(v) => set({ want: v as Want | undefined })} options={Object.entries(wantLabel).map(([value, label]) => ({ value: value as Want, label }))} />
-      </Field>
-      <Field label="Почему важно">
-        <Stack gap="2" w="full">
-          <Chips multi value={t.why ?? []} onChange={(v) => set({ why: (v as string[]) ?? [] })} options={whyOptions.map((x) => ({ value: x, label: x }))}>
-            <PlusToggle
-              label="Своими словами"
-              on={ownWhy}
-              onClick={() => {
-                if (ownWhy) set({ whyText: undefined })
-                setOwnWhy(!ownWhy)
-              }}
-            />
-          </Chips>
-          {ownWhy && <TextInput value={t.whyText ?? ''} onChange={(v) => set({ whyText: v || undefined })} placeholder="своими словами" />}
-        </Stack>
       </Field>
       <Field label="Ресурс">
         <Stack gap="2" w="full">
@@ -354,9 +348,21 @@ export function TaskFields({
           )}
         </Stack>
       </Field>
-      <Check checked={!!t.evenInNav} onChange={(v) => set({ evenInNav: v || undefined })}>
-        Напоминать даже в нави
-      </Check>
+      <Field label="Почему важно">
+        <Stack gap="2" w="full">
+          <Chips multi value={t.why ?? []} onChange={(v) => set({ why: (v as string[]) ?? [] })} options={whyOptions.map((x) => ({ value: x, label: x }))}>
+            <PlusToggle
+              label="Своими словами"
+              on={ownWhy}
+              onClick={() => {
+                if (ownWhy) set({ whyText: undefined })
+                setOwnWhy(!ownWhy)
+              }}
+            />
+          </Chips>
+          {ownWhy && <TextInput value={t.whyText ?? ''} onChange={(v) => set({ whyText: v || undefined })} placeholder="своими словами" />}
+        </Stack>
+      </Field>
       {[...shown].map((k) =>
         view[k] ? (
           <Box key={k} ref={(el: HTMLDivElement | null) => (end.current[k] = el)} scrollMarginBlock="4">
@@ -399,6 +405,29 @@ function AddByName({ placeholder, onAdd, disabled }: { placeholder: string; onAd
 }
 
 const maxChecklist = 20
+
+/** Priority from none to «главное»; the chosen step is named over the slider. */
+const priority: (TaskSlot | undefined)[] = [undefined, 'optional', 'extra', 'main']
+function PrioritySlider({ value, onChange }: { value?: TaskSlot; onChange: (slot: TaskSlot | undefined) => void }) {
+  const at = priority.indexOf(value)
+  return (
+    <Stack gap="1" w="full" maxW="sm">
+      <Text fontSize="sm" color={value ? 'ember.200' : 'fg.muted'}>
+        {value ? slotLabel[value] : 'без приоритета'}
+      </Text>
+      <Slider.Root min={0} max={3} step={1} value={[at]} onValueChange={(e) => onChange(priority[e.value[0]])} colorPalette="ember" aria-label={['Приоритет']}>
+        <Slider.Control>
+          <Slider.Track>
+            <Slider.Range />
+          </Slider.Track>
+          <Slider.Thumb index={0} cursor="grab">
+            <Slider.HiddenInput />
+          </Slider.Thumb>
+        </Slider.Control>
+      </Slider.Root>
+    </Stack>
+  )
+}
 
 /** The round «+» at the end of a row of chips that opens a field for her own words. */
 function PlusToggle({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {
