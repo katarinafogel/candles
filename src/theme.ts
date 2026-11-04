@@ -34,7 +34,7 @@ const config = defineConfig({
   theme: {
     tokens: {
       fonts: {
-        // Per project, see fontSets in themes.ts.
+        // See fonts in themes.ts.
         heading: { value: 'var(--g-font-heading)' },
         body: { value: 'var(--g-font-body)' },
         hand: { value: 'var(--g-font-hand)' },

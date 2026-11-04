@@ -39,7 +39,6 @@ export function applyApp(app: AppId) {
   setHref('app-icon', a.icon)
   document.getElementById('app-title')?.setAttribute('content', a.short)
   document.title = titleOverride ?? a.name
-  document.documentElement.dataset.app = app
   applyTheme(savedTheme())
 }
 
