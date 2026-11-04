@@ -45,7 +45,7 @@ function TagColors() {
                     w="5"
                     h="5"
                     borderRadius="full"
-                    bg={`${p}.400`}
+                    bg={`var(--g-tag-${p})`}
                     borderWidth="2px"
                     borderColor={p === on ? 'fg' : 'transparent'}
                     cursor="pointer"

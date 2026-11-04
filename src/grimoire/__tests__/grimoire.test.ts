@@ -410,7 +410,9 @@ describe('tags', async () => {
   it('keeps a steady colour per name until one is chosen', () => {
     expect(tagPalette('дом', {})).toBe(tagPalette('дом', {}))
     expect(tagPalettes).toContain(tagPalette('дом', {}))
-    expect(tagPalette('дом', { дом: 'purple' })).toBe('purple')
+    expect(tagPalette('дом', { дом: 'pine' })).toBe('pine')
+    // A colour chosen from the old Chakra list maps onto the theme's palette.
+    expect(tagPalette('дом', { дом: 'purple' })).toBe('pine')
     expect(tagPalette('дом', { дом: 'nonsense' })).toBe(tagPalette('дом', {}))
   })
   it('puts the most used tags first', () => {

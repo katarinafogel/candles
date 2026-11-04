@@ -151,6 +151,20 @@ const paperCards = cardVars({
   olive: { from: paperScales.ember[300], to: paperScales.ember[200], fg: paperScales.ember[950], accent: paper.cream, star: paper.cream },
 })
 
+// ---------- tag colours ----------
+// Nine swatches named after the paper palette; the night theme gives each the nearest of its own.
+const tagVars = (t: Record<string, string>) => Object.fromEntries(Object.entries(t).map(([k, v]) => [`--g-tag-${k}`, v]))
+
+const paperTags = tagVars({
+  slate: paper.slate, pine: paper.pine, eucalyptus: paper.eucalyptus, sage: paper.sage, leaf: paper.leaf,
+  mint: paper.mint, stone: paper.stone, taupe: paper.taupe, cream: paper.cream,
+})
+
+const nightTags = tagVars({
+  slate: '#b5a891', pine: palettes.emerald[600], eucalyptus: palettes.emerald[500], sage: palettes.emerald[400], leaf: palettes.emerald[300],
+  mint: palettes.emerald[200], stone: palettes.ember[600], taupe: palettes.ember[400], cream: palettes.ember[200],
+})
+
 export const themes: Record<ThemeId, Theme> = {
   night: {
     label: 'ночь',
@@ -192,6 +206,7 @@ export const themes: Record<ThemeId, Theme> = {
       '--g-moon-dark': 'rgba(255, 255, 255, 0.12)',
       '--g-joy-mark': '#f4efe6',
       ...nightCards,
+      ...nightTags,
     },
   },
   // White paper in the light palette (see `paper` above): slate ink, sage accents, cream and taupe.
@@ -237,6 +252,7 @@ export const themes: Record<ThemeId, Theme> = {
       '--g-moon-dark': 'rgba(82, 94, 117, 0.12)',
       '--g-joy-mark': paper.stone,
       ...paperCards,
+      ...paperTags,
     },
   },
 }

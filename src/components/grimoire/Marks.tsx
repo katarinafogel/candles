@@ -141,7 +141,16 @@ export function Deadline({ dueAt, today, size = 'xs' }: { dueAt?: string; today:
 export function Tag({ name }: { name: string }) {
   const colors = useAppSelector((s) => s.grimoire.meta.tagColors)
   return (
-    <Badge variant="subtle" colorPalette={tagPalette(name, colors)} fontSize="2xs" borderRadius="full" px="2">
+    // The swatch tints the pill; the text is the swatch mixed into the text colour around it
+    // (an arcana card's own on a card), so it reads on light paper and on dark cards alike.
+    <Badge
+      variant="plain"
+      bg={`color-mix(in srgb, var(--g-tag-${tagPalette(name, colors)}) 26%, transparent)`}
+      color={`color-mix(in srgb, var(--g-tag-${tagPalette(name, colors)}) 45%, var(--card-fg, var(--g-fg)))`}
+      fontSize="2xs"
+      borderRadius="full"
+      px="2"
+    >
       #{name}
     </Badge>
   )
