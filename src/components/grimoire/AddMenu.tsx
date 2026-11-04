@@ -1,7 +1,8 @@
-// The floating «+» on every grimoire screen: a tap rolls out what can be added — a wish, a book,
-// a ritual, a person, a mirror entry or a deed — over a dimmed page; a tap on the page, Esc or the «+» again rolls it back.
+// The floating «+» on every grimoire screen: a tap rolls out a column of icons for what can be added —
+// a wish, a book, a ritual, a person, a mirror entry or a deed — over a dimmed page; a tap on the
+// page, Esc or the «+» again rolls it back.
 // On the day scroll a new deed goes into today's plan.
-import { Box, Flex, Stack, Text } from '@chakra-ui/react'
+import { Box, Flex, Stack } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useToday } from '../../grimoire/act'
@@ -62,20 +63,15 @@ export function AddMenu() {
         right={{ base: '4', md: '8' }}
         bottom={{ base: 'calc(76px + env(safe-area-inset-bottom))', md: '8' }}
         zIndex="calc(var(--chakra-z-index-overlay) + 1)"
-        align="flex-end"
-        gap="4"
+        align="center"
+        gap="1"
       >
         <Stack
           gap="1"
-          p="2"
-          bg="bg.panel"
-          borderWidth="1px"
-          borderColor="border"
-          borderRadius="2xl"
           aria-hidden={!open}
           opacity={open ? 1 : 0}
           transform={open ? 'none' : 'translateY(16px) scale(0.95)'}
-          transformOrigin="bottom right"
+          transformOrigin="bottom center"
           pointerEvents={open ? 'auto' : 'none'}
           transition="opacity 0.18s, transform 0.18s"
         >
@@ -83,22 +79,21 @@ export function AddMenu() {
             <Flex
               as="button"
               key={i.kind}
+              aria-label={i.label}
+              w="12"
+              h="12"
               align="center"
-              justify="space-between"
-              gap="6"
-              pl="4"
-              pr="1"
-              py="1"
+              justify="center"
               borderRadius="full"
               cursor="pointer"
               tabIndex={open ? 0 : -1}
-              _hover={{ bg: 'bg.muted' }}
+              // A light tint of the accent, opaque so the dimmed page doesn't show through.
+              bg="color-mix(in srgb, var(--chakra-colors-ember-400) 18%, var(--chakra-colors-bg-panel))"
+              color="ember.fg"
+              _hover={{ bg: 'color-mix(in srgb, var(--chakra-colors-ember-400) 30%, var(--chakra-colors-bg-panel))' }}
               onClick={() => pick(i.kind)}
             >
-              <Text fontSize="lg">{i.label}</Text>
-              <Flex w="12" h="12" align="center" justify="center" borderRadius="full" bg="ember.subtle" color="ember.fg">
-                <Icon name={i.icon} size={26} />
-              </Flex>
+              <Icon name={i.icon} size={26} />
             </Flex>
           ))}
         </Stack>
