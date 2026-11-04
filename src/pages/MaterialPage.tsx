@@ -97,7 +97,7 @@ export default function MaterialPage() {
                   size="xs"
                   variant="ghost"
                   aria-label="удалить"
-                  onClick={() => confirmAction('Удалить эту запись?') && dispatch(actions.removeMovement({ materialId: id, movementId: mv.id }))}
+                  onClick={async () => (await confirmAction('Удалить эту запись?')) && dispatch(actions.removeMovement({ materialId: id, movementId: mv.id }))}
                 >
                   <LuTrash2 />
                 </IconButton>

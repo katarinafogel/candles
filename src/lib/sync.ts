@@ -13,6 +13,7 @@ import { localActions } from '../store/localSlice'
 import { diffGrimoire, grimoireCollections, isGrimoireRow, rowsToGrimoire, type GrimoireKind } from '../grimoire/rows'
 import type { GrimoireState } from '../grimoire/types'
 import type { DataState, Review } from '../types'
+import { confirmAction } from '../components/ui'
 import { testAccountEmail } from './config'
 import { migrate } from './migrate'
 import { supabase } from './supabase'
@@ -281,7 +282,7 @@ export async function stopSync() {
 /** Leaves the account; warns first if changes haven't reached the server. */
 export async function signOut() {
   const n = pending.size
-  if (n && !window.confirm(`${n} изменений ещё не отправлены на сервер и пропадут. Всё равно выйти?`)) return
+  if (n && !(await confirmAction(`${n} изменений ещё не отправлены на сервер и пропадут. Всё равно выйти?`, { label: 'Выйти', danger: true }))) return
   await stopSync()
   await supabase.auth.signOut()
 }

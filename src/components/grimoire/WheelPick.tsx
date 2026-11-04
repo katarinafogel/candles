@@ -2,8 +2,8 @@
 // soonest; the coming sabbat joins two weeks ahead, the esbat a week ahead. Never offered in the навь.
 import { Button, SimpleGrid, Stack } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
-import { Chips, Empty, Modal, notify } from '../ui'
-import { useToday } from '../../grimoire/act'
+import { Chips, Empty, Modal } from '../ui'
+import { useToday, withUndo } from '../../grimoire/act'
 import { addDays, daysBetween, humanDay } from '../../grimoire/days'
 import type { DayKey, Sabbat, WheelPractice } from '../../grimoire/types'
 import { nextFullMoon, sabbats, segmentOf, wheelNow } from '../../grimoire/wheel'
@@ -58,10 +58,7 @@ export function WheelPick({ onClose, focus }: { onClose: () => void; focus?: Sab
   const week = Array.from({ length: 7 }, (_, i) => addDays(today, i))
 
   function put(p: WheelPractice, day: DayKey) {
-    const add = () => {
-      dispatch(A.practiceToTask({ practiceId: p.id, doOn: day }))
-      notify(`В делах на ${humanDay(day, today)}`)
-    }
+    const add = () => withUndo(`В делах на ${humanDay(day, today)}`, () => dispatch(A.practiceToTask({ practiceId: p.id, doOn: day })))
     // Only today has a plan limit to keep.
     if (day === today) guard('optional', add, { stars: 1 })
     else add()

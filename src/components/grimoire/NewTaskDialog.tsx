@@ -59,9 +59,9 @@ export function NewTaskDialog({
     )
   }
 
-  function close() {
+  async function close() {
     const start = defaultDraft({ ...ctx, title: initialTitle }, today)
-    if (JSON.stringify(latest.current) !== JSON.stringify(start) && !confirmAction('Выбросить дело?')) return
+    if (JSON.stringify(latest.current) !== JSON.stringify(start) && !(await confirmAction('Выбросить дело?'))) return
     onClose()
   }
 

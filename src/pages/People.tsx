@@ -24,8 +24,8 @@ function PersonDialog({ person, onClose }: { person: Omit<Person, 'id'> & { id?:
               variant="ghost"
               colorPalette="red"
               mr="auto"
-              onClick={() => {
-                if (confirmAction('Удалить человека? Свечи останутся, но без имени получателя.')) {
+              onClick={async () => {
+                if (await confirmAction('Удалить человека? Свечи останутся, но без имени получателя.')) {
                   dispatch(actions.deletePerson(p.id!))
                   onClose()
                 }

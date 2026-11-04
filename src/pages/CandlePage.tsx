@@ -166,14 +166,14 @@ export default function CandlePage() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => {
+            onClick={async () => {
               const msg =
                 c.history.length === 1
                   ? c.holderId
                     ? 'Отклеить фитиль? Свеча удалится, подсвечник вернётся к этапу «Демпферы».'
                     : 'Удалить эту формовую свечу? Фитиль вернётся на склад.'
                   : 'Вернуть на этап назад? Материалы этого этапа вернутся на склад.'
-              if (!confirmAction(msg)) return
+              if (!(await confirmAction(msg))) return
               dispatch(actions.undoCandle({ id, date: new Date().toISOString() }))
               notify('Возвращено на этап назад')
             }}
@@ -195,9 +195,9 @@ export default function CandlePage() {
           size="sm"
           variant="ghost"
           colorPalette="red"
-          onClick={() => {
+          onClick={async () => {
             const withHolder = c.holderId ? ` Вместе с ней удалится подсвечник ${c.holderId}.` : ''
-            if (!confirmAction(`Удалить свечу ${id} и её отзывы?${withHolder} QR перестанет работать, материалы на склад не вернутся.`)) return
+            if (!(await confirmAction(`Удалить свечу ${id} и её отзывы?${withHolder} QR перестанет работать, материалы на склад не вернутся.`))) return
             dispatch(actions.deleteItem({ kind: 'candle', id, date: new Date().toISOString() }))
             notify('Свеча удалена')
             nav('/candles')

@@ -142,7 +142,7 @@ export default function Reviews() {
                       />
                     </Box>
                   )}
-                  <Button size="xs" variant="ghost" colorPalette="red" onClick={() => confirmAction('Удалить отзыв?') && dispatch(actions.deleteReview(r.id))}>
+                  <Button size="xs" variant="ghost" colorPalette="red" onClick={async () => (await confirmAction('Удалить отзыв?')) && dispatch(actions.deleteReview(r.id))}>
                     Удалить
                   </Button>
                 </HStack>

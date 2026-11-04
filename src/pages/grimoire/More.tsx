@@ -226,8 +226,8 @@ export default function GrimoireMore() {
             size="xs"
             variant="ghost"
             alignSelf="flex-start"
-            onClick={() => {
-              if (confirmAction('Вернуть стартовый набор практик колеса года? Скрытые останутся скрытыми, свои не пропадут.')) {
+            onClick={async () => {
+              if (await confirmAction('Вернуть стартовый набор практик колеса года? Скрытые останутся скрытыми, свои не пропадут.')) {
                 dispatch(A.updateMeta({ practicesSeeded: false }))
               }
             }}

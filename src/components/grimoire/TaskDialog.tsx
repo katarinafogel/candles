@@ -93,8 +93,8 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
             variant="ghost"
             colorPalette="red"
             mr="auto"
-            onClick={() => {
-              if (confirmAction('Удалить дело насовсем?')) {
+            onClick={async () => {
+              if (await confirmAction('Удалить дело насовсем?')) {
                 dispatch(A.deleteTask(live.id))
                 onClose()
               }

@@ -84,7 +84,7 @@ function Lines({ personId, list, title, placeholder, lines, extra, hint }: { per
               )}
             </Text>
             {extra?.(l)}
-            <IconButton size="2xs" variant="ghost" aria-label="Удалить" onClick={() => confirmAction('Удалить запись?') && dispatch(A.deletePersonLine({ personId, list, id: l.id }))}>
+            <IconButton size="2xs" variant="ghost" aria-label="Удалить" onClick={async () => (await confirmAction('Удалить запись?')) && dispatch(A.deletePersonLine({ personId, list, id: l.id }))}>
               <LuTrash2 />
             </IconButton>
           </HStack>

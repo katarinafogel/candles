@@ -552,6 +552,85 @@ export function Link({ to, children }: { to: string; children: ReactNode }) {
   )
 }
 
-export function confirmAction(message: string) {
-  return window.confirm(message)
+// ---------- confirmations ----------
+// The app's own «are you sure» instead of the browser's confirm(): a small dialog in the theme.
+// confirmAction resolves true on «yes»; ConfirmHost (mounted once next to the Toaster) shows it.
+
+interface ConfirmAsk {
+  message: string
+  label: string
+  danger: boolean
+  resolve: (ok: boolean) => void
+}
+let confirmAsk: ConfirmAsk | undefined
+const confirmListeners = new Set<() => void>()
+const confirmEmit = () => confirmListeners.forEach((l) => l())
+
+/** The button's word, taken from the question's first word: «Удалить …?» → «Удалить». */
+const confirmVerbs: Record<string, { label: string; danger?: boolean }> = {
+  Удалить: { label: 'Удалить', danger: true },
+  Стереть: { label: 'Стереть', danger: true },
+  Отозвать: { label: 'Отозвать', danger: true },
+  Выбросить: { label: 'Выбросить', danger: true },
+  Откатить: { label: 'Откатить' },
+  Отклеить: { label: 'Отклеить', danger: true },
+  Закрыть: { label: 'Закрыть' },
+  Вернуть: { label: 'Вернуть' },
+}
+
+export function confirmAction(message: string, opts?: { label?: string; danger?: boolean }): Promise<boolean> {
+  // A question still open is answered «no» before the next one.
+  confirmAsk?.resolve(false)
+  const verb = confirmVerbs[message.split(/[\s?]/)[0]]
+  return new Promise((resolve) => {
+    confirmAsk = {
+      message,
+      label: opts?.label ?? verb?.label ?? 'Да',
+      danger: opts?.danger ?? verb?.danger ?? false,
+      resolve: (ok) => {
+        confirmAsk = undefined
+        confirmEmit()
+        resolve(ok)
+      },
+    }
+    confirmEmit()
+  })
+}
+
+export function ConfirmHost() {
+  const [, rerender] = useState(0)
+  useEffect(() => {
+    const l = () => rerender((n) => n + 1)
+    confirmListeners.add(l)
+    return () => void confirmListeners.delete(l)
+  }, [])
+  const ask = confirmAsk
+  return (
+    <Dialog.Root
+      role="alertdialog"
+      open={!!ask}
+      onOpenChange={(e) => !e.open && ask?.resolve(false)}
+      size="xs"
+      placement="center"
+    >
+      <Portal>
+        <Dialog.Backdrop />
+        <Dialog.Positioner px="4">
+          <Dialog.Content bg="bg.panel" borderWidth="1px" borderColor="border">
+            <Dialog.Body pt="6" pb="2">
+              <Text>{ask?.message}</Text>
+            </Dialog.Body>
+            <Dialog.Footer>
+              <Button variant="ghost" onClick={() => ask?.resolve(false)}>
+                Отмена
+              </Button>
+              <Button colorPalette={ask?.danger ? 'red' : undefined} onClick={() => ask?.resolve(true)}>
+                {ask?.label}
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
+  )
 }

@@ -48,7 +48,7 @@ function SpellRow({ sp, projectId, onCast }: { sp: Spell; projectId?: string; on
             <LuPencil />
           </IconButton>
         )}
-        <IconButton size="xs" variant="ghost" aria-label="Удалить" onClick={() => confirmAction(`Удалить «${sp.title}»? Квесты, уже созданные из него, останутся.`) && dispatch(A.deleteSpell(sp.id))}>
+        <IconButton size="xs" variant="ghost" aria-label="Удалить" onClick={async () => (await confirmAction(`Удалить «${sp.title}»? Квесты, уже созданные из него, останутся.`)) && dispatch(A.deleteSpell(sp.id))}>
           <LuTrash2 />
         </IconButton>
       </Flex>

@@ -50,8 +50,8 @@ export default function Instructions() {
                   variant="ghost"
                   colorPalette="red"
                   mr="auto"
-                  onClick={() => {
-                    if (confirmAction('Удалить шаблон?')) {
+                  onClick={async () => {
+                    if (await confirmAction('Удалить шаблон?')) {
                       dispatch(actions.deleteInstruction(edit.id!))
                       setEdit(null)
                     }

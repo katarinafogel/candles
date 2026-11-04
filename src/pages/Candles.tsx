@@ -171,10 +171,10 @@ export default function Candles() {
     setSel([])
   }
   useFollowStage(`${stage}:${JSON.stringify(f)}`, stage, filtered, setStage)
-  const removeSelected = () => {
+  const removeSelected = async () => {
     const holders = selected.filter((i) => d.candles[i].holderId).length
     const withHolders = holders ? ` Вместе с ними удалятся их подсвечники: ${holders}.` : ''
-    if (!confirmAction(`Удалить свечи (${selected.length}) и их отзывы?${withHolders} QR перестанет работать.`)) return
+    if (!(await confirmAction(`Удалить свечи (${selected.length}) и их отзывы?${withHolders} QR перестанет работать.`))) return
     const date = new Date().toISOString()
     for (const id of selected) dispatch(actions.deleteItem({ kind: 'candle', id, date }))
     notify('Удалено')

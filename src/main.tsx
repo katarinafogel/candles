@@ -6,7 +6,7 @@ import { HashRouter } from 'react-router-dom'
 import { PersistGate } from 'redux-persist/integration/react'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App'
-import { Toaster } from './components/ui'
+import { ConfirmHost, Toaster } from './components/ui'
 import { persistor, store } from './store'
 import { system } from './theme'
 import { installThemes } from './themes'
@@ -26,6 +26,7 @@ createRoot(document.getElementById('root')!).render(
         </PersistGate>
       </Provider>
       <Toaster />
+      <ConfirmHost />
     </ChakraProvider>
   </StrictMode>,
 )

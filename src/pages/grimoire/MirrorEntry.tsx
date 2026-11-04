@@ -374,8 +374,8 @@ export default function MirrorEntry() {
                 variant="ghost"
                 colorPalette="red"
                 ml="auto"
-                onClick={() => {
-                  if (confirmAction('Удалить запись?')) {
+                onClick={async () => {
+                  if (await confirmAction('Удалить запись?')) {
                     dispatch(A.deleteJournal(entry.id))
                     back()
                   }

@@ -95,10 +95,10 @@ export default function Holders() {
   const canNext = selected.length > 0 && sameStage && !!selStage
   const layering = selected.length > 1 && sameStage && (selStage === 'varnishIn' || selStage === 'varnishOut')
   const allWicked = selected.length > 0 && selected.every((i) => d.holders[i].stage === 'wicked' && d.holders[i].candleId)
-  const removeSelected = () => {
+  const removeSelected = async () => {
     const candles = selected.filter((i) => d.holders[i].candleId).length
     const withCandles = candles ? ` Вместе с ними удалятся их свечи и отзывы: ${candles}.` : ''
-    if (!confirmAction(`Удалить изделия (${selected.length})?${withCandles}`)) return
+    if (!(await confirmAction(`Удалить изделия (${selected.length})?${withCandles}`))) return
     const date = new Date().toISOString()
     for (const id of selected) dispatch(actions.deleteItem({ kind: 'holder', id, date }))
     notify('Удалено')

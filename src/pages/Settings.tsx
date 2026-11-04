@@ -383,7 +383,7 @@ export default function Settings() {
             variant="outline"
             colorPalette="red"
             onClick={async () => {
-              if (!confirmAction('Стереть все данные тестового аккаунта? Вернуть их будет нельзя.')) return
+              if (!(await confirmAction('Стереть все данные тестового аккаунта? Вернуть их будет нельзя.'))) return
               try {
                 await resetTestAccount()
                 notify('Тестовый аккаунт обнулён')

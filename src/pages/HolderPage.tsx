@@ -76,8 +76,8 @@ export default function HolderPage() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => {
-              if (!confirmAction('Вернуть на этап назад? Материалы этого этапа вернутся на склад.')) return
+            onClick={async () => {
+              if (!(await confirmAction('Вернуть на этап назад? Материалы этого этапа вернутся на склад.'))) return
               dispatch(actions.undoHolder({ id, date: new Date().toISOString() }))
               notify('Возвращено на этап назад')
             }}
@@ -99,9 +99,9 @@ export default function HolderPage() {
           size="sm"
           variant="ghost"
           colorPalette="red"
-          onClick={() => {
+          onClick={async () => {
             const withCandle = candle ? ` Вместе с ним удалится свеча ${candle.id} и её отзывы.` : ''
-            if (!confirmAction(`Удалить подсвечник ${id}?${withCandle} Материалы на склад не вернутся.`)) return
+            if (!(await confirmAction(`Удалить подсвечник ${id}?${withCandle} Материалы на склад не вернутся.`))) return
             dispatch(actions.deleteItem({ kind: 'holder', id, date: new Date().toISOString() }))
             notify('Подсвечник удалён')
             nav('/holders')

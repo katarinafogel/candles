@@ -55,8 +55,8 @@ function JarDialog({ jar, onClose }: { jar: Draft; onClose: () => void }) {
               variant="ghost"
               colorPalette="red"
               mr="auto"
-              onClick={() => {
-                if (confirmAction('Удалить копилку вместе с журналом? Деньги приложение не трогает — это только учёт.')) {
+              onClick={async () => {
+                if (await confirmAction('Удалить копилку вместе с журналом? Деньги приложение не трогает — это только учёт.')) {
                   dispatch(A.deleteJar(j.id!))
                   onClose()
                 }
@@ -266,7 +266,7 @@ function JarCard({ j, onEdit }: { j: Jar; onEdit: () => void }) {
           журнал · {mine.length}
         </Button>
         {active ? (
-          <Button size="xs" variant="ghost" color="fg.subtle" onClick={() => confirmAction('Закрыть копилку? Журнал останется.') && dispatch(A.setJarStatus({ id: j.id, status: 'closed' }))}>
+          <Button size="xs" variant="ghost" color="fg.subtle" onClick={async () => (await confirmAction('Закрыть копилку? Журнал останется.')) && dispatch(A.setJarStatus({ id: j.id, status: 'closed' }))}>
             закрыть
           </Button>
         ) : (
@@ -291,7 +291,7 @@ function JarCard({ j, onEdit }: { j: Jar; onEdit: () => void }) {
                   {x.note}
                 </Text>
                 {!x.habitLogId && (
-                  <IconButton size="2xs" variant="ghost" aria-label="Удалить" onClick={() => confirmAction('Удалить запись журнала?') && dispatch(A.deleteJarTx(x.id))}>
+                  <IconButton size="2xs" variant="ghost" aria-label="Удалить" onClick={async () => (await confirmAction('Удалить запись журнала?')) && dispatch(A.deleteJarTx(x.id))}>
                     <LuTrash2 />
                   </IconButton>
                 )}

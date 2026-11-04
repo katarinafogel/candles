@@ -43,8 +43,8 @@ export function HabitDialog({ habit, onClose }: { habit: Draft; onClose: () => v
               variant="ghost"
               colorPalette="red"
               mr="auto"
-              onClick={() => {
-                if (confirmAction('Удалить ритуал вместе с историей отметок? Можно вместо этого отправить в архив.')) {
+              onClick={async () => {
+                if (await confirmAction('Удалить ритуал вместе с историей отметок? Можно вместо этого отправить в архив.')) {
                   dispatch(A.deleteHabit(h.id!))
                   onClose()
                 }

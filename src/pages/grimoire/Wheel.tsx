@@ -10,7 +10,7 @@ import { PracticeCard } from '../../components/grimoire/PracticeCard'
 import { cardColumns } from '../../components/grimoire/TaskCard'
 import { WheelPick } from '../../components/grimoire/WheelPick'
 import { Chips, Empty, Field, Modal, notify, PageHeader, Section, TextArea, TextInput } from '../../components/ui'
-import { useToday } from '../../grimoire/act'
+import { useToday, withUndo } from '../../grimoire/act'
 import { addDays, days, daysBetween, humanDay, plainDay } from '../../grimoire/days'
 import type { DayKey, JournalEntry, Sabbat, WheelPractice } from '../../grimoire/types'
 import { isFullMoon, nextFullMoon, sabbatCardDefaults, sabbatCardFields, sabbatOrder, sabbats, segmentOf, wheelNow } from '../../grimoire/wheel'
@@ -199,8 +199,7 @@ function PracticeRow({ p, want, inBook, lived, day, today }: { p: WheelPractice;
               {...arcanaButton}
               onClick={() => {
                 const doOn = p.mode === 'day' && day && day >= today ? day : undefined
-                dispatch(A.practiceToTask({ practiceId: p.id, doOn }))
-                notify(doOn ? `В делах на ${humanDay(doOn, today)}` : 'В бэклоге')
+                withUndo(doOn ? `В делах на ${humanDay(doOn, today)}` : 'В бэклоге', () => dispatch(A.practiceToTask({ practiceId: p.id, doOn })))
               }}
             >
               В дела

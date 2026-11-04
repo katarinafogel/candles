@@ -47,8 +47,8 @@ export function WishDialog({ wish, onClose }: { wish: Draft; onClose: () => void
               variant="ghost"
               colorPalette="red"
               mr="auto"
-              onClick={() => {
-                if (confirmAction('Удалить хотелку насовсем? Можно вместо этого отпустить.')) {
+              onClick={async () => {
+                if (await confirmAction('Удалить хотелку насовсем? Можно вместо этого отпустить.')) {
                   dispatch(A.deleteWish(w.id!))
                   onClose()
                 }

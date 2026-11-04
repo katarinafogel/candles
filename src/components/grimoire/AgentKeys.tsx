@@ -62,7 +62,7 @@ export function AgentKeys() {
   }
 
   async function revoke(k: KeyRow) {
-    if (!confirmAction(`Отозвать ключ «${k.label}»? Агент с ним сразу потеряет доступ.`)) return
+    if (!(await confirmAction(`Отозвать ключ «${k.label}»? Агент с ним сразу потеряет доступ.`))) return
     const { error } = await supabase.rpc('revoke_agent_key', { p_id: k.id })
     if (error) return notify('Не получилось', 'error', error.message)
     void refresh()
