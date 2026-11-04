@@ -65,6 +65,8 @@ export function AddMenu() {
         zIndex="calc(var(--chakra-z-index-overlay) + 1)"
         align="center"
         gap="1"
+        // The closed menu is invisible but still takes up a column: let clicks through to the page under it.
+        pointerEvents="none"
       >
         <Stack
           gap="1"
@@ -101,6 +103,7 @@ export function AddMenu() {
           as="button"
           aria-label="Добавить"
           aria-expanded={open}
+          pointerEvents="auto"
           lineHeight="0"
           borderRadius="full"
           cursor="pointer"
