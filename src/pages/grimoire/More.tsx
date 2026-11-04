@@ -168,7 +168,7 @@ export default function GrimoireMore() {
               type="time"
               value={meta.eveningAt ?? '21:00'}
               onChange={(e) => dispatch(A.updateMeta({ eveningAt: e.target.value }))}
-              style={{ background: 'transparent', color: 'inherit', border: '1px solid var(--chakra-colors-border)', borderRadius: 6, padding: '6px 8px', colorScheme: 'dark', width: 120 }}
+              style={{ background: 'transparent', color: 'inherit', border: '1px solid var(--chakra-colors-border)', borderRadius: 6, padding: '6px 8px', width: 120 }}
             />
           </Field>
           <Field label="Пол">

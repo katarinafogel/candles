@@ -209,21 +209,21 @@ const fontVars = (set: Record<string, string>) => Object.fromEntries(Object.entr
 
 const gogol = "@font-face{font-family:'Gogol';src:url(./fonts/Gogol.woff2) format('woff2'),url(./fonts/Gogol.ttf) format('truetype');font-display:swap}"
 
-/** The grimoire's theme; the workshop always stays at night. */
-export const defaultGrimoireTheme: ThemeId = 'paper'
-const key = 'grimoire-theme'
+/** One theme for both projects, the workshop and the grimoire. */
+export const defaultTheme: ThemeId = 'paper'
+const key = 'theme'
 
-export function grimoireTheme(): ThemeId {
+export function savedTheme(): ThemeId {
   try {
     const saved = localStorage.getItem(key)
     if (saved && saved in themes) return saved as ThemeId
   } catch {
     // Storage blocked: fall back to the default.
   }
-  return defaultGrimoireTheme
+  return defaultTheme
 }
 
-export function setGrimoireTheme(id: ThemeId) {
+export function setTheme(id: ThemeId) {
   try {
     localStorage.setItem(key, id)
   } catch {
@@ -242,8 +242,8 @@ export function applyTheme(id: ThemeId) {
 
 /**
  * Puts every theme's variables on the page. A plain <style> outside Chakra's cascade layers, because
- * the palette overrides must beat Chakra's own `@layer tokens`; night and the workshop's fonts are
- * also on bare :root.
+ * the palette overrides must beat Chakra's own `@layer tokens`; night (for a page that
+ * hasn't set its theme yet) and the workshop's fonts are also on bare :root.
  */
 export function installThemes() {
   const decl = (vars: Record<string, string>) => Object.entries(vars).map(([k, val]) => `${k}:${val}`).join(';')

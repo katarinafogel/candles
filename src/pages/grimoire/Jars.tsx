@@ -90,7 +90,7 @@ function JarDialog({ jar, onClose }: { jar: Draft; onClose: () => void }) {
           </Field>
         </HStack>
         <Field label="К какой дате" helper="с датой гримуар считает, сколько откладывать в неделю">
-          <Input size="sm" type="date" w="170px" value={j.targetDate ?? ''} onChange={(e) => set({ targetDate: e.target.value || undefined })} style={{ colorScheme: 'dark' }} />
+          <Input size="sm" type="date" w="170px" value={j.targetDate ?? ''} onChange={(e) => set({ targetDate: e.target.value || undefined })} />
         </Field>
         {wishes.length > 0 && (
           <Field label="Для хотелки" helper="когда копилка потрачена, хотелка сбывается">

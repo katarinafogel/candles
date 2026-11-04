@@ -97,7 +97,7 @@ function Lines({ personId, list, title, placeholder, lines, extra, hint }: { per
             max={today}
             aria-label="Когда"
             onChange={(e) => e.target.value && setOn(e.target.value)}
-            style={{ background: 'transparent', color: 'inherit', border: '1px solid var(--chakra-colors-border)', borderRadius: 6, padding: '4px 6px', colorScheme: 'dark', fontSize: 13 }}
+            style={{ background: 'transparent', color: 'inherit', border: '1px solid var(--chakra-colors-border)', borderRadius: 6, padding: '4px 6px', fontSize: 13 }}
           />
           <IconButton size="sm" variant="outline" aria-label="Добавить" disabled={!text.trim()} onClick={add}>
             <LuPlus />

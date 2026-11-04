@@ -192,7 +192,7 @@ function EmbodyDialog({ w, onClose }: { w: Wish; onClose: () => void }) {
               <NumInput value={goal} onChange={(v) => setGoal(v && v > 0 ? v : undefined)} suffix="₽" width="180px" />
             </Field>
             <Field label="К какой дате" helper="необязательно: с датой копилка считает, сколько откладывать в неделю">
-              <Input size="sm" type="date" w="170px" value={date} onChange={(e) => setDate(e.target.value)} style={{ colorScheme: 'dark' }} />
+              <Input size="sm" type="date" w="170px" value={date} onChange={(e) => setDate(e.target.value)} />
             </Field>
           </>
         )}
