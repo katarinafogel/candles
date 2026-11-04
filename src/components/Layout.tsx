@@ -3,8 +3,7 @@ import { useEffect, type ReactNode } from 'react'
 import { LuBox, LuEllipsis, LuFlame, LuHouse, LuLayers, LuLayoutGrid, LuMessageSquare, LuScrollText, LuSettings, LuSparkles, LuUsers, LuWarehouse } from 'react-icons/lu'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Eucalyptus, MoonPhases, MoonSlice, Sparkle } from './Magic'
-import { SignOutSideLink } from './SignOut'
-import { SyncBadge } from './SyncBadge'
+import { HeaderRight } from './UserMenu'
 import { useAppDispatch, useAppSelector } from '../store'
 import { localActions } from '../store/localSlice'
 
@@ -123,9 +122,6 @@ export default function Layout() {
           </Text>
         </Flex>
         <MoonPhases size={12} gap="2.5" color="ember.200" px="2" mb="5" />
-        <Box mb="4" px="2">
-          <SyncBadge />
-        </Box>
         <Stack gap="1">
           {primary.map((i) => (
             <SideLink key={i.to} item={i} />
@@ -134,7 +130,6 @@ export default function Layout() {
           {secondary.map((i) => (
             <SideLink key={i.to} item={i} badge={i.to === '/reviews' ? unread : undefined} />
           ))}
-          <SignOutSideLink />
         </Stack>
         <Flex justify="center" gap="3" mt="4" color="ember.300" opacity=".5">
           <Sparkle size={8} />
@@ -150,14 +145,15 @@ export default function Layout() {
           <Eucalyptus width={170} transform="scaleY(-1) rotate(8deg)" />
         </Box>
         <Box position="relative" zIndex="1" px={{ base: '4', md: '8' }} pt={{ base: 'calc(16px + env(safe-area-inset-top))', md: '8' }} pb={{ base: '24', md: '10' }} maxW="1200px">
-          <Flex display={{ base: 'flex', md: 'none' }} justify="space-between" align="center" mb="3" gap="3">
-            <Flex align="center" gap="2">
+          <Flex as="header" justify="space-between" align="center" mb={{ base: '3', md: '5' }} gap="3">
+            <Flex display={{ base: 'flex', md: 'none' }} align="center" gap="2">
               <MoonSlice size={26} />
               <Text fontFamily="heading" fontWeight="semibold" fontSize="lg" color="ember.100">
                 Гримуар
               </Text>
             </Flex>
-            <SyncBadge />
+            <Box display={{ base: 'none', md: 'block' }} />
+            <HeaderRight />
           </Flex>
           <Outlet />
         </Box>

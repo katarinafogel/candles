@@ -345,6 +345,8 @@ export interface Settings {
   /** Address of the published app, used in QR links. Empty = the current address. */
   publicUrl: string
   lastBackupAt?: ISODate
+  /** The sign next to her name in the header; empty = the first letter of the name. */
+  avatar?: string
 }
 
 export interface Counters {

@@ -11,8 +11,7 @@ import { builtInPractices } from '../../grimoire/wheel'
 import { useAppDispatch, useAppSelector, useIsWitch } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 import { Eucalyptus, MoonPhases, MoonSlice } from '../Magic'
-import { SignOutSideLink } from '../SignOut'
-import { SyncBadge } from '../SyncBadge'
+import { HeaderRight } from '../UserMenu'
 import { FeedbackPrompt } from './Feedback'
 import { AddMenu } from './AddMenu'
 
@@ -88,9 +87,6 @@ export default function GrimoireLayout() {
           </Text>
         </Flex>
         <MoonPhases size={12} gap="2.5" color="ember.200" px="2" mb="4" />
-        <Box mb="4" px="2">
-          <SyncBadge />
-        </Box>
         <Stack gap="1">
           {[...items, ...extra, { ...more, label: 'Ещё: навь, настройки' }, { to: '/apps', label: 'Другие проекты', icon: <LuLayoutGrid /> }].map((i) => (
             <NavLink key={i.to} to={i.to} end={i.to === '/g'}>
@@ -112,21 +108,21 @@ export default function GrimoireLayout() {
               )}
             </NavLink>
           ))}
-          <SignOutSideLink />
         </Stack>
         <Eucalyptus width={120} mx="auto" mt="10" opacity={0.45} />
       </Box>
 
       <Box flex="1" minW="0" position="relative" overflowX="clip">
         <Box position="relative" zIndex="1" px={{ base: '4', md: '8' }} pt={{ base: 'calc(16px + env(safe-area-inset-top))', md: '8' }} pb={{ base: '28', md: '24' }} maxW="1000px">
-          <Flex display={{ base: 'flex', md: 'none' }} justify="space-between" align="center" mb="3" gap="3">
-            <Flex align="center" gap="2">
+          <Flex as="header" justify="space-between" align="center" mb={{ base: '3', md: '5' }} gap="3">
+            <Flex display={{ base: 'flex', md: 'none' }} align="center" gap="2">
               <MoonSlice size={26} tone="stone" />
               <Text fontFamily="heading" fontWeight="semibold" fontSize="lg" color="ember.100">
                 Гримуар дел
               </Text>
             </Flex>
-            <SyncBadge />
+            <Box display={{ base: 'none', md: 'block' }} />
+            <HeaderRight />
           </Flex>
           {meta.nav.active && loc.pathname !== '/g' && (
             <Box mb="3" px="3" py="2" borderRadius="l2" bg="bg.muted" fontSize="xs" color="fg.muted">
