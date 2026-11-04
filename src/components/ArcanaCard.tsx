@@ -1,5 +1,6 @@
 // Vertical cards like tarot arcana: a double line frame, stars in the corners, diamonds on the edges,
 // leafy vines and an emblem. Molds are indigo, holders pearl white, candles golden green.
+// The tones are names only: their colours come from the theme's palette (cardVars in themes.ts).
 // The grimoire's deeds wear four tones of their own: swamp (frogs), nacre (joys), wine (the hardest)
 // and silver (everything needed); see TaskCard.
 import { Box, Flex, Stack, Text, type ButtonProps } from '@chakra-ui/react'
@@ -22,96 +23,14 @@ export interface Palette {
   ink: string
 }
 
-export const palettes: Record<ArcanaTone, Palette> = {
-  indigo: {
-    bg: 'radial-gradient(120% 70% at 50% 0%, rgba(160,150,230,.16), transparent 60%), linear-gradient(165deg, #2e3470 0%, #232859 55%, #1b1f47 100%)',
-    fg: '#efeafc',
-    muted: '#bdb4e2',
-    subtle: '#8580b4',
-    line: 'rgba(214, 205, 244, .62)',
-    accent: '#a9c2e0',
-    star: '#f4e4c1',
-    hover: 'rgba(214, 205, 244, .12)',
-    leafOff: '#9d95cc',
-    ink: '#8f86c9',
-  },
-  pearl: {
-    bg: 'radial-gradient(90% 55% at 15% 10%, rgba(255,228,236,.75), transparent 60%), radial-gradient(80% 60% at 90% 85%, rgba(214,232,240,.8), transparent 60%), linear-gradient(160deg, #f6f1ea 0%, #ece6ee 45%, #f3ebe1 75%, #e5ebee 100%)',
-    fg: '#3a3028',
-    muted: '#76685a',
-    subtle: '#a3968a',
-    line: 'rgba(150, 126, 100, .6)',
-    accent: '#d29567',
-    star: '#b48a5c',
-    hover: 'rgba(150, 126, 100, .12)',
-    leafOff: '#b9a68e',
-    ink: '#a88d70',
-  },
-  olive: {
-    bg: 'radial-gradient(110% 65% at 50% 0%, rgba(240,214,140,.22), transparent 60%), linear-gradient(165deg, #7c7a43 0%, #656637 55%, #51552e 100%)',
-    fg: '#fbf3da',
-    muted: '#e3d6a8',
-    subtle: '#bcb27f',
-    line: 'rgba(240, 220, 160, .7)',
-    accent: '#f0cd73',
-    star: '#f7e6b0',
-    hover: 'rgba(240, 220, 160, .14)',
-    leafOff: '#d8c88e',
-    ink: '#b7a35d',
-  },
-  // Marsh green with a frog in the corner.
-  swamp: {
-    bg: 'radial-gradient(110% 70% at 20% 0%, rgba(176,214,120,.16), transparent 60%), linear-gradient(165deg, #34502c 0%, #283f23 55%, #1d2f1a 100%)',
-    fg: '#eef5df',
-    muted: '#c2d4a6',
-    subtle: '#a9c091',
-    line: 'rgba(196, 222, 150, .55)',
-    accent: '#b6d77e',
-    star: '#e4efb5',
-    hover: 'rgba(196, 222, 150, .12)',
-    leafOff: '#8fae6f',
-    ink: '#8fb06a',
-  },
-  // Light mother-of-pearl with a soft iridescence; drawn with gradients only.
-  nacre: {
-    bg: 'radial-gradient(70% 60% at 10% 15%, rgba(255,214,232,.85), transparent 65%), radial-gradient(70% 70% at 95% 30%, rgba(206,232,248,.9), transparent 60%), radial-gradient(80% 70% at 60% 100%, rgba(222,246,226,.85), transparent 60%), linear-gradient(160deg, #f7f2ec 0%, #efe9f3 50%, #eef3f1 100%)',
-    fg: '#3a3033',
-    muted: '#6f6168',
-    subtle: '#685a60',
-    line: 'rgba(150, 120, 140, .5)',
-    accent: '#c7879f',
-    star: '#7e4f3e',
-    hover: 'rgba(150, 120, 140, .1)',
-    leafOff: '#8f7b84',
-    ink: '#a78a98',
-  },
-  // Deep bordeaux with gold lines.
-  wine: {
-    bg: 'radial-gradient(110% 65% at 50% 0%, rgba(230,180,110,.14), transparent 60%), linear-gradient(165deg, #5c1b2a 0%, #4a1522 55%, #370f19 100%)',
-    fg: '#fbeee0',
-    muted: '#e2c3ae',
-    subtle: '#b8927e',
-    line: 'rgba(222, 184, 108, .62)',
-    accent: '#e0b86a',
-    star: '#f1d394',
-    hover: 'rgba(222, 184, 108, .12)',
-    leafOff: '#c79a72',
-    ink: '#c9a060',
-  },
-  // Cold silver: the everyday deeds, quiet so the other colours stand out.
-  silver: {
-    bg: 'radial-gradient(110% 65% at 50% 0%, rgba(220,228,238,.12), transparent 60%), linear-gradient(165deg, #474c55 0%, #3a3e46 55%, #2e3138 100%)',
-    fg: '#eef1f5',
-    muted: '#c3c9d2',
-    subtle: '#b9bfc8',
-    line: 'rgba(206, 214, 226, .5)',
-    accent: '#c9d3e0',
-    star: '#e8d6ad',
-    hover: 'rgba(206, 214, 226, .1)',
-    leafOff: '#9aa2ae',
-    ink: '#a3acba',
-  },
+/** A tone's colours: CSS variables of the theme (see cardVars in themes.ts), never colours of its own. */
+const toneVars = (tone: ArcanaTone): Palette => {
+  const v = (k: string) => `var(--g-card-${tone}-${k})`
+  return { bg: v('bg'), fg: v('fg'), muted: v('muted'), subtle: v('subtle'), line: v('line'), accent: v('accent'), star: v('star'), hover: v('hover'), leafOff: v('leaf-off'), ink: v('ink') }
 }
+
+const tones: ArcanaTone[] = ['indigo', 'pearl', 'olive', 'swamp', 'nacre', 'wine', 'silver']
+export const palettes = Object.fromEntries(tones.map((t) => [t, toneVars(t)])) as Record<ArcanaTone, Palette>
 
 /** Line-art vine with pointed leaves, drawn for the top-left corner; mirrored for the others. */
 export function Vine({ color, transform }: { color: string; transform?: string }) {
@@ -231,7 +150,7 @@ function Emblem({ tone, p }: { tone: ArcanaTone; p: Palette }) {
         <path d="M24 3v4M10 10l3 3M38 10l-3 3M5 24h4M43 24h-4" />
       </g>
       <path d="M24 9c5 7 8 11.5 8 16a8 8 0 0 1-16 0c0-4.5 3-9 8-16z" fill={p.accent} />
-      <path d="M24 18c2.2 3.2 3.4 5.2 3.4 7.3a3.4 3.4 0 0 1-6.8 0c0-2.1 1.2-4.1 3.4-7.3z" fill="#fff7dc" />
+      <path d="M24 18c2.2 3.2 3.4 5.2 3.4 7.3a3.4 3.4 0 0 1-6.8 0c0-2.1 1.2-4.1 3.4-7.3z" fill={p.star} />
       <rect x="17" y="35" width="14" height="9" rx="1.5" fill="none" stroke={p.star} strokeWidth="1.2" />
       <path d="M24 33v2" stroke={p.star} strokeWidth="1.2" />
     </svg>
@@ -272,7 +191,7 @@ export const arcanaButton: ButtonProps = {
   _hover: { bg: 'var(--card-solid)', borderColor: 'var(--card-fg)' },
 }
 
-export const solidOf: Record<ArcanaTone, string> = { indigo: '#262b5e', pearl: '#efe9e6', olive: '#6a6a3a', swamp: '#2b4325', nacre: '#f1ecef', wine: '#4d1624', silver: '#3c4048' }
+export const solidOf = Object.fromEntries(tones.map((t) => [t, `var(--g-card-${t}-solid)`])) as Record<ArcanaTone, string>
 
 /** The card's frame: two lines, corner stars, edge diamonds and vines; inside a relative box. */
 export function ArcanaFrame({ p }: { p: Palette }) {

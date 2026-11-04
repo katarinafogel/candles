@@ -195,7 +195,7 @@ function HabitCard({ h, today, onEdit }: { h: Habit; today: DayKey; onEdit: () =
   const scheduled = isScheduled(h, today)
 
   return (
-    <Box p="4" borderRadius="l3" borderWidth="1px" borderColor="emerald.800" bg="bg.subtle" backgroundImage="radial-gradient(16rem 8rem at 100% 0%, rgba(142,168,131,.10), transparent 70%)" opacity={h.status === 'active' ? 1 : 0.6}>
+    <Box p="4" borderRadius="l3" borderWidth="1px" borderColor="emerald.800" bg="bg.subtle" backgroundImage="radial-gradient(16rem 8rem at 100% 0%, color-mix(in srgb, var(--chakra-colors-emerald-400) 10%, transparent), transparent 70%)" opacity={h.status === 'active' ? 1 : 0.6}>
       <Flex justify="space-between" align="flex-start" gap="2" mb="2">
         <Box>
           <Text fontFamily="heading" fontSize="xl" color="emerald.100" fontWeight="semibold" lineHeight="1.2">

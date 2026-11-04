@@ -23,10 +23,10 @@ function JarGlass({ pct }: { pct: number }) {
           <path d="M14 22h32c3 0 5 2 5 5v52c0 4-3 7-7 7H16c-4 0-7-3-7-7V27c0-3 2-5 5-5z" />
         </clipPath>
       </defs>
-      <rect x="18" y="8" width="24" height="10" rx="2" fill="#6b4a2f" />
-      <rect x="15" y="16" width="30" height="6" rx="2" fill="#4b3424" />
+      <rect x="18" y="8" width="24" height="10" rx="2" fill="var(--chakra-colors-ember-700)" />
+      <rect x="15" y="16" width="30" height="6" rx="2" fill="var(--chakra-colors-ember-800)" />
       <g clipPath="url(#jar-inside)">
-        <rect x="0" y={86 - h} width="60" height={h} fill={pct >= 100 ? '#e0b04f' : '#c99a5b'} opacity=".85" style={{ transition: 'y .6s, height .6s' }} />
+        <rect x="0" y={86 - h} width="60" height={h} fill={pct >= 100 ? 'var(--chakra-colors-ember-400)' : 'var(--chakra-colors-ember-500)'} opacity=".85" style={{ transition: 'y .6s, height .6s' }} />
       </g>
       <path d="M14 22h32c3 0 5 2 5 5v52c0 4-3 7-7 7H16c-4 0-7-3-7-7V27c0-3 2-5 5-5z" fill="none" stroke="var(--g-ink)" strokeWidth="1.5" />
       <path d="M15 30v40" stroke="var(--g-ink-faint)" strokeWidth="2" strokeLinecap="round" />

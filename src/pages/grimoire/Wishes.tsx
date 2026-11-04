@@ -209,7 +209,7 @@ function WishCard({ w, onEdit }: { w: Wish; onEdit: () => void }) {
   const [fulfilling, setFulfilling] = useState(false)
   const [embody, setEmbody] = useState(false)
   return (
-    <Box p="4" borderRadius="l3" borderWidth="1px" borderColor="purple.800" bg="bg.subtle" backgroundImage="radial-gradient(16rem 8rem at 100% 0%, rgba(147,112,170,.14), transparent 70%)">
+    <Box p="4" borderRadius="l3" borderWidth="1px" borderColor="emerald.800" bg="bg.subtle" backgroundImage="radial-gradient(16rem 8rem at 100% 0%, color-mix(in srgb, var(--chakra-colors-emerald-400) 14%, transparent), transparent 70%)">
       <Flex justify="space-between" gap="2" align="flex-start">
         <Box cursor="pointer" onClick={onEdit}>
           <HStack gap="2">
@@ -302,7 +302,7 @@ export default function Wishes() {
           {fame.length ? (
             <SimpleGrid columns={{ base: 1, md: 2 }} gap="3">
               {fame.map((w) => (
-                <Box key={w.id} p="4" borderRadius="l3" borderWidth="1px" borderColor="ember.700" bg="bg.subtle" backgroundImage="radial-gradient(16rem 8rem at 0% 0%, rgba(224,164,85,.14), transparent 70%)">
+                <Box key={w.id} p="4" borderRadius="l3" borderWidth="1px" borderColor="ember.700" bg="bg.subtle" backgroundImage="radial-gradient(16rem 8rem at 0% 0%, color-mix(in srgb, var(--chakra-colors-ember-400) 14%, transparent), transparent 70%)">
                   <HStack gap="2" color="ember.200">
                     <Crescent size={14} />
                     <Text fontFamily="heading" fontSize="xl" fontWeight="semibold">

@@ -255,7 +255,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
           )}
 
           {isStuck(live) && (
-            <Box p="3" borderRadius="l2" borderWidth="1px" borderColor="orange.800" bg="rgba(234,88,12,.06)">
+            <Box p="3" borderRadius="l2" borderWidth="1px" borderColor="ember.700" bg="ember.subtle">
               <Text fontSize="sm" mb="2">
                 Буксует: перенесено {live.postponements.length} раз. Может, оно {live.want ? `«${wantLabel[live.want]}»` : 'не очень нужно'}
                 {live.ownerKind && live.ownerKind !== 'mine' ? ` и вообще не твоя обязанность (${ownerKindLabel[live.ownerKind]})` : ''}?
@@ -275,7 +275,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
           )}
 
           {isFrog(live) && open && (
-            <Box p="3" borderRadius="l2" borderWidth="1px" borderColor="green.800" bg="rgba(74,124,60,.1)">
+            <Box p="3" borderRadius="l2" borderWidth="1px" borderColor="emerald.800" bg="emerald.subtle">
               <HStack gap="2" mb="2" color="green.300">
                 <FrogIcon size={18} />
                 <Text fontSize="sm" color="fg">

@@ -23,6 +23,19 @@ import { useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 import { Dread, StarMark, Stars } from '../../components/grimoire/Marks'
 
+/** «Впереди радости» and «Сегодня»: like Section, edge to edge on a phone. */
+const edgeBlock = {
+  py: '3',
+  px: { base: '4', md: '3' },
+  mx: { base: '-4', md: '0' },
+  borderRadius: { base: '0', md: 'l3' },
+  borderWidth: '1px',
+  borderLeftWidth: { base: '0', md: '1px' },
+  borderRightWidth: { base: '0', md: '1px' },
+  borderColor: 'border',
+  bg: 'bg.subtle',
+} as const
+
 const weekdayLong = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота']
 
 function dateTitle(day: string) {
@@ -334,7 +347,7 @@ export default function Scroll() {
 
       <WorkshopOffers />
       <SimpleGrid columns={{ base: 1, md: 2 }} gap="3" mb="4">
-        <Box p="3" borderRadius="l3" borderWidth="1px" borderColor="border" bg="bg.subtle">
+        <Box {...edgeBlock}>
           <Text fontFamily="heading" fontSize="lg" color="ember.100" mb="1">
             Впереди радости
           </Text>
@@ -370,7 +383,7 @@ export default function Scroll() {
             </HStack>
           )}
         </Box>
-        <Box p="3" borderRadius="l3" borderWidth="1px" borderColor="border" bg="bg.subtle">
+        <Box {...edgeBlock}>
           <Text fontFamily="heading" fontSize="lg" color="ember.100" mb="1">
             Сегодня
           </Text>

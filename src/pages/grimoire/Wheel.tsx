@@ -1,10 +1,13 @@
 // The wheel of the year: eight sectors, a «today» hand, months outside, full moons inside.
 // Tap a sector to see its sabbat: its card by fields, the deeds and practices of the segment («хочу»,
 // «в дела», «не моё») and its journal; below, the esbat — the full moon, a small holiday every month.
-import { Box, Button, Flex, HStack, Stack, Text } from '@chakra-ui/react'
+import { Box, Button, Flex, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { arcanaButton } from '../../components/ArcanaCard'
 import { MoonIcon } from '../../components/grimoire/MoonIcon'
+import { PracticeCard } from '../../components/grimoire/PracticeCard'
+import { cardColumns } from '../../components/grimoire/TaskCard'
 import { WheelPick } from '../../components/grimoire/WheelPick'
 import { Chips, Empty, Field, Modal, notify, PageHeader, Section, TextArea, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
@@ -103,13 +106,13 @@ function WheelSvg({ today, hemisphere, selected, onSelect, marks }: { today: str
           return <circle key={i} cx={x} cy={y} r="2.6" fill="var(--chakra-colors-ember-100)" fillOpacity=".75" />
         })}
         {/* the wood slice with the moon in the centre */}
-        <circle cx={C} cy={C} r={r - 6} fill="#4b3424" />
-        <circle cx={C} cy={C} r={r - 10} fill="#b88a5c" />
-        <circle cx={C} cy={C} r={r - 22} fill="none" stroke="#9a7049" strokeWidth=".8" />
-        <text x={C} y={C - 6} textAnchor="middle" fontSize="26" style={{ fontFamily: 'var(--g-font-heading)' }} fontWeight="700" fill="#1b1814">
+        <circle cx={C} cy={C} r={r - 6} fill="var(--chakra-colors-ember-800)" />
+        <circle cx={C} cy={C} r={r - 10} fill="var(--chakra-colors-ember-500)" />
+        <circle cx={C} cy={C} r={r - 22} fill="none" stroke="var(--chakra-colors-ember-600)" strokeWidth=".8" />
+        <text x={C} y={C - 6} textAnchor="middle" fontSize="26" style={{ fontFamily: 'var(--g-font-heading)' }} fontWeight="700" fill="var(--g-ember-contrast)">
           {now.daysToNext}
         </text>
-        <text x={C} y={C + 14} textAnchor="middle" fontSize="9" fill="#1b1814">
+        <text x={C} y={C + 14} textAnchor="middle" fontSize="9" fill="var(--g-ember-contrast)">
           до {sabbats[now.next.sabbat].genitive}
         </text>
         <line x1={hx0} y1={hy0} x2={hx} y2={hy} stroke="var(--chakra-colors-ember-300)" strokeWidth="2" strokeLinecap="round" />
@@ -170,56 +173,54 @@ function PracticeDialog({ sabbat, onClose }: { sabbat: Sabbat | 'esbat'; onClose
   )
 }
 
-/** One practice with its buttons; «В дела» puts a practice of the holiday's own day onto that day. */
+/** One practice as a card with its buttons; «В дела» puts a practice of the holiday's own day onto that day. */
 function PracticeRow({ p, want, inBook, lived, day, today }: { p: WheelPractice; want: boolean; inBook: boolean; lived: boolean; day?: DayKey; today: DayKey }) {
   const dispatch = useAppDispatch()
   return (
-    <Flex gap="3" align="center" wrap="wrap" py="2" borderBottomWidth="1px" borderColor="border.muted" _last={{ borderBottomWidth: 0 }}>
-      <Box flex="1" minW="160px">
-        <Text fontSize="sm">
-          {want && <Text as="span" color="ember.300">♡ </Text>}
-          {p.title}
-        </Text>
-        <Text fontSize="xs" color="fg.subtle">
-          {p.seasonal ? 'бытовое · ' : ''}
-          {p.sabbat === 'esbat' ? 'в полнолуние' : p.mode === 'day' ? 'в день саббата' : p.mode === 'segment' ? 'весь отрезок' : 'однажды за отрезок'}
-          {lived ? ` · прожито в этом году` : ''}
-          {p.source ? ` · ${p.source}` : ''}
-        </Text>
-      </Box>
-      <HStack gap="1">
-        <Button size="xs" variant={want ? 'solid' : 'outline'} colorPalette="ember" onClick={() => dispatch(want ? A.unwantPractice(p.id) : A.wantPractice({ practiceId: p.id }))}>
-          Хочу
-        </Button>
-        {inBook ? (
-          <Text fontSize="xs" color="fg.subtle" px="2">
-            в делах
-          </Text>
-        ) : (
+    <PracticeCard
+      p={p}
+      want={want}
+      lines={[
+        (p.seasonal ? 'бытовое · ' : '') + (p.sabbat === 'esbat' ? 'в полнолуние' : p.mode === 'day' ? 'в день саббата' : p.mode === 'segment' ? 'весь отрезок' : 'однажды за отрезок'),
+        lived ? 'прожито в этом году' : null,
+        p.source ?? null,
+      ]}
+      actions={
+        <>
+          <Button {...arcanaButton} borderColor={want ? 'var(--card-fg)' : arcanaButton.borderColor} onClick={() => dispatch(want ? A.unwantPractice(p.id) : A.wantPractice({ practiceId: p.id }))}>
+            {want ? '♡ хочу' : 'Хочу'}
+          </Button>
+          {inBook ? (
+            <Text fontSize="xs" color="fg.subtle" px="1" alignSelf="center">
+              в делах
+            </Text>
+          ) : (
+            <Button
+              {...arcanaButton}
+              onClick={() => {
+                const doOn = p.mode === 'day' && day && day >= today ? day : undefined
+                dispatch(A.practiceToTask({ practiceId: p.id, doOn }))
+                notify(doOn ? `В делах на ${humanDay(doOn, today)}` : 'В бэклоге')
+              }}
+            >
+              В дела
+            </Button>
+          )}
           <Button
-            size="xs"
-            variant="outline"
+            {...arcanaButton}
+            variant="ghost"
+            borderColor="transparent"
+            bg="transparent"
             onClick={() => {
-              const doOn = p.mode === 'day' && day && day >= today ? day : undefined
-              dispatch(A.practiceToTask({ practiceId: p.id, doOn }))
-              notify(doOn ? `В делах на ${humanDay(doOn, today)}` : 'В бэклоге')
+              dispatch(A.upsertPractice({ ...p, hidden: true }))
+              notify('Скрыто', 'info', undefined, { label: 'Вернуть', onClick: () => dispatch(A.upsertPractice({ ...p, hidden: false })) })
             }}
           >
-            В дела
+            Не моё
           </Button>
-        )}
-        <Button
-          size="xs"
-          variant="ghost"
-          onClick={() => {
-            dispatch(A.upsertPractice({ ...p, hidden: true }))
-            notify('Скрыто', 'info', undefined, { label: 'Вернуть', onClick: () => dispatch(A.upsertPractice({ ...p, hidden: false })) })
-          }}
-        >
-          Не моё
-        </Button>
-      </HStack>
-    </Flex>
+        </>
+      }
+    />
   )
 }
 
@@ -384,7 +385,7 @@ export default function Wheel() {
       </Section>
 
       <Section title="Что можно сделать" actions={<Button size="xs" variant="outline" onClick={() => setAdding(selected)}>Добавить своё</Button>}>
-        {sorted(selected).length ? <Stack gap="2">{sorted(selected).map((p) => row(p, seg.from))}</Stack> : <Empty>Для этого отрезка пока ничего нет.</Empty>}
+        {sorted(selected).length ? <SimpleGrid gridTemplateColumns={cardColumns} gap={{ base: '3', md: '4' }}>{sorted(selected).map((p) => row(p, seg.from))}</SimpleGrid> : <Empty>Для этого отрезка пока ничего нет.</Empty>}
       </Section>
 
       <SabbatJournal entries={journal} name={info.name} onWrite={() => setWriting(true)} />
@@ -404,7 +405,7 @@ export default function Wheel() {
           <Text fontSize="sm" color="fg.muted" mb="2">
             Полнолуние, малый праздник каждого месяца · {moon === today ? 'сегодня' : `${humanDay(moon, today)}, через ${days(daysBetween(today, moon))}`}
           </Text>
-          {sorted('esbat').length ? <Stack gap="2">{sorted('esbat').map((p) => row(p, moon))}</Stack> : <Empty>Практик полнолуния пока нет.</Empty>}
+          {sorted('esbat').length ? <SimpleGrid gridTemplateColumns={cardColumns} gap={{ base: '3', md: '4' }}>{sorted('esbat').map((p) => row(p, moon))}</SimpleGrid> : <Empty>Практик полнолуния пока нет.</Empty>}
         </Section>
       </Box>
       {adding && <PracticeDialog sabbat={adding} onClose={() => setAdding(undefined)} />}

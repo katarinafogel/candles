@@ -12,7 +12,7 @@ export function ScarNote({ personIds }: { personIds: (string | undefined)[] }) {
     .filter((x) => x.scar && people[x.id])
   if (!lines.length) return null
   return (
-    <Box px="3" py="2" borderRadius="l2" borderWidth="1px" borderColor="border" bg="rgba(120,60,60,.08)">
+    <Box px="3" py="2" borderRadius="l2" borderWidth="1px" borderColor="border" bg="ember.subtle">
       {lines.map(({ id, scar }) => (
         <Text key={id} fontSize="xs" color="fg.muted">
           {people[id].name}, {monthDay(scar!.day)}: {scar!.text}. Точно хочешь?

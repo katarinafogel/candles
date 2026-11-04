@@ -462,12 +462,16 @@ export function Section({ title, children, actions, dense }: { title?: ReactNode
       variant="outline"
       bg="bg.subtle"
       borderColor="border"
-      borderRadius="l3"
+      // On a phone the block runs edge to edge: no side borders or corners, so the content gets the width.
+      mx={{ base: '-4', md: '0' }}
+      borderRadius={{ base: '0', md: 'l3' }}
+      borderLeftWidth={{ base: '0', md: '1px' }}
+      borderRightWidth={{ base: '0', md: '1px' }}
       mb="4"
       backdropFilter="blur(2px)"
     >
       {(title || actions) && (
-        <Card.Header pb="0" px={dense ? '3' : undefined} pt={dense ? '3' : undefined}>
+        <Card.Header pb="0" px={dense ? { base: '4', md: '3' } : { base: '4', md: '6' }} pt={dense ? '3' : { base: '4', md: '6' }}>
           <Flex justify="space-between" align="center" gap="2" wrap="wrap">
             {title && (
               <Heading size="xl" fontWeight="semibold" color="ember.100">
@@ -478,7 +482,7 @@ export function Section({ title, children, actions, dense }: { title?: ReactNode
           </Flex>
         </Card.Header>
       )}
-      <Card.Body p={dense ? '3' : undefined}>{children}</Card.Body>
+      <Card.Body px={dense ? { base: '4', md: '3' } : { base: '4', md: '6' }} py={dense ? '3' : { base: '4', md: '6' }}>{children}</Card.Body>
     </Card.Root>
   )
 }

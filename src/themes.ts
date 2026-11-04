@@ -101,6 +101,56 @@ const starField = [
   'radial-gradient(50rem 36rem at -10% -10%, rgba(135,163,123,.08), transparent 60%)',
 ].join(',')
 
+// ---------- arcana cards ----------
+// Every card tone is drawn from the theme's own palette: two fill colours (top-left to bottom-right),
+// the text, the accent for the emblem and lines, and the star for corners and the done leaf.
+// The rest is mixed from these, so a card never brings a colour of its own.
+type CardTone = 'indigo' | 'pearl' | 'olive' | 'swamp' | 'nacre' | 'wine' | 'silver'
+interface CardSpec { from: string; to: string; fg: string; accent: string; star: string }
+
+const mix = (a: string, share: number, b = 'transparent') => `color-mix(in srgb, ${a} ${share}%, ${b})`
+
+function cardVars(tones: Record<CardTone, CardSpec>) {
+  const out: Record<string, string> = {}
+  for (const [tone, c] of Object.entries(tones)) {
+    const v = (k: string, val: string) => (out[`--g-card-${tone}-${k}`] = val)
+    v('bg', `radial-gradient(110% 65% at 50% 0%, ${mix(c.star, 18)}, transparent 60%), linear-gradient(165deg, ${c.from} 0%, ${mix(c.from, 45, c.to)} 55%, ${c.to} 100%)`)
+    v('fg', c.fg)
+    v('muted', mix(c.fg, 82, c.to))
+    v('subtle', mix(c.fg, 66, c.to))
+    v('line', mix(c.accent, 62))
+    v('accent', c.accent)
+    v('star', c.star)
+    v('hover', mix(c.fg, 12))
+    v('leaf-off', mix(c.fg, 55, c.to))
+    v('ink', mix(c.accent, 80, c.to))
+    v('solid', mix(c.from, 50, c.to))
+  }
+  return out
+}
+
+// Night: warm charcoal and wood, sage («emerald») and candle amber («ember»).
+const nightCards = cardVars({
+  silver: { from: '#322b24', to: '#1d1915', fg: '#ece4d6', accent: '#b5a891', star: palettes.ember[300] },
+  nacre: { from: palettes.ember[50], to: palettes.emerald[100], fg: palettes.ember[900], accent: palettes.ember[600], star: palettes.ember[700] },
+  swamp: { from: palettes.emerald[700], to: palettes.emerald[900], fg: palettes.emerald[50], accent: palettes.emerald[300], star: palettes.ember[200] },
+  wine: { from: palettes.ember[800], to: palettes.ember[900], fg: palettes.ember[50], accent: palettes.ember[400], star: palettes.ember[200] },
+  indigo: { from: '#4a3e32', to: '#26211c', fg: palettes.ember[50], accent: palettes.emerald[300], star: palettes.ember[200] },
+  pearl: { from: palettes.emerald[50], to: palettes.ember[100], fg: palettes.emerald[900], accent: palettes.ember[600], star: palettes.ember[700] },
+  olive: { from: palettes.ember[600], to: palettes.ember[700], fg: palettes.ember[50], accent: palettes.ember[200], star: palettes.ember[100] },
+})
+
+// Paper: the light palette (see `paper` above) and its sage and cream scales.
+const paperCards = cardVars({
+  silver: { from: paperScales.emerald[950], to: paper.mist, fg: '#3a4357', accent: paper.pine, star: paper.slate },
+  nacre: { from: paperScales.ember[950], to: paper.cream, fg: '#3a4357', accent: paper.eucalyptus, star: paperScales.ember[300] },
+  swamp: { from: paperScales.emerald[300], to: paperScales.emerald[100], fg: paperScales.emerald[900], accent: paper.leaf, star: paper.cream },
+  wine: { from: paper.slate, to: '#3a4357', fg: paperScales.ember[950], accent: paper.cream, star: paper.cream },
+  indigo: { from: paper.pine, to: paper.slate, fg: paperScales.emerald[950], accent: paper.mist, star: paper.cream },
+  pearl: { from: paperScales.ember[950], to: paperScales.ember[700], fg: '#3a4357', accent: paperScales.ember[300], star: paperScales.ember[200] },
+  olive: { from: paperScales.ember[300], to: paperScales.ember[200], fg: paperScales.ember[950], accent: paper.cream, star: paper.cream },
+})
+
 export const themes: Record<ThemeId, Theme> = {
   night: {
     label: 'ночь',
@@ -141,6 +191,7 @@ export const themes: Record<ThemeId, Theme> = {
       '--g-chip-fg': '#f3e8d6',
       '--g-moon-dark': 'rgba(255, 255, 255, 0.12)',
       '--g-joy-mark': '#f4efe6',
+      ...nightCards,
     },
   },
   // White paper in the light palette (see `paper` above): slate ink, sage accents, cream and taupe.
@@ -185,6 +236,7 @@ export const themes: Record<ThemeId, Theme> = {
       '--g-chip-fg': '#3a4357',
       '--g-moon-dark': 'rgba(82, 94, 117, 0.12)',
       '--g-joy-mark': paper.stone,
+      ...paperCards,
     },
   },
 }

@@ -449,8 +449,8 @@ function PriorityScale({ value, onChange }: { value?: TaskSlot; onChange: (slot:
   )
 }
 
-/** How much she does not want a «надо» deed: 0–3 on a slider that turns bluer the heavier it is. */
-const dreadBlue = ['#a59fb5', '#8f9bd0', '#6f8fe6', '#4b7bff']
+/** How much she does not want a «надо» deed: 0–3 on a slider that warms up the heavier it is. */
+const dreadBlue = ['fg.subtle', 'ember.500', 'ember.400', 'ember.300']
 function DreadSlider({ value, onChange }: { value: number; onChange: (v: Task['dread']) => void }) {
   return (
     <Stack gap="1" w="full" maxW="sm">

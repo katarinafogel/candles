@@ -1,6 +1,6 @@
 // Deeds of the wheel for a day or a week: «хочу» first, and among them the ones whose segment ends
 // soonest; the coming sabbat joins two weeks ahead, the esbat a week ahead. Never offered in the навь.
-import { Box, Button, Flex, HStack, Stack, Text } from '@chakra-ui/react'
+import { Button, SimpleGrid, Stack } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { Chips, Empty, Modal, notify } from '../ui'
 import { useToday } from '../../grimoire/act'
@@ -9,7 +9,10 @@ import type { DayKey, Sabbat, WheelPractice } from '../../grimoire/types'
 import { nextFullMoon, sabbats, segmentOf, wheelNow } from '../../grimoire/wheel'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
+import { arcanaButton } from '../ArcanaCard'
+import { PracticeCard } from './PracticeCard'
 import { usePlanGuard } from './PlanGuard'
+import { cardColumns } from './TaskCard'
 
 const weekdayShort = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб']
 
@@ -73,38 +76,36 @@ export function WheelPick({ onClose, focus }: { onClose: () => void; focus?: Sab
           { value: 'week', label: 'на неделю' },
         ]} />
         {list.length ? (
-          list.map(({ p, want, holiday }) => (
-            <Flex key={p.id} gap="2" align="center" wrap="wrap" py="2" borderBottomWidth="1px" borderColor="border.muted" _last={{ borderBottomWidth: 0 }}>
-              <Box flex="1" minW="160px">
-                <Text fontSize="sm">
-                  {want && <Text as="span" color="ember.300">♡ </Text>}
-                  {p.title}
-                </Text>
-                <Text fontSize="xs" color="fg.subtle">
-                  {p.sabbat === 'esbat' ? 'эсбат' : sabbats[p.sabbat].name}
-                  {holiday ? ` · в свой день: ${humanDay(holiday, today)}` : ''}
-                </Text>
-              </Box>
-              <HStack gap="1" wrap="wrap">
-                {holiday && holiday !== today && (
-                  <Button size="xs" variant="outline" colorPalette="ember" onClick={() => put(p, holiday)}>
-                    {humanDay(holiday, today)}
-                  </Button>
-                )}
-                {mode === 'day' ? (
-                  <Button size="xs" variant="outline" onClick={() => put(p, today)}>
-                    Сегодня
-                  </Button>
-                ) : (
-                  week.map((d) => (
-                    <Button key={d} size="xs" variant="ghost" px="1.5" minW="0" onClick={() => put(p, d)} title={humanDay(d, today)}>
-                      {d === today ? 'сег' : weekdayShort[new Date(`${d}T12:00:00Z`).getUTCDay()]}
-                    </Button>
-                  ))
-                )}
-              </HStack>
-            </Flex>
-          ))
+          <SimpleGrid gridTemplateColumns={cardColumns} gap="3">
+            {list.map(({ p, want, holiday }) => (
+              <PracticeCard
+                key={p.id}
+                p={p}
+                want={want}
+                lines={[p.sabbat === 'esbat' ? 'эсбат' : sabbats[p.sabbat].name, holiday ? `в свой день: ${humanDay(holiday, today)}` : null]}
+                actions={
+                  <>
+                    {holiday && holiday !== today && (
+                      <Button {...arcanaButton} onClick={() => put(p, holiday)}>
+                        {humanDay(holiday, today)}
+                      </Button>
+                    )}
+                    {mode === 'day' ? (
+                      <Button {...arcanaButton} onClick={() => put(p, today)}>
+                        Сегодня
+                      </Button>
+                    ) : (
+                      week.map((d) => (
+                        <Button key={d} {...arcanaButton} px="1.5" minW="0" onClick={() => put(p, d)} title={humanDay(d, today)}>
+                          {d === today ? 'сег' : weekdayShort[new Date(`${d}T12:00:00Z`).getUTCDay()]}
+                        </Button>
+                      ))
+                    )}
+                  </>
+                }
+              />
+            ))}
+          </SimpleGrid>
         ) : (
           <Empty>Всё, что можно сейчас, уже в делах или скрыто.</Empty>
         )}

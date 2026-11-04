@@ -43,8 +43,8 @@ export function Stars({ n, size = 12 }: { n: number; size?: number }) {
 }
 
 const weather = [LuSun, LuCloud, LuCloudRain, LuCloudLightning]
-/** Lilac-grey for laziness and «не хочу», a deeper violet for the monster. */
-const weatherColor = ['#a59fb5', '#a59fb5', '#a59fb5', '#b18ff0']
+/** Quiet for laziness and «не хочу», the candle amber for the monster. */
+const weatherColor = ['fg.subtle', 'fg.subtle', 'fg.subtle', 'ember.300']
 
 /** One weather icon for the dread; «норм» (0) is drawn only in the picker (`calm`). */
 export function Dread({ n, size = 12, calm }: { n: number; size?: number; calm?: boolean }) {

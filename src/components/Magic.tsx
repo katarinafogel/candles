@@ -21,12 +21,13 @@ export function Sparkle({ size = 12, color = 'currentColor' }: { size?: number |
 
 /** A moon on a wood slice: bark ring, light end grain and a dark crescent. */
 export function MoonSlice({ size = 40, tone = 'wood' }: { size?: number; tone?: 'wood' | 'stone' | 'sage' }) {
-  const face = { wood: '#b88a5c', stone: '#4a4540', sage: '#a7b39a' }[tone]
-  const ring = { wood: '#9a7049', stone: '#3c3833', sage: '#8f9c83' }[tone]
-  const moon = tone === 'stone' ? '#e6dccb' : '#1b1814'
+  // Theme colours only: wood is the amber scale, stone the wood-dark border, sage the green scale.
+  const face = { wood: 'var(--chakra-colors-ember-500)', stone: 'var(--g-border-emphasized)', sage: 'var(--chakra-colors-emerald-500)' }[tone]
+  const ring = { wood: 'var(--chakra-colors-ember-600)', stone: 'var(--chakra-colors-ember-700)', sage: 'var(--chakra-colors-emerald-600)' }[tone]
+  const moon = { wood: 'var(--g-ember-contrast)', stone: 'var(--g-ink-bright)', sage: 'var(--g-emerald-contrast)' }[tone]
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
-      <circle cx="20" cy="20" r="19" fill="#4b3424" />
+      <circle cx="20" cy="20" r="19" fill="var(--chakra-colors-ember-800)" />
       <circle cx="20" cy="20" r="16" fill={face} />
       <circle cx="20" cy="20" r="11.5" fill="none" stroke={ring} strokeWidth=".8" />
       <circle cx="20" cy="20" r="6.5" fill="none" stroke={ring} strokeWidth=".6" />
@@ -81,11 +82,11 @@ export function Eucalyptus({ width = 120, flip, ...rest }: { width?: number; fli
       {...rest}
     >
       <svg width="100%" viewBox="0 0 120 150">
-        <path d="M58 0c-4 30 6 52 0 78s-4 44-2 60" fill="none" stroke="#6b5a45" strokeWidth="1.6" strokeLinecap="round" />
+        <path d="M58 0c-4 30 6 52 0 78s-4 44-2 60" fill="none" stroke="var(--chakra-colors-ember-600)" strokeWidth="1.6" strokeLinecap="round" />
         {leaves.map(([x, y, r, rot], i) => (
           <g key={i} transform={`rotate(${rot} ${x} ${y})`}>
-            <ellipse cx={x} cy={y} rx={r} ry={r * 0.92} fill={i % 3 === 1 ? '#7f9474' : '#8ea883'} fillOpacity={0.55 + (i % 3) * 0.12} />
-            <path d={`M${x - r * 0.7} ${y}h${r * 1.4}`} stroke="#5a7251" strokeOpacity=".5" strokeWidth=".6" />
+            <ellipse cx={x} cy={y} rx={r} ry={r * 0.92} fill={i % 3 === 1 ? 'var(--chakra-colors-emerald-500)' : 'var(--chakra-colors-emerald-400)'} fillOpacity={0.55 + (i % 3) * 0.12} />
+            <path d={`M${x - r * 0.7} ${y}h${r * 1.4}`} stroke="var(--chakra-colors-emerald-600)" strokeOpacity=".5" strokeWidth=".6" />
           </g>
         ))}
         {/* tiny dried flowers */}
@@ -97,9 +98,9 @@ export function Eucalyptus({ width = 120, flip, ...rest }: { width?: number; fli
           [26, 38],
           [86, 70],
         ].map(([x, y], i) => (
-          <circle key={i} cx={x} cy={y} r="1.6" fill="#d8cdb9" fillOpacity=".55" />
+          <circle key={i} cx={x} cy={y} r="1.6" fill="var(--chakra-colors-ember-200)" fillOpacity=".55" />
         ))}
-        <path d="M60 10c10 0 20 2 26 6M60 34c-12-2-22-2-30 0M60 66c10 0 18 2 24 4" fill="none" stroke="#6b5a45" strokeWidth=".8" strokeOpacity=".7" />
+        <path d="M60 10c10 0 20 2 26 6M60 34c-12-2-22-2-30 0M60 66c10 0 18 2 24 4" fill="none" stroke="var(--chakra-colors-ember-600)" strokeWidth=".8" strokeOpacity=".7" />
       </svg>
     </Box>
   )
