@@ -7,6 +7,9 @@ export type DayKey = string
 export type ISODateTime = string
 
 export type TaskType = 'deed' | 'joy'
+/** How urgent a deed is, as in Jira (without Blocker and Trivial); no value means «medium». */
+export type TaskPriority = 'highest' | 'high' | 'medium' | 'low' | 'lowest'
+/** @deprecated The plan's old parts (главное / дополнительное / необязательное); only read to become a priority. */
 export type TaskSlot = 'main' | 'extra' | 'optional'
 export type Want = 'want' | 'need' | 'unsure'
 export type TaskOwnerKind = 'mine' | 'person' | 'work' | 'other'
@@ -70,6 +73,9 @@ export interface Task {
   doOn?: DayKey
   /** The time on `doOn` to do it, HH:mm. */
   doAt?: string
+  /** No value means «medium». */
+  priority?: TaskPriority
+  /** @deprecated Read only by priorityOf, for deeds saved before priorities. */
   slot?: TaskSlot
   stars: Stars
   dread: 0 | 1 | 2 | 3
@@ -280,7 +286,10 @@ export interface GrimoireMeta {
   /** The owner's time zone (IANA), saved by the app, so the agent counts days the same way. */
   timeZone?: string
   hemisphere: 'north' | 'south'
-  planLimit: { main: number; extra: number; optional: number }
+  /** How many open deeds a day's plan holds before the grimoire asks what to move (0 — no limit). */
+  planMax: number
+  /** @deprecated The old per-part limits; only read to set planMax once. */
+  planLimit?: { main: number; extra: number; optional: number }
   /** How many stars of difficulty a day's plan holds comfortably (0 — no limit shown). */
   dayStars: number
   streaksOn: boolean

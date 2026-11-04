@@ -4,15 +4,16 @@
 import { Badge, Box, HStack, IconButton, Input, Slider, Stack, Switch, Text } from '@chakra-ui/react'
 import { nanoid } from '@reduxjs/toolkit'
 import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react'
-import { LuBookOpen, LuCalendarClock, LuChevronUp, LuClockAlert, LuHash, LuListChecks, LuPen, LuPlus, LuRepeat, LuUser, LuX } from 'react-icons/lu'
-import { costOptions, dreadLabel, slotLabel, whyOptions } from '../../grimoire/labels'
+import { LuBookOpen, LuCalendarClock, LuClockAlert, LuHash, LuListChecks, LuPen, LuPlus, LuRepeat, LuUser, LuX } from 'react-icons/lu'
+import { costOptions, dreadLabel, priorityLabel, whyOptions } from '../../grimoire/labels'
+import { priorities, priorityOf } from '../../grimoire/selectors'
 import type { TaskDraft } from '../../grimoire/newTask'
-import type { ChecklistItem, Task, TaskSlot } from '../../grimoire/types'
+import type { ChecklistItem, Task, TaskPriority } from '../../grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { actions } from '../../store/dataSlice'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 import { Check, Chips, Field, NumInput, TextArea, TextInput } from '../ui'
-import { MarkPicker } from './Marks'
+import { MarkPicker, PriorityIcon } from './Marks'
 import { ScarNote } from './ScarNote'
 import { SuggestInput } from './SuggestInput'
 import { TagInput } from './TagInput'
@@ -311,7 +312,7 @@ export function TaskFields({
         </Field>
       )}
       <Field label="Приоритет">
-        <PriorityScale value={t.slot} onChange={(slot) => set({ slot })} />
+        <PriorityPicker value={priorityOf(t)} onChange={(priority) => set({ priority, slot: undefined })} />
       </Field>
       <Field label="Ресурс">
         <Stack gap="2" w="full">
@@ -418,33 +419,38 @@ function TwoWay({ left, right, value, onChange }: { left: string; right: string;
   )
 }
 
-/** Priority as a scale of three arrows: one — необязательное, two — дополнительное, three — главное. Tapping the chosen one clears it. */
-const priority: TaskSlot[] = ['optional', 'extra', 'main']
-function PriorityScale({ value, onChange }: { value?: TaskSlot; onChange: (slot: TaskSlot | undefined) => void }) {
-  const at = value ? priority.indexOf(value) + 1 : 0
+/** Priority as in Jira: five arrows in a row, «нормальный» by default; the chosen one is named beside. */
+function PriorityPicker({ value, onChange }: { value: TaskPriority; onChange: (p: TaskPriority) => void }) {
   return (
-    <HStack gap="0.5" role="radiogroup" aria-label="Приоритет">
-      {priority.map((slot, i) => {
-        const on = at > i
+    <HStack gap="1" role="radiogroup" aria-label="Приоритет" wrap="wrap">
+      {priorities.map((p) => {
+        const on = value === p
         return (
           <Box
             as="button"
-            key={slot}
+            key={p}
             role="radio"
-            aria-checked={value === slot}
-            aria-label={slotLabel[slot]}
-            title={slotLabel[slot]}
-            p="1"
+            aria-checked={on}
+            aria-label={priorityLabel[p]}
+            title={priorityLabel[p]}
+            p="1.5"
             lineHeight="0"
             cursor="pointer"
-            color={on ? 'ember.300' : 'fg.subtle'}
-            _hover={{ color: 'ember.200' }}
-            onClick={() => onChange(value === slot ? undefined : slot)}
+            borderRadius="l2"
+            borderWidth="1px"
+            borderColor={on ? 'border.emphasized' : 'transparent'}
+            bg={on ? 'bg.muted' : 'transparent'}
+            opacity={on ? 1 : 0.55}
+            _hover={{ opacity: 1, bg: 'bg.muted' }}
+            onClick={() => onChange(p)}
           >
-            <LuChevronUp size={26} strokeWidth={on ? 2.6 : 2} />
+            <PriorityIcon p={p} size={20} />
           </Box>
         )
       })}
+      <Text fontSize="sm" color="fg.muted" ml="1">
+        {priorityLabel[value]}
+      </Text>
     </HStack>
   )
 }

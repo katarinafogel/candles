@@ -8,13 +8,13 @@ import { LuCalendarClock, LuFlame, LuHourglass, LuLink, LuMoon, LuSparkles, LuSu
 import { complete, remove, reopen } from '../../grimoire/act'
 import { isFrog } from '../../grimoire/frog'
 import { dueDay } from '../../grimoire/days'
-import { cardTone, isBlocked, stepsOf } from '../../grimoire/selectors'
+import { cardTone, isBlocked, priorityOf, stepsOf } from '../../grimoire/selectors'
 import type { DayKey, Task } from '../../grimoire/types'
 import { useAppSelector } from '../../store'
 import { ArcanaCard } from '../ArcanaCard'
 import { Sparkle } from '../Magic'
 import { LeafMark } from '../ui'
-import { Deadline, Stars, Tag } from './Marks'
+import { Deadline, PriorityIcon, Stars, Tag } from './Marks'
 
 /**
  * Card grid: two columns on a phone; wider, as many as fit at about the tablet size, so on a big
@@ -106,11 +106,6 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
         }
         title={
           <>
-            {t.slot === 'main' && !done && (
-              <Box as="span" display="inline-block" mr="1" verticalAlign="middle" color="var(--star-on)" title="главное">
-                <Sparkle size={11} />
-              </Box>
-            )}
             {project && (
               <Box as="span" mr="1" title={project.title}>
                 {project.sigil || '🌿'}
@@ -122,6 +117,8 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
         fixed
       >
         <HStack gap="1.5" justify="center" wrap="wrap">
+          {/* «Нормальный» is the default and goes unmarked, so the card stays quiet. */}
+          {priorityOf(t) !== 'medium' && <PriorityIcon p={priorityOf(t)} size={13} />}
           <Stars n={t.stars} size={11} />
           {t.type === 'joy' && (
             <Box display="inline-flex" title="радость">

@@ -60,7 +60,7 @@ export function WheelPick({ onClose, focus }: { onClose: () => void; focus?: Sab
   function put(p: WheelPractice, day: DayKey) {
     const add = () => withUndo(`В делах на ${humanDay(day, today)}`, () => dispatch(A.practiceToTask({ practiceId: p.id, doOn: day })))
     // Only today has a plan limit to keep.
-    if (day === today) guard('optional', add, { stars: 1 })
+    if (day === today) guard(true, add, { stars: 1 })
     else add()
   }
 

@@ -49,8 +49,11 @@ describe('quick add', () => {
     const p = parseQuickAdd('кино с @аня +радость', MON)
     expect(p).toMatchObject({ title: 'кино с аня', type: 'joy', people: ['аня'] })
   })
-  it('caps the marks and reads slots and days', () => {
-    expect(parseQuickAdd('**** ☠☠☠☠ зуб +главное', MON)).toMatchObject({ stars: 3, dread: 3, slot: 'main', doOn: MON, title: 'зуб' })
+  it('caps the marks and reads priorities and days', () => {
+    expect(parseQuickAdd('**** ☠☠☠☠ зуб +высокий', MON)).toMatchObject({ stars: 3, dread: 3, priority: 'high', title: 'зуб' })
+    expect(parseQuickAdd('зуб +высокий', MON).doOn).toBeUndefined()
+    // The old plan parts still work: a priority and today's plan.
+    expect(parseQuickAdd('зуб +главное', MON)).toMatchObject({ priority: 'high', doOn: MON })
     expect(parseQuickAdd('отчёт +завтра !5.11', MON)).toMatchObject({ doOn: '2026-10-27', dueAt: '2026-11-05' })
     expect(parseQuickAdd('просто дело', MON)).toMatchObject({ stars: 1, dread: 0, title: 'просто дело' })
   })
@@ -654,10 +657,10 @@ describe('push notifications', async () => {
   const N = await import('../notify')
   it('sends each kind once, in its window, and nothing in the навь', () => {
     let s: GS = initialGrimoire
-    s = reducer(s, A.addTask({ fields: { id: 'a', title: 'налоги', doOn: MON, slot: 'main', dueAt: MON } }))
+    s = reducer(s, A.addTask({ fields: { id: 'a', title: 'налоги', doOn: MON, priority: 'high', dueAt: MON } }))
     const m = N.dueMessages(s, MON, '09:20', [])
     expect(m.map((x) => x.kind)).toEqual(['morning'])
-    expect(m[0].body).toContain('главное — налоги')
+    expect(m[0].body).toContain('важнее всего — налоги')
     expect(m[0].body).toContain('Срок сегодня: налоги')
     expect(N.dueMessages(s, MON, '09:20', ['morning'])).toEqual([])
     expect(N.dueMessages(s, MON, '13:00', [])).toEqual([])
@@ -676,18 +679,46 @@ describe('new deed form', async () => {
 
   it('starts in the backlog, on today from the day scroll, in the book from a book', () => {
     expect(defaultDraft({}, MON)).toEqual({ title: '', stars: 1, dread: 0, tags: [], type: 'deed' })
-    expect(defaultDraft({ planToday: true }, MON)).toMatchObject({ doOn: MON, slot: 'extra' })
+    expect(defaultDraft({ planToday: true }, MON)).toEqual({ title: '', stars: 1, dread: 0, tags: [], type: 'deed', doOn: MON })
     expect(defaultDraft({ fields: { projectId: 'p1', source: 'project' }, title: 'окна' }, MON)).toMatchObject({ title: 'окна', projectId: 'p1', source: 'project' })
   })
   it('trims, drops empty fields and keeps symbols as plain text', () => {
     const f = draftToFields({ title: '  купить #2 **☠ ', stars: 2, dread: 1, tags: [], type: 'deed', note: ' ', why: [], personIds: [], checklist: [{ id: 'a', text: ' купить ' }, { id: 'b', text: ' ' }] })
     expect(f).toEqual({ title: 'купить #2 **☠', stars: 2, dread: 1, tags: [], type: 'deed', checklist: [{ id: 'a', text: 'купить' }] })
   })
-  it('puts a planned deed into «доп» and takes the slot off a backlog one', () => {
+  it('stores «нормальный» as no priority and keeps the others', () => {
     const base: import('../newTask').TaskDraft = { title: 'x', stars: 1, dread: 0, tags: [], type: 'deed' }
-    expect(draftToFields({ ...base, doOn: MON })).toMatchObject({ doOn: MON, slot: 'extra' })
-    expect(draftToFields({ ...base, doOn: MON, slot: 'main' }).slot).toBe('main')
-    expect(draftToFields({ ...base, slot: 'main' })).not.toHaveProperty('slot')
+    expect(draftToFields({ ...base, doOn: MON })).not.toHaveProperty('priority')
+    expect(draftToFields({ ...base, priority: 'medium' })).not.toHaveProperty('priority')
+    expect(draftToFields({ ...base, priority: 'lowest' }).priority).toBe('lowest')
+    expect(draftToFields({ ...base, doOn: MON, slot: 'main' })).not.toHaveProperty('slot')
+  })
+})
+
+describe('priorities', async () => {
+  const { priorityOf, dayPlan } = await import('../selectors')
+  const { migrateGrimoire } = await import('../../store/grimoireSlice')
+  it('read the old plan parts and sort the day by urgency', () => {
+    expect(priorityOf({})).toBe('medium')
+    expect(priorityOf({ slot: 'main' })).toBe('high')
+    expect(priorityOf({ slot: 'optional' })).toBe('low')
+    let s: GS = initialGrimoire
+    s = reducer(s, A.addTask({ fields: { id: 'low', title: 'потом', doOn: MON, priority: 'low' } }))
+    s = reducer(s, A.addTask({ fields: { id: 'mid', title: 'обычное', doOn: MON } }))
+    s = reducer(s, A.addTask({ fields: { id: 'top', title: 'горит', doOn: MON, priority: 'highest' } }))
+    expect(dayPlan(s, MON).all.map((t) => t.id)).toEqual(['top', 'mid', 'low'])
+    expect(s.tasks.mid).not.toHaveProperty('priority')
+    s = reducer(s, A.updateTask({ id: 'top', priority: 'medium' }))
+    expect(s.tasks.top).not.toHaveProperty('priority')
+  })
+  it('migrates old deeds and the old plan limits once', () => {
+    const old = { tasks: { a: { id: 'a', title: 'a', slot: 'main', status: 'done' } }, meta: { planLimit: { main: 1, extra: 2, optional: 1 } } } as unknown as GS
+    const g = migrateGrimoire(old)
+    expect(g.tasks.a).toMatchObject({ priority: 'high' })
+    expect(g.tasks.a).not.toHaveProperty('slot')
+    expect(g.meta.planMax).toBe(4)
+    expect(g.meta).not.toHaveProperty('planLimit')
+    expect(migrateGrimoire({ meta: { planLimit: { main: 1, extra: 0, optional: 1 } } } as unknown as GS).meta.planMax).toBe(0)
   })
 })
 

@@ -45,7 +45,7 @@ export function NewTaskDialog({
     const f = draftToFields(d)
     // A full plan asks what to move first; the form stays as it is until the deed is really added.
     guard(
-      f.doOn === today ? f.slot : undefined,
+      f.doOn === today,
       () => {
         dispatch(A.addTask({ fields: f }))
         onAdded?.()

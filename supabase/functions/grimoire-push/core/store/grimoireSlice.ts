@@ -6,6 +6,7 @@ import { createSlice, nanoid, type PayloadAction } from '@reduxjs/toolkit'
 import { cleanWords } from '../grimoire/emotions.ts'
 import { dayKey, nextRepeat } from '../grimoire/days.ts'
 import { habitLogId, habitTaskId, isDone, isScheduled } from '../grimoire/habits.ts'
+import { priorityOf } from '../grimoire/selectors.ts'
 import type {
   DayKey,
   GrimoireMeta,
@@ -17,7 +18,7 @@ import type {
   PostponeReason,
   Project,
   Task,
-  TaskSlot,
+  TaskPriority,
   WheelPractice,
   PersonLine,
   PersonList,
@@ -29,7 +30,7 @@ import type {
 export const defaultMeta: GrimoireMeta = {
   dayBoundaryHour: 4,
   hemisphere: 'north',
-  planLimit: { main: 1, extra: 0, optional: 1 },
+  planMax: 0,
   dayStars: 6,
   streaksOn: true,
   timersOn: false,
@@ -69,10 +70,18 @@ export function migrateGrimoire(input: Partial<GrimoireState> | undefined): Grim
   // The old coin journal and its rules are dropped: the reward is being rebuilt from scratch.
   const { coinTxs: _txs, ...rest } = (input ?? {}) as Partial<GrimoireState> & { coinTxs?: unknown }
   const { coins: _rules, ...m } = (input?.meta ?? {}) as Partial<GrimoireMeta> & { coins?: unknown }
+  // The old per-part limits become one: their sum, unless «extra» was unlimited.
+  if (m.planMax === undefined && m.planLimit) m.planMax = m.planLimit.extra > 0 ? m.planLimit.main + m.planLimit.extra + m.planLimit.optional : 0
+  delete m.planLimit
   const meta0 = { ...defaultMeta, ...m }
   // Deeds saved before frogs existed become frogs by the same rules, once.
   const tasks = Object.fromEntries(
     Object.entries(input?.tasks ?? {}).map(([id, t]) => {
+      // A deed from before priorities: its plan part becomes the priority, once.
+      if (t.slot && !t.priority) {
+        const { slot, ...r } = t
+        t = { ...r, priority: priorityOf({ slot }) }
+      }
       if (t.frog !== undefined || !isOpen(t)) return [id, t]
       const count = t.postponeCount ?? t.postponements?.length ?? 0
       return [id, { ...t, postponeCount: count, ...(t.dread === 3 || count >= meta0.frogPostpones ? { frog: 'auto' as const } : {}) }]
@@ -85,7 +94,6 @@ export function migrateGrimoire(input: Partial<GrimoireState> | undefined): Grim
     meta: {
       ...defaultMeta,
       ...m,
-      planLimit: { ...defaultMeta.planLimit, ...m.planLimit },
       tone: { ...defaultMeta.tone, ...m.tone },
       nav: { ...defaultMeta.nav, ...m.nav },
       notify: { ...defaultMeta.notify, ...m.notify },
@@ -94,6 +102,13 @@ export function migrateGrimoire(input: Partial<GrimoireState> | undefined): Grim
 }
 
 // ---------- helpers on the draft ----------
+
+/** Sets a priority; «medium» is the default, so it is stored as no value. The old plan part goes. */
+export function setPriority(t: Task, p: TaskPriority) {
+  if (p === 'medium') delete t.priority
+  else t.priority = p
+  delete t.slot
+}
 
 type S = GrimoireState
 
@@ -249,7 +264,7 @@ function spawnRepeat(s: S, t: Task, at: string, day: DayKey) {
 }
 
 function newTask(fields: Partial<Task> & { title: string }, at: string): Task {
-  return {
+  const t: Task = {
     type: 'deed',
     stars: 1,
     dread: 0,
@@ -262,6 +277,9 @@ function newTask(fields: Partial<Task> & { title: string }, at: string): Task {
     title: fields.title.trim().slice(0, 200),
     createdAt: fields.createdAt ?? at,
   }
+  // «medium» is stored as no value; a part of the old plan becomes its priority.
+  setPriority(t, priorityOf(t))
+  return t
 }
 
 // ---------- payloads ----------
@@ -315,6 +333,7 @@ const slice = createSlice({
       if (!t) return
       const wasIn = t.projectId
       Object.assign(t, a.payload)
+      if ('priority' in a.payload) setPriority(t, a.payload.priority ?? 'medium')
       if (t.title) t.title = t.title.trim().slice(0, 200)
       frogUp(s, t)
       if (wasIn !== t.projectId && !t.parentId) {
@@ -365,7 +384,6 @@ const slice = createSlice({
       if (a.payload.day) {
         t.eatOn = a.payload.day
         t.doOn = a.payload.day
-        t.slot = t.slot ?? 'main'
       } else delete t.eatOn
     },
     deleteTask(s, a: PayloadAction<string>) {
@@ -447,13 +465,13 @@ const slice = createSlice({
       delete t.doOn
     },
 
-    /** Chooses a task for a day (or sends it back to the backlog with `day` empty). */
-    planTask(s, a: PayloadAction<{ id: string; day?: DayKey; slot?: TaskSlot }>) {
+    /** Chooses a task for a day (or sends it back to the backlog with `day` empty), optionally with a priority. */
+    planTask(s, a: PayloadAction<{ id: string; day?: DayKey; priority?: TaskPriority }>) {
       const t = s.tasks[a.payload.id]
       if (!t) return
+      if (a.payload.priority) setPriority(t, a.payload.priority)
       if (a.payload.day) {
         t.doOn = a.payload.day
-        t.slot = a.payload.slot ?? t.slot ?? 'extra'
         delete t.later
         if (t.status === 'waiting') t.status = 'open'
       } else {
@@ -525,7 +543,7 @@ const slice = createSlice({
             tags: [...from.tags],
             personIds: from.personIds,
             doOn: from.doOn,
-            slot: from.slot,
+            priority: from.priority,
             ...a.payload.fields,
             spawnedFrom: from.id,
           },
@@ -547,7 +565,7 @@ const slice = createSlice({
         if (!t) return
         a.payload.steps.forEach((title, i) => {
           const step = newTask(
-            { title, stars: t.stars, dread: t.dread, tags: [...t.tags], parentId: t.id, projectId: t.projectId, order: i, source: t.source, ...(i === 0 && t.doOn ? { doOn: t.doOn, slot: t.slot } : {}) },
+            { title, stars: t.stars, dread: t.dread, tags: [...t.tags], parentId: t.id, projectId: t.projectId, order: i, source: t.source, ...(t.priority ? { priority: t.priority } : {}), ...(i === 0 && t.doOn ? { doOn: t.doOn } : {}) },
             a.payload.at,
           )
           s.tasks[step.id] = step
@@ -957,7 +975,6 @@ const slice = createSlice({
             practiceId: p.id,
             tags: [p.sabbat === 'esbat' ? 'эсбат' : p.seasonal ? 'сезонное' : 'колесо'],
             doOn: a.payload.doOn,
-            ...(a.payload.doOn ? { slot: 'optional' as const } : {}),
             ...(wish ? { want: 'want' as const, wishId: wish.id } : {}),
           },
           a.payload.at,

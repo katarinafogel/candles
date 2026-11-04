@@ -56,7 +56,7 @@ export function PushSettings() {
           </Button>
         )}
       </Flex>
-      <Field label="Утром: план на день" helper="сколько дел и главное, сроки сегодня, саббат завтра; пусто — не присылать">
+      <Field label="Утром: план на день" helper="сколько дел и самое срочное, сроки сегодня, саббат завтра; пусто — не присылать">
         <TimeField value={n.morning} onChange={(morning) => set({ morning })} />
       </Field>
       <Field label="Днём: как идёт день" helper="сколько сделано и что можно уменьшить; пусто — не присылать">

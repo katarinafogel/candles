@@ -4,7 +4,7 @@
 // window from its time (a phone asleep at 9:00 still gets the morning at 9:15). Nothing in the навь.
 import { addDays } from './days.ts'
 import { isDone, isScheduled, habitLogId } from './habits.ts'
-import { dayPlan, deadlinesSoon } from './selectors.ts'
+import { dayPlan, deadlinesSoon, priorityOf } from './selectors.ts'
 import type { DayKey, GrimoireState } from './types.ts'
 import { sabbatDays, sabbats } from './wheel.ts'
 
@@ -38,8 +38,9 @@ export function morningMessage(g: GrimoireState, today: DayKey): PushMessage | u
   const plan = dayPlan(g, today)
   const open = plan.all.filter((t) => t.status !== 'done')
   const parts: string[] = []
-  const main = open.find((t) => (t.slot ?? 'extra') === 'main')
-  if (open.length) parts.push(`В плане ${open.length}${main ? `, главное — ${main.title}` : ''}.`)
+  // The plan is sorted by priority: its first open deed is the most urgent one, if it is above «medium».
+  const main = open.find((t) => ['highest', 'high'].includes(priorityOf(t)))
+  if (open.length) parts.push(`В плане ${open.length}${main ? `, важнее всего — ${main.title}` : ''}.`)
   else parts.push('План пуст — можно выбрать одно дело из бэклога или просто пожить.')
   if (n.deadlines) {
     const dl = deadlinesSoon(g, today, today).map((t) => t.title)

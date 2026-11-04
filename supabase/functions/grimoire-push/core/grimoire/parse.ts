@@ -4,10 +4,11 @@
 //   «помыть окна **☠☠ #дом !пт»  → 2 stars, dread 2, tag «дом», deadline on Friday
 //   «кино с @аня +радость»       → a joy linked to the person «Аня»
 // Tokens: * stars (1–3), ☠ dread (0–3), #tag, !deadline (пн…вс, сегодня, завтра, послезавтра,
-// 12.11, 12.11.2026, 2026-11-12), @person, +радость, +главное / +доп / +необяз (slot, puts it in today's
+// 12.11, 12.11.2026, 2026-11-12), @person, +радость, +наивысший / +высокий / +нормальный / +низкий /
+// +низший (priority; the old +главное / +доп / +необяз give high / medium / low and put it in today's
 // plan), +сегодня / +завтра (the day to do it).
 import { addDays, weekday } from './days.ts'
-import type { DayKey, TaskSlot, TaskType } from './types.ts'
+import type { DayKey, TaskPriority, TaskType } from './types.ts'
 
 export interface ParsedTask {
   title: string
@@ -16,14 +17,18 @@ export interface ParsedTask {
   tags: string[]
   dueAt?: DayKey
   doOn?: DayKey
-  slot?: TaskSlot
+  priority?: TaskPriority
   type: TaskType
   /** Names after @, as typed. */
   people: string[]
 }
 
 const weekdays: Record<string, number> = { пн: 1, вт: 2, ср: 3, чт: 4, пт: 5, сб: 6, вс: 7 }
-const slots: Record<string, TaskSlot> = { главное: 'main', доп: 'extra', дополнительное: 'extra', необяз: 'optional', необязательное: 'optional' }
+const priorityWords: Record<string, TaskPriority> = {
+  наивысший: 'highest', срочно: 'highest', высокий: 'high', важно: 'high', нормальный: 'medium', низкий: 'low', низший: 'lowest',
+}
+/** The old plan parts: a priority and today's plan. */
+const oldParts: Record<string, TaskPriority> = { главное: 'high', доп: 'medium', дополнительное: 'medium', необяз: 'low', необязательное: 'low' }
 
 /** A day word or date relative to `today`; undefined when it is not one. */
 export function parseDay(word: string, today: DayKey): DayKey | undefined {
@@ -83,8 +88,9 @@ export function parseQuickAdd(line: string, today: DayKey): ParsedTask {
     } else if (tok.startsWith('+') && tok.length > 1) {
       const w = tok.slice(1).toLowerCase()
       if (w === 'радость') out.type = 'joy'
-      else if (w in slots) {
-        out.slot = slots[w]
+      else if (w in priorityWords) out.priority = priorityWords[w]
+      else if (w in oldParts) {
+        out.priority = oldParts[w]
         out.doOn ??= today
       } else if (parseDay(w, today)) out.doOn = parseDay(w, today)
       else words.push(tok)

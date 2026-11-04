@@ -350,6 +350,9 @@ export function Modal({
             bg="bg.panel"
             borderWidth="1px"
             borderColor="border.emphasized"
+            // Soft round corners; a phone shows the dialog full screen, square.
+            borderRadius={{ mdDown: '0', md: '2xl' }}
+            overflow="hidden"
             backgroundImage="radial-gradient(30rem 16rem at 100% 0%, var(--g-glow-soft), transparent 70%)"
             pt={{ mdDown: 'env(safe-area-inset-top)' }}
             pb={{ mdDown: 'env(safe-area-inset-bottom)' }}
@@ -622,7 +625,7 @@ export function ConfirmHost() {
       <Portal>
         <Dialog.Backdrop {...scrim} />
         <Dialog.Positioner px="4">
-          <Dialog.Content bg="bg.panel" borderWidth="1px" borderColor="border.emphasized">
+          <Dialog.Content bg="bg.panel" borderWidth="1px" borderColor="border.emphasized" borderRadius="2xl">
             <Dialog.Body pt="6" pb="2">
               <Text>{ask?.message}</Text>
             </Dialog.Body>

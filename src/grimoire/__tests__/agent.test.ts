@@ -38,15 +38,16 @@ describe('agent tools', () => {
     let { state, result } = run(base, 'grimoire_add_task', { line: 'помыть окна **☠☠ #дом !пт' })
     const t = (result as { task: { id: string; dueAt: string; stars: number; dread: number } }).task
     expect(t).toMatchObject({ dueAt: '2026-10-30', stars: 2, dread: 2 })
-    ;({ state } = run(state, 'grimoire_plan_task', { id: t.id, day: '2026-10-26', slot: 'main' }))
-    const today = run(state, 'grimoire_today').result as { day: string; plan: { main: { id: string }[] } }
+    ;({ state } = run(state, 'grimoire_plan_task', { id: t.id, day: '2026-10-26', priority: 'high' }))
+    const today = run(state, 'grimoire_today').result as { day: string; plan: { deeds: { id: string; priority?: string }[] } }
     expect(today.day).toBe('2026-10-26')
-    expect(today.plan.main.map((x) => x.id)).toEqual([t.id])
+    expect(today.plan.deeds).toMatchObject([{ id: t.id, priority: 'high' }])
   })
 
   it('warns, but still adds, when the day’s plan is full', () => {
-    let { state } = run(base, 'grimoire_add_task', { title: 'первое', doOn: '2026-10-26', slot: 'main' })
-    const r = run(state, 'grimoire_add_task', { title: 'второе', doOn: '2026-10-26', slot: 'main' })
+    const one = { ...base, meta: { ...base.meta, planMax: 1 } }
+    let { state } = run(one, 'grimoire_add_task', { title: 'первое', doOn: '2026-10-26' })
+    const r = run(state, 'grimoire_add_task', { title: 'второе', doOn: '2026-10-26' })
     state = r.state
     expect((r.result as { warning?: string }).warning).toMatch(/лимит/)
     expect(Object.keys(state.tasks)).toHaveLength(2)
@@ -62,9 +63,9 @@ describe('agent tools', () => {
   })
 
   it('warns when a deed would take the day past its stars, and links «ждёт другое дело»', () => {
-    let { state } = run(base, 'grimoire_add_task', { title: 'раз', stars: 3, doOn: '2026-10-26', slot: 'extra' })
-    ;({ state } = run(state, 'grimoire_add_task', { title: 'два', stars: 3, doOn: '2026-10-26', slot: 'extra' }))
-    const third = run(state, 'grimoire_add_task', { title: 'три', stars: 2, doOn: '2026-10-26', slot: 'extra' })
+    let { state } = run(base, 'grimoire_add_task', { title: 'раз', stars: 3, doOn: '2026-10-26' })
+    ;({ state } = run(state, 'grimoire_add_task', { title: 'два', stars: 3, doOn: '2026-10-26' }))
+    const third = run(state, 'grimoire_add_task', { title: 'три', stars: 2, doOn: '2026-10-26' })
     expect((third.result as { warning?: string }).warning).toContain('звёзд в плане станет 8 при лимите 6')
     const today = run(third.state, 'grimoire_today').result as { dayStars: { inPlan: number; limit: number; over: number } }
     expect(today.dayStars).toMatchObject({ inPlan: 8, limit: 6, over: 2 })

@@ -23,11 +23,12 @@ import {
   isWaiting,
   joysAhead,
   overLimit,
-  slotCounts,
+  planCount,
+  priorityOf,
   stepsOf,
   toReview,
 } from './selectors.ts'
-import type { DayKey, GrimoireState, PostponeReason, Task, TaskSlot } from './types.ts'
+import type { DayKey, GrimoireState, PostponeReason, Task } from './types.ts'
 import { nextFullMoon, sabbatCardDefaults, sabbatOrder, sabbats, segmentOf, wheelNow } from './wheel.ts'
 
 export class AgentError extends Error {}
@@ -76,7 +77,8 @@ interface Ctx extends AgentContext {
 }
 
 const day = { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'день YYYY-MM-DD (день гримуара с учётом границы дня)' }
-const slot = { type: 'string', enum: ['main', 'extra', 'optional'], description: 'главное / дополнительное / необязательное' }
+const priorityValues = ['highest', 'high', 'medium', 'low', 'lowest'] as const
+const priority = { type: 'string', enum: priorityValues, description: 'приоритет как в Jira: наивысший / высокий / нормальный (по умолчанию) / низкий / самый низкий' }
 const reasons: PostponeReason[] = ['unclear', 'tooBig', 'unpleasant', 'hardToDecide', 'needTalk', 'noPlace', 'noEnergy', 'dontKnow']
 
 const str = (a: Args, k: string, required = false): string | undefined => {
@@ -128,7 +130,7 @@ function view(t: Task, c: Ctx, full = false) {
     status: t.status,
     ...(t.type === 'joy' ? { type: 'joy' } : {}),
     ...(t.doOn ? { doOn: t.doOn } : {}),
-    ...(t.slot && t.doOn ? { slot: t.slot } : {}),
+    ...(priorityOf(t) !== 'medium' ? { priority: priorityOf(t) } : {}),
     ...(t.dueAt ? { dueAt: t.dueAt } : {}),
     stars: t.stars,
     dread: t.dread,
@@ -176,6 +178,7 @@ const taskFieldSchema = {
   zone: { type: 'string' },
   rewardText: { type: 'string', description: 'своя настоящая награда' },
   evenInNav: { type: 'boolean', description: 'напоминать даже в нави (реальная дата, которую нельзя пропустить)' },
+  priority,
 }
 
 function taskFields(a: Args): Partial<Task> {
@@ -187,6 +190,8 @@ function taskFields(a: Args): Partial<Task> {
   }
   const type = oneOf(a, 'type', ['deed', 'joy'] as const)
   if (type) f.type = type
+  const p = oneOf(a, 'priority', priorityValues)
+  if (p) f.priority = p
   const stars = int(a, 'stars', 1, 3)
   if (stars != null) f.stars = stars as Task['stars']
   const dread = int(a, 'dread', 0, 3)
@@ -208,11 +213,11 @@ function taskFields(a: Args): Partial<Task> {
   return f
 }
 
-/** What is over if a deed of `stars` joins `day` in `slot`: the slot's limit, the day's stars, or nothing. */
-function planWarning(c: Ctx, day: DayKey, slot: TaskSlot, stars: number) {
+/** What is over if a deed of `stars` joins `day`: the plan's limit, the day's stars, or nothing. */
+function planWarning(c: Ctx, day: DayKey, stars: number) {
   const g = c.get()
   const parts: string[] = []
-  if (overLimit(g.meta, slotCounts(g, day), slot)) parts.push(`на ${day} уже набран лимит для «${slot}»`)
+  if (overLimit(g.meta, planCount(g, day))) parts.push(`на ${day} в плане уже ${planCount(g, day)} дел при лимите ${g.meta.planMax}`)
   const st = dayStars(g, day)
   if (st.limit > 0 && st.total + stars > st.limit) parts.push(`звёзд в плане станет ${st.total + stars} при лимите ${st.limit}`)
   return parts.length ? parts.join('; ') : undefined
@@ -232,7 +237,7 @@ const tools: (ToolDef & { run: Run })[] = [
   {
     name: 'grimoire_today',
     description:
-      'Сегодняшний свиток: план (главное → дополнительное → необязательное → ритуалы), что осталось со вчера для утреннего разбора, радости впереди, сроки рядом, буксующие, колесо года, состояние нави. Вызывай первым в каждой сводке. Если хозяйка в нави (nav.active) — не предлагай план и не проверяй дела.',
+      'Сегодняшний свиток: план (дела по приоритету, самые срочные первыми, и ритуалы), что осталось со вчера для утреннего разбора, радости впереди, сроки рядом, буксующие, колесо года, состояние нави. Вызывай первым в каждой сводке. Если хозяйка в нави (nav.active) — не предлагай план и не проверяй дела.',
     inputSchema: { type: 'object', properties: {}, additionalProperties: false },
     writes: true,
     run: (_a, c) => {
@@ -251,12 +256,12 @@ const tools: (ToolDef & { run: Run })[] = [
         timeZone: g.meta.timeZone ?? null,
         nav: { active: g.meta.nav.active, since: g.meta.nav.since ?? null, note: navNote(c) ?? null, agent: g.meta.nav.agent ?? 'hello' },
         evenInNav: evenInNav(g, addDays(c.today, 3)).map(v),
-        planLimit: g.meta.planLimit,
+        planMax: g.meta.planMax,
         dayStars: (() => {
           const st = dayStars(g, c.today)
           return { inPlan: st.total, joys: st.joy, limit: st.limit, over: st.over }
         })(),
-        plan: { main: plan.main.map(v), extra: plan.extra.map(v), optional: plan.optional.map(v), rituals: plan.habits.map(v) },
+        plan: { deeds: plan.all.map(v), rituals: plan.habits.map(v) },
         morningReview: g.meta.reviewedDay === c.today || g.meta.nav.active ? [] : toReview(g, c.today).map(v),
         joysAhead: joysAhead(g, c.today).slice(0, 5).map(v),
         deadlinesSoon: deadlinesSoon(g, c.today, addDays(c.today, 3)).map(v),
@@ -342,14 +347,13 @@ const tools: (ToolDef & { run: Run })[] = [
   {
     name: 'grimoire_add_task',
     description:
-      'Новое дело. Можно строкой как в быстром добавлении (line: «помыть окна **☠☠ #дом !пт», «кино +радость», «+главное», «+завтра») или полями. Без doOn дело уходит в бэклог. Если на день уже набран лимит плана, дело всё равно добавится, но вернётся warning — тогда спроси, что убрать.',
+      'Новое дело. Можно строкой как в быстром добавлении (line: «помыть окна **☠☠ #дом !пт», «кино +радость», «+высокий», «+завтра») или полями. Без doOn дело уходит в бэклог. Если на день уже набран лимит плана, дело всё равно добавится, но вернётся warning — тогда спроси, что убрать.',
     inputSchema: {
       type: 'object',
       properties: {
         line: { type: 'string', description: 'строка быстрого добавления' },
         ...taskFieldSchema,
         doOn: { ...day, description: 'на какой день поставить в план' },
-        slot,
         steps: { type: 'array', items: { type: 'string' }, description: 'сразу расколоть на шаги (в план пойдёт первый)' },
       },
       additionalProperties: false,
@@ -360,17 +364,15 @@ const tools: (ToolDef & { run: Run })[] = [
       const parsed = line ? parseQuickAdd(line, c.today) : undefined
       const fields: Partial<Task> = {
         ...(parsed
-          ? { title: parsed.title, stars: parsed.stars, dread: parsed.dread, tags: parsed.tags, type: parsed.type, dueAt: parsed.dueAt, doOn: parsed.doOn, slot: parsed.slot }
+          ? { title: parsed.title, stars: parsed.stars, dread: parsed.dread, tags: parsed.tags, type: parsed.type, dueAt: parsed.dueAt, doOn: parsed.doOn, ...(parsed.priority ? { priority: parsed.priority } : {}) }
           : {}),
         ...taskFields(a),
       }
       const doOn = dayArg(a, 'doOn') ?? fields.doOn
-      const s = oneOf(a, 'slot', ['main', 'extra', 'optional'] as const) ?? fields.slot
       if (!fields.title) throw new AgentError('нужно название (title или line)')
       const id = nanoid()
-      const slotFinal: TaskSlot | undefined = doOn ? (s ?? 'extra') : undefined
-      const warning = doOn && slotFinal ? planWarning(c, doOn, slotFinal, fields.stars ?? 1) : undefined
-      c.apply(A.addTask.type, { fields: { ...fields, title: fields.title, id, doOn, slot: slotFinal }, at: c.at, day: c.today })
+      const warning = doOn ? planWarning(c, doOn, fields.stars ?? 1) : undefined
+      c.apply(A.addTask.type, { fields: { ...fields, title: fields.title, id, doOn }, at: c.at, day: c.today })
       const steps = strs(a, 'steps')
       if (steps?.length) c.apply(A.splitTask.type, { id, steps, at: c.at, day: c.today })
       return { task: view(c.get().tasks[id], c), ...(warning ? { warning } : {}) }
@@ -427,16 +429,16 @@ const tools: (ToolDef & { run: Run })[] = [
   },
   {
     name: 'grimoire_plan_task',
-    description: 'Поставить дело в план на день со слотом (главное / дополнительное / необязательное) или убрать из плана в бэклог (day не передан). Это выбор, а не перенос: перенос — grimoire_postpone_task.',
-    inputSchema: { type: 'object', properties: { id: { type: 'string' }, day, slot }, required: ['id'], additionalProperties: false },
+    description: 'Поставить дело в план на день (можно сразу с приоритетом) или убрать из плана в бэклог (day не передан). Это выбор, а не перенос: перенос — grimoire_postpone_task.',
+    inputSchema: { type: 'object', properties: { id: { type: 'string' }, day, priority }, required: ['id'], additionalProperties: false },
     writes: true,
     run: (a, c) => {
       const t = task(c, a.id)
       const d = dayArg(a, 'day')
-      const s = oneOf(a, 'slot', ['main', 'extra', 'optional'] as const)
-      const warning = d && t.doOn !== d ? planWarning(c, d, s ?? t.slot ?? 'extra', t.stars) : undefined
+      const p = oneOf(a, 'priority', priorityValues)
+      const warning = d && t.doOn !== d ? planWarning(c, d, t.stars) : undefined
       if (d && isBlocked(t, c.get().tasks)) throw new AgentError('дело ждёт другое дело (waitsFor), его нельзя поставить в план')
-      c.apply(A.planTask.type, { id: t.id, day: d, slot: s })
+      c.apply(A.planTask.type, { id: t.id, day: d, ...(p ? { priority: p } : {}) })
       return { task: view(c.get().tasks[t.id], c), ...(warning ? { warning } : {}) }
     },
   },
@@ -708,7 +710,7 @@ export const agentInstructions = `Это «Гримуар дел» — личн�
 Как работать:
 - Каждую сводку начинай с grimoire_today. Если nav.active — хозяйка в нави: никаких планов, проверок и напоминаний; nav.agent = hello — только мягкое «я тут», silent — ничего. Единственное исключение — дела из evenInNav.
 - Дни считаются по границе дня хозяйки (часовой пояс и час в настройках); даты — YYYY-MM-DD.
-- Не штрафуй и не дави: просрочек нет, невыполненное уходит на утренний разбор или в бэклог. Предлагай, а не требуй. План дня маленький: по умолчанию одно главное и одно необязательное, а звёзд сложности — не больше dayStars.limit; при превышении любого лимита (warning) спроси, что убрать.
+- Не штрафуй и не дави: просрочек нет, невыполненное уходит на утренний разбор или в бэклог. Предлагай, а не требуй. У дел приоритет как в Jira (highest, high, medium — по умолчанию, low, lowest); план дня идёт от самых срочных. План маленький: дел не больше planMax (0 — без лимита), а звёзд сложности — не больше dayStars.limit; при превышении любого лимита (warning) спроси, что убрать.
 - Меняй дела только по словам хозяйки: «сделала», «перенеси», «добавь». Не отмечай выполненным то, о чём она не сказала.
 - Буксующее дело (stuck) — повод расколоть, уменьшить, отпустить или свериться с «хочу / надо» и «чья обязанность», а не напомнить ещё раз.
 - Чудовища (dread 3) сами в план не лезут: предлагай их только когда хозяйка готова.

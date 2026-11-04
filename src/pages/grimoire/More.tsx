@@ -130,12 +130,8 @@ export default function GrimoireMore() {
               { value: 'south', label: 'южное' },
             ]} />
           </Field>
-          <Field label="Лимит плана на день" helper="при превышении гримуар спросит, что сдвинуть; 0 — без лимита">
-            <HStack gap="3" wrap="wrap">
-              <NumInput value={meta.planLimit.main} onChange={(v) => dispatch(A.updateMeta({ planLimit: { ...meta.planLimit, main: Math.max(0, Math.round(v ?? 0)) } }))} suffix="главное" width="160px" />
-              <NumInput value={meta.planLimit.extra} onChange={(v) => dispatch(A.updateMeta({ planLimit: { ...meta.planLimit, extra: Math.max(0, Math.round(v ?? 0)) } }))} suffix="доп." width="140px" />
-              <NumInput value={meta.planLimit.optional} onChange={(v) => dispatch(A.updateMeta({ planLimit: { ...meta.planLimit, optional: Math.max(0, Math.round(v ?? 0)) } }))} suffix="необяз." width="160px" />
-            </HStack>
+          <Field label="Лимит плана на день" helper="сколько дел в плане, прежде чем гримуар спросит, что сдвинуть; 0 — без лимита (остаётся лимит звёзд)">
+            <NumInput value={meta.planMax} onChange={(v) => dispatch(A.updateMeta({ planMax: Math.max(0, Math.round(v ?? 0)) }))} suffix="дел" width="140px" />
           </Field>
           <Field label="Похвала" helper="что пишет гримуар, когда дело сделано">
             <Chips value={meta.tone.praise} onChange={(v) => v && dispatch(A.updateMeta({ tone: { ...meta.tone, praise: v as typeof meta.tone.praise } }))} options={[

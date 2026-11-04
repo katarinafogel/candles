@@ -1,8 +1,8 @@
-import type { PostponeReason, TaskOwnerKind, TaskSlot, TaskSource, TaskStatus, Want } from './types'
+import type { PostponeReason, TaskOwnerKind, TaskPriority, TaskSource, TaskStatus, Want } from './types'
 
 export const dreadLabel = ['норм', 'лень', 'не хочу', 'чудовище'] as const
 
-export const slotLabel: Record<TaskSlot, string> = { main: 'главное', extra: 'дополнительное', optional: 'необязательное' }
+export const priorityLabel: Record<TaskPriority, string> = { highest: 'наивысший', high: 'высокий', medium: 'нормальный', low: 'низкий', lowest: 'самый низкий' }
 
 export const statusLabel: Record<TaskStatus, string> = {
   open: 'открыто',

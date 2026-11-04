@@ -3,10 +3,10 @@
 import { Badge, Box, HStack, Text } from '@chakra-ui/react'
 import { LuCloud, LuCloudLightning, LuCloudRain, LuSun } from 'react-icons/lu'
 import { dueDay, humanDay } from '../../grimoire/days'
-import { dreadLabel } from '../../grimoire/labels'
+import { dreadLabel, priorityLabel } from '../../grimoire/labels'
 import { tagPalette } from '../../grimoire/tags'
 import { useAppSelector } from '../../store'
-import type { DayKey } from '../../grimoire/types'
+import type { DayKey, TaskPriority } from '../../grimoire/types'
 
 const star = (on: boolean, px: string) => (
   <svg width={px} height={px} viewBox="0 0 24 24" aria-hidden="true">
@@ -168,5 +168,33 @@ export function FrogIcon({ size = 16 }: { size?: number }) {
       <path d="M9 14.2c1.8 1.2 4.2 1.2 6 0" />
       <path d="M4 18.6l-2 1.6M20 18.6l2 1.6" />
     </svg>
+  )
+}
+
+/**
+ * A deed's priority as Jira draws it: two arrows up, one up, two bars, one down, two down; in the
+ * theme's colours (themes.ts, --g-prio-*), mixed into the text around so it reads on cards too.
+ */
+export function PriorityIcon({ p, size = 14 }: { p: TaskPriority; size?: number }) {
+  const path = {
+    highest: 'M6 17l6-5 6 5M6 11l6-5 6 5',
+    high: 'M6 15l6-6 6 6',
+    medium: 'M6 9.5h12M6 14.5h12',
+    low: 'M6 9l6 6 6-6',
+    lowest: 'M6 7l6 5 6-5M6 13l6 5 6-5',
+  }[p]
+  return (
+    <Box
+      as="span"
+      display="inline-flex"
+      lineHeight="0"
+      color={`color-mix(in srgb, var(--g-prio-${p}) 78%, var(--card-fg, var(--g-fg)))`}
+      title={`приоритет: ${priorityLabel[p]}`}
+      aria-label={`приоритет: ${priorityLabel[p]}`}
+    >
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={p === 'highest' || p === 'lowest' ? 2.6 : 2.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d={path} />
+      </svg>
+    </Box>
   )
 }

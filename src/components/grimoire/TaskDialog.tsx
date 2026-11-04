@@ -64,12 +64,11 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
       dispatch(A.updateTask({ ...edits(), title: t.title.trim() || live.title }))
       onClose()
     }
-    // Moved onto today, into another slot, or made harder while on today: the plan may be full.
+    // Moved onto today, or made harder while on today: the plan may be full.
     const wasToday = live.doOn === today && isOpenTask(live)
-    const slotNow = t.slot ?? 'extra'
     const extraStars = wasToday ? Math.max(0, t.stars - live.stars) : t.stars
-    if (t.doOn === today && !live.habitId && (!wasToday || slotNow !== (live.slot ?? 'extra') || extraStars > 0))
-      guard(slotNow, write, { stars: extraStars, self: live.id, starsOnly: wasToday && slotNow === (live.slot ?? 'extra') })
+    if (t.doOn === today && !live.habitId && (!wasToday || extraStars > 0))
+      guard(true, write, { stars: extraStars, self: live.id, starsOnly: wasToday })
     else write()
   }
   const [guard, guardDialog] = usePlanGuard()
@@ -226,7 +225,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
                 </Button>
               )}
               {live.doOn !== today && (
-                <Button size="sm" variant="outline" onClick={() => guard(t.slot ?? 'extra', () => act(() => withUndo('В плане на сегодня', () => dispatch(A.planTask({ id: live.id, day: today, slot: t.slot })))), { stars: t.stars, self: live.id })}>
+                <Button size="sm" variant="outline" onClick={() => guard(true, () => act(() => withUndo('В плане на сегодня', () => dispatch(A.planTask({ id: live.id, day: today })))), { stars: t.stars, self: live.id })}>
                   На сегодня
                 </Button>
               )}
@@ -289,7 +288,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
                     Не сегодня
                   </Button>
                 ) : (
-                  <Button size="xs" colorPalette="green" onClick={() => guard(live.doOn === today ? undefined : (t.slot ?? 'main'), () => act(() => dispatch(A.eatFrog({ id: live.id, day: today }))), { stars: t.stars, self: live.id })}>
+                  <Button size="xs" colorPalette="green" onClick={() => guard(live.doOn !== today, () => act(() => dispatch(A.eatFrog({ id: live.id, day: today }))), { stars: t.stars, self: live.id })}>
                     Съесть сегодня
                   </Button>
                 )}

@@ -165,6 +165,12 @@ const nightTags = tagVars({
   mint: palettes.emerald[200], stone: palettes.ember[600], taupe: palettes.ember[400], cream: palettes.ember[200],
 })
 
+// ---------- priorities ----------
+// Jira's arrows in the theme's colours: the urgent ones warm, «medium» neutral, the low ones cool.
+const prioVars = (p: Record<string, string>) => Object.fromEntries(Object.entries(p).map(([k, v]) => [`--g-prio-${k}`, v]))
+const nightPriorities = prioVars({ highest: palettes.ember[400], high: palettes.ember[300], medium: '#b5a891', low: palettes.emerald[300], lowest: palettes.emerald[400] })
+const paperPriorities = prioVars({ highest: paperScales.ember[200], high: paperScales.ember[400], medium: paper.stone, low: paper.sage, lowest: paper.eucalyptus })
+
 export const themes: Record<ThemeId, Theme> = {
   night: {
     label: 'ночь',
@@ -209,6 +215,7 @@ export const themes: Record<ThemeId, Theme> = {
       '--g-joy-mark': '#f4efe6',
       ...nightCards,
       ...nightTags,
+      ...nightPriorities,
     },
   },
   // White paper in the light palette (see `paper` above): slate ink, sage accents, cream and taupe.
@@ -257,6 +264,7 @@ export const themes: Record<ThemeId, Theme> = {
       '--g-joy-mark': paper.stone,
       ...paperCards,
       ...paperTags,
+      ...paperPriorities,
     },
   },
 }

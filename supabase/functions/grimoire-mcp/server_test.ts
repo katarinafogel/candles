@@ -48,7 +48,7 @@ Deno.test('initialize, list tools, notifications', async () => {
 Deno.test('adds, completes and reads back through storage', async () => {
   const s = await memory()
   const add = await (
-    await handle(post({ jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'grimoire_add_task', arguments: { line: 'зуб ***☠☠☠ +главное' } } }), s, NOW)
+    await handle(post({ jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'grimoire_add_task', arguments: { line: 'зуб ***☠☠☠ +высокий' } } }), s, NOW)
   ).json()
   const id = add.result.structuredContent.task.id as string
   assert(s.rows.has(`task:${id}`))

@@ -20,7 +20,7 @@ export function defaultDraft(ctx: NewTaskCtx, today: DayKey): TaskDraft {
     dread: 0,
     tags: [],
     type: 'deed',
-    ...(ctx.planToday ? { doOn: today, slot: 'extra' as const } : {}),
+    ...(ctx.planToday ? { doOn: today } : {}),
     ...ctx.fields,
   }
 }
@@ -28,7 +28,7 @@ export function defaultDraft(ctx: NewTaskCtx, today: DayKey): TaskDraft {
 const textKeys = ['note', 'whyText'] as const
 const listKeys = ['why', 'costs', 'personIds'] as const
 
-/** The draft as addTask fields: trimmed, without empty strings and lists; a planned deed gets «доп» by default. */
+/** The draft as addTask fields: trimmed, without empty strings and lists; «medium» is stored as no priority. */
 export function draftToFields(draft: TaskDraft): Partial<Task> & { title: string } {
   const f: Partial<Task> & { title: string } = { ...draft, title: draft.title.trim().slice(0, 200) }
   for (const k of textKeys) if (!f[k]?.trim()) delete f[k]
@@ -39,8 +39,9 @@ export function draftToFields(draft: TaskDraft): Partial<Task> & { title: string
   if (!f.doOn) {
     delete f.doOn
     delete f.doAt
-    delete f.slot
-  } else if (!f.slot) f.slot = 'extra'
+  }
+  delete f.slot
+  if (f.priority === 'medium') delete f.priority
   if (!f.doAt) delete f.doAt
   if (!f.dueAt) delete f.dueAt
   if (f.estimateMin == null) delete f.estimateMin

@@ -1,4 +1,4 @@
-// The day scroll: joys ahead, the morning review, today's plan (main → extra → optional → rituals),
+// The day scroll: joys ahead, the morning review, today's plan (deeds by priority, then rituals),
 // one-line adding and «на сегодня всё».
 import { Box, Button, Flex, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useEffect, useMemo, useState } from 'react'
@@ -10,9 +10,8 @@ import { cardColumns, TaskCard } from '../../components/grimoire/TaskCard'
 import { Empty, Modal, PageHeader, Section } from '../../components/ui'
 import { cancel, toBacklog, useToday, withUndo } from '../../grimoire/act'
 import { addDays, dayKey, days, daysBetween, humanDay } from '../../grimoire/days'
-import { slotLabel } from '../../grimoire/labels'
-import { backlog, dayPlan, dayStars, deadlinesSoon, evenInNav, isBlocked, joysAhead, toReview, words } from '../../grimoire/selectors'
-import type { Sabbat, Task, TaskSlot } from '../../grimoire/types'
+import { backlog, dayPlan, dayStars, deadlinesSoon, evenInNav, isBlocked, joysAhead, priorities, priorityOf, toReview, words } from '../../grimoire/selectors'
+import type { Sabbat, Task } from '../../grimoire/types'
 import { isFullMoon, moonPhase, moonPhaseNames, sabbats, wheelNow } from '../../grimoire/wheel'
 import { upcomingDates } from '../../grimoire/people'
 import { WorkshopOffers } from '../../components/grimoire/FromWorkshop'
@@ -21,7 +20,7 @@ import { WheelPick } from '../../components/grimoire/WheelPick'
 import { sabbatTag, SabbatNoteDialog } from './Wheel'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
-import { Dread, StarMark, Stars } from '../../components/grimoire/Marks'
+import { Dread, PriorityIcon, StarMark, Stars } from '../../components/grimoire/Marks'
 
 /** «Впереди радости» and «Сегодня»: like Section, edge to edge on a phone. */
 const edgeBlock = {
@@ -137,29 +136,31 @@ function MorningReview({ items, today, open }: { items: Task[]; today: string; o
   )
 }
 
-/** Choosing today's deeds from the backlog; monsters are there too but never suggested first. */
-function PickFromBacklog({ onClose, today, slot }: { onClose: () => void; today: string; slot: TaskSlot }) {
+const rank = (t: Task) => priorities.indexOf(priorityOf(t))
+
+/** Choosing today's deeds from the backlog, the most urgent first; monsters are there too but never suggested first. */
+function PickFromBacklog({ onClose, today }: { onClose: () => void; today: string }) {
   const dispatch = useAppDispatch()
   const g = useAppSelector((s) => s.grimoire)
   const list = useMemo(
     () =>
       backlog(g, today)
         .filter((t) => !isBlocked(t, g.tasks))
-        .sort((a, b) => (a.dueAt ?? '9999').localeCompare(b.dueAt ?? '9999') || a.dread - b.dread || a.createdAt.localeCompare(b.createdAt)),
+        .sort((a, b) => rank(a) - rank(b) || (a.dueAt ?? '9999').localeCompare(b.dueAt ?? '9999') || a.dread - b.dread || a.createdAt.localeCompare(b.createdAt)),
     [g, today],
   )
   const [guard, guardDialog] = usePlanGuard()
   return (
-    <Modal open onClose={onClose} title={`В план: ${slotLabel[slot]}`}>
+    <Modal open onClose={onClose} title="В план на сегодня">
       {guardDialog}
       {list.length ? (
         <Stack gap="1">
           {list.map((t) => (
             <Flex key={t.id} align="center" gap="3" py="2" px="2" borderRadius="l2" _hover={{ bg: 'bg.muted' }} cursor="pointer" onClick={() => {
               guard(
-                slot,
+                true,
                 () => {
-                  dispatch(A.planTask({ id: t.id, day: today, slot }))
+                  dispatch(A.planTask({ id: t.id, day: today }))
                   onClose()
                 },
                 { stars: t.stars, self: t.id },
@@ -168,6 +169,7 @@ function PickFromBacklog({ onClose, today, slot }: { onClose: () => void; today:
               <Box flex="1">
                 <Text fontSize="sm">{t.title}</Text>
                 <HStack gap="2">
+                  <PriorityIcon p={priorityOf(t)} size={12} />
                   <Stars n={t.stars} size={10} />
                   <Dread n={t.dread} size={10} />
                   {t.dueAt && <Text fontSize="xs" color="fg.muted">до {humanDay(t.dueAt.slice(0, 10), today)}</Text>}
@@ -210,14 +212,15 @@ function DayStars({ today }: { today: string }) {
   )
 }
 
-function PlanSection({ title, slot, tasks, today, open, pick }: { title: string; slot: TaskSlot; tasks: Task[]; today: string; open: (t: Task) => void; pick: (s: TaskSlot) => void }) {
+/** The day's deeds in one list, the most urgent first (see byPlanOrder). */
+function PlanSection({ title, tasks, today, open, pick }: { title: string; tasks: Task[]; today: string; open: (t: Task) => void; pick: () => void }) {
   return (
     <Box mb="4">
       <Flex align="center" justify="space-between" mb="1.5">
         <Text fontFamily="heading" fontSize="xl" color="ember.100" fontWeight="semibold">
           {title}
         </Text>
-        <Button size="xs" variant="ghost" onClick={() => pick(slot)}>
+        <Button size="xs" variant="ghost" onClick={pick}>
           + из бэклога
         </Button>
       </Flex>
@@ -229,7 +232,7 @@ function PlanSection({ title, slot, tasks, today, open, pick }: { title: string;
         </SimpleGrid>
       ) : (
         <Text fontSize="sm" color="fg.subtle" px="2">
-          {slot === 'optional' ? 'Можно ничего.' : 'Пусто.'}
+          Пусто. Можно взять что-то из бэклога — или ничего.
         </Text>
       )}
     </Box>
@@ -241,20 +244,20 @@ export default function Scroll() {
   const g = useAppSelector((s) => s.grimoire)
   const today = useToday()
   const { open, dialog } = useTaskDialog()
-  const [pick, setPick] = useState<TaskSlot>()
+  const [pick, setPick] = useState(false)
   const [survival, setSurvival] = useState(false)
   const [wheelPick, setWheelPick] = useState(false)
   const [noteFor, setNoteFor] = useState<Sabbat>()
   const meta = g.meta
   const w = words(meta)
   const fullPlan = dayPlan(g, today)
-  // Energy 1–2 in today's latest mirror entry: offer to show only the main deeds and the light ones.
+  // Energy 1–2 in today's latest mirror entry: offer to show only the urgent deeds and the light ones.
   const lastEnergy = Object.values(g.journal)
     .filter((e) => e.day === today && e.energy)
     .sort((a, b) => b.at.localeCompare(a.at))[0]?.energy
   const lowEnergy = !!lastEnergy && lastEnergy <= 2
-  const light = (t: Task) => t.stars === 1 || t.status === 'done'
-  const plan = survival ? { ...fullPlan, extra: fullPlan.extra.filter(light), optional: fullPlan.optional.filter(light) } : fullPlan
+  const light = (t: Task) => t.stars === 1 || t.status === 'done' || ['highest', 'high'].includes(priorityOf(t))
+  const plan = survival ? { ...fullPlan, all: fullPlan.all.filter(light) } : fullPlan
   const review = meta.reviewedDay === today || meta.nav.active ? [] : toReview(g, today)
   // Back from the навь today, or away for 3+ days: a welcome first, until it is answered.
   const lastNav = meta.nav.history[meta.nav.history.length - 1]
@@ -337,7 +340,7 @@ export default function Scroll() {
       {lowEnergy && (
         <Flex mb="4" p="3" borderRadius="l2" bg="bg.muted" align="center" gap="3" wrap="wrap">
           <Text fontSize="sm" flex="1" color="fg.muted">
-            Энергии сегодня мало. Можно оставить только главное и лёгкое.
+            Энергии сегодня мало. Можно оставить только срочное и лёгкое.
           </Text>
           <Button size="xs" variant={survival ? 'solid' : 'outline'} onClick={() => setSurvival(!survival)}>
             {survival ? 'Показать всё' : 'Режим выживания'}
@@ -424,9 +427,7 @@ export default function Scroll() {
       )}
 
       <Section dense>
-        <PlanSection title="Главное" slot="main" tasks={plan.main} today={today} open={open} pick={setPick} />
-        <PlanSection title="Дополнительное" slot="extra" tasks={plan.extra} today={today} open={open} pick={setPick} />
-        <PlanSection title="Необязательное" slot="optional" tasks={plan.optional} today={today} open={open} pick={setPick} />
+        <PlanSection title="План" tasks={plan.all} today={today} open={open} pick={() => setPick(true)} />
         {plan.habits.length > 0 && (
           <Box>
             <Text fontFamily="heading" fontSize="xl" color="ember.100" fontWeight="semibold" mb="1.5">
@@ -458,7 +459,7 @@ export default function Scroll() {
         </Section>
       )}
 
-      {pick && <PickFromBacklog slot={pick} today={today} onClose={() => setPick(undefined)} />}
+      {pick && <PickFromBacklog today={today} onClose={() => setPick(false)} />}
       {dialog}
       {wheelPick && <WheelPick onClose={() => setWheelPick(false)} focus={sabbatSoon ? wheel.next.sabbat : undefined} />}
       {noteFor && <SabbatNoteDialog sabbat={noteFor} onClose={() => setNoteFor(undefined)} />}

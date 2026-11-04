@@ -1,5 +1,5 @@
 import { dueDay } from './days.ts'
-import type { DayKey, GrimoireMeta, GrimoireState, Task, TaskSlot } from './types.ts'
+import type { DayKey, GrimoireMeta, GrimoireState, Task, TaskPriority, TaskSlot } from './types.ts'
 
 export const isOpenTask = (t: Task) => t.status !== 'done' && t.status !== 'cancelled'
 
@@ -12,10 +12,16 @@ export const isStuck = (t: Task) => isOpenTask(t) && t.postponements.length >= 3
 /** Waiting for an answer or an event until a day; before it the task stays out of the plan. */
 export const isWaiting = (t: Task, today: DayKey) => t.status === 'waiting' && (!t.waitUntil || t.waitUntil > today)
 
-const slotRank: Record<TaskSlot, number> = { main: 0, extra: 1, optional: 2 }
+/** Highest first. */
+export const priorities: TaskPriority[] = ['highest', 'high', 'medium', 'low', 'lowest']
+const fromSlot: Record<TaskSlot, TaskPriority> = { main: 'high', extra: 'medium', optional: 'low' }
 
+/** A deed's priority: its own, the one its old plan part stood for, or «medium». */
+export const priorityOf = (t: Pick<Task, 'priority' | 'slot'>): TaskPriority => t.priority ?? (t.slot ? fromSlot[t.slot] : 'medium')
+
+/** The most urgent first, then the order she set, then the oldest. */
 export const byPlanOrder = (a: Task, b: Task) =>
-  slotRank[a.slot ?? 'extra'] - slotRank[b.slot ?? 'extra'] || (a.order ?? 0) - (b.order ?? 0) || a.createdAt.localeCompare(b.createdAt)
+  priorities.indexOf(priorityOf(a)) - priorities.indexOf(priorityOf(b)) || (a.order ?? 0) - (b.order ?? 0) || a.createdAt.localeCompare(b.createdAt)
 
 /** Tasks chosen for a day (open and done that day), habits apart. */
 export function dayPlan(g: GrimoireState, day: DayKey) {
@@ -25,9 +31,6 @@ export function dayPlan(g: GrimoireState, day: DayKey) {
   const habits = all.filter((t) => t.habitId)
   const deeds = all.filter((t) => !t.habitId).sort((a, b) => doneLast(a, b) || byPlanOrder(a, b))
   return {
-    main: deeds.filter((t) => (t.slot ?? 'extra') === 'main'),
-    extra: deeds.filter((t) => (t.slot ?? 'extra') === 'extra'),
-    optional: deeds.filter((t) => t.slot === 'optional'),
     habits: habits.sort((a, b) => doneLast(a, b) || a.title.localeCompare(b.title)),
     all: deeds,
   }
@@ -46,18 +49,13 @@ export function dayStars(g: GrimoireState, day: DayKey) {
   return { joy, deed, total: joy + deed, limit, over: limit > 0 ? Math.max(0, joy + deed - limit) : 0 }
 }
 
-/** How many open deeds of each slot a day already has, for the soft plan limit. */
-export function slotCounts(g: GrimoireState, day: DayKey) {
-  const c: Record<TaskSlot, number> = { main: 0, extra: 0, optional: 0 }
-  for (const t of Object.values(g.tasks)) if (t.doOn === day && !t.habitId && isOpenTask(t)) c[t.slot ?? 'extra']++
-  return c
+/** How many open deeds a day already has, for the soft plan limit. */
+export function planCount(g: GrimoireState, day: DayKey) {
+  return Object.values(g.tasks).filter((t) => t.doOn === day && !t.habitId && isOpenTask(t)).length
 }
 
-export const overLimit = (meta: GrimoireMeta, counts: Record<TaskSlot, number>, slot: TaskSlot) => {
-  const limit = meta.planLimit[slot]
-  // A limit of 0 for «extra» means «not limited separately».
-  return limit > 0 && counts[slot] >= limit
-}
+/** One more deed would go past the plan limit (0 means no limit). */
+export const overLimit = (meta: GrimoireMeta, count: number) => meta.planMax > 0 && count >= meta.planMax
 
 /** Yesterday's (and older) unfinished deeds for the morning review. Habits leave on their own. */
 export const toReview = (g: GrimoireState, today: DayKey) =>
