@@ -8,7 +8,7 @@ self.addEventListener('push', (event) => {
     m = { body: event.data && event.data.text() }
   }
   event.waitUntil(
-    self.registration.showNotification(m.title || 'Гримуар дел', {
+    self.registration.showNotification(m.title || 'Гримуар', {
       body: m.body || '',
       icon: 'icon-grimoire-192.png',
       badge: 'icon-grimoire-192.png',

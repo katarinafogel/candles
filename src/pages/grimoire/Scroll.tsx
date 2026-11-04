@@ -82,15 +82,12 @@ function MorningReview({ items, today, open }: { items: Task[]; today: string; o
       <Text fontSize="sm" color="fg.muted" mb="3">
         Ничего не переносится само. {items.length > 1 ? `Осталось ${items.length}, по одному:` : 'Одно дело:'}
       </Text>
-      <Box mb="3" p="3" borderRadius="l2" borderWidth="1px" borderColor="border" onClick={() => open(t)} cursor="pointer">
-        <Text>{t.title}</Text>
-        <HStack gap="2" mt="1">
-          <Stars n={t.stars} size={10} />
-          <Dread n={t.dread} size={10} />
-          {t.slot && <Text fontSize="xs" color="fg.subtle">{slotLabel[t.slot]}</Text>}
-        </HStack>
-      </Box>
-      <Flex gap="2" wrap="wrap">
+      {/* The deed as the same arcana card as everywhere; the choices stand beside it. */}
+      <Flex gap="3" align="flex-start">
+        <Box w={{ base: '44%', sm: '150px' }} flexShrink={0}>
+          <TaskCard t={t} today={today} onOpen={open} compact />
+        </Box>
+        <Flex gap="2" wrap="wrap" direction={{ base: 'column', sm: 'row' }} flex="1" minW="0" align={{ base: 'stretch', sm: 'flex-start' }}>
         <Button size="sm" onClick={() => dispatch(A.planTask({ id: t.id, day: today }))}>
           Оставить на сегодня
         </Button>
@@ -121,6 +118,7 @@ function MorningReview({ items, today, open }: { items: Task[]; today: string; o
         >
           Всё в бэклог
         </Button>
+        </Flex>
       </Flex>
     </Section>
   )
@@ -341,15 +339,16 @@ export default function Scroll() {
             Впереди радости
           </Text>
           {joys.length ? (
-            joys.map((t) => (
-              <Text key={t.id} fontSize="sm" cursor="pointer" onClick={() => open(t)}>
-                ✦ {t.title}
-                <Text as="span" color="fg.subtle">
-                  {' '}
-                  · {humanDay(t.doOn ?? t.dueAt?.slice(0, 10) ?? today, today)}
-                </Text>
-              </Text>
-            ))
+            <SimpleGrid gridTemplateColumns={cardColumns} gap="3" my="2">
+              {joys.map((t) => (
+                <Stack key={t.id} gap="1">
+                  <TaskCard t={t} today={today} onOpen={open} compact />
+                  <Text fontSize="xs" color="fg.subtle" textAlign="center">
+                    {humanDay(t.doOn ?? t.dueAt?.slice(0, 10) ?? today, today)}
+                  </Text>
+                </Stack>
+              ))}
+            </SimpleGrid>
           ) : (
             <Text fontSize="sm" color="fg.subtle">
               Пока ничего. Добавь с «+радость».

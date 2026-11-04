@@ -169,7 +169,7 @@ export function UserMenu() {
               )}
               {witch && (
                 <Menu.Item value={inGrimoire ? '/' : '/g'}>
-                  <LuArrowLeftRight /> {inGrimoire ? 'В мастерскую' : 'В гримуар дел'}
+                  <LuArrowLeftRight /> {inGrimoire ? 'В мастерскую' : 'В гримуар'}
                 </Menu.Item>
               )}
               <Menu.Item value="/apps">

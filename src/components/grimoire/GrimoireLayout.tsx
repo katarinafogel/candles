@@ -83,7 +83,7 @@ export default function GrimoireLayout() {
         <Flex align="center" gap="3" mb="3" px="1">
           <MoonSlice size={38} tone="stone" />
           <Text fontFamily="heading" fontWeight="semibold" fontSize="2xl" lineHeight="1" color="ember.100">
-            Гримуар дел
+            Гримуар
           </Text>
         </Flex>
         <MoonPhases size={12} gap="2.5" color="ember.200" px="2" mb="4" />
@@ -118,7 +118,7 @@ export default function GrimoireLayout() {
             <Flex display={{ base: 'flex', md: 'none' }} align="center" gap="2">
               <MoonSlice size={26} tone="stone" />
               <Text fontFamily="heading" fontWeight="semibold" fontSize="lg" color="ember.100">
-                Гримуар дел
+                Гримуар
               </Text>
             </Flex>
             <Box display={{ base: 'none', md: 'block' }} />

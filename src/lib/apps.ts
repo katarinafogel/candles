@@ -10,7 +10,7 @@ export type AppId = 'workshop' | 'grimoire'
 
 export const apps: Record<AppId, { name: string; short: string; start: string; manifest: string; touchIcon: string; icon: string }> = {
   workshop: { name: 'Гримуар', short: 'Свечи', start: '/', manifest: './manifest.webmanifest', touchIcon: './apple-touch-icon.png', icon: './icon.svg' },
-  grimoire: { name: 'Гримуар дел', short: 'Гримуар', start: '/g', manifest: './manifest-grimoire.webmanifest', touchIcon: './apple-touch-icon-grimoire.png', icon: './icon-grimoire.svg' },
+  grimoire: { name: 'Гримуар', short: 'Гримуар', start: '/g', manifest: './manifest-grimoire.webmanifest', touchIcon: './apple-touch-icon-grimoire.png', icon: './icon-grimoire.svg' },
 }
 
 /** The app an address belongs to; on the projects page the one chosen for install (`?app=`). */
