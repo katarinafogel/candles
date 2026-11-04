@@ -1,11 +1,11 @@
 // A deed as a tall arcana card, like the workshop's: its colour says what it is at a glance (cardTone):
 // swamp frog, nacre joy, wine for the hardest, silver for the needed. Leaf in the corner — done; tap — the
-// deed; swipe right — done, swipe left — to the backlog. Every card is the same 5:8 (at most three tags
+// deed; swipe right — done, swipe left — deleted (with «Вернуть» in the toast). Every card is the same 5:8 (at most three tags
 // on it); postponements and dread stay inside the deed, «съесть сегодня» is set there too.
 import { Box, Flex, HStack, Text } from '@chakra-ui/react'
 import { useRef, useState } from 'react'
 import { LuCalendarClock, LuFlame, LuHourglass, LuLink, LuMoon, LuSparkles, LuSun } from 'react-icons/lu'
-import { complete, reopen, toBacklog } from '../../grimoire/act'
+import { complete, remove, reopen } from '../../grimoire/act'
 import { isFrog } from '../../grimoire/frog'
 import { dueDay } from '../../grimoire/days'
 import { cardTone, isBlocked, stepsOf } from '../../grimoire/selectors'
@@ -70,13 +70,26 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
         start.current = null
         setDx(0)
         if (d > 80) tick()
-        else if (d < -80 && t.doOn && !done) toBacklog([t.id])
+        else if (d < -100) remove(t)
       }}
     >
       {/* What the swipe will do, said over the card. */}
       {Math.abs(dx) > 30 && (
-        <Flex position="absolute" inset="0" zIndex="1" align="center" justify="center" pointerEvents="none" borderRadius="10px" bg="bg.veil" color="ember.100" fontSize="sm">
-          {dx > 0 ? (done ? 'вернуть' : 'сделано') : 'в бэклог'}
+        <Flex
+          position="absolute"
+          inset="0"
+          zIndex="1"
+          align="center"
+          justify="center"
+          pointerEvents="none"
+          borderRadius="10px"
+          bg={dx < 0 ? `color-mix(in srgb, var(--chakra-colors-red-500) ${dx < -100 ? 55 : 30}%, var(--chakra-colors-bg-veil))` : 'bg.veil'}
+          color={dx < 0 ? 'white' : 'ember.100'}
+          fontSize="sm"
+          fontWeight={dx < -100 ? 'semibold' : undefined}
+          transition="background .15s"
+        >
+          {dx > 0 ? (done ? 'вернуть' : 'сделано') : 'удалить'}
         </Flex>
       )}
       <ArcanaCard

@@ -2,10 +2,9 @@
 import { Box, Button, Flex, HStack, Input, SimpleGrid, Stack, Tabs, Text } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { QuickAdd } from '../../components/grimoire/QuickAdd'
 import { useTaskDialog } from '../../components/grimoire/TaskDialog'
 import { cardColumns, TaskCard } from '../../components/grimoire/TaskCard'
-import { Chips, Empty, PageHeader, Section, Select } from '../../components/ui'
+import { Chips, Empty, PageHeader, Select } from '../../components/ui'
 import { SpellsDialog } from '../../components/grimoire/Spells'
 import { FromWorkshopDialog } from '../../components/grimoire/FromWorkshop'
 import { useToday } from '../../grimoire/act'
@@ -95,9 +94,6 @@ export default function Book() {
       </PageHeader>
       {spells && <SpellsDialog onClose={() => setSpells(false)} />}
       {fromWorkshop && <FromWorkshopDialog onClose={() => setFromWorkshop(false)} />}
-      <Section>
-        <QuickAdd />
-      </Section>
       <Tabs.Root value={view} onValueChange={(e) => setParams(e.value === 'backlog' ? {} : { v: e.value }, { replace: true })} variant="line" size="sm" mb="3">
         <Tabs.List overflowX="auto" overflowY="hidden">
           {views.map((v) => (

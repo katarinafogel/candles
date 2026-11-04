@@ -14,17 +14,17 @@ const g = () => store.getState().grimoire
  * Runs a step and offers «Отменить» in the toast. Undo puts back the state from before the step,
  * only while nothing else changed in the grimoire since.
  */
-export function withUndo(title: string, change: () => void, description?: string) {
+export function withUndo(title: string, change: () => void, description?: string, undoLabel = 'Отменить') {
   const before = g()
   change()
   const after = g()
   if (after === before) return
   notify(title, 'success', description, {
-    label: 'Отменить',
+    label: undoLabel,
     onClick: () => {
       if (g() !== after) return notify('Уже были другие изменения, отменить не получится', 'warning')
       store.dispatch(A.restore(before as GrimoireState))
-      notify('Отменено', 'info')
+      notify(undoLabel === 'Вернуть' ? 'Вернула' : 'Отменено', 'info')
     },
   })
 }
@@ -67,6 +67,8 @@ export const asksEmotion = (t: Task, ask: GrimoireState['meta']['emotionAsk'] = 
 
 export const reopen = (t: Task) => withUndo('Вернула в работу', () => store.dispatch(A.reopenTask({ id: t.id })))
 export const toBacklog = (ids: string[], title = 'В бэклоге') => withUndo(title, () => store.dispatch(A.toBacklog(ids)))
+/** Deletes a deed for good, with «Вернуть» in the toast while nothing else changed. */
+export const remove = (t: Task) => withUndo('Дело удалено', () => store.dispatch(A.deleteTask(t.id)), t.title, 'Вернуть')
 export const cancel = (t: Task) => withUndo('Отпущено без штрафа', () => store.dispatch(A.cancelTask(t.id)))
 
 /** Today in the grimoire's terms; re-checks every minute and when the app comes back to the screen. */
