@@ -54,6 +54,8 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
       filter={done ? 'saturate(.55)' : undefined}
       transform={`translateX(${dx}px)`}
       transition={dx ? undefined : 'transform .2s'}
+      // While dragged the card rides over its neighbours, or the next one hides it and the hint on it.
+      zIndex={dx ? 2 : undefined}
       onTouchStart={(e) => (start.current = inBook ? null : { x: e.touches[0].clientX, y: e.touches[0].clientY })}
       onTouchMove={(e) => {
         if (!start.current) return
