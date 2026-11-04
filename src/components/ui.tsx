@@ -406,7 +406,7 @@ export function FormActions({ onCancel, onSave, saveLabel = 'Сохранить'
         position="fixed"
         bottom={{ base: '72px', md: '6' }}
         left={{ base: '4', md: 'calc(240px + 2rem)' }}
-        right="4"
+        right={{ base: '4', md: '8' }}
         zIndex="docked"
         justify="space-between"
         gap="2"
@@ -415,7 +415,6 @@ export function FormActions({ onCancel, onSave, saveLabel = 'Сохранить'
         borderWidth="1px"
         borderColor="emerald.700"
         borderRadius="l3"
-        maxW="1200px"
       >
         <Button variant="ghost" onClick={onCancel}>
           Отмена
