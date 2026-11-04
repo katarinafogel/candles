@@ -343,7 +343,7 @@ export function Modal({
       placement="center"
     >
       <Portal>
-        <Dialog.Backdrop />
+        <Dialog.Backdrop {...scrim} />
         <Dialog.Positioner>
           {/* Full screen on a phone: keep the title and the cross below the notch, the footer above the home bar. */}
           <Dialog.Content
@@ -552,6 +552,12 @@ export function Link({ to, children }: { to: string; children: ReactNode }) {
   )
 }
 
+/**
+ * Dialog backdrops dim the page in the theme's colour. Chakra's own is blackAlpha, which is mirrored
+ * in light themes and would whiten the page instead, so the panel merged with it.
+ */
+const scrim = { bg: 'var(--g-scrim)', backdropFilter: 'blur(2px)' }
+
 // ---------- confirmations ----------
 // The app's own «are you sure» instead of the browser's confirm(): a small dialog in the theme.
 // confirmAction resolves true on «yes»; ConfirmHost (mounted once next to the Toaster) shows it.
@@ -614,7 +620,7 @@ export function ConfirmHost() {
       placement="center"
     >
       <Portal>
-        <Dialog.Backdrop />
+        <Dialog.Backdrop {...scrim} />
         <Dialog.Positioner px="4">
           <Dialog.Content bg="bg.panel" borderWidth="1px" borderColor="border.emphasized">
             <Dialog.Body pt="6" pb="2">
