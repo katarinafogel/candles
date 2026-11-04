@@ -52,7 +52,7 @@ export function AddMenu() {
         position="fixed"
         inset="0"
         zIndex="overlay"
-        bg="rgba(0, 0, 0, 0.4)"
+        bg="var(--g-scrim)"
         opacity={open ? 1 : 0}
         pointerEvents={open ? 'auto' : 'none'}
         transition="opacity 0.2s"

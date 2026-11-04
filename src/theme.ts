@@ -18,6 +18,9 @@ const config = defineConfig({
       backgroundAttachment: 'fixed',
     },
     '::selection': { bg: 'var(--g-selection)' },
+    // Every dialog's backdrop dims the page in the theme's colour (Chakra's blackAlpha is mirrored
+    // in light themes and would whiten it instead); a slight blur keeps the panel in front.
+    '[data-scope="dialog"][data-part="backdrop"]': { bg: 'var(--g-scrim)', backdropFilter: 'blur(2px)' },
     // Thin scrollbars in the theme's wood instead of the system's.
     '*': { scrollbarWidth: 'thin', scrollbarColor: 'var(--g-scrollbar) transparent' },
     '*::-webkit-scrollbar': { width: '8px', height: '8px' },

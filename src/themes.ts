@@ -189,6 +189,8 @@ export const themes: Record<ThemeId, Theme> = {
       '--g-glow': 'rgba(224, 164, 85, 0.45)',
       '--g-glow-soft': 'rgba(224, 164, 85, 0.07)',
       '--g-shade': 'rgba(0, 0, 0, 0.7)',
+      // Behind dialogs and the «+» menu: dims the page so the panel stands out.
+      '--g-scrim': 'rgba(0, 0, 0, 0.6)',
       '--g-selection': 'rgba(224, 164, 85, 0.35)',
       '--g-scrollbar': '#4a3e32',
       '--g-scrollbar-hover': '#6a5743',
@@ -236,6 +238,8 @@ export const themes: Record<ThemeId, Theme> = {
       '--g-glow': 'rgba(133, 167, 142, 0.45)',
       '--g-glow-soft': 'rgba(241, 221, 191, 0.35)',
       '--g-shade': 'rgba(82, 94, 117, 0.18)',
+      // Slate, not white: the mirrored blackAlpha would turn Chakra's own backdrop white on white.
+      '--g-scrim': 'rgba(58, 67, 87, 0.38)',
       '--g-selection': 'rgba(174, 204, 174, 0.5)',
       '--g-scrollbar': paper.taupe,
       '--g-scrollbar-hover': paper.stone,

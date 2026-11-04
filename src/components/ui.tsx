@@ -349,7 +349,7 @@ export function Modal({
           <Dialog.Content
             bg="bg.panel"
             borderWidth="1px"
-            borderColor="border"
+            borderColor="border.emphasized"
             backgroundImage="radial-gradient(30rem 16rem at 100% 0%, var(--g-glow-soft), transparent 70%)"
             pt={{ mdDown: 'env(safe-area-inset-top)' }}
             pb={{ mdDown: 'env(safe-area-inset-bottom)' }}
@@ -616,7 +616,7 @@ export function ConfirmHost() {
       <Portal>
         <Dialog.Backdrop />
         <Dialog.Positioner px="4">
-          <Dialog.Content bg="bg.panel" borderWidth="1px" borderColor="border">
+          <Dialog.Content bg="bg.panel" borderWidth="1px" borderColor="border.emphasized">
             <Dialog.Body pt="6" pb="2">
               <Text>{ask?.message}</Text>
             </Dialog.Body>
