@@ -4,7 +4,7 @@
 // one skip a week is forgiven («оберег»), and days in «навь» freeze
 // the streak instead of breaking it.
 import { addDays, daysBetween, weekStart, weekday } from './days.ts'
-import type { DayKey, GrimoireMeta, Habit, HabitLog } from './types.ts'
+import type { DayKey, GrimoireMeta, Habit, HabitLog, LifeEvent } from './types.ts'
 
 export const habitLogId = (habitId: string, day: DayKey) => `${habitId}:${day}`
 /** One task per habit and day on every device, so two phones never create a duplicate. */
@@ -30,10 +30,14 @@ export function isDone(h: Habit, log: HabitLog | undefined) {
   return h.mark.kind === 'count' ? log.value >= h.mark.goal : log.value >= 1
 }
 
-/** Days spent in «навь», as a test. */
-export function navTest(meta: Pick<GrimoireMeta, 'nav'>, boundaryDay: (iso: string) => DayKey) {
-  const periods = meta.nav.history.map((p) => ({ from: boundaryDay(p.from), to: p.to ? boundaryDay(p.to) : undefined }))
+/**
+ * Days spent in «навь» — or inside a long event (a trip, a sick leave) — as a test: a series doesn't
+ * break on them.
+ */
+export function navTest(meta: Pick<GrimoireMeta, 'nav'>, boundaryDay: (iso: string) => DayKey, events: Record<string, LifeEvent> = {}) {
+  const periods: { from: DayKey; to?: DayKey }[] = meta.nav.history.map((p) => ({ from: boundaryDay(p.from), to: p.to ? boundaryDay(p.to) : undefined }))
   if (meta.nav.active && meta.nav.since) periods.push({ from: boundaryDay(meta.nav.since), to: undefined })
+  for (const e of Object.values(events)) periods.push({ from: e.from, to: e.to })
   return (day: DayKey) => periods.some((p) => day >= p.from && (!p.to || day <= p.to))
 }
 

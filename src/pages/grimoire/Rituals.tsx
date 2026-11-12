@@ -190,7 +190,7 @@ function YearOfMoons({ h, today, inNav }: { h: Habit; today: DayKey; inNav: (d: 
 function HabitCard({ h, today, onEdit }: { h: Habit; today: DayKey; onEdit: () => void }) {
   const dispatch = useAppDispatch()
   const g = useAppSelector((s) => s.grimoire)
-  const inNav = useMemo(() => navTest(g.meta, (iso) => dayKey(new Date(iso), g.meta.dayBoundaryHour)), [g.meta])
+  const inNav = useMemo(() => navTest(g.meta, (iso) => dayKey(new Date(iso), g.meta.dayBoundaryHour), g.events), [g.meta, g.events])
   const st = streak(h, g.habitLogs, today, inNav)
   const log = g.habitLogs[habitLogId(h.id, today)]
   const task = g.tasks[habitTaskId(h.id, today)]

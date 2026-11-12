@@ -145,7 +145,7 @@ function Feed({ entries, onOpen, onWord }: { entries: JournalEntry[]; onOpen: (e
   const [taskId, setTaskId] = useState('')
   const [person, setPerson] = useState('')
   const [q, setQ] = useState('')
-  const inNav = useMemo(() => navTest(g.meta, (iso) => dayKey(new Date(iso), g.meta.dayBoundaryHour)), [g.meta])
+  const inNav = useMemo(() => navTest(g.meta, (iso) => dayKey(new Date(iso), g.meta.dayBoundaryHour), g.events), [g.meta, g.events])
   // Only deeds and people that some entry is tied to can be filtered by.
   const taskIds = [...new Set(entries.map((e) => e.taskId).filter((x): x is string => !!x && !!g.tasks[x]))]
   const personIds = [...new Set(entries.flatMap((e) => e.people ?? []).filter((x) => people[x]))]

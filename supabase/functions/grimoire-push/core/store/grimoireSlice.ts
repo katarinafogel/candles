@@ -4,7 +4,7 @@
 // in its payload (filled in by `prepare`), so the reducers stay pure and testable.
 import { createSlice, nanoid, type PayloadAction } from '@reduxjs/toolkit'
 import { cleanWords } from '../grimoire/emotions.ts'
-import { dayKey, nextRepeat } from '../grimoire/days.ts'
+import { addDays, dayKey, nextRepeat } from '../grimoire/days.ts'
 import { habitLogId, habitTaskId, isDone, isScheduled } from '../grimoire/habits.ts'
 import { priorityOf } from '../grimoire/selectors.ts'
 import type {
@@ -25,6 +25,12 @@ import type {
   PersonNotes,
   WorkshopKind,
   CycleEntry,
+  Goal,
+  LifeEvent,
+  Note,
+  Spell,
+  SpellStep,
+  TarotReading,
 } from '../grimoire/types.ts'
 
 export const defaultMeta: GrimoireMeta = {
@@ -62,6 +68,10 @@ export const initialGrimoire: GrimoireState = {
   jarTxs: {},
   personNotes: {},
   cycles: {},
+  events: {},
+  tarot: {},
+  goals: {},
+  notes: {},
   meta: defaultMeta,
 }
 
@@ -284,6 +294,37 @@ function spawnRepeat(s: S, t: Task, at: string, day: DayKey) {
   frogUp(s, s.tasks[id])
 }
 
+/** A chain spell: the done deed brings the next step, into the backlog, once. */
+function spawnChain(s: S, t: Task, at: string) {
+  if (!t.chainNext?.length) return
+  const id = `${t.id}>`.slice(0, 64)
+  if (s.tasks[id]) return
+  const [next, ...rest] = t.chainNext
+  s.tasks[id] = newTask({ ...next, id, tags: [...t.tags], projectId: t.projectId, personIds: t.personIds, source: t.source, spawnedFrom: t.id, chainNext: rest.length ? rest : undefined }, at)
+  frogUp(s, s.tasks[id])
+}
+
+/** Templates offered on an empty «Шаблоны» page. */
+export const starterSpells: Omit<Spell, 'id' | 'createdAt'>[] = [
+  { title: 'Вынести мусор', stars: 1, dread: 0, tags: ['дом'], steps: [] },
+  { title: 'Помыть окна', stars: 2, dread: 1, tags: ['дом'], steps: [] },
+  {
+    title: 'Стирка',
+    stars: 1,
+    dread: 0,
+    tags: ['дом'],
+    chain: true,
+    steps: [
+      { title: 'Постирать', stars: 1, dread: 0 },
+      { title: 'Развесить бельё', stars: 1, dread: 0 },
+      { title: 'Снять и разложить бельё', stars: 1, dread: 0 },
+    ],
+  },
+]
+
+/** Spaced repetition for notes: days until it comes back after each «помню». */
+export const noteLadder = [1, 3, 7, 21, 60]
+
 function newTask(fields: Partial<Task> & { title: string }, at: string): Task {
   const t: Task = {
     type: 'deed',
@@ -435,6 +476,7 @@ const slice = createSlice({
         syncProject(s, t.projectId ?? (t.parentId ? s.tasks[t.parentId]?.projectId : undefined), at)
         syncWish(s, t, at, true)
         spawnRepeat(s, t, at, day)
+        spawnChain(s, t, at)
       },
       prepare: (p: { id: string; partial?: boolean; note?: string; boundary?: number }) => ({ payload: when(p) }),
     },
@@ -709,7 +751,7 @@ const slice = createSlice({
           .filter((x) => x.parentId === t.id && x.status !== 'cancelled')
           .sort((x, y) => (x.order ?? 0) - (y.order ?? 0))
           .map((x) => ({ title: x.title, stars: x.stars, dread: x.dread }))
-        if (!steps.length) return
+        // A deed without steps is kept too: a one-deed template («вынести мусор»).
         s.meta.spells.push({ id: a.payload.spellId, title: (a.payload.title ?? t.title).trim().slice(0, 200), stars: t.stars, dread: t.dread, tags: [...t.tags], steps, createdAt: a.payload.at })
       },
       prepare: (p: { taskId: string; title?: string }) => ({ payload: when({ ...p, spellId: nanoid() }) }),
@@ -720,7 +762,18 @@ const slice = createSlice({
         const sp = s.meta.spells.find((x) => x.id === a.payload.spellId)
         if (!sp) return
         const { at, questId, projectId } = a.payload
-        const q = newTask({ id: questId, title: a.payload.title?.trim() || sp.title, stars: sp.stars, dread: sp.dread, tags: [...sp.tags], projectId, source: projectId ? 'project' : 'manual' }, at)
+        sp.uses = (sp.uses ?? 0) + 1
+        const source = projectId ? 'project' : 'manual'
+        const extra = { ...(a.payload.fields ?? {}) }
+        if (sp.chain && sp.steps.length) {
+          // A chain: only the first step now, the rest waits on it.
+          const [first, ...rest] = sp.steps
+          const c = newTask({ ...extra, id: questId, ...first, tags: [...sp.tags], projectId, source, chainNext: rest.length ? rest : undefined }, at)
+          s.tasks[c.id] = c
+          frogUp(s, c)
+          return
+        }
+        const q = newTask({ ...extra, id: questId, title: a.payload.title?.trim() || sp.title, stars: sp.stars, dread: sp.dread, tags: [...sp.tags], projectId, source }, at)
         s.tasks[q.id] = q
         frogUp(s, q)
         sp.steps.forEach((step, i) => {
@@ -728,7 +781,28 @@ const slice = createSlice({
           s.tasks[x.id] = x
         })
       },
-      prepare: (p: { spellId: string; title?: string; projectId?: string }) => ({ payload: when({ ...p, questId: nanoid() }) }),
+      prepare: (p: { spellId: string; title?: string; projectId?: string; fields?: Partial<Task> }) => ({ payload: when({ ...p, questId: nanoid() }) }),
+    },
+    /** A template made or changed by hand on the «Шаблоны» page. */
+    upsertSpell: {
+      reducer(s, a: PayloadAction<{ spell: Omit<Spell, 'createdAt'> } & When>) {
+        const i = s.meta.spells.findIndex((x) => x.id === a.payload.spell.id)
+        const sp: Spell = { ...a.payload.spell, title: a.payload.spell.title.trim().slice(0, 200), createdAt: i >= 0 ? s.meta.spells[i].createdAt : a.payload.at }
+        if (!sp.title) return
+        if (i >= 0) s.meta.spells[i] = sp
+        else s.meta.spells.push(sp)
+      },
+      prepare: (p: { spell: Omit<Spell, 'createdAt' | 'id'> & { id?: string } }) => ({ payload: when({ spell: { ...p.spell, id: p.spell.id ?? nanoid() } }) }),
+    },
+    /** The starter templates, added once on request; those with the same name are skipped. */
+    addStarterSpells: {
+      reducer(s, a: PayloadAction<{ ids: string[] } & When>) {
+        starterSpells.forEach((sp, i) => {
+          if (s.meta.spells.some((x) => x.title.toLowerCase() === sp.title.toLowerCase())) return
+          s.meta.spells.push({ ...sp, id: a.payload.ids[i], createdAt: a.payload.at })
+        })
+      },
+      prepare: () => ({ payload: when({ ids: starterSpells.map(() => nanoid()) }) }),
     },
     renameSpell(s, a: PayloadAction<{ id: string; title: string }>) {
       const sp = s.meta.spells.find((x) => x.id === a.payload.id)
@@ -836,13 +910,16 @@ const slice = createSlice({
         const { at, day } = a.payload
         // In «навь» habits make no tasks and write no skips.
         if (s.meta.nav.active) return
+        // A long event (a trip, a sick leave): its days ask for no rituals and count no skips.
+        const inEvent = (d: DayKey) => Object.values(s.events).some((e) => d >= e.from && d <= e.to)
         for (const t of Object.values(s.tasks)) {
           if (!t.habitId || !t.doOn || t.doOn >= day || !isOpen(t)) continue
           const id = habitLogId(t.habitId, t.doOn)
-          if (!s.habitLogs[id] && s.habits[t.habitId]) s.habitLogs[id] = { id, habitId: t.habitId, date: t.doOn, value: 0, skipped: true }
+          if (!s.habitLogs[id] && s.habits[t.habitId] && !inEvent(t.doOn)) s.habitLogs[id] = { id, habitId: t.habitId, date: t.doOn, value: 0, skipped: true }
           delete s.tasks[t.id]
         }
         for (const h of Object.values(s.habits)) {
+          if (inEvent(day)) break
           if (!isScheduled(h, day)) continue
           if (h.schedule.kind === 'timesPerWeek') {
             // Offered every day until the week's count is reached.
@@ -905,6 +982,102 @@ const slice = createSlice({
       for (const w of Object.values(s.wishes)) if (w.projectId === id) delete w.projectId
       for (const j of Object.values(s.jars)) if (j.projectId === id) delete j.projectId
       delete s.projects[id]
+    },
+
+    // ----- long events (a trip, a sick leave) -----
+    /**
+     * An event and what happens to the deeds of its days, decided once: `keep`, `after` — the day after
+     * the event, `backlog`, `cancel` (let go). Rituals of those days are skipped without breaking a series.
+     */
+    upsertEvent: {
+      reducer(s, a: PayloadAction<{ event: Omit<LifeEvent, 'createdAt'>; fate?: Record<string, 'keep' | 'after' | 'backlog' | 'cancel'> } & When>) {
+        const e = a.payload.event
+        s.events[e.id] = { ...e, title: e.title.trim().slice(0, 200), createdAt: s.events[e.id]?.createdAt ?? a.payload.at }
+        const after = addDays(e.to, 1)
+        for (const [id, how] of Object.entries(a.payload.fate ?? {})) {
+          const t = s.tasks[id]
+          if (!t || !isOpen(t)) continue
+          if (how === 'after') t.doOn = after
+          else if (how === 'backlog') {
+            delete t.doOn
+            delete t.doAt
+          } else if (how === 'cancel') t.status = 'cancelled'
+        }
+      },
+      prepare: (p: { event: Omit<LifeEvent, 'createdAt' | 'id'> & { id?: string }; fate?: Record<string, 'keep' | 'after' | 'backlog' | 'cancel'> }) => ({
+        payload: when({ ...p, event: { ...p.event, id: p.event.id ?? nanoid() } }),
+      }),
+    },
+    deleteEvent(s, a: PayloadAction<string>) {
+      delete s.events[a.payload]
+    },
+
+    // ----- tarot: readings with a real deck -----
+    upsertTarot: {
+      reducer(s, a: PayloadAction<{ reading: Omit<TarotReading, 'createdAt'> } & When>) {
+        const r = a.payload.reading
+        s.tarot[r.id] = { ...r, createdAt: s.tarot[r.id]?.createdAt ?? a.payload.at }
+        if (r.deck && !(s.meta.tarotDecks ?? []).includes(r.deck)) s.meta.tarotDecks = [...(s.meta.tarotDecks ?? []), r.deck]
+      },
+      prepare: (p: { reading: Omit<TarotReading, 'createdAt' | 'id'> & { id?: string } }) => ({ payload: when({ reading: { ...p.reading, id: p.reading.id ?? nanoid() } }) }),
+    },
+    deleteTarot(s, a: PayloadAction<string>) {
+      delete s.tarot[a.payload]
+    },
+    saveTarotLayout(s, a: PayloadAction<{ name: string; positions: string[] }>) {
+      const name = a.payload.name.trim()
+      if (!name) return
+      s.meta.tarotLayouts = [...(s.meta.tarotLayouts ?? []).filter((l) => l.name !== name), { name, positions: a.payload.positions }]
+    },
+
+    // ----- goals for the year -----
+    upsertGoal: {
+      reducer(s, a: PayloadAction<{ goal: Omit<Goal, 'createdAt'> } & When>) {
+        const g = a.payload.goal
+        const was = s.goals[g.id]
+        s.goals[g.id] = { ...g, title: g.title.trim().slice(0, 200), createdAt: was?.createdAt ?? a.payload.at }
+        if (g.status === 'done' && was?.status !== 'done') s.goals[g.id].doneAt = a.payload.at
+        if (g.status !== 'done') delete s.goals[g.id].doneAt
+      },
+      prepare: (p: { goal: Omit<Goal, 'createdAt' | 'id'> & { id?: string } }) => ({ payload: when({ goal: { ...p.goal, id: p.goal.id ?? nanoid() } }) }),
+    },
+    deleteGoal(s, a: PayloadAction<string>) {
+      delete s.goals[a.payload]
+    },
+
+    // ----- notes, quotes, moments to come back to -----
+    upsertNote: {
+      reducer(s, a: PayloadAction<{ note: Omit<Note, 'createdAt'> } & When>) {
+        const n = a.payload.note
+        const was = s.notes[n.id]
+        const note: Note = { ...n, text: n.text.trim(), createdAt: was?.createdAt ?? a.payload.at }
+        if (!note.text) return
+        // Turned on for repeating: it first comes back tomorrow.
+        if (note.repeat && !was?.repeat) {
+          note.step = 0
+          note.nextOn = addDays(a.payload.day, noteLadder[0])
+        }
+        if (!note.repeat) {
+          delete note.step
+          delete note.nextOn
+        }
+        s.notes[n.id] = note
+      },
+      prepare: (p: { note: Omit<Note, 'createdAt' | 'id'> & { id?: string }; boundary?: number }) => ({ payload: when({ ...p, note: { ...p.note, id: p.note.id ?? nanoid() } }) }),
+    },
+    deleteNote(s, a: PayloadAction<string>) {
+      delete s.notes[a.payload]
+    },
+    /** The note of the day was read: «помню» moves it up the ladder, «ещё повторить» brings it back tomorrow. */
+    reviewNote: {
+      reducer(s, a: PayloadAction<{ id: string; remember: boolean } & When>) {
+        const n = s.notes[a.payload.id]
+        if (!n?.repeat) return
+        const step = a.payload.remember ? Math.min((n.step ?? 0) + 1, noteLadder.length - 1) : 0
+        n.step = step
+        n.nextOn = addDays(a.payload.day, a.payload.remember ? noteLadder[step] : 1)
+      },
+      prepare: (p: { id: string; remember: boolean; boundary?: number }) => ({ payload: when(p) }),
     },
 
     // ----- journal («Зеркало») -----

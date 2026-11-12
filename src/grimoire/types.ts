@@ -65,6 +65,8 @@ export interface Task {
   title: string
   /** Put away with its archived book: out of the plan and the backlog until the book comes back. */
   shelved?: boolean
+  /** A chain spell's steps still ahead: when this deed is done, the first of them becomes the next deed. */
+  chainNext?: SpellStep[]
   note?: string
   checklist?: ChecklistItem[]
   type: TaskType
@@ -312,8 +314,12 @@ export interface GrimoireMeta {
   emotionAsk: 'off' | 'hard' | 'all'
   /** From this time (HH:MM) the scroll offers the evening page until the day ends; empty — never. */
   eveningAt: string
-  /** Quests kept as templates («заклинания»). */
+  /** Templates («заклинания»): single deeds, quests and chains. */
   spells: Spell[]
+  /** Her tarot decks, to note which one a reading was made with. */
+  tarotDecks?: string[]
+  /** Her own spread layouts: a name and the places of the cards in order. */
+  tarotLayouts?: { name: string; positions: string[] }[]
   /** The bestiary's circles: семья, друзья… — an editable list. */
   circles: string[]
   /** Asked on the first sign-in; the cycle can be turned on only for «f». */
@@ -353,13 +359,101 @@ export interface GrimoireMeta {
 }
 
 /** «Заклинание»: a quest kept as a template — its own marks and its steps in order — to cast again. */
+/** One step of a spell (template). */
+export interface SpellStep {
+  title: string
+  stars: Stars
+  dread: 0 | 1 | 2 | 3
+}
+
+/**
+ * «Заклинания» — templates. With no steps it is one deed («вынести мусор»); with steps it is a quest
+ * (all the steps at once), or with `chain` a chain: one deed at a time, the next appears when the one
+ * before is done (постирать → развесить → снять и разложить).
+ */
 export interface Spell {
   id: string
   title: string
   stars: Stars
   dread: 0 | 1 | 2 | 3
   tags: string[]
-  steps: { title: string; stars: Stars; dread: 0 | 1 | 2 | 3 }[]
+  steps: SpellStep[]
+  chain?: boolean
+  zone?: string
+  /** How many times it was cast: suggestions put the used ones first. */
+  uses?: number
+  createdAt: ISODateTime
+}
+
+/**
+ * A long event — a trip, a sick leave. Kind `event`. What happens to the deeds of these days is
+ * decided once, when it is created; its days are marked on the scroll and in the calendar.
+ */
+export interface LifeEvent {
+  id: string
+  title: string
+  sigil?: string
+  from: DayKey
+  to: DayKey
+  note?: string
+  createdAt: ISODateTime
+}
+
+/** One card on the table: its key from the deck list (tarot.ts), upside down or not, its place in a spread. */
+export interface TarotCardPick {
+  card: string
+  reversed?: boolean
+  position?: string
+}
+
+/**
+ * A reading with a real deck, written down (kind `tarot`): the card of the day or a spread. The app
+ * never draws cards itself.
+ */
+export interface TarotReading {
+  id: string
+  type: 'day' | 'spread'
+  day: DayKey
+  deck?: string
+  question?: string
+  /** A spread's layout name: «3 карты», «Кельтский крест» or her own. */
+  layout?: string
+  cards: TarotCardPick[]
+  meaning?: string
+  /** Later: how it went. For the card of the day — asked in the evening. */
+  came?: 'yes' | 'partly' | 'no'
+  outcome?: string
+  createdAt: ISODateTime
+}
+
+/** A goal for a calendar year (kind `goal`), tied to what moves it: books, wishes, jars, rituals. */
+export interface Goal {
+  id: string
+  year: number
+  title: string
+  description?: string
+  status: 'active' | 'done' | 'dropped'
+  projectIds?: string[]
+  wishIds?: string[]
+  jarIds?: string[]
+  habitIds?: string[]
+  createdAt: ISODateTime
+  doneAt?: ISODateTime
+}
+
+/**
+ * A note, a quote, an important moment (kind `note`). With `repeat` it comes back on the scroll, one a
+ * day, less and less often while she says «помню»: 1, 3, 7, 21, 60 days.
+ */
+export interface Note {
+  id: string
+  text: string
+  source?: string
+  tags: string[]
+  repeat?: boolean
+  /** Place on the 1-3-7-21-60 ladder. */
+  step?: number
+  nextOn?: DayKey
   createdAt: ISODateTime
 }
 
@@ -422,5 +516,9 @@ export interface GrimoireState {
   jarTxs: Record<string, JarTx>
   personNotes: Record<string, PersonNotes>
   cycles: Record<string, CycleEntry>
+  events: Record<string, LifeEvent>
+  tarot: Record<string, TarotReading>
+  goals: Record<string, Goal>
+  notes: Record<string, Note>
   meta: GrimoireMeta
 }

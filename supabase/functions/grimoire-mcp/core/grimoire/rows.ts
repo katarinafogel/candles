@@ -4,7 +4,7 @@
 // and write exactly the same rows.
 import type { GrimoireState } from './types.ts'
 
-export type GrimoireKind = 'task' | 'project' | 'habit' | 'habit_log' | 'wish' | 'wheel_practice' | 'journal' | 'jar' | 'jar_tx' | 'person_notes' | 'cycle'
+export type GrimoireKind = 'task' | 'project' | 'habit' | 'habit_log' | 'wish' | 'wheel_practice' | 'journal' | 'jar' | 'jar_tx' | 'person_notes' | 'cycle' | 'event' | 'tarot' | 'goal' | 'note'
 
 export interface RowChange {
   op: 'upsert' | 'delete'
@@ -25,6 +25,10 @@ export const grimoireCollections: [Exclude<keyof GrimoireState, 'meta'>, Grimoir
   ['jarTxs', 'jar_tx'],
   ['personNotes', 'person_notes'],
   ['cycles', 'cycle'],
+  ['events', 'event'],
+  ['tarot', 'tarot'],
+  ['goals', 'goal'],
+  ['notes', 'note'],
 ]
 
 export const grimoireKinds: GrimoireKind[] = grimoireCollections.map(([, k]) => k)

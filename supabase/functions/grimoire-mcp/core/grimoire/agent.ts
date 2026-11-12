@@ -256,6 +256,10 @@ const tools: (ToolDef & { run: Run })[] = [
         timeZone: g.meta.timeZone ?? null,
         nav: { active: g.meta.nav.active, since: g.meta.nav.since ?? null, note: navNote(c) ?? null, agent: g.meta.nav.agent ?? 'hello' },
         evenInNav: evenInNav(g, addDays(c.today, 3)).map(v),
+        // A trip or a sick leave going on (or starting within 3 days): plan no more than she left.
+        events: Object.values(g.events ?? {})
+          .filter((e) => e.to >= c.today && e.from <= addDays(c.today, 3))
+          .map((e) => ({ title: e.title, from: e.from, to: e.to, now: e.from <= c.today })),
         planMax: g.meta.planMax,
         dayStars: (() => {
           const st = dayStars(g, c.today)
@@ -549,7 +553,7 @@ const tools: (ToolDef & { run: Run })[] = [
     writes: false,
     run: (_a, c) => {
       const g = c.get()
-      const inNav = navTest(g.meta, (iso) => dayKeyIn(new Date(iso), g.meta.dayBoundaryHour, g.meta.timeZone))
+      const inNav = navTest(g.meta, (iso) => dayKeyIn(new Date(iso), g.meta.dayBoundaryHour, g.meta.timeZone), g.events)
       return Object.values(g.habits)
         .filter((h) => h.status !== 'archived')
         .map((h) => {
@@ -709,6 +713,7 @@ export const agentInstructions = `Это «Гримуар дел» — личн�
 
 Как работать:
 - Каждую сводку начинай с grimoire_today. Если nav.active — хозяйка в нави: никаких планов, проверок и напоминаний; nav.agent = hello — только мягкое «я тут», silent — ничего. Единственное исключение — дела из evenInNav.
+- events — длительные события (поездка, больничный). Если событие идёт сейчас (now), не предлагай новых дел сверх того, что уже в плане.
 - Дни считаются по границе дня хозяйки (часовой пояс и час в настройках); даты — YYYY-MM-DD.
 - Не штрафуй и не дави: просрочек нет, невыполненное уходит на утренний разбор или в бэклог. Предлагай, а не требуй. У дел приоритет как в Jira (highest, high, medium — по умолчанию, low, lowest); план дня идёт от самых срочных. План маленький: дел не больше planMax (0 — без лимита), а звёзд сложности — не больше dayStars.limit; при превышении любого лимита (warning) спроси, что убрать.
 - Меняй дела только по словам хозяйки: «сделала», «перенеси», «добавь». Не отмечай выполненным то, о чём она не сказала.
