@@ -5,11 +5,12 @@ import { Button, HStack, Stack } from '@chakra-ui/react'
 import { useRef, useState } from 'react'
 import { useToday } from '../../grimoire/act'
 import { defaultDraft, draftToFields, type NewTaskCtx, type TaskDraft } from '../../grimoire/newTask'
-import type { Task } from '../../grimoire/types'
+import type { Spell, Task } from '../../grimoire/types'
 import { useAppDispatch } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 import { confirmAction, Modal, notify } from '../ui'
 import { usePlanGuard } from './PlanGuard'
+import { SpellHints } from './SpellHints'
 import { TaskFields, useFieldBlocks } from './TaskFields'
 
 /** `fields` go into every deed added here (a book's deeds carry its projectId); `onAdded` — after each one. */
@@ -64,6 +65,21 @@ export function NewTaskDialog({
     )
   }
 
+  /** A template picked under the title: a single deed fills the form, a quest or a chain is cast at once. */
+  function fromSpell(sp: Spell) {
+    if (!sp.steps.length) {
+      dispatch(A.upsertSpell({ spell: { ...sp, uses: (sp.uses ?? 0) + 1 } }))
+      change({ title: sp.title, stars: sp.stars, dread: sp.dread, tags: [...new Set([...draft.tags, ...sp.tags])], ...(sp.zone ? { zone: sp.zone } : {}) } as Partial<Task>)
+      title.current?.focus()
+      return
+    }
+    const f = draftToFields(latest.current)
+    dispatch(A.castSpell({ spellId: sp.id, projectId: fields?.projectId, fields: { doOn: f.doOn, personIds: f.personIds } }))
+    notify(`Сотворено: ${sp.title}`, 'success', sp.chain ? 'Цепочка: следующий шаг появится, когда сделаешь этот' : undefined)
+    onAdded?.()
+    onClose()
+  }
+
   async function close() {
     const start = defaultDraft({ ...ctx, title: initialTitle }, today)
     if (JSON.stringify(latest.current) !== JSON.stringify(start) && !(await confirmAction('Выбросить дело?'))) return
@@ -102,6 +118,7 @@ export function NewTaskDialog({
           setTimeout(() => add(again))
         }}
       >
+        <SpellHints typed={draft.title} onPick={fromSpell} />
         <TaskFields value={draft} onChange={change} shown={blocks.shown} opened={blocks.opened} titleRef={title} titleMissing={tried} onTitleEnter={() => add(false)} />
       </Stack>
     </Modal>

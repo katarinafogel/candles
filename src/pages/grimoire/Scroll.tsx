@@ -21,6 +21,7 @@ import { sabbatTag, SabbatNoteDialog } from './Wheel'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
 import { Dread, PriorityIcon, StarMark, Stars } from '../../components/grimoire/Marks'
+import { ScrollSide, ScrollTop } from '../../components/grimoire/ScrollExtras'
 
 /** «Впереди радости» and «Сегодня»: like Section, edge to edge on a phone. */
 const edgeBlock = {
@@ -348,6 +349,7 @@ export default function Scroll() {
         </Flex>
       )}
 
+      <ScrollTop today={today} />
       <WorkshopOffers />
       <SimpleGrid columns={{ base: 1, md: 2 }} gap="3" mb="4">
         <Box {...edgeBlock}>
@@ -400,6 +402,8 @@ export default function Scroll() {
           </Button>
         </Box>
       </SimpleGrid>
+
+      <ScrollSide today={today} />
 
       {(askNote || memory) && (
         <Section>

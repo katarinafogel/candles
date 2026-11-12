@@ -79,6 +79,11 @@ export default function GrimoireMore() {
           { to: '/g/people', label: 'Бестиарий: люди, памятка и даты' },
           { to: '/g/wishes', label: 'Сундук желаний и зал славы' },
           { to: '/g/jars', label: 'Копилки: настоящие деньги' },
+          { to: '/g/goals', label: 'Цели на год' },
+          { to: '/g/events', label: 'События: поездки, больничные' },
+          { to: '/g/tarot', label: 'Таро: карта дня и расклады' },
+          { to: '/g/notes', label: 'Заметки и цитаты' },
+          { to: '/g/spells', label: `${words(meta).spells}: дела, квесты и цепочки` },
           { to: '/apps', label: 'Другие проекты' },
         ].map((i) => (
           <RouterLink key={i.to} to={i.to}>

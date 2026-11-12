@@ -8,13 +8,15 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useToday } from '../../grimoire/act'
 import { Icon, type IconName } from '../../icons'
 import { NewPerson } from '../../pages/grimoire/Bestiary'
+import { blankEvent, EventDialog } from '../../pages/grimoire/Events'
+import { blankNote, NoteDialog } from '../../pages/grimoire/Notes'
 import { blankJar, JarDialog } from '../../pages/grimoire/Jars'
 import { ProjectDialog } from '../../pages/grimoire/Projects'
 import { blank as blankRitual, HabitDialog } from '../../pages/grimoire/Rituals'
 import { WishDialog } from '../../pages/grimoire/Wishes'
 import { NewTaskDialog } from './NewTaskDialog'
 
-type Kind = 'wish' | 'jar' | 'project' | 'ritual' | 'person' | 'entry' | 'deed'
+type Kind = 'wish' | 'jar' | 'project' | 'ritual' | 'person' | 'event' | 'note' | 'entry' | 'deed'
 
 const items: { kind: Kind; label: string; icon: IconName }[] = [
   { kind: 'wish', label: 'Желание', icon: 'star-alt-3' },
@@ -22,6 +24,8 @@ const items: { kind: Kind; label: string; icon: IconName }[] = [
   { kind: 'project', label: 'Проект', icon: 'book-open' },
   { kind: 'ritual', label: 'Ритуал', icon: 'moon' },
   { kind: 'person', label: 'Человек', icon: 'circle-user' },
+  { kind: 'event', label: 'Событие', icon: 'calendar-alt' },
+  { kind: 'note', label: 'Заметка', icon: 'thumbtack' },
   { kind: 'entry', label: 'Запись', icon: 'pen-nib' },
   { kind: 'deed', label: 'Дело', icon: 'leaf-2' },
 ]
@@ -146,6 +150,8 @@ export function AddMenu() {
       {adding === 'project' && <ProjectDialog project={{ title: '' }} onClose={done} />}
       {adding === 'ritual' && <HabitDialog habit={{ ...blankRitual, activeFrom: today }} onClose={done} />}
       {adding === 'person' && <NewPerson onClose={done} />}
+      {adding === 'event' && <EventDialog event={blankEvent(today)} onClose={done} />}
+      {adding === 'note' && <NoteDialog note={blankNote} onClose={done} />}
       {adding === 'deed' && <NewTaskDialog planToday={onScroll} onClose={done} />}
     </>
   )

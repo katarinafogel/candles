@@ -354,6 +354,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
           )}
 
           {!live.workshopStep && steps.length > 0 && <QuestSteps questId={live.id} today={today} />}
+          {!live.workshopStep && !live.habitId && !live.parentId && steps.length === 0 && <SaveAsSpell taskId={live.id} title={live.title} />}
           {live.workshop && (
             <Text fontSize="sm" color="fg.muted">
               Пункт дела мастерской: отметится сам, когда {live.workshop.id} пройдёт этот шаг в мастерской.
@@ -430,6 +431,21 @@ function DeedMirror({ taskId, onGo }: { taskId: string; onGo: (to: string) => vo
         + чувство
       </Button>
     </Flex>
+  )
+}
+
+/** A simple deed kept as a one-deed template («вынести мусор»): it is then suggested when a deed is named. */
+function SaveAsSpell({ taskId, title }: { taskId: string; title: string }) {
+  const dispatch = useAppDispatch()
+  const meta = useAppSelector((s) => s.grimoire.meta)
+  const w = words(meta)
+  const saved = (meta.spells ?? []).some((sp) => sp.title.toLowerCase() === title.trim().toLowerCase())
+  return (
+    <Box>
+      <Button size="2xs" variant="ghost" disabled={saved} onClick={() => withUndo(`Сохранено как ${w.spell}`, () => dispatch(A.saveSpell({ taskId })))}>
+        {saved ? `уже есть ${w.spell}` : `Сохранить как ${w.spell}`}
+      </Button>
+    </Box>
   )
 }
 

@@ -2,6 +2,7 @@ import { Box, Button, Flex, HStack, Input, SimpleGrid, Stack, Table, Text } from
 import { useRef, useState } from 'react'
 import { LuDownload, LuFileUp, LuLogOut, LuUpload } from 'react-icons/lu'
 import { RolesAdmin } from '../components/RolesAdmin'
+import { InvitesAdmin } from '../components/Invites'
 import { confirmAction, Field, Modal, notify, NumInput, PageHeader, Row, Section, Select, TextInput } from '../components/ui'
 import { testAccountEmail } from '../lib/config'
 import { downloadBackup, readBackup, type BackupSummary } from '../lib/backup'
@@ -371,6 +372,7 @@ export default function Settings() {
       {isAdmin && (
         <Section title="Роли мастеров">
           <RolesAdmin />
+          <InvitesAdmin />
         </Section>
       )}
 

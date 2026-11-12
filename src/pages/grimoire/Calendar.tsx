@@ -74,6 +74,9 @@ function MonthCard({ m, today, holidays, busy, feel, born, onDay, refFor }: { m:
   const pad = weekday(m.first) - 1
   const cells = [...Array.from({ length: pad }, () => undefined), ...Array.from({ length: m.length }, (_, i) => addDays(m.first, i))]
   const fullMoons = cells.filter((d): d is DayKey => !!d && isFullMoon(d))
+  // Days of a long event (a trip, a sick leave): a line under the day.
+  const events = Object.values(useAppSelector((s) => s.grimoire.events))
+  const eventOn = (d: DayKey) => events.find((e) => d >= e.from && d <= e.to)
   const p = palette
   return (
     <Box
@@ -124,6 +127,7 @@ function MonthCard({ m, today, holidays, busy, feel, born, onDay, refFor }: { m:
               const sabbat = holidays[d]
               const full = isFullMoon(d)
               const isToday = d === today
+              const ev = eventOn(d)
               return (
                 <Box
                   as="button"
@@ -154,6 +158,7 @@ function MonthCard({ m, today, holidays, busy, feel, born, onDay, refFor }: { m:
                       <MoonIcon day={d} size={18} lit={full ? '#fff6dc' : 'rgba(246,239,228,.85)'} />
                     )}
                   </Box>
+                  <Box h="2px" w="70%" borderRadius="full" bg={ev ? p.star : 'transparent'} opacity={0.8} title={ev?.title} />
                   {/* Deeds of the day, and the day's main feeling in its petal's colour. */}
                   <HStack gap="2px" h="5px">
                     <Box w="3px" h="3px" borderRadius="full" bg={busy.has(d) ? p.star : 'transparent'} />
@@ -183,9 +188,20 @@ function DayDialog({ day, today, holiday, onClose }: { day: DayKey; today: DayKe
   const born = Object.values(g.personNotes ?? {}).filter((n) => n.birthday?.slice(-5) === day.slice(5) && people[n.id])
   const full = isFullMoon(day)
   const n = daysBetween(today, day)
+  const events = Object.values(g.events).filter((e) => day >= e.from && day <= e.to)
   return (
     <Modal open onClose={onClose} title={plainDay(day)} size="sm">
       <Stack gap="3">
+        {events.map((e) => (
+          <Text key={e.id} fontSize="sm">
+            {e.sigil ?? '🗓️'}{' '}
+            <RouterLink to="/g/events">
+              <Text as="span" color="ember.100">
+                {e.title}
+              </Text>
+            </RouterLink>
+          </Text>
+        ))}
         <HStack gap="2" color="fg.muted" fontSize="sm">
           <Box color="ember.100">
             <MoonIcon day={day} size={20} />

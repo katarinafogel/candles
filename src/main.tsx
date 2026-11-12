@@ -6,6 +6,7 @@ import { HashRouter } from 'react-router-dom'
 import { PersistGate } from 'redux-persist/integration/react'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App'
+import { catchInvite } from './components/Invites'
 import { ConfirmHost, Toaster } from './components/ui'
 import { persistor, store } from './store'
 import { system } from './theme'
@@ -13,6 +14,8 @@ import { installThemes } from './themes'
 
 registerSW({ immediate: true })
 installThemes()
+// An invite link (#/invite/…) is remembered before the sign-in, which may leave the page.
+catchInvite()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -1,5 +1,6 @@
 import { Outlet, Route, Routes } from 'react-router-dom'
 import { AuthGate } from './components/AuthGate'
+import { InviteTaker } from './components/Invites'
 import GrimoireLayout from './components/grimoire/GrimoireLayout'
 import Layout from './components/Layout'
 import CandlePage from './pages/CandlePage'
@@ -18,6 +19,11 @@ import Wheel from './pages/grimoire/Wheel'
 import GrimoireCalendar from './pages/grimoire/Calendar'
 import Wishes from './pages/grimoire/Wishes'
 import Jars from './pages/grimoire/Jars'
+import Events from './pages/grimoire/Events'
+import Tarot from './pages/grimoire/Tarot'
+import Goals from './pages/grimoire/Goals'
+import Notes from './pages/grimoire/Notes'
+import SpellsPage from './pages/grimoire/SpellsPage'
 import HolderPage from './pages/HolderPage'
 import Holders from './pages/Holders'
 import Home from './pages/Home'
@@ -54,6 +60,7 @@ export default function App() {
       <Route
         element={
           <AuthGate>
+            <InviteTaker />
             <Outlet />
           </AuthGate>
         }
@@ -75,6 +82,11 @@ export default function App() {
         <Route path="people/:id" element={<BestiaryCard />} />
         <Route path="wishes" element={<Wishes />} />
         <Route path="jars" element={<Jars />} />
+        <Route path="events" element={<Events />} />
+        <Route path="tarot" element={<Tarot />} />
+        <Route path="goals" element={<Goals />} />
+        <Route path="notes" element={<Notes />} />
+        <Route path="spells" element={<SpellsPage />} />
         <Route path="more" element={<GrimoireMore />} />
         <Route path="*" element={<Scroll />} />
       </Route>
