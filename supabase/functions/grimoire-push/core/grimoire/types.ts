@@ -64,6 +64,8 @@ export interface ChecklistItem {
 export interface Task {
   id: string
   title: string
+  /** Put away with its archived book: out of the plan and the backlog until the book comes back. */
+  shelved?: boolean
   note?: string
   checklist?: ChecklistItem[]
   type: TaskType
@@ -217,6 +219,11 @@ export interface Wish {
   jarId?: string
   practiceId?: string
   sabbat?: Sabbat
+  /** Who it is with or for (people of the workshop's bestiary). */
+  personIds?: string[]
+  /** After this day the chest asks whether it is still wanted; nothing goes away by itself. */
+  relevantUntil?: DayKey
+  priority?: TaskPriority
 }
 
 /**
@@ -263,6 +270,8 @@ export interface Jar {
   wishId?: string
   projectId?: string
   createdAt?: ISODateTime
+  tags?: string[]
+  personIds?: string[]
 }
 
 export interface JarTx {

@@ -63,6 +63,8 @@ export interface ChecklistItem {
 export interface Task {
   id: string
   title: string
+  /** Put away with its archived book: out of the plan and the backlog until the book comes back. */
+  shelved?: boolean
   note?: string
   checklist?: ChecklistItem[]
   type: TaskType

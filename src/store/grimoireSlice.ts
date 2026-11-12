@@ -102,6 +102,27 @@ export function migrateGrimoire(input: Partial<GrimoireState> | undefined): Grim
 
 // ---------- helpers on the draft ----------
 
+/** Open deeds of a book (steps of its quests too): shelved with it, detached from it or deleted. */
+function moveProjectTasks(s: GrimoireState, projectId: string, how: 'shelve' | 'detach' | 'delete') {
+  const mine = Object.values(s.tasks).filter((t) => t.projectId === projectId && t.status !== 'done' && t.status !== 'cancelled')
+  for (const t of mine) {
+    if (how === 'shelve') {
+      t.shelved = true
+      delete t.doOn
+      delete t.doAt
+    } else if (how === 'detach') {
+      delete t.projectId
+      delete t.shelved
+    } else {
+      delete s.tasks[t.id]
+      for (const o of Object.values(s.tasks)) {
+        if (o.blockedBy?.includes(t.id)) o.blockedBy = o.blockedBy.filter((x) => x !== t.id)
+        if (o.parentId === t.id) delete o.parentId
+      }
+    }
+  }
+}
+
 /** Sets a priority; «medium» is the default, so it is stored as no value. The old plan part goes. */
 export function setPriority(t: Task, p: TaskPriority) {
   if (p === 'medium') delete t.priority
@@ -111,7 +132,7 @@ export function setPriority(t: Task, p: TaskPriority) {
 
 type S = GrimoireState
 
-const isOpen = (t: Task) => t.status !== 'done' && t.status !== 'cancelled'
+const isOpen = (t: Task) => t.status !== 'done' && t.status !== 'cancelled' && !t.shelved
 
 /**
  * Makes a deed a frog when it qualifies: dread 3 (unless the frog was taken off by hand) or enough
@@ -846,6 +867,43 @@ const slice = createSlice({
       prepare: (p: { project: Omit<Project, 'id' | 'createdAt'> & { id?: string } }) => ({
         payload: when({ ...p, project: { ...p.project, id: p.project.id ?? nanoid() } }),
       }),
+    },
+    /**
+     * A book to the archive. Its open deeds: `shelve` — go with it (out of the plan and the backlog,
+     * back to the backlog when the book comes back), `detach` — stay where they are without the book,
+     * `delete` — go away. Done deeds stay in the history either way.
+     */
+    archiveProject(s, a: PayloadAction<{ id: string; tasks: 'shelve' | 'detach' | 'delete' }>) {
+      const p = s.projects[a.payload.id]
+      if (!p) return
+      p.status = 'archived'
+      moveProjectTasks(s, p.id, a.payload.tasks)
+    },
+    /** Back from the archive: its shelved deeds return to the backlog, without their old days. */
+    unarchiveProject(s, a: PayloadAction<string>) {
+      const p = s.projects[a.payload]
+      if (!p) return
+      p.status = 'active'
+      for (const t of Object.values(s.tasks))
+        if (t.projectId === p.id && t.shelved) {
+          delete t.shelved
+          delete t.doOn
+          delete t.doAt
+        }
+    },
+    /** A book for good. Its open deeds are detached or deleted; done ones stay without the book; wishes and jars just lose the link. */
+    deleteProject(s, a: PayloadAction<{ id: string; tasks: 'detach' | 'delete' }>) {
+      const id = a.payload.id
+      if (!s.projects[id]) return
+      moveProjectTasks(s, id, a.payload.tasks)
+      for (const t of Object.values(s.tasks))
+        if (t.projectId === id) {
+          delete t.projectId
+          delete t.shelved
+        }
+      for (const w of Object.values(s.wishes)) if (w.projectId === id) delete w.projectId
+      for (const j of Object.values(s.jars)) if (j.projectId === id) delete j.projectId
+      delete s.projects[id]
     },
 
     // ----- journal («Зеркало») -----

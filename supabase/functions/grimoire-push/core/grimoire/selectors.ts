@@ -2,7 +2,8 @@
 import { dueDay } from './days.ts'
 import type { DayKey, GrimoireMeta, GrimoireState, Task, TaskPriority, TaskSlot } from './types.ts'
 
-export const isOpenTask = (t: Task) => t.status !== 'done' && t.status !== 'cancelled'
+/** Open: not done, not let go, and not put away with its archived book. */
+export const isOpenTask = (t: Task) => t.status !== 'done' && t.status !== 'cancelled' && !t.shelved
 
 /** Waits for another task that isn't closed yet. */
 export const isBlocked = (t: Task, tasks: Record<string, Task>) => (t.blockedBy ?? []).some((id) => tasks[id] && isOpenTask(tasks[id]))
