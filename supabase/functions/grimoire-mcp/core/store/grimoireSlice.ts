@@ -758,7 +758,7 @@ const slice = createSlice({
     },
     /** Casts a spell: a new quest in the backlog (or in a project's book) with the spell's steps in order. */
     castSpell: {
-      reducer(s, a: PayloadAction<{ spellId: string; title?: string; projectId?: string; questId: string } & When>) {
+      reducer(s, a: PayloadAction<{ spellId: string; title?: string; projectId?: string; questId: string; fields?: Partial<Task> } & When>) {
         const sp = s.meta.spells.find((x) => x.id === a.payload.spellId)
         if (!sp) return
         const { at, questId, projectId } = a.payload
