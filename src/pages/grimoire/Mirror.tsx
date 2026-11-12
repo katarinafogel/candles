@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom'
 import { EmotionWheel, WordChip } from '../../components/grimoire/EmotionWheel'
 import { Dread, Stars } from '../../components/grimoire/Marks'
 import { WordCard } from '../../components/grimoire/WordCard'
-import { Chips, Empty, PageHeader, Section, Select, TextInput } from '../../components/ui'
+import { Chips, Empty, PageHeader, Panel, Section, Select, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
 import { addDays, dayKey, humanDay, plural } from '../../grimoire/days'
 import { actionLabel, bodyLabel, emotionWords, factorLabel, petalOrder, petals, wordColor, wordPetals, type Petal } from '../../grimoire/emotions'
@@ -88,7 +88,7 @@ function EntryCard({ e, onOpen, onWord }: { e: JournalEntry; onOpen: () => void;
   const people = useAppSelector((s) => s.data.people)
   const task = e.taskId ? tasks[e.taskId] : undefined
   return (
-    <Box p="3" borderRadius="l2" borderWidth="1px" borderColor="border" bg="bg.subtle" cursor="pointer" onClick={onOpen}>
+    <Panel nested onClick={onOpen}>
       <HStack gap="2" fontSize="sm" wrap="wrap" mb={e.words?.length ? '1.5' : 0}>
         <Text color="fg.subtle" fontSize="xs">
           {new Date(e.at).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' })}
@@ -133,7 +133,7 @@ function EntryCard({ e, onOpen, onWord }: { e: JournalEntry; onOpen: () => void;
           {e.text}
         </Text>
       )}
-    </Box>
+    </Panel>
   )
 }
 

@@ -2,7 +2,7 @@ import { Badge, Box, Button, Flex, HStack, IconButton, Input, Stack, Text, Wrap 
 import { useState } from 'react'
 import { LuPencil, LuPlus } from 'react-icons/lu'
 import { useSearchParams } from 'react-router-dom'
-import { Check, confirmAction, Empty, Field, IdBadge, Modal, PageHeader, TextArea, TextInput } from '../components/ui'
+import { Check, DeleteButton, Empty, Field, IdBadge, Modal, PageHeader, TextArea, TextInput } from '../components/ui'
 import { candleStageLabel } from '../lib/labels'
 import { reviewsOf } from '../lib/selectors'
 import { useAppDispatch, useData } from '../store'
@@ -20,19 +20,11 @@ function PersonDialog({ person, onClose }: { person: Omit<Person, 'id'> & { id?:
       footer={
         <>
           {p.id && (
-            <Button
-              variant="ghost"
-              colorPalette="red"
-              mr="auto"
-              onClick={async () => {
-                if (await confirmAction('Удалить человека? Свечи останутся, но без имени получателя.')) {
-                  dispatch(actions.deletePerson(p.id!))
-                  onClose()
-                }
-              }}
-            >
-              Удалить
-            </Button>
+            <DeleteButton confirm="Удалить человека? Свечи останутся, но без имени получателя." onDelete={() => {
+              dispatch(actions.deletePerson(p.id!))
+              onClose()
+            }}
+            />
           )}
           <Button
             disabled={!p.name.trim()}

@@ -2,7 +2,7 @@ import { Badge, Box, Button, Flex, Input, SimpleGrid, Stack, Text } from '@chakr
 import { useState } from 'react'
 import { LuPlus } from 'react-icons/lu'
 import { StockHint } from '../components/StockHint'
-import { Chips, Empty, Field, Modal, notify, NumInput, PageHeader, Select, TextArea, TextInput } from '../components/ui'
+import { Chips, DateInput, Empty, Field, Modal, notify, NumInput, PageHeader, Select, TextArea, TextInput } from '../components/ui'
 import { fmt, fmtDate } from '../lib/calc'
 import { nowLocal, toIso } from '../lib/dates'
 import { decorKindLabel } from '../lib/labels'
@@ -68,7 +68,7 @@ function NewBatch({ onClose }: { onClose: () => void }) {
           <TextInput value={name} onChange={setName} placeholder="листики, ягоды" />
         </Field>
         <Field label="Дата">
-          <Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
+          <DateInput kind="datetime-local" value={date} onChange={setDate} />
         </Field>
         {kind === 'wax' && (
           <>

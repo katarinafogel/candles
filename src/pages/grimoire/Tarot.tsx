@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react'
 import { LuRotateCcw, LuX } from 'react-icons/lu'
 import { useAttempt } from '../../components/grimoire/RoundBlocks'
 import { SuggestInput } from '../../components/grimoire/SuggestInput'
-import { Check, Chips, confirmAction, Empty, Field, Modal, PageHeader, Select, TextArea, TextInput } from '../../components/ui'
+import { Check, Chips, DateInput, DeleteButton, Empty, Field, Modal, PageHeader, Panel, Select, TextArea, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
 import { humanDay } from '../../grimoire/days'
 import { cardHistory, cardName, tarotCards, tarotLayouts } from '../../grimoire/tarot'
@@ -74,19 +74,11 @@ export function ReadingDialog({ reading, onClose }: { reading: Draft; onClose: (
       footer={
         <>
           {r.id && (
-            <Button
-              variant="ghost"
-              colorPalette="red"
-              mr="auto"
-              onClick={async () => {
-                if (await confirmAction('Удалить запись?')) {
-                  dispatch(A.deleteTarot(r.id!))
-                  onClose()
-                }
-              }}
-            >
-              Удалить
-            </Button>
+            <DeleteButton confirm="Удалить запись?" onDelete={() => {
+              dispatch(A.deleteTarot(r.id!))
+              onClose()
+            }}
+            />
           )}
           <Button onClick={save}>Сохранить</Button>
         </>
@@ -95,7 +87,7 @@ export function ReadingDialog({ reading, onClose }: { reading: Draft; onClose: (
       <Stack gap="4">
         <HStack gap="3" wrap="wrap" align="flex-end">
           <Field label="День" w="180px">
-            <Input type="date" value={r.day} onChange={(e) => e.target.value && set({ day: e.target.value })} />
+            <DateInput value={r.day} onChange={(v) => v && set({ day: v })} />
           </Field>
           <Field label="Колода" flex="1" minW="180px">
             <SuggestInput
@@ -122,7 +114,7 @@ export function ReadingDialog({ reading, onClose }: { reading: Draft; onClose: (
             </Field>
           </>
         )}
-        <Stack gap="3" p="3" borderRadius="l2" borderWidth="1px" borderColor="border" bg="bg.subtle">
+        <Panel display="flex" flexDirection="column" gap="3">
           {positions.map((pos, i) => (
             <CardPicker key={`${r.layout ?? ''}-${i}`} label={positions.length > 1 || r.type === 'spread' ? pos : undefined} value={r.cards[i]} onChange={(v) => setCard(i, pos, v)} />
           ))}
@@ -131,7 +123,7 @@ export function ReadingDialog({ reading, onClose }: { reading: Draft; onClose: (
               Выбери хотя бы одну карту
             </Text>
           )}
-        </Stack>
+        </Panel>
         {r.type === 'spread' && !layout && r.cards.length > 1 && (
           <Field label="Сохранить схему" helper="позиции этого расклада станут твоей схемой">
             <TextInput value={newLayout} onChange={setNewLayout} />
@@ -170,14 +162,14 @@ function CardPage({ card, onClose, onOpen }: { card: string; onClose: () => void
       </Text>
       <Stack gap="2">
         {history.map(({ reading, pick }) => (
-          <Box key={reading.id + (pick.position ?? '')} as="button" textAlign="left" p="2.5" borderRadius="l2" borderWidth="1px" borderColor="border" _hover={{ bg: 'bg.muted' }} onClick={() => onOpen(reading)}>
+          <Panel key={reading.id + (pick.position ?? '')} p="2.5" onClick={() => onOpen(reading)}>
             <Text fontSize="xs" color="fg.muted">
               {humanDay(reading.day, today)} · {reading.type === 'day' ? 'карта дня' : `${reading.layout ?? 'расклад'}${pick.position ? `, ${pick.position}` : ''}`}
               {pick.reversed ? ' · перевёрнутая' : ''}
               {reading.came ? ` · ${cameLabel[reading.came]}` : ''}
             </Text>
             {reading.meaning && <Text fontSize="sm">{reading.meaning}</Text>}
-          </Box>
+          </Panel>
         ))}
       </Stack>
     </Modal>
@@ -233,7 +225,7 @@ export default function Tarot() {
             {tarotCards
               .filter((c) => !majorOnly || c.arcana === 'major')
               .map((c) => (
-                <Flex key={c.key} as="button" onClick={() => setCard(c.key)} justify="space-between" gap="2" p="2" borderRadius="l2" borderWidth="1px" borderColor="border" opacity={counts[c.key] ? 1 : 0.55} _hover={{ bg: 'bg.muted' }}>
+                <Panel display="flex" key={c.key} onClick={() => setCard(c.key)} justifyContent="space-between" gap="2" p="2" opacity={counts[c.key] ? 1 : 0.55}>
                   <Text fontSize="sm" textAlign="left">
                     {c.name}
                   </Text>
@@ -242,14 +234,14 @@ export default function Tarot() {
                       {counts[c.key]}
                     </Text>
                   ) : null}
-                </Flex>
+                </Panel>
               ))}
           </SimpleGrid>
         </>
       ) : list.length ? (
         <Stack gap="2">
           {list.map((r) => (
-            <Box key={r.id} as="button" textAlign="left" p="3" borderRadius="l2" borderWidth="1px" borderColor="border" bg="bg.subtle" _hover={{ bg: 'bg.muted' }} onClick={() => setEdit(r)}>
+            <Panel key={r.id} onClick={() => setEdit(r)}>
               <Text fontSize="xs" color="fg.muted">
                 {humanDay(r.day, today)} · {r.type === 'day' ? 'карта дня' : r.layout ?? 'расклад'}
                 {r.deck ? ` · ${r.deck}` : ''}
@@ -262,7 +254,7 @@ export default function Tarot() {
                   {r.meaning}
                 </Text>
               )}
-            </Box>
+            </Panel>
           ))}
         </Stack>
       ) : (

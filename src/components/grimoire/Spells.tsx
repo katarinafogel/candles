@@ -10,7 +10,7 @@ import { words } from '../../grimoire/selectors'
 import type { Spell } from '../../grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
-import { Check, confirmAction, Empty, Field, Modal, TextArea, TextInput } from '../ui'
+import { Check, confirmAction, Empty, Field, Modal, Panel, TextArea, TextInput } from '../ui'
 import { MarkPicker, Stars } from './Marks'
 import { useAttempt } from './RoundBlocks'
 import { TagInput } from './TagInput'
@@ -21,7 +21,7 @@ function SpellRow({ sp, projectId, onCast, onEdit }: { sp: Spell; projectId?: st
   const dispatch = useAppDispatch()
   const [open, setOpen] = useState(false)
   return (
-    <Box p="3" borderRadius="l2" borderWidth="1px" borderColor="border" bg="bg.subtle">
+    <Panel>
       <Flex gap="2" align="center" wrap="wrap">
         <Text flex="1" fontWeight="semibold" cursor={sp.steps.length ? 'pointer' : undefined} onClick={() => setOpen(!open)}>
           {sp.title}
@@ -52,7 +52,7 @@ function SpellRow({ sp, projectId, onCast, onEdit }: { sp: Spell; projectId?: st
           Сотворить{projectId ? ' в книгу' : ''}
         </Button>
       </HStack>
-    </Box>
+    </Panel>
   )
 }
 

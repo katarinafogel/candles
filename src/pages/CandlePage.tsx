@@ -7,7 +7,7 @@ import { History } from '../components/History'
 import { QrBlock } from '../components/QrBlock'
 import { ReviewCard, ReviewForm } from '../components/ReviewForm'
 import { DecorateDialog, DefectDialog } from '../components/StepDialogs'
-import { Check, confirmAction, Empty, Field, Link, Modal, notify, PageHeader, Row, Section, Select, TextInput } from '../components/ui'
+import { Check, confirmAction, DateInput, Empty, Field, Link, Modal, notify, PageHeader, Row, Section, Select, TextInput } from '../components/ui'
 import { candleCost, daysBetween, fmt, fmtDate, fmtDateTime } from '../lib/calc'
 import { nowLocal, toIso } from '../lib/dates'
 import { candleStageLabel, decorKindLabel, defectReasonLabel, holderStageLabel, wickSchemeLabel } from '../lib/labels'
@@ -90,7 +90,7 @@ export function GiveDialog({ ids, onClose, onDone }: { ids: string[]; onClose: (
           </>
         )}
         <Field label="Дата выдачи">
-          <Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
+          <DateInput kind="datetime-local" value={date} onChange={setDate} />
         </Field>
       </Stack>
     </Modal>

@@ -12,7 +12,7 @@ import { chainOf, isOpenTask, isStuck, stepsOf, words } from '../../grimoire/sel
 import type { PostponeReason, Task } from '../../grimoire/types'
 import { store, useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
-import { Chips, confirmAction, Field, Modal, TextArea, TextInput } from '../ui'
+import { Chips, DateInput, DeleteButton, Field, Modal, TextArea, TextInput } from '../ui'
 import { WordChip } from './EmotionWheel'
 import { FrogIcon } from './Marks'
 import { usePlanGuard } from './PlanGuard'
@@ -88,19 +88,11 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
       <Stack gap="3" w="full">
         {blocks.toolbar}
         <HStack gap="2">
-          <Button
-            variant="ghost"
-            colorPalette="red"
-            mr="auto"
-            onClick={async () => {
-              if (await confirmAction('Удалить дело насовсем?')) {
-                dispatch(A.deleteTask(live.id))
-                onClose()
-              }
-            }}
-          >
-            Удалить
-          </Button>
+          <DeleteButton confirm="Удалить дело насовсем?" onDelete={() => {
+            dispatch(A.deleteTask(live.id))
+            onClose()
+          }}
+          />
           <Button onClick={save}>
             Сохранить
           </Button>
@@ -118,7 +110,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
           </Text>
           <Chips value={reason} onChange={(v) => setReason(v as PostponeReason | undefined)} options={Object.entries(postponeReasonLabel).map(([value, label]) => ({ value: value as PostponeReason, label }))} />
           <Field label="На какой день">
-            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+            <DateInput value={to} onChange={setTo} />
           </Field>
           <Wrap gap="2">
             <Button onClick={() => act(() => withUndo(`Перенесено на ${humanDay(to, today)}`, () => dispatch(A.postponeTask({ id: live.id, to, reason }))))}>Перенести</Button>
@@ -143,7 +135,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
       {mode === 'wait' && (
         <Stack gap="4">
           <Field label="Проверить" helper="до этого дня дело не попадает в план">
-            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+            <DateInput value={to} onChange={setTo} />
           </Field>
           <Field label="Чего ждём">
             <TextInput value={text} onChange={setText} />

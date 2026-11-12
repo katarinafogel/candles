@@ -6,7 +6,7 @@ import { LuRepeat } from 'react-icons/lu'
 import { Tag } from '../../components/grimoire/Marks'
 import { useAttempt } from '../../components/grimoire/RoundBlocks'
 import { TagInput } from '../../components/grimoire/TagInput'
-import { Check, Chips, confirmAction, Empty, Field, Modal, PageHeader, TextArea, TextInput } from '../../components/ui'
+import { Check, Chips, DeleteButton, Empty, Field, Modal, PageHeader, Panel, TextArea, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
 import { humanDay } from '../../grimoire/days'
 import type { Note } from '../../grimoire/types'
@@ -34,19 +34,11 @@ export function NoteDialog({ note, onClose }: { note: Draft; onClose: () => void
       footer={
         <>
           {n.id && (
-            <Button
-              variant="ghost"
-              colorPalette="red"
-              mr="auto"
-              onClick={async () => {
-                if (await confirmAction('Удалить заметку?')) {
-                  dispatch(A.deleteNote(n.id!))
-                  onClose()
-                }
-              }}
-            >
-              Удалить
-            </Button>
+            <DeleteButton confirm="Удалить заметку?" onDelete={() => {
+              dispatch(A.deleteNote(n.id!))
+              onClose()
+            }}
+            />
           )}
           <Button onClick={save}>Сохранить</Button>
         </>
@@ -100,7 +92,7 @@ export default function Notes() {
       {list.length ? (
         <Stack gap="2">
           {list.map((n) => (
-            <Box key={n.id} as="button" textAlign="left" p="3" borderRadius="l2" borderWidth="1px" borderColor="border" bg="bg.subtle" _hover={{ bg: 'bg.muted' }} onClick={() => setEdit(n)}>
+            <Panel key={n.id} onClick={() => setEdit(n)}>
               <Text whiteSpace="pre-wrap" lineClamp={5}>
                 {n.text}
               </Text>
@@ -116,7 +108,7 @@ export default function Notes() {
                   </HStack>
                 )}
               </Flex>
-            </Box>
+            </Panel>
           ))}
         </Stack>
       ) : (

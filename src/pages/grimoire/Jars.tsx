@@ -6,7 +6,7 @@ import { LuBookOpen, LuCalendarClock, LuHash, LuPlus, LuStar, LuTrash2, LuUser }
 import { BlockSpot, useAttempt, useRoundBlocks, type RoundBlock } from '../../components/grimoire/RoundBlocks'
 import { TagInput } from '../../components/grimoire/TagInput'
 import { PeoplePicker } from '../../components/grimoire/TaskFields'
-import { Chips, confirmAction, Empty, Field, Modal, notify, NumInput, PageHeader, Select, TextInput } from '../../components/ui'
+import { Chips, confirmAction, DateInput, DeleteButton, Empty, Field, Modal, notify, NumInput, PageHeader, Select, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
 import { humanDay } from '../../grimoire/days'
 import { jarPlan, money } from '../../grimoire/jars'
@@ -92,19 +92,11 @@ export function JarDialog({ jar, onClose }: { jar: Draft; onClose: () => void })
           {blocks.toolbar}
           <HStack gap="2" justify="flex-end">
             {j.id && (
-              <Button
-                variant="ghost"
-                colorPalette="red"
-                mr="auto"
-                onClick={async () => {
-                  if (await confirmAction('Удалить копилку вместе с журналом? Деньги приложение не трогает — это только учёт.')) {
-                    dispatch(A.deleteJar(j.id!))
-                    onClose()
-                  }
-                }}
-              >
-                Удалить
-              </Button>
+              <DeleteButton confirm="Удалить копилку вместе с журналом? Деньги приложение не трогает — это только учёт." onDelete={() => {
+                dispatch(A.deleteJar(j.id!))
+                onClose()
+              }}
+              />
             )}
             <Button onClick={save}>Сохранить</Button>
           </HStack>
@@ -128,7 +120,7 @@ export function JarDialog({ jar, onClose }: { jar: Draft; onClose: () => void })
         {blocks.show('date') && (
           <BlockSpot active={blocks.opened === 'date'}>
             <Field label="К какой дате" helper="с датой гримуар считает, сколько откладывать в неделю">
-              <Input type="date" w="190px" value={j.targetDate ?? ''} onChange={(e) => set({ targetDate: e.target.value || undefined })} />
+              <DateInput w="190px" value={j.targetDate ?? ''} onChange={(v) => set({ targetDate: v || undefined })} />
             </Field>
           </BlockSpot>
         )}

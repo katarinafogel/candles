@@ -12,7 +12,7 @@ import type { ChecklistItem, Task, TaskPriority } from '../../grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { actions } from '../../store/dataSlice'
 import { grimoireActions as A } from '../../store/grimoireSlice'
-import { Check, Chips, Field, NumInput, TextArea, TextInput } from '../ui'
+import { Check, Chips, DateInput, Field, NumInput, RemovableChip, TextArea, TextInput } from '../ui'
 import { MarkPicker, PriorityIcon } from './Marks'
 import { ScarNote } from './ScarNote'
 import { SuggestInput } from './SuggestInput'
@@ -133,29 +133,29 @@ export function TaskFields({
     time: (
       <HStack gap="3" wrap="wrap">
         <Field label="Когда делать" flex="1" minW="150px">
-          <Input type="date" value={t.doOn ?? ''} onChange={(e) => set(e.target.value ? { doOn: e.target.value } : { doOn: undefined, doAt: undefined })} />
+          <DateInput value={t.doOn ?? ''} onChange={(v) => set(v ? { doOn: v } : { doOn: undefined, doAt: undefined })} />
         </Field>
         <Field label="Время" w="110px">
-          <Input type="time" value={t.doAt ?? ''} disabled={!t.doOn} onChange={(e) => set({ doAt: e.target.value || undefined })} />
+          <DateInput kind="time" value={t.doAt ?? ''} disabled={!t.doOn} onChange={(v) => set({ doAt: v || undefined })} />
         </Field>
       </HStack>
     ),
     due: (
       <HStack gap="3" wrap="wrap">
         <Field label="Сделать до" flex="1" minW="150px">
-          <Input type="date" value={t.dueAt?.slice(0, 10) ?? ''} onChange={(e) => set({ dueAt: e.target.value ? e.target.value + (t.dueAt?.slice(10) ?? '') : undefined })} />
+          <DateInput value={t.dueAt?.slice(0, 10) ?? ''} onChange={(v) => set({ dueAt: v ? v + (t.dueAt?.slice(10) ?? '') : undefined })} />
         </Field>
         <Field label="Время" w="110px">
-          <Input type="time" value={t.dueAt?.slice(11, 16) ?? ''} disabled={!t.dueAt} onChange={(e) => set({ dueAt: t.dueAt!.slice(0, 10) + (e.target.value ? `T${e.target.value}` : '') })} />
+          <DateInput kind="time" value={t.dueAt?.slice(11, 16) ?? ''} disabled={!t.dueAt} onChange={(v) => set({ dueAt: t.dueAt!.slice(0, 10) + (v ? `T${v}` : '') })} />
         </Field>
       </HStack>
     ),
     project: t.parentId ? null : (
       <Field label="Проект">
         {project ? (
-          <Chip onRemove={() => set({ projectId: undefined })}>
+          <RemovableChip onRemove={() => set({ projectId: undefined })}>
             {project.sigil ?? '🌿'} {project.title}
-          </Chip>
+          </RemovableChip>
         ) : (
           <SuggestInput
             placeholder="проект"
@@ -430,17 +430,6 @@ function PlusToggle({ label, on, onClick }: { label: string; on: boolean; onClic
   )
 }
 
-/** A chosen person or project: tap to take it off. */
-function Chip({ children, onRemove }: { children: ReactNode; onRemove: () => void }) {
-  return (
-    <Box as="button" onClick={onRemove} cursor="pointer" display="inline-flex" aria-label="Убрать">
-      <Badge variant="subtle" colorPalette="ember" borderRadius="full" px="2.5" py="1" fontSize="sm" fontWeight="normal">
-        {children}
-      </Badge>
-    </Box>
-  )
-}
-
 /** Subtasks of one deed: the field for a new one stays on top, new ones go to the end of the list. */
 function Checklist({ items, onChange }: { items: ChecklistItem[]; onChange: (items: ChecklistItem[]) => void }) {
   const put = (id: string, patch: Partial<ChecklistItem>) => onChange(items.map((x) => (x.id === id ? { ...x, ...patch } : x)))
@@ -477,9 +466,9 @@ export function PeoplePicker({ value, onChange, scar }: { value: string[]; onCha
       {value.length > 0 && (
         <HStack gap="1.5" wrap="wrap">
           {value.map((id) => (
-            <Chip key={id} onRemove={() => onChange(value.filter((x) => x !== id))}>
+            <RemovableChip key={id} onRemove={() => onChange(value.filter((x) => x !== id))}>
               {people[id]?.name ?? '?'}
-            </Chip>
+            </RemovableChip>
           ))}
         </HStack>
       )}

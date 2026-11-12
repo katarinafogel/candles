@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { LuMinus, LuPencil, LuPlus } from 'react-icons/lu'
 import { useAttempt } from '../../components/grimoire/RoundBlocks'
 import { MarkPicker } from '../../components/grimoire/Marks'
-import { Chips, confirmAction, Empty, Field, Modal, NumInput, PageHeader, Section, Select, TextInput } from '../../components/ui'
+import { Chips, DateInput, DeleteButton, Empty, Field, Modal, NumInput, PageHeader, Section, Select, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
 import { addDays, dayKey, weekStart } from '../../grimoire/days'
 import { habitLogId, habitTaskId, isDone, isScheduled, navTest, streak } from '../../grimoire/habits'
@@ -41,19 +41,11 @@ export function HabitDialog({ habit, onClose }: { habit: Draft; onClose: () => v
       footer={
         <>
           {h.id && (
-            <Button
-              variant="ghost"
-              colorPalette="red"
-              mr="auto"
-              onClick={async () => {
-                if (await confirmAction('Удалить ритуал вместе с историей отметок? Можно вместо этого отправить в архив.')) {
-                  dispatch(A.deleteHabit(h.id!))
-                  onClose()
-                }
-              }}
-            >
-              Удалить
-            </Button>
+            <DeleteButton confirm="Удалить ритуал вместе с историей отметок? Можно вместо этого отправить в архив." onDelete={() => {
+              dispatch(A.deleteHabit(h.id!))
+              onClose()
+            }}
+            />
           )}
           <Button
             onClick={() =>
@@ -117,10 +109,10 @@ export function HabitDialog({ habit, onClose }: { habit: Draft; onClose: () => v
         </Field>
         <HStack gap="3">
           <Field label="С">
-            <Input type="date" value={h.activeFrom ?? ''} onChange={(e) => set({ activeFrom: e.target.value || undefined })} />
+            <DateInput value={h.activeFrom ?? ''} onChange={(v) => set({ activeFrom: v || undefined })} />
           </Field>
           <Field label="По">
-            <Input type="date" value={h.activeTo ?? ''} onChange={(e) => set({ activeTo: e.target.value || undefined })} />
+            <DateInput value={h.activeTo ?? ''} onChange={(v) => set({ activeTo: v || undefined })} />
           </Field>
         </HStack>
         {jars.length > 0 && (

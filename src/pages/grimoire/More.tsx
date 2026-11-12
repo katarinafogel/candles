@@ -5,7 +5,7 @@ import { Link as RouterLink } from 'react-router-dom'
 import { AgentKeys } from '../../components/grimoire/AgentKeys'
 import { PushSettings } from '../../components/grimoire/PushSettings'
 import { SignOutRow } from '../../components/SignOut'
-import { Check, Chips, confirmAction, Field, NumInput, PageHeader, Section, TextInput } from '../../components/ui'
+import { Check, Chips, confirmAction, DateInput, Field, NumInput, PageHeader, Section, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
 import { humanDay } from '../../grimoire/days'
 import { words } from '../../grimoire/selectors'
@@ -167,12 +167,7 @@ export default function GrimoireMore() {
             ]} />
           </Field>
           <Field label="Вечерняя страница" helper="с этого времени до конца дня свиток зовёт её записать; пусто — не звать">
-            <input
-              type="time"
-              value={meta.eveningAt ?? '21:00'}
-              onChange={(e) => dispatch(A.updateMeta({ eveningAt: e.target.value }))}
-              style={{ background: 'transparent', color: 'inherit', border: '1px solid var(--chakra-colors-border)', borderRadius: 6, padding: '6px 8px', width: 120 }}
-            />
+            <DateInput kind="time" w="120px" value={meta.eveningAt ?? '21:00'} onChange={(eveningAt) => dispatch(A.updateMeta({ eveningAt }))} />
           </Field>
           <Field label="Пол">
             <Chips value={meta.gender} onChange={(v) => dispatch(A.updateMeta(v === 'f' ? { gender: 'f' } : { gender: v as 'm' | undefined, cycleOn: false }))} options={[

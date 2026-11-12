@@ -1,7 +1,7 @@
 import { Box, Button, Flex, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { LuPlus } from 'react-icons/lu'
-import { confirmAction, Field, Modal, PageHeader, TextArea, TextInput } from '../components/ui'
+import { DeleteButton, Field, Modal, PageHeader, TextArea, TextInput } from '../components/ui'
 import { useAppDispatch, useData } from '../store'
 import { actions } from '../store/dataSlice'
 import type { Instruction } from '../types'
@@ -46,19 +46,11 @@ export default function Instructions() {
           footer={
             <>
               {edit.id && edit.id !== 'default' && (
-                <Button
-                  variant="ghost"
-                  colorPalette="red"
-                  mr="auto"
-                  onClick={async () => {
-                    if (await confirmAction('Удалить шаблон?')) {
-                      dispatch(actions.deleteInstruction(edit.id!))
-                      setEdit(null)
-                    }
-                  }}
-                >
-                  Удалить
-                </Button>
+                <DeleteButton confirm="Удалить шаблон?" onDelete={() => {
+                  dispatch(actions.deleteInstruction(edit.id!))
+                  setEdit(null)
+                }}
+                />
               )}
               <Button
                 disabled={!edit.title.trim()}

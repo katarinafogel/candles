@@ -8,7 +8,7 @@ import { nextHolderStage, actions, varnishTarget, type HolderStepParams } from '
 import { useAppDispatch, useData } from '../store'
 import type { DecorUse, DefectReason, VarnishKind, WickScheme } from '../types'
 import { StockHint } from './StockHint'
-import { Check, Chips, Field, Modal, notify, NumInput, Select, TextArea, TextInput } from './ui'
+import { Check, Chips, DateInput, Field, Modal, notify, NumInput, Select, TextArea, TextInput } from './ui'
 import { withUndo } from '../lib/undo'
 
 /** Bulk "Дальше" for holders: parameters are entered once for all selected items. */
@@ -110,7 +110,7 @@ export function HolderStepDialog({ ids, onClose }: { ids: string[]; onClose: () 
           {holders.map((h) => h.id).join(', ')}
         </Text>
         <Field label={step === 'dried' ? 'Дата конца сушки' : 'Дата'}>
-          <Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
+          <DateInput kind="datetime-local" value={date} onChange={setDate} />
         </Field>
 
         {(step === 'varnishIn' || step === 'varnishOut') && (
@@ -294,7 +294,7 @@ export function DefectDialog({
           />
         </Field>
         <Field label="Дата">
-          <Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
+          <DateInput kind="datetime-local" value={date} onChange={setDate} />
         </Field>
         <Field label="Комментарий">
           <TextArea value={comment} onChange={setComment} rows={2} />
@@ -352,7 +352,7 @@ export function DecorateDialog({ ids, onClose }: { ids: string[]; onClose: () =>
     >
       <Stack gap="4">
         <Field label="Дата">
-          <Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
+          <DateInput kind="datetime-local" value={date} onChange={setDate} />
         </Field>
         <Field label="Декор на одну свечу">
           <Stack gap="2" w="100%">

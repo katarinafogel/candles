@@ -6,13 +6,13 @@ import { useToday, withUndo } from '../../grimoire/act'
 import { cycleSymptoms, openPeriod } from '../../grimoire/cycle'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
-import { Chips, Field } from '../ui'
+import { Chips, DateInput, Field } from '../ui'
 
 const ddmm = (d: string) => `${d.slice(8)}.${d.slice(5, 7)}`
 
 function DateInput({ value, max, onChange }: { value: string; max?: string; onChange: (v: string) => void }) {
   return (
-    <Input size="sm" type="date" w="160px" value={value} max={max} onChange={(e) => e.target.value && onChange(e.target.value)} />
+    <DateInput size="sm" w="160px" value={value} max={max} onChange={(v) => v && onChange(v)} />
   )
 }
 
