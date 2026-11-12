@@ -731,3 +731,75 @@ describe('suggestions while typing', async () => {
     expect(matchSuggestions('зз', opts)).toEqual([])
   })
 })
+
+describe('wishlist round two', () => {
+  const add = (s: GS, id: string, f: object = {}) => reducer(s, { type: A.addTask.type, payload: { fields: { id, title: id, ...f }, ...w(MON) } })
+  const done = (s: GS, id: string) => reducer(s, { type: A.completeTask.type, payload: { id, ...w(MON) } })
+
+  it('a chain spell brings its next step only when the one before is done', () => {
+    let s = reducer(initialGrimoire, {
+      type: A.upsertSpell.type,
+      payload: { spell: { id: 'wash', title: 'Стирка', stars: 1, dread: 0, tags: ['дом'], chain: true, steps: [{ title: 'Постирать', stars: 1, dread: 0 }, { title: 'Развесить', stars: 1, dread: 0 }] }, ...w(MON) },
+    })
+    s = reducer(s, { type: A.castSpell.type, payload: { spellId: 'wash', questId: 'q', ...w(MON) } })
+    expect(Object.values(s.tasks).map((t) => t.title)).toEqual(['Постирать'])
+    expect(s.meta.spells[0].uses).toBe(1)
+    s = done(s, 'q')
+    const next = Object.values(s.tasks).find((t) => t.title === 'Развесить')!
+    expect(next).toMatchObject({ status: 'open', spawnedFrom: 'q', tags: ['дом'] })
+    expect(next.chainNext).toBeUndefined()
+    // Done twice (undo and again) — still one next step.
+    s = reducer(s, { type: A.reopenTask.type, payload: { id: 'q', ...w(MON) } })
+    s = done(s, 'q')
+    expect(Object.values(s.tasks).filter((t) => t.title === 'Развесить')).toHaveLength(1)
+  })
+
+  it('an archived book takes its open deeds along, if asked, and gives them back to the backlog', () => {
+    let s = reducer(initialGrimoire, { type: A.upsertProject.type, payload: { project: { id: 'p', title: 'Ремонт', status: 'active' }, ...w(MON) } })
+    s = add(s, 'a', { projectId: 'p', doOn: MON })
+    s = add(s, 'b', { projectId: 'p' })
+    s = done(s, 'b')
+    s = reducer(s, A.archiveProject({ id: 'p', tasks: 'shelve' }))
+    expect(s.projects.p.status).toBe('archived')
+    expect(s.tasks.a).toMatchObject({ shelved: true })
+    expect(s.tasks.a.doOn).toBeUndefined()
+    expect(dayPlan(s, MON).all).toHaveLength(0)
+    s = reducer(s, A.unarchiveProject('p'))
+    expect(s.tasks.a.shelved).toBeUndefined()
+    expect(s.projects.p.status).toBe('active')
+    s = reducer(s, A.deleteProject({ id: 'p', tasks: 'delete' }))
+    expect(s.projects.p).toBeUndefined()
+    expect(s.tasks.a).toBeUndefined()
+    expect(s.tasks.b).toBeDefined()
+    expect(s.tasks.b.projectId).toBeUndefined()
+  })
+
+  it('an event moves the deeds of its days as chosen and pauses rituals without skips', () => {
+    let s = add(initialGrimoire, 'x', { doOn: addDays(MON, 1) })
+    s = add(s, 'y', { doOn: addDays(MON, 2) })
+    s = reducer(s, {
+      type: A.upsertEvent.type,
+      payload: { event: { id: 'e', title: 'Поездка', from: addDays(MON, 1), to: addDays(MON, 3) }, fate: { x: 'after', y: 'backlog' }, ...w(MON) },
+    })
+    expect(s.tasks.x.doOn).toBe(addDays(MON, 4))
+    expect(s.tasks.y.doOn).toBeUndefined()
+    s = reducer(s, { type: A.upsertHabit.type, payload: { habit: { id: 'h', title: 'вода', schedule: { kind: 'daily' }, mark: { kind: 'check' }, stars: 1, dread: 0, status: 'active', activeFrom: MON }, ...w(MON) } })
+    s = reducer(s, { type: A.generateHabitTasks.type, payload: w(addDays(MON, 2)) })
+    expect(Object.values(s.tasks).filter((t) => t.habitId === 'h' && t.doOn === addDays(MON, 2))).toHaveLength(0)
+  })
+
+  it('a note to repeat climbs the ladder on «помню» and comes back tomorrow otherwise', () => {
+    let s = reducer(initialGrimoire, { type: A.upsertNote.type, payload: { note: { id: 'n', text: 'цитата', tags: [], repeat: true }, ...w(MON) } })
+    expect(s.notes.n.nextOn).toBe(addDays(MON, 1))
+    s = reducer(s, { type: A.reviewNote.type, payload: { id: 'n', remember: true, ...w(addDays(MON, 1)) } })
+    expect(s.notes.n).toMatchObject({ step: 1, nextOn: addDays(MON, 4) })
+    s = reducer(s, { type: A.reviewNote.type, payload: { id: 'n', remember: false, ...w(addDays(MON, 4)) } })
+    expect(s.notes.n).toMatchObject({ step: 0, nextOn: addDays(MON, 5) })
+  })
+
+  it('stores the new collections as their own rows', () => {
+    const next = { ...initialGrimoire, events: { e: { id: 'e', title: 't', from: MON, to: MON, createdAt: at(MON) } } }
+    expect(diffGrimoire(initialGrimoire, next)).toEqual([{ op: 'upsert', kind: 'event', id: 'e', data: next.events.e }])
+    expect(isGrimoireRow('tarot', 'r')).toBe(true)
+  })
+})
