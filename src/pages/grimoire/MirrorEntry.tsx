@@ -3,12 +3,13 @@
 // /g/mirror/evening, /g/mirror/:id; `?task=` ties a new entry to a deed, `?source=` says where from.
 import { Box, Button, Flex, Grid, HStack, Input, Stack, Text } from '@chakra-ui/react'
 import { nanoid } from '@reduxjs/toolkit'
-import { useMemo, useState } from 'react'
-import { LuPlus, LuX } from 'react-icons/lu'
+import { useMemo, useState, type ReactNode } from 'react'
+import { LuCalendarClock, LuFootprints, LuHeart, LuHourglass, LuLeaf, LuPersonStanding, LuPlus, LuSparkles, LuUser, LuX, LuZap } from 'react-icons/lu'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { CycleMark } from '../../components/grimoire/Cycle'
 import { EmotionPicker, WordChip } from '../../components/grimoire/EmotionWheel'
 import { matchPeople } from '../../components/grimoire/QuickAdd'
+import { BlockSpot, useRoundBlocks, type RoundBlock } from '../../components/grimoire/RoundBlocks'
 import { WordCard } from '../../components/grimoire/WordCard'
 import { Chips, confirmAction, Field, PageHeader, Section, TextArea, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
@@ -182,6 +183,21 @@ function DayStrip({ entries }: { entries: JournalEntry[] }) {
   )
 }
 
+type MirrorBlock = 'wentWell' | 'putOff' | 'grateful' | 'body' | 'trigger' | 'task' | 'people' | 'action' | 'when'
+
+/** The mirror's optional fields; `evening` — only on the evening page. */
+const mirrorBlocks: (RoundBlock<MirrorBlock> & { evening?: boolean; has: (e: Partial<JournalEntry>) => boolean; clear: Partial<JournalEntry> })[] = [
+  { key: 'wentWell', label: 'Что получилось', icon: <LuSparkles />, evening: true, has: (e) => !!e.wentWell, clear: { wentWell: undefined } },
+  { key: 'putOff', label: 'Что отложила', icon: <LuHourglass />, evening: true, has: (e) => !!e.putOff, clear: { putOff: undefined } },
+  { key: 'grateful', label: 'За что благодарна', icon: <LuHeart />, evening: true, has: (e) => !!e.grateful, clear: { grateful: undefined } },
+  { key: 'body', label: 'Где в теле', icon: <LuPersonStanding />, has: (e) => !!e.bodyZones?.length, clear: { bodyZones: undefined } },
+  { key: 'trigger', label: 'Что случилось', icon: <LuZap />, has: (e) => !!e.trigger, clear: { trigger: undefined } },
+  { key: 'task', label: 'Связанное дело', icon: <LuLeaf />, has: (e) => !!e.taskId, clear: { taskId: undefined } },
+  { key: 'people', label: 'С кем', icon: <LuUser />, has: (e) => !!e.people?.length, clear: { people: undefined } },
+  { key: 'action', label: 'Что с этим сделаю', icon: <LuFootprints />, has: (e) => !!e.action, clear: { action: undefined } },
+  { key: 'when', label: 'Когда', icon: <LuCalendarClock />, has: () => false, clear: {} },
+]
+
 export default function MirrorEntry() {
   const { id } = useParams()
   const [params] = useSearchParams()
@@ -199,8 +215,16 @@ export default function MirrorEntry() {
   )
   const [at, setAt] = useState(entry?.at ?? new Date().toISOString())
   const [info, setInfo] = useState<string>()
-  const [more, setMore] = useState(!!(entry?.bodyZones?.length || entry?.trigger || entry?.action || entry?.taskId || entry?.people?.length || params.get('task')))
-  const set = (p: Partial<JournalEntry>) => setE({ ...e, ...p })
+  const set = (p: Partial<JournalEntry>) => setE((x) => ({ ...x, ...p }))
+  // Optional fields behind round buttons, as in a deed's form; the filled ones are open from the start.
+  const blockList = mirrorBlocks.filter((b) => evening || !b.evening)
+  const filled = blockList
+    .filter((b) => (b.key === 'when' ? !!entry : b.key === 'task' ? !!(entry?.taskId || params.get('task')) : b.has(entry ?? {})))
+    .map((b) => b.key)
+  const blocks = useRoundBlocks<MirrorBlock>(blockList, filled, (k) => {
+    if (k === 'when') setAt(entry?.at ?? new Date().toISOString())
+    else set(mirrorBlocks.find((b) => b.key === k)!.clear)
+  })
   const location = useLocation()
   // Back where she came from (a deed, the scroll); opened by a link — to the mirror.
   const back = () => (location.key !== 'default' ? navigate(-1) : navigate('/g/mirror'))
@@ -250,25 +274,56 @@ export default function MirrorEntry() {
     back()
   }
 
-  const details = (
-    <Stack gap="4" p="3" borderRadius="l2" borderWidth="1px" borderColor="border" bg="bg.subtle">
+  const blockView: Record<MirrorBlock, ReactNode> = {
+    wentWell: (
+      <Field label="Что получилось">
+        <TextInput value={e.wentWell ?? ''} onChange={(v) => set({ wentWell: v || undefined })} />
+      </Field>
+    ),
+    putOff: (
+      <Field label="Что отложила и почему">
+        <TextInput value={e.putOff ?? ''} onChange={(v) => set({ putOff: v || undefined })} />
+      </Field>
+    ),
+    grateful: (
+      <Field label="За что благодарна">
+        <TextInput value={e.grateful ?? ''} onChange={(v) => set({ grateful: v || undefined })} />
+      </Field>
+    ),
+    body: (
       <Field label="Где в теле">
         <BodyMap value={e.bodyZones ?? []} onChange={(bodyZones) => set({ bodyZones: bodyZones.length ? bodyZones : undefined })} />
       </Field>
+    ),
+    trigger: (
       <Field label="Что случилось">
         <TextInput value={e.trigger ?? ''} onChange={(v) => set({ trigger: v || undefined })} />
       </Field>
+    ),
+    task: (
       <Field label="Связанное дело">
         <PickList chosen={e.taskId ? [e.taskId] : []} options={taskOptions} placeholder="найти дело на сегодня или в бэклоге" onChange={(v) => set({ taskId: v[0] })} />
       </Field>
-      <Field label="С кем">
-        {peoplePick}
-      </Field>
+    ),
+    people: <Field label="С кем">{peoplePick}</Field>,
+    action: (
       <Field label="Что с этим сделаю">
         <Chips value={e.action} onChange={(v) => set({ action: (v as string) ?? undefined })} options={emotionActions.map((a) => ({ value: a.key, label: a.label }))} />
       </Field>
-    </Stack>
-  )
+    ),
+    when: (
+      <Field label="Когда">
+        <input
+          type="datetime-local"
+          value={toLocalInput(at)}
+          max={toLocalInput(new Date().toISOString())}
+          onChange={(ev) => ev.target.value && setAt(new Date(ev.target.value).toISOString())}
+          style={{ background: 'transparent', color: 'inherit', border: '1px solid var(--chakra-colors-border)', borderRadius: 6, padding: '6px 8px' }}
+        />
+      </Field>
+    ),
+  }
+  const shownBlocks = blockList.filter((b) => blocks.show(b.key))
 
   return (
     <>
@@ -287,28 +342,25 @@ export default function MirrorEntry() {
           )}
           {evening && (
             <Text fontFamily="heading" fontSize="lg" color="ember.100">
-              Какое чувство было главным сегодня?
+              Какие чувства были главными сегодня?
             </Text>
           )}
           {evening && todaysWords.length > 0 && (
             <Flex gap="1.5" wrap="wrap">
               {todaysWords.map((k) => (
                 <Box key={k} opacity={e.words?.includes(k) ? 1 : 0.7}>
-                  <WordChip wordKey={k} onClick={() => set({ words: e.words?.includes(k) ? [] : [k] })} />
+                  <WordChip
+                    wordKey={k}
+                    onClick={() => {
+                      const now = e.words ?? []
+                      set({ words: now.includes(k) ? now.filter((x) => x !== k) : now.length < 3 ? [...now, k] : now })
+                    }}
+                  />
                 </Box>
               ))}
             </Flex>
           )}
-          <EmotionPicker max={evening ? 1 : 3} value={e.words ?? []} onChange={(words) => set({ words })} onInfo={setInfo} />
-          {!evening && (
-            <Box>
-              <Button size="sm" variant="ghost" onClick={() => setMore(!more)}>
-                {more ? <LuX /> : <LuPlus />}
-                {more ? 'Свернуть подробности' : 'Подробнее: тело, что случилось, дело, человек'}
-              </Button>
-            </Box>
-          )}
-          {!evening && more && details}
+          <EmotionPicker max={3} value={e.words ?? []} onChange={(words) => set({ words })} onInfo={setInfo} />
         </Stack>
         <Stack gap="5">
           <EnergySlider value={e.energy} onChange={(energy) => set({ energy })} />
@@ -319,19 +371,6 @@ export default function MirrorEntry() {
             <Field label="Кто именно?" helper="можно и через @имя в тексте записи">
               {peoplePick}
             </Field>
-          )}
-          {evening && (
-            <>
-              <Field label="Что получилось">
-                <TextInput value={e.wentWell ?? ''} onChange={(v) => set({ wentWell: v || undefined })} />
-              </Field>
-              <Field label="Что отложила и почему">
-                <TextInput value={e.putOff ?? ''} onChange={(v) => set({ putOff: v || undefined })} />
-              </Field>
-              <Field label="За что благодарна">
-                <TextInput value={e.grateful ?? ''} onChange={(v) => set({ grateful: v || undefined })} />
-              </Field>
-            </>
           )}
           <Field label="Запись">
             <Stack gap="1.5">
@@ -353,15 +392,12 @@ export default function MirrorEntry() {
               )}
             </Stack>
           </Field>
-          <Field label="Когда">
-            <input
-              type="datetime-local"
-              value={toLocalInput(at)}
-              max={toLocalInput(new Date().toISOString())}
-              onChange={(ev) => ev.target.value && setAt(new Date(ev.target.value).toISOString())}
-              style={{ background: 'transparent', color: 'inherit', border: '1px solid var(--chakra-colors-border)', borderRadius: 6, padding: '6px 8px' }}
-            />
-          </Field>
+          {shownBlocks.map((b) => (
+            <BlockSpot key={b.key} active={blocks.opened === b.key}>
+              {blockView[b.key]}
+            </BlockSpot>
+          ))}
+          {blocks.toolbar}
           <Flex gap="2" wrap="wrap">
             <Button disabled={empty} onClick={save}>
               Записать
