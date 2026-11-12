@@ -8,5 +8,8 @@ export function publicBase(s?: Settings) {
   return base.replace(/[?#].*$/, '').replace(/\/?$/, '/')
 }
 
-/** QR link: the master's address keeps candle numbers unique across masters. */
-export const candleLink = (slug: string, id: string, s?: Settings) => `${publicBase(s)}#/c/${slug}/${id}`
+/**
+ * QR link: the master's address keeps candle numbers unique across masters;
+ * the secret token proves the person holds the candle (the server rejects reviews without it).
+ */
+export const candleLink = (slug: string, id: string, token: string, s?: Settings) => `${publicBase(s)}#/c/${slug}/${id}/${token}`

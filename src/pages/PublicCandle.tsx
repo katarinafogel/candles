@@ -7,6 +7,7 @@ import { Chips, Field, notify, NumInput, TextArea } from '../components/ui'
 import { candleColors, scentNotes } from '../lib/labels'
 import { fmt, round2 } from '../lib/calc'
 import { supabase } from '../lib/supabase'
+import { isTokenError } from '../lib/reviewTokens'
 import type { ReviewAnswers, TesterAnswer } from '../types'
 import { MoonSlice } from '../components/Magic'
 
@@ -242,7 +243,7 @@ function TesterQuestion({ slug, reviewId, master, onDone }: { slug: string; revi
 }
 
 export default function PublicCandle() {
-  const { slug = '', id = '' } = useParams()
+  const { slug = '', id = '', token = '' } = useParams()
   const trackerKey = `${slug}/${id}`
   const [info, setInfo] = useState<{
     name?: string
@@ -256,6 +257,7 @@ export default function PublicCandle() {
   const [sent, setSent] = useState(0)
   const [sentFinal, setSentFinal] = useState(false)
   const [failed, setFailed] = useState<string | null>(null)
+  const [badQr, setBadQr] = useState(false)
   const [askTester, setAskTester] = useState<string>()
 
   useEffect(() => {
@@ -284,6 +286,7 @@ export default function PublicCandle() {
       wentOut: answers.wentOut ?? wentOut,
       id: crypto.randomUUID(),
       candleId: id,
+      token: token || undefined,
       date: new Date().toISOString(),
       burnHours: round2(total / 3600000),
       sessions: sessions.length,
@@ -295,12 +298,19 @@ export default function PublicCandle() {
     const p = payload()
     setSending(true)
     setFailed(null)
+    setBadQr(false)
     try {
       const { error } = await supabase.rpc('submit_review', {
         p_slug: slug,
         p_review: p,
       })
-      if (error) throw new Error(error.message)
+      if (error) {
+        if (isTokenError(error.message)) {
+          setBadQr(true)
+          return
+        }
+        throw new Error(error.message)
+      }
       setSent((n) => n + 1)
       setSentFinal(p.finished === 'yes')
       if (!answeredTester(slug)) setAskTester(p.id)
@@ -391,6 +401,14 @@ export default function PublicCandle() {
               <Button size="xl" onClick={send} loading={sending}>
                 <LuSend /> Отправить
               </Button>
+              {badQr && (
+                <Box p="3" borderWidth="1px" borderColor="orange.700" borderRadius="l3">
+                  <Text fontSize="sm" color="orange.300">
+                    Этот QR-код не подходит к свече — отзыв по нему отправить нельзя. Отсканируйте QR с самой свечи или напишите
+                    мастеру{info?.master ? ` (${info.master})` : ''}, и вам пришлют правильную ссылку.
+                  </Text>
+                </Box>
+              )}
               {failed && (
                 <Box p="3" borderWidth="1px" borderColor="orange.700" borderRadius="l3">
                   <Text fontSize="sm" color="orange.300" mb="2">

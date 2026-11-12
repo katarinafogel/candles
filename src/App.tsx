@@ -55,6 +55,7 @@ export default function App() {
     <Routes>
       {/* The recipient's page lives outside the master layout. */}
       <Route path="/c/:slug/:id" element={<PublicCandle />} />
+      <Route path="/c/:slug/:id/:token" element={<PublicCandle />} />
       {/* The component showcase: no data, so no sign-in. */}
       <Route path="/ui" element={<UiKit />} />
       <Route

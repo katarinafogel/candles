@@ -25,7 +25,7 @@ npm run build
 3. Переменные репозитория (**Settings → Secrets and variables → Actions → Variables**): `SUPABASE_URL` и `SUPABASE_ANON_KEY` (публичный ключ проекта). Их же для локального запуска — в `.env.local` как `VITE_SUPABASE_URL` и `VITE_SUPABASE_ANON_KEY`.
 4. Workflow `keepalive.yml` раз в 3 дня обращается к базе, чтобы бесплатный проект Supabase не засыпал.
 
-Ссылки в QR имеют вид `https://<логин>.github.io/<репозиторий>/#/c/<мастер>/S-0042` (HashRouter, чтобы Pages не отдавал 404).
+Ссылки в QR имеют вид `https://<логин>.github.io/<репозиторий>/#/c/<мастер>/S-0042/<секретный код>` (HashRouter, чтобы Pages не отдавал 404). Секретный код свечи (`review_tokens`, миграция 0013) не даёт слать отзывы перебором номеров; проверка включена для всех и отключается только в базе (`review_settings`).
 
 ## Supabase
 

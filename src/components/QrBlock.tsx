@@ -1,8 +1,9 @@
-import { Box, Button, HStack, Image, Stack, Text } from '@chakra-ui/react'
+import { Box, Button, HStack, Image, Spinner, Stack, Text } from '@chakra-ui/react'
 import QRCode from 'qrcode'
 import { useEffect, useState } from 'react'
 import { LuCopy, LuDownload } from 'react-icons/lu'
 import { candleLink } from '../lib/config'
+import { useReviewTokens } from '../lib/reviewTokens'
 import { saveFile } from '../lib/download'
 import { useAppSelector, useData } from '../store'
 import { notify } from './ui'
@@ -13,11 +14,23 @@ export const qrDataUrl = (text: string, width = 512) =>
 export function QrBlock({ candleId }: { candleId: string }) {
   const d = useData()
   const slug = useAppSelector((s) => s.local.profile?.slug ?? '')
-  const link = candleLink(slug, candleId, d.settings)
+  const { tokens, loading, error } = useReviewTokens([candleId])
+  const token = tokens[candleId]
+  const link = token ? candleLink(slug, candleId, token, d.settings) : ''
   const [src, setSrc] = useState('')
   useEffect(() => {
-    qrDataUrl(link).then(setSrc)
+    if (link) qrDataUrl(link).then(setSrc)
   }, [link])
+
+  if (loading) return <Stack align="center" py="8"><Spinner color="ember.300" /></Stack>
+  if (!token)
+    return (
+      <Text fontSize="sm" color="orange.300" textAlign="center" py="4">
+        {error
+          ? 'Не получилось получить секретный код для QR: нет связи с сервером. Попробуйте ещё раз, когда появится интернет.'
+          : 'Свеча ещё не сохранилась на сервере. Подождите синхронизации и откройте QR снова.'}
+      </Text>
+    )
 
   return (
     <Stack align="center" gap="3">

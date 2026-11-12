@@ -5,6 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { qrDataUrl } from '../components/QrBlock'
 import { NumInput } from '../components/ui'
 import { candleLink } from '../lib/config'
+import { fetchReviewTokens } from '../lib/reviewTokens'
 import { useAppSelector, useData } from '../store'
 
 /** A printable sheet of QR codes with the candle id under each. */
@@ -16,11 +17,19 @@ export default function PrintQr() {
   const slug = useAppSelector((s) => s.local.profile?.slug ?? '')
   const [sizeCm, setSizeCm] = useState<number | undefined>(2.5)
   const [srcs, setSrcs] = useState<Record<string, string>>({})
+  const [failed, setFailed] = useState<string | null>(null)
 
   useEffect(() => {
-    Promise.all(ids.map(async (id) => [id, await qrDataUrl(candleLink(slug, id, d.settings), 600)] as const)).then((e) =>
-      setSrcs(Object.fromEntries(e)),
-    )
+    setFailed(null)
+    fetchReviewTokens(ids)
+      .then(async (tokens) => {
+        const missing = ids.filter((id) => !tokens[id])
+        if (missing.length) setFailed(`Нет секретного кода для ${missing.join(', ')}: свечи ещё не сохранились на сервере.`)
+        const ready = ids.filter((id) => tokens[id])
+        const e = await Promise.all(ready.map(async (id) => [id, await qrDataUrl(candleLink(slug, id, tokens[id], d.settings), 600)] as const))
+        setSrcs(Object.fromEntries(e))
+      })
+      .catch(() => setFailed('Не получилось получить секретные коды для QR: нет связи с сервером.'))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sp.get('ids'), d.settings.publicUrl, slug])
 
@@ -42,6 +51,11 @@ export default function PrintQr() {
         <Text fontSize="xs" color="gray.400">
           Кодов: {ids.length}
         </Text>
+        {failed && (
+          <Text fontSize="sm" color="orange.300">
+            {failed}
+          </Text>
+        )}
       </HStack>
       <Flex wrap="wrap" gap="4mm">
         {ids.map((id) => (
