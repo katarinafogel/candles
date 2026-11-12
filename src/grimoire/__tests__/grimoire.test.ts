@@ -672,6 +672,13 @@ describe('push notifications', async () => {
     const m = N.morningMessage(initialGrimoire, '2026-10-30')
     expect(m!.body).toContain('Завтра Самайн')
   })
+  it('during an event names it in the morning and asks for no rituals in the evening', () => {
+    let s: GS = reducer(initialGrimoire, { type: A.upsertHabit.type, payload: { habit: { id: 'h', title: 'вода', schedule: { kind: 'daily' }, mark: { kind: 'check' }, stars: 1, dread: 0, status: 'active', activeFrom: MON }, ...w(MON) } })
+    expect(N.eveningMessage(s, MON)!.body).toContain('Ритуалы: вода')
+    s = { ...s, events: { e: { id: 'e', title: 'Поездка', sigil: '🧳', from: MON, to: addDays(MON, 2), createdAt: at(MON) } } }
+    expect(N.eveningMessage(s, MON)!.body).not.toContain('Ритуалы')
+    expect(N.morningMessage(s, MON)!.body).toContain('🧳 Поездка, ритуалы на паузе.')
+  })
 })
 
 describe('new deed form', async () => {

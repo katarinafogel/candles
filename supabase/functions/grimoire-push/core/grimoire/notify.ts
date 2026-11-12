@@ -40,8 +40,10 @@ export function morningMessage(g: GrimoireState, today: DayKey): PushMessage | u
   const parts: string[] = []
   // The plan is sorted by priority: its first open deed is the most urgent one, if it is above «medium».
   const main = open.find((t) => ['highest', 'high'].includes(priorityOf(t)))
+  const ev = eventOn(g, today)
+  if (ev) parts.push(`${ev.sigil ? `${ev.sigil} ` : ''}${ev.title}, ритуалы на паузе.`)
   if (open.length) parts.push(`В плане ${open.length}${main ? `, важнее всего — ${main.title}` : ''}.`)
-  else parts.push('План пуст — можно выбрать одно дело из бэклога или просто пожить.')
+  else if (!ev) parts.push('План пуст — можно выбрать одно дело из бэклога или просто пожить.')
   if (n.deadlines) {
     const dl = deadlinesSoon(g, today, today).map((t) => t.title)
     if (dl.length) parts.push(`Срок сегодня: ${list(dl)}.`)
@@ -71,9 +73,15 @@ export function afternoonMessage(g: GrimoireState, today: DayKey): PushMessage |
   }
 }
 
+/** A long event (a trip, a sick leave) going on today. */
+const eventOn = (g: GrimoireState, day: DayKey) => Object.values(g.events ?? {}).find((e) => day >= e.from && day <= e.to)
+
 export function eveningMessage(g: GrimoireState, today: DayKey): PushMessage | undefined {
   const written = Object.values(g.journal).some((e) => e.day === today && e.type === 'evening')
-  const rituals = Object.values(g.habits)
+  // During an event rituals are paused: the evening doesn't remind of them.
+  const rituals = eventOn(g, today)
+    ? []
+    : Object.values(g.habits)
     .filter((h) => h.status === 'active' && isScheduled(h, today) && !isDone(h, g.habitLogs[habitLogId(h.id, today)]))
     .map((h) => h.title)
   if (written && !rituals.length) return undefined
