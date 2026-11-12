@@ -1,6 +1,6 @@
 // The cycle in the grimoire: marked on the evening page only — the period started, how heavy and how
 // it felt, then that it ended. Phases, forecasts and statistics are not shown anywhere yet.
-import { Button, Flex, Input, Stack, Text } from '@chakra-ui/react'
+import { Button, Flex, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { useToday, withUndo } from '../../grimoire/act'
 import { cycleSymptoms, openPeriod } from '../../grimoire/cycle'
@@ -9,12 +9,6 @@ import { grimoireActions as A } from '../../store/grimoireSlice'
 import { Chips, DateInput, Field } from '../ui'
 
 const ddmm = (d: string) => `${d.slice(8)}.${d.slice(5, 7)}`
-
-function DateInput({ value, max, onChange }: { value: string; max?: string; onChange: (v: string) => void }) {
-  return (
-    <DateInput size="sm" w="160px" value={value} max={max} onChange={(v) => v && onChange(v)} />
-  )
-}
 
 /** «Начались» with a day, or for the open period: intensity, how it felt and «Закончились». */
 export function CycleMark() {
@@ -29,7 +23,7 @@ export function CycleMark() {
         <Button size="sm" onClick={() => withUndo('Цикл отмечен', () => dispatch(A.upsertCycle({ start: on })))}>
           Месячные начались {on === today ? 'сегодня' : ddmm(on)}
         </Button>
-        <DateInput value={on} max={today} onChange={setOn} />
+        <DateInput size="sm" w="160px" value={on} max={today} onChange={(v) => v && setOn(v)} />
       </Flex>
     )
   return (
@@ -53,7 +47,7 @@ export function CycleMark() {
         <Button size="sm" variant="outline" onClick={() => withUndo('Цикл отмечен', () => dispatch(A.upsertCycle({ ...open, end: on < open.start ? open.start : on })))}>
           Закончились {on === today ? 'сегодня' : ddmm(on)}
         </Button>
-        <DateInput value={on} max={today} onChange={setOn} />
+        <DateInput size="sm" w="160px" value={on} max={today} onChange={(v) => v && setOn(v)} />
       </Flex>
     </Stack>
   )
