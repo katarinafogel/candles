@@ -21,8 +21,10 @@ import { grimoireActions as A } from '../../store/grimoireSlice'
 function TagColors() {
   const dispatch = useAppDispatch()
   const tasks = useAppSelector((s) => s.grimoire.tasks)
+  const wishTags = useAppSelector((s) => s.grimoire.wishes)
+  const jarTags = useAppSelector((s) => s.grimoire.jars)
   const colors = useAppSelector((s) => s.grimoire.meta.tagColors)
-  const tags = tagsByUse({ tasks })
+  const tags = tagsByUse({ tasks, wishes: wishTags, jars: jarTags })
   if (!tags.length) return null
   return (
     <Field label="Цвета тегов">

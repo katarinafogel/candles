@@ -1,4 +1,4 @@
-// Tags of a deed: chips to drop with a tap and a field for a new one that suggests the tags already
+// Tags of a deed, a wish or a jar: chips to drop with a tap and a field for a new one that suggests the tags already
 // in the book (the most used first) only while typing.
 import { Box, HStack, Stack } from '@chakra-ui/react'
 import { useMemo } from 'react'
@@ -11,7 +11,9 @@ const clean = (s: string) => s.trim().replace(/^#+/, '').toLowerCase()
 
 export function TagInput({ value, onChange }: { value: string[]; onChange: (tags: string[]) => void }) {
   const tasks = useAppSelector((s) => s.grimoire.tasks)
-  const known = useMemo(() => tagsByUse({ tasks }), [tasks])
+  const wishes = useAppSelector((s) => s.grimoire.wishes)
+  const jars = useAppSelector((s) => s.grimoire.jars)
+  const known = useMemo(() => tagsByUse({ tasks, wishes, jars }), [tasks, wishes, jars])
   const options = known.filter((t) => !value.includes(t)).map((t) => ({ value: t, label: t, view: <Tag name={t} /> }))
 
   function add(raw: string) {

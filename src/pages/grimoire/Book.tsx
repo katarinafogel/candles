@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTaskDialog } from '../../components/grimoire/TaskDialog'
 import { cardColumns, TaskCard } from '../../components/grimoire/TaskCard'
+import { useTaskPick } from '../../components/grimoire/useTaskPick'
 import { Chips, Empty, PageHeader, Select } from '../../components/ui'
 import { SpellsDialog } from '../../components/grimoire/Spells'
 import { FromWorkshopDialog } from '../../components/grimoire/FromWorkshop'
@@ -81,10 +82,12 @@ export default function Book() {
   // «Чистый лист» leftovers stand apart at the top of the backlog until planned or unpacked.
   const packed = view === 'backlog' ? list.filter((t) => t.later) : []
   const rest = view === 'backlog' ? list.filter((t) => !t.later) : list
+  const picking = useTaskPick([...packed, ...rest])
   const tagList = allTags(g)
   return (
     <>
       <PageHeader title={w.book}>
+        {picking.button}
         <Button size="sm" variant="outline" onClick={() => setFromWorkshop(true)}>
           Из мастерской
         </Button>
@@ -131,7 +134,7 @@ export default function Book() {
           </Flex>
           <SimpleGrid gridTemplateColumns={cardColumns} gap={{ base: '3', md: '4' }}>
             {packed.map((t) => (
-              <TaskCard key={t.id} t={t} today={today} onOpen={open} />
+              <TaskCard key={t.id} t={t} today={today} onOpen={open} pick={picking.pick(t)} />
             ))}
           </SimpleGrid>
         </Box>
@@ -139,12 +142,13 @@ export default function Book() {
       {rest.length ? (
         <SimpleGrid gridTemplateColumns={cardColumns} gap={{ base: '3', md: '4' }}>
           {rest.map((t) => (
-            <TaskCard key={t.id} t={t} today={today} onOpen={open} />
+            <TaskCard key={t.id} t={t} today={today} onOpen={open} pick={picking.pick(t)} />
           ))}
         </SimpleGrid>
       ) : packed.length ? null : (
         <Empty>{view === 'backlog' ? 'Бэклог пуст — и это нормально.' : view === 'stuck' ? 'Ничего не буксует.' : 'Здесь пусто.'}</Empty>
       )}
+      {picking.bar}
       {dialog}
     </>
   )

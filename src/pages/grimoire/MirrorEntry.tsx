@@ -256,7 +256,7 @@ export default function MirrorEntry() {
         <BodyMap value={e.bodyZones ?? []} onChange={(bodyZones) => set({ bodyZones: bodyZones.length ? bodyZones : undefined })} />
       </Field>
       <Field label="Что случилось">
-        <TextInput value={e.trigger ?? ''} onChange={(v) => set({ trigger: v || undefined })} placeholder="одной строкой" />
+        <TextInput value={e.trigger ?? ''} onChange={(v) => set({ trigger: v || undefined })} />
       </Field>
       <Field label="Связанное дело">
         <PickList chosen={e.taskId ? [e.taskId] : []} options={taskOptions} placeholder="найти дело на сегодня или в бэклоге" onChange={(v) => set({ taskId: v[0] })} />

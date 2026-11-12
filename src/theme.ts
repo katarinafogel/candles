@@ -18,6 +18,11 @@ const config = defineConfig({
       backgroundAttachment: 'fixed',
     },
     '::selection': { bg: 'var(--g-selection)' },
+    // iOS Safari zooms the page into any field with text under 16px and doesn't zoom back: on touch
+    // screens every field gets 16px, whatever its size.
+    '@media (hover: none) and (pointer: coarse)': {
+      'input, textarea, select': { fontSize: '16px !important' },
+    },
     // Thin scrollbars in the theme's wood instead of the system's.
     '*': { scrollbarWidth: 'thin', scrollbarColor: 'var(--g-scrollbar) transparent' },
     '*::-webkit-scrollbar': { width: '8px', height: '8px' },

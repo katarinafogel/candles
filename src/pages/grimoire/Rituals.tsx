@@ -2,6 +2,7 @@
 import { Box, Button, Flex, HStack, IconButton, Input, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { LuMinus, LuPencil, LuPlus } from 'react-icons/lu'
+import { useAttempt } from '../../components/grimoire/RoundBlocks'
 import { MarkPicker } from '../../components/grimoire/Marks'
 import { Chips, confirmAction, Empty, Field, Modal, NumInput, PageHeader, Section, Select, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
@@ -31,6 +32,7 @@ export function HabitDialog({ habit, onClose }: { habit: Draft; onClose: () => v
   const allJars = useAppSelector((st) => st.grimoire.jars)
   const jars = Object.values(allJars).filter((j) => j.status === 'saving' || j.status === 'collected' || j.id === h.jarId)
   const s = h.schedule
+  const check = useAttempt()
   return (
     <Modal
       open
@@ -54,11 +56,12 @@ export function HabitDialog({ habit, onClose }: { habit: Draft; onClose: () => v
             </Button>
           )}
           <Button
-            disabled={!h.title.trim() || (s.kind === 'weekdays' && !s.days.length)}
-            onClick={() => {
-              dispatch(A.upsertHabit({ habit: { ...h, title: h.title.trim() } }))
-              onClose()
-            }}
+            onClick={() =>
+              check.attempt(!!h.title.trim() && !(s.kind === 'weekdays' && !s.days.length), () => {
+                dispatch(A.upsertHabit({ habit: { ...h, title: h.title.trim() } }))
+                onClose()
+              })
+            }
           >
             Сохранить
           </Button>
@@ -66,10 +69,10 @@ export function HabitDialog({ habit, onClose }: { habit: Draft; onClose: () => v
       }
     >
       <Stack gap="4">
-        <Field label="Название">
-          <TextInput value={h.title} onChange={(v) => set({ title: v })} placeholder="8 стаканов воды" />
+        <Field label="Название" invalid={check.missing(!h.title.trim())} error="Назови ритуал">
+          <TextInput value={h.title} onChange={(v) => set({ title: v })} />
         </Field>
-        <Field label="Расписание">
+        <Field label="Расписание" invalid={check.missing(s.kind === 'weekdays' && !s.days.length)} error="Выбери хотя бы один день">
           <Chips
             value={s.kind}
             onChange={(v) =>
@@ -102,7 +105,7 @@ export function HabitDialog({ habit, onClose }: { habit: Draft; onClose: () => v
               <NumInput value={h.mark.goal} onChange={(v) => set({ mark: { kind: 'count', goal: Math.max(1, v ?? 1), unit: h.mark.kind === 'count' ? h.mark.unit : undefined } })} />
             </Field>
             <Field label="Единица">
-              <TextInput value={h.mark.unit ?? ''} onChange={(v) => set({ mark: { kind: 'count', goal: h.mark.kind === 'count' ? h.mark.goal : 1, unit: v || undefined } })} placeholder="стаканов" />
+              <TextInput value={h.mark.unit ?? ''} onChange={(v) => set({ mark: { kind: 'count', goal: h.mark.kind === 'count' ? h.mark.goal : 1, unit: v || undefined } })} />
             </Field>
           </HStack>
         )}

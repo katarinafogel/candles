@@ -286,7 +286,7 @@ export function SabbatNoteDialog({ sabbat, onClose }: { sabbat: Sabbat; onClose:
         </Button>
       }
     >
-      <TextArea value={text} onChange={setText} rows={6} placeholder="что делала, что почувствовала, что хочется повторить через год" />
+      <TextArea value={text} onChange={setText} rows={6} />
     </Modal>
   )
 }

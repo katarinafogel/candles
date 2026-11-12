@@ -4,7 +4,7 @@
 // on it); postponements and dread stay inside the deed, «съесть сегодня» is set there too.
 import { Box, Flex, HStack, Text } from '@chakra-ui/react'
 import { useRef, useState } from 'react'
-import { LuCalendarClock, LuFlame, LuHourglass, LuLink, LuMoon, LuSparkles, LuSun } from 'react-icons/lu'
+import { LuCalendarClock, LuCheck, LuFlame, LuHourglass, LuLink, LuMoon, LuSparkles, LuSun } from 'react-icons/lu'
 import { complete, remove, reopen } from '../../grimoire/act'
 import { isFrog } from '../../grimoire/frog'
 import { dueDay } from '../../grimoire/days'
@@ -14,6 +14,7 @@ import { useAppSelector } from '../../store'
 import { ArcanaCard } from '../ArcanaCard'
 import { Sparkle } from '../Magic'
 import { LeafMark } from '../ui'
+import { HoverTrash } from './HoverTrash'
 import { Deadline, PriorityIcon, Stars, Tag } from './Marks'
 
 /**
@@ -25,7 +26,22 @@ export const cardColumns = { base: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(auto
 const sourceIcon = { habit: <LuMoon />, wheel: <LuSun />, workshop: <LuFlame /> } as Record<string, JSX.Element>
 
 /** `inBook`: on a book's page a sideways swipe turns the page, and the book's own sigil is not repeated. */
-export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today: DayKey; onOpen: (t: Task) => void; compact?: boolean; inBook?: boolean }) {
+/** `pick`: the «Выбрать» mode — a tap marks the card instead of opening it (Shift — the whole run). */
+export function TaskCard({
+  t,
+  today,
+  onOpen,
+  compact,
+  inBook,
+  pick,
+}: {
+  t: Task
+  today: DayKey
+  onOpen: (t: Task) => void
+  compact?: boolean
+  inBook?: boolean
+  pick?: { on: boolean; toggle: (t: Task, range: boolean) => void }
+}) {
   const g = useAppSelector((s) => s.grimoire)
   const people = useAppSelector((s) => s.data.people)
   const tone = cardTone(t)
@@ -48,6 +64,7 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
   return (
     <Box
       position="relative"
+      className="group"
       h="100%"
       // Done: not crossed out, just paler (on top of the card's own dim).
       opacity={done ? 0.7 : 1}
@@ -56,7 +73,7 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
       transition={dx ? undefined : 'transform .2s'}
       // While dragged the card rides over its neighbours, or the next one hides it and the hint on it.
       zIndex={dx ? 2 : undefined}
-      onTouchStart={(e) => (start.current = inBook ? null : { x: e.touches[0].clientX, y: e.touches[0].clientY })}
+      onTouchStart={(e) => (start.current = inBook || pick ? null : { x: e.touches[0].clientX, y: e.touches[0].clientY })}
       onTouchMove={(e) => {
         if (!start.current) return
         const mx = e.touches[0].clientX - start.current.x
@@ -93,6 +110,27 @@ export function TaskCard({ t, today, onOpen, compact, inBook }: { t: Task; today
         >
           {dx > 0 ? (done ? 'вернуть' : 'сделано') : 'удалить'}
         </Flex>
+      )}
+      {!pick && <HoverTrash label="Удалить дело" onClick={() => remove(t)} />}
+      {pick && (
+        <Box
+          position="absolute"
+          inset="0"
+          zIndex="2"
+          cursor="pointer"
+          borderRadius="10px"
+          borderWidth="2px"
+          borderColor={pick.on ? 'ember.400' : 'transparent'}
+          bg={pick.on ? 'color-mix(in srgb, var(--chakra-colors-ember-400) 14%, transparent)' : undefined}
+          onClick={(e) => pick.toggle(t, e.shiftKey)}
+          role="checkbox"
+          aria-checked={pick.on}
+          aria-label={t.title}
+        >
+          <Flex position="absolute" top="2" left="2" w="5" h="5" align="center" justify="center" borderRadius="md" borderWidth="2px" borderColor={pick.on ? 'ember.400' : 'fg.muted'} bg={pick.on ? 'ember.400' : 'bg.panel'} color="bg" fontSize="xs">
+            {pick.on && <LuCheck />}
+          </Flex>
+        </Box>
       )}
       <ArcanaCard
         tone={tone}

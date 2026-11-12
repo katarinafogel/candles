@@ -7,6 +7,7 @@ import { nanoid } from '@reduxjs/toolkit'
 import { useState, type ReactNode } from 'react'
 import { LuCheck, LuEye, LuEyeOff, LuPlus, LuTrash2, LuUndo2 } from 'react-icons/lu'
 import { Link as RouterLink, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { useAttempt } from '../../components/grimoire/RoundBlocks'
 import { useTaskDialog } from '../../components/grimoire/TaskDialog'
 import { Chips, confirmAction, Empty, Field, Modal, PageHeader, Section, TextArea, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
@@ -56,7 +57,7 @@ function DateField({ value, onChange }: { value?: string; onChange: (v?: string)
 const ddmm = (day: string) => `${day.slice(8)}.${day.slice(5, 7)}.${day.slice(2, 4)}`
 
 /** A dated list on the card: add a line (today by default), delete it; `extra` adds a toggle per line. */
-function Lines({ personId, list, title, placeholder, lines, extra, hint }: { personId: string; list: PersonList; title: string; placeholder: string; lines: PersonNotes[PersonList]; extra?: (l: NonNullable<PersonNotes[PersonList]>[number]) => ReactNode; hint?: string }) {
+function Lines({ personId, list, title, placeholder, lines, extra, hint }: { personId: string; list: PersonList; title: string; placeholder?: string; lines: PersonNotes[PersonList]; extra?: (l: NonNullable<PersonNotes[PersonList]>[number]) => ReactNode; hint?: string }) {
   const dispatch = useAppDispatch()
   const today = useToday()
   const [text, setText] = useState('')
@@ -112,15 +113,17 @@ export function NewPerson({ onClose }: { onClose: () => void }) {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const [name, setName] = useState('')
-  const save = () => {
+  const check = useAttempt()
+  const save = () => check.attempt(!!name.trim(), create)
+  const create = () => {
     const id = nanoid(8)
     dispatch(actions.upsertPerson({ id, name: name.trim(), contact: '', notes: '' }))
     onClose()
     navigate(`/g/people/${id}`)
   }
   return (
-    <Modal open onClose={onClose} title="Новый человек" footer={<Button disabled={!name.trim()} onClick={save}>Создать</Button>}>
-      <Field label="Имя" helper="тот же человек появится в «Людях» мастерской">
+    <Modal open onClose={onClose} title="Новый человек" footer={<Button onClick={save}>Создать</Button>}>
+      <Field label="Имя" helper="тот же человек появится в «Людях» мастерской" invalid={check.missing(!name.trim())} error="Как зовут?">
         <TextInput value={name} onChange={setName} />
       </Field>
     </Modal>
@@ -266,12 +269,11 @@ export function BestiaryCard() {
           </Section>
           <Section title="Идеи и вопросы">
             <Stack gap="4">
-              <Lines personId={id} list="gifts" title="Идеи подарков" placeholder="свеча с бергамотом" lines={n.gifts} />
+              <Lines personId={id} list="gifts" title="Идеи подарков" lines={n.gifts} />
               <Lines
                 personId={id}
                 list="ask"
                 title="Что спросить"
-                placeholder="как прошло собеседование"
                 lines={n.ask}
                 extra={(l) => (
                   <IconButton size="2xs" variant="ghost" aria-label={l.asked ? 'Ещё не спросила' : 'Спросила'} onClick={() => dispatch(A.updatePersonLine({ personId: id, list: 'ask', id: l.id, patch: { asked: l.asked ? undefined : today } }))}>
@@ -285,8 +287,8 @@ export function BestiaryCard() {
         <Stack gap="4">
           <Section title="Заметки и добрые дела">
             <Stack gap="4">
-              <Lines personId={id} list="facts" title="Заметки" placeholder="переехал в Казань" lines={n.facts} />
-              <Lines personId={id} list="kindness" title="Добрые дела" placeholder="помогла с переездом" lines={n.kindness} />
+              <Lines personId={id} list="facts" title="Заметки" lines={n.facts} />
+              <Lines personId={id} list="kindness" title="Добрые дела" lines={n.kindness} />
             </Stack>
           </Section>
           <Section
@@ -304,7 +306,6 @@ export function BestiaryCard() {
                 list="scars"
                 title="Где задел или воспользовался"
                 hint="«отпустила» убирает шрам из предупреждений, но оставляет в истории"
-                placeholder="не пришла на мой день рождения"
                 lines={n.scars}
                 extra={(l) => (
                   <Button size="2xs" variant="ghost" onClick={() => dispatch(A.updatePersonLine({ personId: id, list: 'scars', id: l.id, patch: { released: l.released ? undefined : today } }))}>
@@ -353,7 +354,7 @@ function NewDate({ onAdd }: { onAdd: (label: string, date: string) => void }) {
   const ok = label.trim() && parseDate(date)
   return (
     <Flex gap="2" wrap="wrap">
-      <Input size="sm" flex="1" minW="140px" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="годовщина свадьбы" />
+      <Input size="sm" flex="1" minW="140px" value={label} onChange={(e) => setLabel(e.target.value)} />
       <Input size="sm" w="150px" value={date} onChange={(e) => setDate(e.target.value)} placeholder="14.03" />
       <IconButton
         size="sm"

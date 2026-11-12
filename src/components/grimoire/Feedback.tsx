@@ -100,7 +100,7 @@ export function FeedbackPrompt() {
             <MarkPicker kind="dread" value={dread} onChange={setDread} />
           </Field>
           <Field label="Пара слов">
-            <TextInput value={note} onChange={setNote} placeholder="оказалось за 10 минут" />
+            <TextInput value={note} onChange={setNote} />
           </Field>
         </Stack>
       </Modal>

@@ -2,7 +2,10 @@
 // touches the money. A jar fills like a glass and is «собрана» when full.
 import { Box, Button, Flex, HStack, IconButton, Input, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
-import { LuPlus, LuTrash2 } from 'react-icons/lu'
+import { LuBookOpen, LuCalendarClock, LuHash, LuPlus, LuStar, LuTrash2, LuUser } from 'react-icons/lu'
+import { BlockSpot, useAttempt, useRoundBlocks, type RoundBlock } from '../../components/grimoire/RoundBlocks'
+import { TagInput } from '../../components/grimoire/TagInput'
+import { PeoplePicker } from '../../components/grimoire/TaskFields'
 import { Chips, confirmAction, Empty, Field, Modal, notify, NumInput, PageHeader, Select, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
 import { humanDay } from '../../grimoire/days'
@@ -36,71 +39,119 @@ function JarGlass({ pct }: { pct: number }) {
 
 type Draft = Partial<Jar> & { title: string; goal: number }
 
-function JarDialog({ jar, onClose }: { jar: Draft; onClose: () => void }) {
+type JarBlock = 'wish' | 'date' | 'project' | 'tags' | 'people'
+const jarBlocks: RoundBlock<JarBlock>[] = [
+  { key: 'wish', label: 'Хотелка', icon: <LuStar /> },
+  { key: 'date', label: 'К какой дате', icon: <LuCalendarClock /> },
+  { key: 'project', label: 'Проект', icon: <LuBookOpen /> },
+  { key: 'tags', label: 'Теги', icon: <LuHash /> },
+  { key: 'people', label: 'Люди', icon: <LuUser /> },
+]
+const clearJar: Record<JarBlock, Partial<Jar>> = {
+  wish: { wishId: undefined },
+  date: { targetDate: undefined },
+  project: { projectId: undefined },
+  tags: { tags: undefined },
+  people: { personIds: undefined },
+}
+
+export const blankJar: Draft = { title: '', goal: 0, currency: '₽' }
+
+export function JarDialog({ jar, onClose }: { jar: Draft; onClose: () => void }) {
   const dispatch = useAppDispatch()
   const g = useAppSelector((s) => s.grimoire)
   const [j, setJ] = useState<Draft>(jar)
-  const set = (p: Partial<Draft>) => setJ({ ...j, ...p })
+  const set = (p: Partial<Draft>) => setJ((x) => ({ ...x, ...p }))
   const wishes = Object.values(g.wishes).filter((w) => w.status !== 'fulfilled' && w.status !== 'released')
   const projects = Object.values(g.projects).filter((p) => p.status !== 'archived')
+  const filled: JarBlock[] = []
+  if (jar.wishId) filled.push('wish')
+  if (jar.targetDate) filled.push('date')
+  if (jar.projectId) filled.push('project')
+  if (jar.tags?.length) filled.push('tags')
+  if (jar.personIds?.length) filled.push('people')
+  const blocks = useRoundBlocks(jarBlocks, filled, (k) => set(clearJar[k]))
+  const check = useAttempt()
+  const save = () =>
+    check.attempt(!!j.title.trim() && j.goal > 0, () => {
+      dispatch(A.upsertJar({ jar: { ...j, title: j.title.trim(), currency: j.currency || '₽' } }))
+      onClose()
+    })
+  // A wish with a price fills an empty goal.
+  const pickWish = (id: string) => {
+    const w = g.wishes[id]
+    set({ wishId: id || undefined, ...(w?.price && !j.goal ? { goal: w.price } : {}) })
+  }
   return (
     <Modal
       open
       onClose={onClose}
       title={j.id ? j.title : 'Новая копилка'}
       footer={
-        <>
-          {j.id && (
-            <Button
-              variant="ghost"
-              colorPalette="red"
-              mr="auto"
-              onClick={async () => {
-                if (await confirmAction('Удалить копилку вместе с журналом? Деньги приложение не трогает — это только учёт.')) {
-                  dispatch(A.deleteJar(j.id!))
-                  onClose()
-                }
-              }}
-            >
-              Удалить
-            </Button>
-          )}
-          <Button
-            disabled={!j.title.trim() || !(j.goal > 0)}
-            onClick={() => {
-              dispatch(A.upsertJar({ jar: { ...j, title: j.title.trim(), currency: j.currency || '₽' } }))
-              onClose()
-            }}
-          >
-            Сохранить
-          </Button>
-        </>
+        <Stack gap="3" w="full">
+          {blocks.toolbar}
+          <HStack gap="2" justify="flex-end">
+            {j.id && (
+              <Button
+                variant="ghost"
+                colorPalette="red"
+                mr="auto"
+                onClick={async () => {
+                  if (await confirmAction('Удалить копилку вместе с журналом? Деньги приложение не трогает — это только учёт.')) {
+                    dispatch(A.deleteJar(j.id!))
+                    onClose()
+                  }
+                }}
+              >
+                Удалить
+              </Button>
+            )}
+            <Button onClick={save}>Сохранить</Button>
+          </HStack>
+        </Stack>
       }
     >
       <Stack gap="4">
-        <Field label="На что">
-          <TextInput value={j.title} onChange={(v) => set({ title: v })} placeholder="Новый торшер" />
+        <Field label="На что" invalid={check.missing(!j.title.trim())} error="Назови копилку">
+          <TextInput value={j.title} onChange={(v) => set({ title: v })} />
         </Field>
-        <HStack gap="3" align="flex-end" wrap="wrap">
-          <Field label="Цель">
-            <NumInput value={j.goal || undefined} onChange={(v) => set({ goal: Math.max(0, v ?? 0) })} width="160px" />
-          </Field>
-          <Field label="Валюта">
-            <Chips value={j.currency ?? '₽'} onChange={(v) => set({ currency: (v as string) ?? '₽' })} options={['₽', '$', '€'].map((c) => ({ value: c, label: c }))} />
-          </Field>
-        </HStack>
-        <Field label="К какой дате" helper="с датой гримуар считает, сколько откладывать в неделю">
-          <Input size="sm" type="date" w="170px" value={j.targetDate ?? ''} onChange={(e) => set({ targetDate: e.target.value || undefined })} />
+        <Field label="Цель" helper="сколько хочешь накопить" invalid={check.missing(!(j.goal > 0))} error="Сколько хочешь накопить?">
+          <NumInput integer value={j.goal || undefined} onChange={(v) => set({ goal: Math.max(0, v ?? 0) })} placeholder="10 000" suffix={j.currency || '₽'} width="200px" />
         </Field>
-        {wishes.length > 0 && (
-          <Field label="Для хотелки" helper="когда копилка потрачена, хотелка сбывается">
-            <Select value={j.wishId ?? ''} onChange={(v) => set({ wishId: v || undefined })} placeholder="ни для какой" options={wishes.map((w) => ({ value: w.id, label: w.title }))} />
-          </Field>
+        {blocks.show('wish') && (
+          <BlockSpot active={blocks.opened === 'wish'}>
+            <Field label="Для хотелки" helper="когда копилка потрачена, хотелка сбывается">
+              <Select value={j.wishId ?? ''} onChange={pickWish} placeholder="ни для какой" options={wishes.map((w) => ({ value: w.id, label: w.title }))} />
+            </Field>
+          </BlockSpot>
         )}
-        {projects.length > 0 && (
-          <Field label="Для проекта">
-            <Select value={j.projectId ?? ''} onChange={(v) => set({ projectId: v || undefined })} placeholder="ни для какого" options={projects.map((p) => ({ value: p.id, label: p.title }))} />
-          </Field>
+        {blocks.show('date') && (
+          <BlockSpot active={blocks.opened === 'date'}>
+            <Field label="К какой дате" helper="с датой гримуар считает, сколько откладывать в неделю">
+              <Input type="date" w="190px" value={j.targetDate ?? ''} onChange={(e) => set({ targetDate: e.target.value || undefined })} />
+            </Field>
+          </BlockSpot>
+        )}
+        {blocks.show('project') && (
+          <BlockSpot active={blocks.opened === 'project'}>
+            <Field label="Для проекта">
+              <Select value={j.projectId ?? ''} onChange={(v) => set({ projectId: v || undefined })} placeholder="ни для какого" options={projects.map((p) => ({ value: p.id, label: p.title }))} />
+            </Field>
+          </BlockSpot>
+        )}
+        {blocks.show('tags') && (
+          <BlockSpot active={blocks.opened === 'tags'}>
+            <Field label="Теги" helper="Enter или запятая добавляет, тап по тегу убирает">
+              <TagInput value={j.tags ?? []} onChange={(tags) => set({ tags: tags.length ? tags : undefined })} />
+            </Field>
+          </BlockSpot>
+        )}
+        {blocks.show('people') && (
+          <BlockSpot active={blocks.opened === 'people'}>
+            <Field label="Люди">
+              <PeoplePicker value={j.personIds ?? []} onChange={(ids) => set({ personIds: ids.length ? ids : undefined })} />
+            </Field>
+          </BlockSpot>
         )}
       </Stack>
     </Modal>
@@ -111,6 +162,7 @@ function MoneyDialog({ jar, sign, onClose }: { jar: Jar; sign: 1 | -1; onClose: 
   const dispatch = useAppDispatch()
   const [sum, setSum] = useState<number>()
   const [note, setNote] = useState('')
+  const check = useAttempt()
   return (
     <Modal
       open
@@ -118,22 +170,23 @@ function MoneyDialog({ jar, sign, onClose }: { jar: Jar; sign: 1 | -1; onClose: 
       title={sign > 0 ? `Положить в «${jar.title}»` : `Взять из «${jar.title}»`}
       footer={
         <Button
-          disabled={!sum}
-          onClick={() => {
-            dispatch(A.addJarTx({ jarId: jar.id, amount: sign * sum!, note }))
-            onClose()
-          }}
+          onClick={() =>
+            check.attempt(!!sum, () => {
+              dispatch(A.addJarTx({ jarId: jar.id, amount: sign * sum!, note }))
+              onClose()
+            })
+          }
         >
           {sign > 0 ? 'Положила' : 'Взяла'}
         </Button>
       }
     >
       <Stack gap="4">
-        <Field label="Сколько">
-          <NumInput value={sum} onChange={(v) => setSum(v && v > 0 ? v : undefined)} suffix={jar.currency} width="180px" />
+        <Field label="Сколько" invalid={check.missing(!sum)} error="Впиши сумму">
+          <NumInput integer value={sum} onChange={(v) => setSum(v && v > 0 ? v : undefined)} placeholder="1 000" suffix={jar.currency} width="200px" />
         </Field>
         <Field label="Комментарий">
-          <TextInput value={note} onChange={setNote} placeholder={sign > 0 ? 'с зарплаты' : 'на подарок маме'} />
+          <TextInput value={note} onChange={setNote} />
         </Field>
       </Stack>
     </Modal>
@@ -178,7 +231,7 @@ function HabitForJar({ jar, onClose }: { jar: Jar; onClose: () => void }) {
     >
       <Stack gap="4">
         <Field label="Сколько откладывать">
-          <NumInput value={sum} onChange={(v) => setSum(v && v > 0 ? v : undefined)} suffix={jar.currency} width="180px" />
+          <NumInput integer value={sum} onChange={(v) => setSum(v && v > 0 ? v : undefined)} suffix={jar.currency} width="180px" />
         </Field>
         <Field label="Как часто">
           <Chips value={kind} onChange={(v) => setKind((v as 'week' | 'day') ?? 'week')} options={[
@@ -318,11 +371,7 @@ export default function Jars() {
   const shown = shelf === 'open' ? open : done
   return (
     <>
-      <PageHeader title="Копилки">
-        <Button size="sm" onClick={() => setEdit({ title: '', goal: 0, currency: '₽' })}>
-          <LuPlus /> Копилка
-        </Button>
-      </PageHeader>
+      <PageHeader title="Копилки" />
       <Text fontSize="sm" color="fg.muted" mb="3">
         Настоящие деньги: гримуар их только считает.
       </Text>
@@ -341,7 +390,7 @@ export default function Jars() {
           ))}
         </SimpleGrid>
       ) : (
-        <Empty>{shelf === 'open' ? 'Копилок пока нет. Хотелку можно воплотить в копилку прямо из сундука желаний.' : 'Пока ничего.'}</Empty>
+        <Empty>{shelf === 'open' ? 'Копилок пока нет. Новую — через плюсик внизу, или воплоти хотелку в копилку прямо из сундука желаний.' : 'Пока ничего.'}</Empty>
       )}
       {edit && <JarDialog jar={edit} onClose={() => setEdit(undefined)} />}
     </>

@@ -4,6 +4,7 @@ import { Box, Button, Flex, HStack, Input, SimpleGrid, Stack, Text } from '@chak
 import { useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 import { BookCover, bookColors } from '../../components/grimoire/BookCover'
+import { useAttempt } from '../../components/grimoire/RoundBlocks'
 import { Chips, Empty, Field, Modal, PageHeader, Section, TextArea, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
 import { humanDay } from '../../grimoire/days'
@@ -20,7 +21,9 @@ export function ProjectDialog({ project, onClose, onSaved }: { project: Draft; o
   const dispatch = useAppDispatch()
   const [p, setP] = useState<Draft>(project)
   const set = (x: Partial<Draft>) => setP({ ...p, ...x })
-  function save() {
+  const check = useAttempt()
+  const save = () => check.attempt(!!p.title.trim(), write)
+  function write() {
     const action = A.upsertProject({ project: { status: 'active', ...p, title: p.title.trim() } as Project })
     dispatch(action)
     onSaved?.(action.payload.project.id!)
@@ -32,14 +35,14 @@ export function ProjectDialog({ project, onClose, onSaved }: { project: Draft; o
       onClose={onClose}
       title={p.id ? p.title || 'Книга' : 'Новая книга'}
       footer={
-        <Button onClick={save} disabled={!p.title.trim()}>
+        <Button onClick={save}>
           Сохранить
         </Button>
       }
     >
       <Stack gap="4">
-        <Field label="Название">
-          <TextInput value={p.title} onChange={(v) => set({ title: v.slice(0, 80) })} placeholder="Ремонт" />
+        <Field label="Название" invalid={check.missing(!p.title.trim())} error="Назови книгу">
+          <TextInput value={p.title} onChange={(v) => set({ title: v.slice(0, 80) })} />
         </Field>
         <Field label="О чём книга">
           <TextArea value={p.description ?? ''} onChange={(v) => set({ description: v || undefined })} rows={3} />

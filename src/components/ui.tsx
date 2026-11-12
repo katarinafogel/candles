@@ -81,18 +81,25 @@ export function Field({
   helper,
   children,
   invalid,
+  error,
   ...rest
-}: { label?: ReactNode; helper?: ReactNode; children: ReactNode; invalid?: boolean } & BoxProps) {
+}: { label?: ReactNode; helper?: ReactNode; children: ReactNode; invalid?: boolean; /** Shown instead of the helper while invalid. */ error?: ReactNode } & BoxProps) {
   return (
     <CField.Root invalid={invalid} {...(rest as object)}>
       {label && <CField.Label color="fg.muted">{label}</CField.Label>}
       {children}
-      {helper && <CField.HelperText>{helper}</CField.HelperText>}
+      {invalid && error ? <CField.ErrorText>{error}</CField.ErrorText> : helper && <CField.HelperText>{helper}</CField.HelperText>}
     </CField.Root>
   )
 }
 
-/** Number input that accepts "27,3" and keeps the typed text while editing. */
+/** «12 500»: digits in groups of three, as money is written. */
+export const groupDigits = (n: number) => Math.trunc(n).toLocaleString('ru').replace(/\s/g, '\u00a0')
+
+/**
+ * Number input that accepts "27,3" and keeps the typed text while editing. `integer` takes digits
+ * only (a numeric keypad on phones) and shows them grouped: «12 500».
+ */
 export function NumInput({
   value,
   onChange,
@@ -100,6 +107,7 @@ export function NumInput({
   suffix,
   size = 'md',
   width,
+  integer,
 }: {
   value: number | undefined
   onChange: (v: number | undefined) => void
@@ -107,22 +115,30 @@ export function NumInput({
   suffix?: string
   size?: 'sm' | 'md'
   width?: string
+  integer?: boolean
 }) {
-  const [text, setText] = useState(value == null ? '' : String(value).replace('.', ','))
+  const show = (v: number | undefined) => (v == null ? '' : integer ? groupDigits(v) : String(v).replace('.', ','))
+  const read = (t: string) => {
+    if (!integer) return parseNum(t)
+    const digits = t.replace(/\D/g, '')
+    return digits ? Number(digits) : undefined
+  }
+  const [text, setText] = useState(show(value))
   useEffect(() => {
-    if (parseNum(text) !== value) setText(value == null ? '' : String(value).replace('.', ','))
+    if (read(text) !== value) setText(show(value))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value])
   return (
     <HStack gap="2" width={width}>
       <Input
         size={size}
-        inputMode="decimal"
+        inputMode={integer ? 'numeric' : 'decimal'}
         value={text}
         placeholder={placeholder}
         onChange={(e) => {
-          setText(e.target.value)
-          onChange(parseNum(e.target.value))
+          const v = read(e.target.value)
+          setText(integer ? show(v) : e.target.value)
+          onChange(v)
         }}
       />
       {suffix && (

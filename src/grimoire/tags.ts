@@ -35,8 +35,13 @@ export function tagPalette(tag: string, colors: Record<string, string>): TagPale
 }
 
 /** Every tag in the book, the most used first (ties in alphabetical order). */
-export function tagsByUse(g: Pick<GrimoireState, 'tasks'>): string[] {
+export function tagsByUse(g: Pick<GrimoireState, 'tasks'> & Partial<Pick<GrimoireState, 'wishes' | 'jars'>>): string[] {
   const n = new Map<string, number>()
-  for (const t of Object.values(g.tasks)) for (const x of t.tags) n.set(x, (n.get(x) ?? 0) + 1)
+  const count = (tags?: string[]) => {
+    for (const x of tags ?? []) n.set(x, (n.get(x) ?? 0) + 1)
+  }
+  for (const t of Object.values(g.tasks)) count(t.tags)
+  for (const w of Object.values(g.wishes ?? {})) count(w.tags)
+  for (const j of Object.values(g.jars ?? {})) count(j.tags)
   return [...n.keys()].sort((a, b) => n.get(b)! - n.get(a)! || a.localeCompare(b, 'ru'))
 }

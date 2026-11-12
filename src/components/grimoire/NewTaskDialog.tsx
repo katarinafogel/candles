@@ -37,11 +37,16 @@ export function NewTaskDialog({
   const change = (p: Partial<Task>) => setDraft((x) => ({ ...x, ...p }))
   const blocks = useFieldBlocks(draft, change)
   const [guard, guardDialog] = usePlanGuard()
-  const empty = !draft.title.trim()
+  const [tried, setTried] = useState(false)
 
   function add(again: boolean) {
     const d = latest.current
-    if (!d.title.trim()) return
+    if (!d.title.trim()) {
+      setTried(true)
+      title.current?.focus()
+      return
+    }
+    setTried(false)
     const f = draftToFields(d)
     // A full plan asks what to move first; the form stays as it is until the deed is really added.
     guard(
@@ -76,10 +81,10 @@ export function NewTaskDialog({
         <Stack gap="3" w="full">
           {blocks.toolbar}
           <HStack gap="2">
-            <Button variant="outline" flex={{ base: '1', md: 'initial' }} mr={{ md: 'auto' }} disabled={empty} onClick={() => add(true)}>
+            <Button variant="outline" flex={{ base: '1', md: 'initial' }} mr={{ md: 'auto' }} onClick={() => add(true)}>
               Ещё одно
             </Button>
-            <Button flex={{ base: '1', md: 'initial' }} disabled={empty} onClick={() => add(false)}>
+            <Button flex={{ base: '1', md: 'initial' }} onClick={() => add(false)}>
               Добавить
             </Button>
           </HStack>
@@ -97,7 +102,7 @@ export function NewTaskDialog({
           setTimeout(() => add(again))
         }}
       >
-        <TaskFields value={draft} onChange={change} shown={blocks.shown} opened={blocks.opened} titleRef={title} onTitleEnter={() => add(false)} />
+        <TaskFields value={draft} onChange={change} shown={blocks.shown} opened={blocks.opened} titleRef={title} titleMissing={tried} onTitleEnter={() => add(false)} />
       </Stack>
     </Modal>
   )

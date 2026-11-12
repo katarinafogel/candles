@@ -106,7 +106,7 @@ export function AgentKeys() {
       )}
       <HStack gap="2" align="flex-end">
         <Box flex="1">
-          <TextInput value={label} onChange={setLabel} placeholder="для чего ключ: утренние сводки" />
+          <TextInput value={label} onChange={setLabel} />
         </Box>
         <Button onClick={issue} loading={busy}>
           Выпустить ключ

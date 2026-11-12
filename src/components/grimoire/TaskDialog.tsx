@@ -101,7 +101,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
           >
             Удалить
           </Button>
-          <Button onClick={save} disabled={!t.title.trim()}>
+          <Button onClick={save}>
             Сохранить
           </Button>
         </HStack>
@@ -132,7 +132,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
       {mode === 'partial' && (
         <Stack gap="4">
           <Field label="Что именно сделано">
-            <TextInput value={text} onChange={setText} placeholder="посылка упакована, не отправлена" />
+            <TextInput value={text} onChange={setText} />
           </Field>
           <Button onClick={() => act(() => { dispatch(A.updateTask({ id: live.id, partialNote: text || undefined })); complete({ ...t, partialNote: text }, true) })}>
             Сделана часть
@@ -146,7 +146,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
             <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </Field>
           <Field label="Чего ждём">
-            <TextInput value={text} onChange={setText} placeholder="ответ от мастера по ремонту" />
+            <TextInput value={text} onChange={setText} />
           </Field>
           <Button onClick={() => act(() => withUndo('Ждёт ответа', () => dispatch(A.setWaiting({ id: live.id, until: to || undefined, note: text || undefined }))))}>Ждать</Button>
         </Stack>
@@ -158,7 +158,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
             В процессе выросло другое дело. «{live.title}» подождёт, пока хвост не закроется.
           </Text>
           <Field label="Что потянуло">
-            <TextInput value={text} onChange={setText} placeholder="Узнать, какая нужна лампочка" />
+            <TextInput value={text} onChange={setText} />
           </Field>
           <Button disabled={!text.trim()} onClick={() => act(() => withUndo('Потянуло за собой', () => dispatch(A.spawnTask({ fromId: live.id, fields: { title: text } }))))}>
             Создать звено
@@ -202,7 +202,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
               </Button>
             ))}
           </Wrap>
-          <TextArea value={text} onChange={setText} rows={6} placeholder={'Решить, какой цвет\nКупить краску\nПокрасить'} />
+          <TextArea value={text} onChange={setText} rows={6} />
           <Button disabled={!lines(text).length} onClick={() => act(() => withUndo('Расколото на шаги', () => dispatch(A.splitTask({ id: live.id, steps: lines(text) }))))}>
             Расколоть
           </Button>

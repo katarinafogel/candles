@@ -16,6 +16,7 @@ import { Check, Chips, Field, NumInput, TextArea, TextInput } from '../ui'
 import { MarkPicker, PriorityIcon } from './Marks'
 import { ScarNote } from './ScarNote'
 import { SuggestInput } from './SuggestInput'
+import { RoundButton } from './RoundBlocks'
 import { TagInput } from './TagInput'
 
 /** Optional blocks of the form, each behind its round button above the footer. */
@@ -74,43 +75,7 @@ export function useFieldBlocks(t: Partial<Task>, set: (patch: Partial<Task>) => 
         .map((b) => {
           const on = shown.has(b.key)
           return (
-            <Box key={b.key} position="relative" className="group">
-              <IconButton
-                aria-label={b.label}
-                aria-pressed={on}
-                borderRadius="full"
-                size="sm"
-                variant="outline"
-                borderColor={on ? 'ember.500' : 'border'}
-                bg={on ? 'ember.subtle' : 'transparent'}
-                color={on ? 'ember.200' : 'fg.muted'}
-                onClick={() => toggle(b)}
-              >
-                {b.icon}
-              </IconButton>
-              {/* What the button means, over it while the pointer is there. */}
-              <Text
-                role="tooltip"
-                position="absolute"
-                bottom="calc(100% + 6px)"
-                left="50%"
-                transform="translateX(-50%)"
-                whiteSpace="nowrap"
-                fontSize="xs"
-                px="2"
-                py="1"
-                borderRadius="l2"
-                bg="bg.emphasized"
-                color="fg"
-                pointerEvents="none"
-                opacity="0"
-                transition="opacity .12s"
-                zIndex="1"
-                css={{ '.group:hover > &': { opacity: 1 } }}
-              >
-                {b.label}
-              </Text>
-            </Box>
+            <RoundButton key={b.key} label={b.label} icon={b.icon} on={on} onClick={() => toggle(b)} />
           )
         })}
     </HStack>
@@ -135,7 +100,10 @@ export function TaskFields({
   scar = true,
   shown,
   opened,
+  titleMissing,
 }: {
+  /** A save was tried with no title: the field asks for one. */
+  titleMissing?: boolean
   value: TaskDraft
   onChange: (patch: Partial<Task>) => void
   titleRef?: Ref<HTMLInputElement>
@@ -148,7 +116,6 @@ export function TaskFields({
 }) {
   const dispatch = useAppDispatch()
   const g = useAppSelector((s) => s.grimoire)
-  const people = useAppSelector((s) => s.data.people)
   // Books to put the deed in: those being read, and the one it is in already, whatever its state.
   const books = Object.values(g.projects).filter((p) => p.status === 'active' || p.status === 'paused' || p.id === t.projectId)
   const project = t.projectId ? g.projects[t.projectId] : undefined
@@ -205,30 +172,7 @@ export function TaskFields({
     ),
     people: (
       <Field label="Люди">
-        <Stack gap="2" w="full">
-          {(t.personIds ?? []).length > 0 && (
-            <HStack gap="1.5" wrap="wrap">
-              {(t.personIds ?? []).map((id) => (
-                <Chip key={id} onRemove={() => set({ personIds: (t.personIds ?? []).filter((x) => x !== id) })}>
-                  {people[id]?.name ?? '?'}
-                </Chip>
-              ))}
-            </HStack>
-          )}
-          <SuggestInput
-            placeholder="имя"
-            options={Object.values(people)
-              .filter((p) => !(t.personIds ?? []).includes(p.id))
-              .map((p) => ({ value: p.id, label: p.name }))}
-            onPick={(id) => set({ personIds: [...(t.personIds ?? []), id] })}
-            onCreate={(name) => {
-              const id = nanoid(8)
-              dispatch(actions.upsertPerson({ id, name, contact: '', notes: '' }))
-              set({ personIds: [...(t.personIds ?? []), id] })
-            }}
-          />
-          {scar && <ScarNote personIds={t.personIds ?? []} />}
-        </Stack>
+        <PeoplePicker value={t.personIds ?? []} onChange={(ids) => set({ personIds: ids.length ? ids : undefined })} scar={scar} />
       </Field>
     ),
     tags: (
@@ -282,7 +226,7 @@ export function TaskFields({
 
   return (
     <>
-      <Field label="Название">
+      <Field label="Название" invalid={titleMissing && !t.title.trim()} error="Назови дело">
         <Input
           ref={titleRef}
           value={t.title}
@@ -420,7 +364,7 @@ function TwoWay({ left, right, value, onChange }: { left: string; right: string;
 }
 
 /** Priority as in Jira: five arrows in a row, «нормальный» by default; the chosen one is named beside. */
-function PriorityPicker({ value, onChange }: { value: TaskPriority; onChange: (p: TaskPriority) => void }) {
+export function PriorityPicker({ value, onChange }: { value: TaskPriority; onChange: (p: TaskPriority) => void }) {
   return (
     <HStack gap="1" role="radiogroup" aria-label="Приоритет" wrap="wrap">
       {priorities.map((p) => {
@@ -520,6 +464,38 @@ function Checklist({ items, onChange }: { items: ChecklistItem[]; onChange: (ite
           </IconButton>
         </HStack>
       ))}
+    </Stack>
+  )
+}
+
+/** People from the bestiary as chips, with a field that finds one or adds a new one by name. */
+export function PeoplePicker({ value, onChange, scar }: { value: string[]; onChange: (ids: string[]) => void; scar?: boolean }) {
+  const dispatch = useAppDispatch()
+  const people = useAppSelector((s) => s.data.people)
+  return (
+    <Stack gap="2" w="full">
+      {value.length > 0 && (
+        <HStack gap="1.5" wrap="wrap">
+          {value.map((id) => (
+            <Chip key={id} onRemove={() => onChange(value.filter((x) => x !== id))}>
+              {people[id]?.name ?? '?'}
+            </Chip>
+          ))}
+        </HStack>
+      )}
+      <SuggestInput
+        placeholder="имя"
+        options={Object.values(people)
+          .filter((p) => !value.includes(p.id))
+          .map((p) => ({ value: p.id, label: p.name }))}
+        onPick={(id) => onChange([...value, id])}
+        onCreate={(name) => {
+          const id = nanoid(8)
+          dispatch(actions.upsertPerson({ id, name, contact: '', notes: '' }))
+          onChange([...value, id])
+        }}
+      />
+      {scar && <ScarNote personIds={value} />}
     </Stack>
   )
 }

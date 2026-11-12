@@ -69,6 +69,9 @@ export const reopen = (t: Task) => withUndo('Вернула в работу', ()
 export const toBacklog = (ids: string[], title = 'В бэклоге') => withUndo(title, () => store.dispatch(A.toBacklog(ids)))
 /** Deletes a deed for good, with «Вернуть» in the toast while nothing else changed. */
 export const remove = (t: Task) => withUndo('Дело удалено', () => store.dispatch(A.deleteTask(t.id)), t.title, 'Вернуть')
+/** Several deeds at once (the «Выбрать» mode); one «Вернуть» brings them all back. */
+export const removeMany = (ids: string[]) =>
+  withUndo(`Удалено дел: ${ids.length}`, () => ids.forEach((id) => store.dispatch(A.deleteTask(id))), undefined, 'Вернуть')
 export const cancel = (t: Task) => withUndo('Отпущено без штрафа', () => store.dispatch(A.cancelTask(t.id)))
 
 /** Today in the grimoire's terms; re-checks every minute and when the app comes back to the screen. */
