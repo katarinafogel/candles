@@ -1,26 +1,28 @@
+import { lazy, Suspense } from 'react'
+import { PageLoading } from '../components/PageLoading'
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { AuthGate } from '../components/AuthGate'
 import { InviteTaker } from '../components/Invites'
 import { NotFound } from '../components/NotFound'
 import GrimoireLayout from '../components/grimoire/GrimoireLayout'
 import Book from '../pages/grimoire/Book'
-import Mirror from '../pages/grimoire/Mirror'
-import MirrorEntry from '../pages/grimoire/MirrorEntry'
+const Mirror = lazy(() => import('../pages/grimoire/Mirror'))
+const MirrorEntry = lazy(() => import('../pages/grimoire/MirrorEntry'))
 import Bestiary, { BestiaryCard } from '../pages/grimoire/Bestiary'
-import ProjectBook from '../pages/grimoire/ProjectBook'
-import Projects from '../pages/grimoire/Projects'
-import GrimoireMore from '../pages/grimoire/More'
-import Rituals from '../pages/grimoire/Rituals'
+const ProjectBook = lazy(() => import('../pages/grimoire/ProjectBook'))
+const Projects = lazy(() => import('../pages/grimoire/Projects'))
+const GrimoireMore = lazy(() => import('../pages/grimoire/More'))
+const Rituals = lazy(() => import('../pages/grimoire/Rituals'))
 import Scroll from '../pages/grimoire/Scroll'
-import Wheel from '../pages/grimoire/Wheel'
-import GrimoireCalendar from '../pages/grimoire/Calendar'
-import Wishes from '../pages/grimoire/Wishes'
-import Jars from '../pages/grimoire/Jars'
-import Events from '../pages/grimoire/Events'
-import Tarot from '../pages/grimoire/Tarot'
-import Goals from '../pages/grimoire/Goals'
-import Notes from '../pages/grimoire/Notes'
-import SpellsPage from '../pages/grimoire/SpellsPage'
+const Wheel = lazy(() => import('../pages/grimoire/Wheel'))
+const GrimoireCalendar = lazy(() => import('../pages/grimoire/Calendar'))
+const Wishes = lazy(() => import('../pages/grimoire/Wishes'))
+const Jars = lazy(() => import('../pages/grimoire/Jars'))
+const Events = lazy(() => import('../pages/grimoire/Events'))
+const Tarot = lazy(() => import('../pages/grimoire/Tarot'))
+const Goals = lazy(() => import('../pages/grimoire/Goals'))
+const Notes = lazy(() => import('../pages/grimoire/Notes'))
+const SpellsPage = lazy(() => import('../pages/grimoire/SpellsPage'))
 import { useWorkshopSync, WorkshopRunner } from '../components/grimoire/WorkshopRun'
 import { GoApp } from '../lib/apps'
 
@@ -30,6 +32,7 @@ export default function GrimoireApp() {
   return (
     <>
       <WorkshopRunner />
+      <Suspense fallback={<PageLoading />}>
       <Routes>
         <Route
           element={
@@ -66,6 +69,7 @@ export default function GrimoireApp() {
           </Route>
         </Route>
       </Routes>
+      </Suspense>
     </>
   )
 }

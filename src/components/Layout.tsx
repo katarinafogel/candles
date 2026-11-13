@@ -1,11 +1,12 @@
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, type ReactNode, Suspense } from 'react'
 import { LuBox, LuEllipsis, LuFlame, LuHouse, LuLayers, LuLayoutGrid, LuMessageSquare, LuScrollText, LuSettings, LuSparkles, LuUsers, LuWarehouse } from 'react-icons/lu'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { GoApp } from '../lib/apps'
 import { Eucalyptus, MoonPhases, Sparkle } from '@shared/components/Magic'
 import { HeaderRight } from './UserMenu'
 import { useAppDispatch, useAppSelector, useIsMaster, useIsWitch } from '../store'
+import { PageLoading } from './PageLoading'
 import { NoAccess } from './NoAccess'
 import { AppMark } from './AppMark'
 import { localActions } from '../store/localSlice'
@@ -162,7 +163,9 @@ export default function Layout() {
             <Box display={{ base: 'none', md: 'block' }} />
             <HeaderRight />
           </Flex>
-          <Outlet />
+          <Suspense fallback={<PageLoading />}>
+            <Outlet />
+          </Suspense>
         </Box>
       </Box>
 

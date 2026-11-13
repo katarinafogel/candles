@@ -1,29 +1,31 @@
+import { lazy, Suspense } from 'react'
+import { PageLoading } from '../components/PageLoading'
 import type { ReactNode } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { AuthGate } from '../components/AuthGate'
 import { InviteTaker } from '../components/Invites'
 import { NotFound } from '../components/NotFound'
 import Layout from '../components/Layout'
-import CandlePage from '../pages/CandlePage'
+const CandlePage = lazy(() => import('../pages/CandlePage'))
 import Candles from '../pages/Candles'
-import Decor from '../pages/Decor'
-import HolderPage from '../pages/HolderPage'
+const Decor = lazy(() => import('../pages/Decor'))
+const HolderPage = lazy(() => import('../pages/HolderPage'))
 import Holders from '../pages/Holders'
 import Home from '../pages/Home'
-import Instructions from '../pages/Instructions'
-import MaterialPage from '../pages/MaterialPage'
-import MoldPage from '../pages/MoldPage'
+const Instructions = lazy(() => import('../pages/Instructions'))
+const MaterialPage = lazy(() => import('../pages/MaterialPage'))
+const MoldPage = lazy(() => import('../pages/MoldPage'))
 import { AddCandles, AddHolders, EditCandle, EditHolder } from '../pages/ItemForms'
-import Molds from '../pages/Molds'
-import More from '../pages/More'
-import NewMix from '../pages/NewMix'
-import NewPour from '../pages/NewPour'
-import People from '../pages/People'
-import PrintQr from '../pages/PrintQr'
-import Reviews from '../pages/Reviews'
-import Settings from '../pages/Settings'
-import Stock from '../pages/Stock'
-import UiKit from '../pages/UiKit'
+const Molds = lazy(() => import('../pages/Molds'))
+const More = lazy(() => import('../pages/More'))
+const NewMix = lazy(() => import('../pages/NewMix'))
+const NewPour = lazy(() => import('../pages/NewPour'))
+const People = lazy(() => import('../pages/People'))
+const PrintQr = lazy(() => import('../pages/PrintQr'))
+const Reviews = lazy(() => import('../pages/Reviews'))
+const Settings = lazy(() => import('../pages/Settings'))
+const Stock = lazy(() => import('../pages/Stock'))
+const UiKit = lazy(() => import('../pages/UiKit'))
 import { useWorkshopSync, WorkshopRunner } from '../components/grimoire/WorkshopRun'
 import { useIsAdmin } from '../store'
 import { GoApp } from '../lib/apps'
@@ -34,6 +36,7 @@ export default function WorkshopApp() {
   return (
     <>
       <WorkshopRunner />
+      <Suspense fallback={<PageLoading />}>
       <Routes>
         <Route
           element={
@@ -75,6 +78,7 @@ export default function WorkshopApp() {
           </Route>
         </Route>
       </Routes>
+      </Suspense>
     </>
   )
 }

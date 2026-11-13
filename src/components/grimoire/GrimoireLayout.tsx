@@ -1,7 +1,7 @@
 // The grimoire's own shell in the workshop's style: side menu on a computer, bottom tabs on a phone,
 // «Другие проекты» at the end of the menu and the floating «+» with its menu.
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, type ReactNode, Suspense } from 'react'
 import { LuBookOpen, LuCalendarDays, LuEllipsis, LuFlame, LuGem, LuLibrary, LuMoon, LuScrollText, LuLayoutGrid, LuPiggyBank, LuSparkles, LuSun, LuUsers } from 'react-icons/lu'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { GoApp } from '../../lib/apps'
@@ -10,6 +10,7 @@ import { daysBetween } from '@grimoire-core/grimoire/days'
 import { words } from '@grimoire-core/grimoire/selectors'
 import { builtInPractices } from '@grimoire-core/grimoire/wheel'
 import { useAppDispatch, useAppSelector, useIsMaster, useIsWitch } from '../../store'
+import { PageLoading } from '../PageLoading'
 import { NoAccess } from '../NoAccess'
 import { AppMark } from '../AppMark'
 import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
@@ -127,7 +128,9 @@ export default function GrimoireLayout() {
               Ты в нави: серии заморожены, привычки молчат.
             </Box>
           )}
-          <Outlet />
+          <Suspense fallback={<PageLoading />}>
+            <Outlet />
+          </Suspense>
         </Box>
       </Box>
 
