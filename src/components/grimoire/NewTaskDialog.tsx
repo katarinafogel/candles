@@ -1,4 +1,5 @@
 // «Новое дело»: the card's fields with only the title required, the buttons pinned to the bottom.
+// It works the same from every page: «На сегодня» (off at first) puts the deed into today's plan.
 // «Ещё одно» adds and starts over in the same place, «Добавить» adds and closes.
 // Enter in the title or Cmd/Ctrl+Enter anywhere — «Добавить», Cmd/Ctrl+Shift+Enter — «Ещё одно».
 import { Button, HStack, Stack } from '@chakra-ui/react'
@@ -12,6 +13,8 @@ import { confirmAction, Modal, notify } from '@shared/components/ui'
 import { usePlanGuard } from './PlanGuard'
 import { SpellHints } from './SpellHints'
 import { TaskFields, useFieldBlocks } from './TaskFields'
+import { RoundButton } from './RoundBlocks'
+import { LuSun } from 'react-icons/lu'
 
 /** `fields` go into every deed added here (a book's deeds carry its projectId); `onAdded` — after each one. */
 export function NewTaskDialog({
@@ -95,7 +98,16 @@ export function NewTaskDialog({
       initialFocusEl={() => title.current}
       footer={
         <Stack gap="3" w="full">
-          {blocks.toolbar}
+          <HStack gap="2" align="flex-start">
+            {/* «На сегодня»: the same switch wherever the form was opened; off by default. */}
+            <RoundButton
+              label="На сегодня"
+              icon={<LuSun />}
+              on={draft.doOn === today}
+              onClick={() => change(draft.doOn === today ? { doOn: undefined, doAt: undefined } : { doOn: today })}
+            />
+            {blocks.toolbar}
+          </HStack>
           <HStack gap="2">
             <Button variant="outline" flex={{ base: '1', md: 'initial' }} mr={{ md: 'auto' }} onClick={() => add(true)}>
               Ещё одно
