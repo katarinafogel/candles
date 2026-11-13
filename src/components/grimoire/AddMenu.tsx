@@ -34,7 +34,7 @@ export function AddMenu() {
   const [open, setOpen] = useState(false)
   const [adding, setAdding] = useState<Kind>()
   const today = useToday()
-  const onScroll = useLocation().pathname === '/g'
+  const onScroll = useLocation().pathname === '/'
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export function AddMenu() {
   const pick = (k: Kind) => {
     setOpen(false)
     // A mirror entry is written on its own page.
-    if (k === 'entry') navigate('/g/mirror/new')
+    if (k === 'entry') navigate('/mirror/new')
     else setAdding(k)
   }
   const done = () => setAdding(undefined)

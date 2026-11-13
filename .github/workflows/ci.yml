@@ -21,6 +21,15 @@ jobs:
       - run: npm ci
       - run: npx vitest run --reporter=default --reporter=github-actions
       - run: npm run build
+      - name: The site has its three apps
+        run: |
+          for f in dist/index.html dist/_redirects dist/_headers dist/privacy.html \
+                   dist/workshop/index.html dist/workshop/sw.js dist/workshop/manifest.webmanifest \
+                   dist/grimoire/index.html dist/grimoire/sw.js dist/grimoire/manifest.webmanifest dist/grimoire/push-sw.js; do
+            [ -f "$f" ] || { echo "::error::$f is missing"; exit 1; }
+          done
+          ! ls dist/sw.js 2>/dev/null || { echo "::error::the showcase must have no service worker"; exit 1; }
+          grep -q '"scope":"/grimoire/"' dist/grimoire/manifest.webmanifest || { echo "::error::grimoire scope"; exit 1; }
 
   database:
     # Applies the migrations to an empty Postgres with a stand-in for Supabase auth and checks the access rules.

@@ -4,9 +4,11 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview",
+    "dev": "vite --mode workshop",
+    "dev:grimoire": "vite --mode grimoire",
+    "dev:showcase": "vite --mode showcase",
+    "build": "tsc -b && vite build --mode showcase && vite build --mode workshop && vite build --mode grimoire && node scripts/site.mjs",
+    "preview": "vite preview --outDir dist",
     "test": "vitest run"
   },
   "dependencies": {

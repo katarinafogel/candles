@@ -226,7 +226,7 @@ export default function MirrorEntry() {
   })
   const location = useLocation()
   // Back where she came from (a deed, the scroll); opened by a link — to the mirror.
-  const back = () => (location.key !== 'default' ? navigate(-1) : navigate('/g/mirror'))
+  const back = () => (location.key !== 'default' ? navigate(-1) : navigate('/mirror'))
 
   const taskOptions = useMemo(
     () =>
@@ -256,7 +256,7 @@ export default function MirrorEntry() {
   if (id && !entry && id !== 'new' && id !== 'evening')
     return (
       <>
-        <PageHeader title="Запись" back="/g/mirror" />
+        <PageHeader title="Запись" back="/mirror" />
         <Text color="fg.muted">Такой записи нет — может, её удалили.</Text>
       </>
     )
@@ -320,7 +320,7 @@ export default function MirrorEntry() {
 
   return (
     <>
-      <PageHeader title={entry ? 'Запись' : evening ? 'Вечерняя страница' : 'Новая запись'} back="/g/mirror" />
+      <PageHeader title={entry ? 'Запись' : evening ? 'Вечерняя страница' : 'Новая запись'} back="/mirror" />
       <Grid templateColumns={{ base: '1fr', lg: 'minmax(0, 1.1fr) minmax(0, 1fr)' }} gap={{ base: '5', lg: '8' }} alignItems="start">
         <Stack gap="4">
           {evening && (

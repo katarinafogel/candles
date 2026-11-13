@@ -5,11 +5,13 @@ import { FLUSH, PAUSE, PERSIST, persistReducer, persistStore, PURGE, REGISTER, R
 import data, { SCHEMA_VERSION } from '@workshop-core/store/dataSlice'
 import grimoire, { migrateGrimoire, setDayBoundary } from '@grimoire-core/store/grimoireSlice'
 import local from './localSlice'
+import { APP } from '../lib/apps'
 import { migrate } from '@workshop-core/lib/migrate'
 import { initSync, syncMiddleware } from '../lib/sync'
 
 // IndexedDB through localforage: localStorage is too small and gets cleared too easily.
-localforage.config({ name: 'candle-tracker', storeName: 'state' })
+// Each app keeps its own copy on the device (they share the site, so the database is named by app).
+localforage.config({ name: `candles-${APP}`, storeName: 'state' })
 
 const root = combineReducers({
   data: persistReducer(

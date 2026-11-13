@@ -14,7 +14,7 @@ export interface PushMessage {
   kind: NotifyKind
   title: string
   body: string
-  /** Where a tap leads, inside the app (hash route). */
+  /** Where a tap leads: a page of the grimoire ('/', '/rituals'). */
   url: string
 }
 
@@ -57,7 +57,7 @@ export function morningMessage(g: GrimoireState, today: DayKey): PushMessage | u
         else if (d === tomorrow) parts.push(`Завтра ${sabbats[k as keyof typeof sabbats].name}.`)
       }
   }
-  return { kind: 'morning', title: 'Свиток дня', body: parts.join(' '), url: '#/g' }
+  return { kind: 'morning', title: 'Свиток дня', body: parts.join(' '), url: '/' }
 }
 
 export function afternoonMessage(g: GrimoireState, today: DayKey): PushMessage | undefined {
@@ -69,7 +69,7 @@ export function afternoonMessage(g: GrimoireState, today: DayKey): PushMessage |
     kind: 'afternoon',
     title: 'Как идёт день?',
     body: left.length ? `Сделано ${done} из ${plan.all.length}. Что-то можно уменьшить или отпустить — без штрафа.` : `Всё из плана сделано: ${done}. Остальное — по желанию.`,
-    url: '#/g',
+    url: '/',
   }
 }
 
@@ -86,7 +86,7 @@ export function eveningMessage(g: GrimoireState, today: DayKey): PushMessage | u
     .map((h) => h.title)
   if (written && !rituals.length) return undefined
   const parts = [!written && 'Вечерняя страница ждёт: пара слов о дне.', rituals.length && `Ритуалы: ${list(rituals)}.`].filter(Boolean)
-  return { kind: 'evening', title: 'Вечер', body: parts.join(' '), url: written ? '#/g/rituals' : '#/g/mirror/evening' }
+  return { kind: 'evening', title: 'Вечер', body: parts.join(' '), url: written ? '/rituals' : '/mirror/evening' }
 }
 
 /**

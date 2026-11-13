@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { LuCopy } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
 import { publicBase } from '../lib/config'
+import { appHref } from '../lib/apps'
 import { supabase } from '@shared/lib/supabase'
 import { load } from '../lib/sync'
 import { useAppSelector } from '../store'
@@ -70,7 +71,8 @@ interface Invite {
   revoked_at: string | null
 }
 
-export const inviteLink = (token: string) => `${publicBase()}#/invite/${token}`
+/** An invite opens the app it gives: the grimoire (witch) or the workshop (master). */
+export const inviteLink = (token: string, role: InviteRole) => `${publicBase()}${appHref(role === 'witch' ? 'grimoire' : 'workshop', `/invite/${token}`)}`
 
 const inviteText: Record<InviteRole, string> = {
   witch: 'Ссылка-приглашение даёт гримуар тому, кто по ней зарегистрируется или войдёт. Одноразовая, живёт 7 дней.',
@@ -98,10 +100,10 @@ export function InvitesAdmin({ role }: { role: InviteRole }) {
   }
   async function copy(token: string) {
     try {
-      await navigator.clipboard.writeText(inviteLink(token))
+      await navigator.clipboard.writeText(inviteLink(token, role))
       notify('Ссылка скопирована', 'success')
     } catch {
-      notify('Скопируй ссылку вручную', 'info', inviteLink(token))
+      notify('Скопируй ссылку вручную', 'info', inviteLink(token, role))
     }
   }
   async function revoke(token: string) {
@@ -121,7 +123,7 @@ export function InvitesAdmin({ role }: { role: InviteRole }) {
       {fresh && (
         <HStack gap="2" p="2" borderRadius="l2" borderWidth="1px" borderColor="ember.600" wrap="wrap">
           <Text fontSize="xs" flex="1" minW="200px" wordBreak="break-all">
-            {inviteLink(fresh)}
+            {inviteLink(fresh, role)}
           </Text>
           <Button size="xs" onClick={() => void copy(fresh)}>
             <LuCopy /> Скопировать

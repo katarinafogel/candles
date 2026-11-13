@@ -405,7 +405,7 @@ function DeedMirror({ taskId, onGo }: { taskId: string; onGo: (to: string) => vo
       <Text color="fg.muted">В зеркале:</Text>
       {mine.map((e) =>
         e.words?.length ? (
-          <HStack key={e.id} gap="1" as="button" onClick={() => onGo(`/g/mirror/${e.id}`)}>
+          <HStack key={e.id} gap="1" as="button" onClick={() => onGo(`/mirror/${e.id}`)}>
             <Text fontSize="xs" color="fg.subtle">
               {e.source === 'task_start' ? 'до' : e.type === 'taskFeedback' ? 'после' : ''}
             </Text>
@@ -414,12 +414,12 @@ function DeedMirror({ taskId, onGo }: { taskId: string; onGo: (to: string) => vo
             ))}
           </HStack>
         ) : (
-          <Button key={e.id} size="2xs" variant="ghost" onClick={() => onGo(`/g/mirror/${e.id}`)}>
+          <Button key={e.id} size="2xs" variant="ghost" onClick={() => onGo(`/mirror/${e.id}`)}>
             запись
           </Button>
         ),
       )}
-      <Button size="2xs" variant="outline" onClick={() => onGo(`/g/mirror/new?task=${taskId}`)}>
+      <Button size="2xs" variant="outline" onClick={() => onGo(`/mirror/new?task=${taskId}`)}>
         + чувство
       </Button>
     </Flex>

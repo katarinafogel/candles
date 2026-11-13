@@ -10,6 +10,7 @@ import { nowLocal, toIso } from '@shared/lib/dates'
 import { candleStageLabel, candleStageOrder, wickSchemeLabel } from '@workshop-core/lib/labels'
 import { byId, candleRating, materialOptions, moldOfCandle, sootShare, sortMolds } from '@workshop-core/lib/selectors'
 import { useAppDispatch, useData, useIsWitch } from '../store'
+import { appHref } from '../lib/apps'
 import { FromWorkshopDialog } from '../components/grimoire/FromWorkshop'
 import { actions } from '@workshop-core/store/dataSlice'
 import type { Candle, CandleStage, WickScheme } from '@workshop-core/types'
@@ -362,7 +363,7 @@ export default function Candles() {
           ids={selected}
           onClose={close}
           onDone={() => {
-            window.open(`${location.pathname}#/print?ids=${selected.join(',')}`, '_blank')
+            window.open(appHref('workshop', `/print?ids=${selected.join(',')}`), '_blank')
             close()
           }}
         />

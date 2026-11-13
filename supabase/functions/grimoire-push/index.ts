@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
       if (!who) return json({ error: 'sign in' }, 401)
       const subs = await rest<Sub[]>(`push_subscriptions?owner_id=eq.${who}&select=endpoint,owner_id,keys`)
       if (!subs.length) return json({ error: 'no devices' }, 404)
-      await send(await config(), subs, { title: 'Гримуар дел', body: 'Уведомления работают. Луна на месте.', url: '#/g' })
+      await send(await config(), subs, { title: 'Гримуар дел', body: 'Уведомления работают. Луна на месте.', url: '/' })
       return json({ ok: true, devices: subs.length })
     }
     return json({ error: 'not found' }, 404)

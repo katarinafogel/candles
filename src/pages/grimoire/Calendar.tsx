@@ -195,7 +195,7 @@ function DayDialog({ day, today, holiday, onClose }: { day: DayKey; today: DayKe
         {events.map((e) => (
           <Text key={e.id} fontSize="sm">
             {e.sigil ?? '🗓️'}{' '}
-            <RouterLink to="/g/events">
+            <RouterLink to="/events">
               <Text as="span" color="ember.100">
                 {e.title}
               </Text>
@@ -214,7 +214,7 @@ function DayDialog({ day, today, holiday, onClose }: { day: DayKey; today: DayKe
         {born.map((n) => (
           <Text key={n.id} fontSize="sm">
             🎂{' '}
-            <RouterLink to={`/g/people/${n.id}`}>
+            <RouterLink to={`/people/${n.id}`}>
               <Text as="span" color="ember.100">
                 {people[n.id].name}
               </Text>
@@ -228,7 +228,7 @@ function DayDialog({ day, today, holiday, onClose }: { day: DayKey; today: DayKe
               {sabbats[holiday].symbol} {sabbats[holiday].name}: {sabbats[holiday].theme.toLowerCase()}
             </Text>
             <Button asChild size="xs" variant="outline">
-              <RouterLink to={`/g/wheel?s=${holiday}`}>К колесу</RouterLink>
+              <RouterLink to={`/wheel?s=${holiday}`}>К колесу</RouterLink>
             </Button>
           </Flex>
         )}
@@ -238,7 +238,7 @@ function DayDialog({ day, today, holiday, onClose }: { day: DayKey; today: DayKe
               Эсбат: полнолуние, малый праздник
             </Text>
             <Button asChild size="xs" variant="outline">
-              <RouterLink to="/g/wheel#esbat">Практики</RouterLink>
+              <RouterLink to="/wheel#esbat">Практики</RouterLink>
             </Button>
           </Flex>
         )}

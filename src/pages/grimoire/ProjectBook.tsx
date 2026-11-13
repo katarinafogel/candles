@@ -115,7 +115,7 @@ export default function ProjectBook() {
     if (quest) document.getElementById(`steps-${quest}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' })
   }, [quest])
 
-  if (!project) return <Navigate to="/g/projects" replace />
+  if (!project) return <Navigate to="/projects" replace />
   const done = deeds.filter((t) => t.status === 'done').length
   const progress = projectProgress(g, project.id)
   const c = bookColor(project)
@@ -123,7 +123,7 @@ export default function ProjectBook() {
 
   return (
     <>
-      <PageHeader title={project.title} back="/g/projects">
+      <PageHeader title={project.title} back="/projects">
         <Button size="sm" variant="outline" onClick={() => setSpells(true)}>
           {words(g.meta).spells}
         </Button>

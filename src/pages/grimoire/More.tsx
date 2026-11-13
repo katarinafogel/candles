@@ -78,17 +78,17 @@ export default function GrimoireMore() {
       <PageHeader title="Ещё" />
       <Stack gap="0" borderWidth="1px" borderColor="border" borderRadius="l3" bg="bg.subtle" overflow="hidden" mb="4">
         {[
-          { to: '/g/calendar', label: 'Календарь: луны, саббаты и эсбаты' },
-          { to: '/g/projects', label: `${words(meta).projects}: полка проектов` },
-          { to: '/g/mirror', label: 'Зеркало: словарь эмоций и записи' },
-          { to: '/g/people', label: 'Бестиарий: люди, памятка и даты' },
-          { to: '/g/wishes', label: 'Сундук желаний и зал славы' },
-          { to: '/g/jars', label: 'Копилки: настоящие деньги' },
-          { to: '/g/goals', label: 'Цели на год' },
-          { to: '/g/events', label: 'События: поездки, больничные' },
-          { to: '/g/tarot', label: 'Таро: карта дня и расклады' },
-          { to: '/g/notes', label: 'Заметки и цитаты' },
-          { to: '/g/spells', label: `${words(meta).spells}: дела, квесты и цепочки` },
+          { to: '/calendar', label: 'Календарь: луны, саббаты и эсбаты' },
+          { to: '/projects', label: `${words(meta).projects}: полка проектов` },
+          { to: '/mirror', label: 'Зеркало: словарь эмоций и записи' },
+          { to: '/people', label: 'Бестиарий: люди, памятка и даты' },
+          { to: '/wishes', label: 'Сундук желаний и зал славы' },
+          { to: '/jars', label: 'Копилки: настоящие деньги' },
+          { to: '/goals', label: 'Цели на год' },
+          { to: '/events', label: 'События: поездки, больничные' },
+          { to: '/tarot', label: 'Таро: карта дня и расклады' },
+          { to: '/notes', label: 'Заметки и цитаты' },
+          { to: '/spells', label: `${words(meta).spells}: дела, квесты и цепочки` },
           { to: '/apps', label: 'Другие проекты' },
         ].map((i) => (
           <RouterLink key={i.to} to={i.to}>

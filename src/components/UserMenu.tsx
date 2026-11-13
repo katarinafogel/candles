@@ -3,7 +3,7 @@
 import { Box, Button, Flex, Menu, Portal, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { LuArrowLeftRight, LuChevronDown, LuLayoutGrid, LuLogOut, LuSettings, LuUserPen } from 'react-icons/lu'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { APP, appHref, useGo, type AppId } from '../lib/apps'
 import { signOut } from '../lib/sync'
 import { supabase } from '@shared/lib/supabase'
 import { useAppDispatch, useAppSelector, useIsMaster, useIsWitch } from '../store'
@@ -110,19 +110,23 @@ function ProfileDialog({ open, onClose }: { open: boolean; onClose: () => void }
 }
 
 export function UserMenu() {
-  const nav = useNavigate()
-  const loc = useLocation()
+  const go = useGo()
   const witch = useIsWitch()
   const master = useIsMaster()
   const name = useAppSelector((s) => s.local.profile?.name ?? '')
   const email = useAppSelector((s) => s.local.email)
   const [profileOpen, setProfileOpen] = useState(false)
-  const inGrimoire = loc.pathname === '/g' || loc.pathname.startsWith('/g/')
+  const inGrimoire = APP === 'grimoire'
 
   const pick = (v: string) => {
     if (v === 'profile') setProfileOpen(true)
     else if (v === 'signout') void signOut()
-    else nav(v)
+    else if (v === 'projects') location.assign(appHref('showcase', '/projects'))
+    else {
+      // 'grimoire:/more', 'workshop:/settings' — a page of either app.
+      const [app, path] = v.split(':') as [AppId, string]
+      go(app, path)
+    }
   }
 
   return (
@@ -160,20 +164,20 @@ export function UserMenu() {
                 <LuUserPen /> Имя и значок
               </Menu.Item>
               {inGrimoire ? (
-                <Menu.Item value="/g/more">
+                <Menu.Item value="grimoire:/more">
                   <LuSettings /> Настройки гримуара
                 </Menu.Item>
               ) : (
-                <Menu.Item value="/settings">
+                <Menu.Item value="workshop:/settings">
                   <LuSettings /> Настройки мастерской
                 </Menu.Item>
               )}
               {witch && master && (
-                <Menu.Item value={inGrimoire ? '/' : '/g'}>
+                <Menu.Item value={inGrimoire ? 'workshop:/' : 'grimoire:/'}>
                   <LuArrowLeftRight /> {inGrimoire ? 'В мастерскую' : 'В гримуар'}
                 </Menu.Item>
               )}
-              <Menu.Item value="/apps">
+              <Menu.Item value="projects">
                 <LuLayoutGrid /> Другие проекты
               </Menu.Item>
               <Menu.Separator />

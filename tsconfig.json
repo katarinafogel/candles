@@ -19,5 +19,5 @@
       "@workshop-core/*": ["./packages/workshop-core/src/*"]
     }
   },
-  "include": ["src", "packages", "vite.config.ts"]
+  "include": ["src", "packages", "apps", "vite.config.ts"]
 }

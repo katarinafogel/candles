@@ -363,7 +363,7 @@ export default function Settings() {
               </Button>
             </HStack>
           </Field>
-          <Field label="Адрес приложения для QR" helper={`Сейчас ссылки ведут на ${publicBase(s)}#/c/${profile?.slug}/S-0001`}>
+          <Field label="Адрес приложения для QR" helper={`Сейчас ссылки ведут на ${publicBase(s)}/candles-review/${profile?.slug}/S-0001`}>
             <Input value={s.publicUrl} onChange={(e) => set({ publicUrl: e.target.value.trim() })} placeholder="https://<логин>.github.io/<репозиторий>/" />
           </Field>
           <Box>

@@ -2,8 +2,7 @@ import { Box, Button, Center, Container, Flex, Heading, IconButton, Input, Separ
 import type { Session } from '@supabase/supabase-js'
 import { useEffect, useState, type ReactNode } from 'react'
 import { FcGoogle } from 'react-icons/fc'
-import { useLocation } from 'react-router-dom'
-import { appOf, applyApp } from '../lib/apps'
+import { APP, apps } from '../lib/apps'
 import { publicBase } from '../lib/config'
 import { authRedirect, supabase, supabaseConfigured } from '@shared/lib/supabase'
 import { startSync } from '../lib/sync'
@@ -22,11 +21,11 @@ function Shell({ children }: { children: ReactNode }) {
           <Eucalyptus width={60} flip position="absolute" top="-44px" right="-6px" opacity={0.35} />
           <MoonSlice size={48} />
           <Heading size="3xl" fontWeight="semibold" color="ember.50">
-            Гримуар
+            {apps[APP].short}
           </Heading>
           <MoonPhases size={10} gap="2" color="ember.200" />
           <Text color="fg.muted" fontSize="sm" textAlign="center">
-            Открывая гримуар, представься
+            {APP === 'grimoire' ? 'Открывая гримуар, представься' : 'Открывая мастерскую, представься'}
           </Text>
         </Flex>
         <Box p="4" borderWidth="1px" borderColor="border" bg="bg.subtle" borderRadius="l3">
@@ -43,14 +42,11 @@ function Shell({ children }: { children: ReactNode }) {
 }
 
 function Login() {
-  const { pathname } = useLocation()
   const [busy, setBusy] = useState(false)
   const [googleBusy, setGoogleBusy] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  // The sign-in page is shared by both projects and carries the name of the one being opened.
-  useEffect(() => applyApp(appOf(pathname)), [pathname])
 
   async function signIn() {
     setBusy(true)
@@ -170,7 +166,7 @@ function Onboarding({ session }: { session: Session }) {
               ? 'латиница, цифры и дефис, от 3 до 30 символов'
               : free === false
                 ? 'этот адрес уже занят'
-                : `${publicBase(d.settings)}#/c/${slug}/S-0001 · изменить потом нельзя`
+                : `${publicBase(d.settings)}/candles-review/${slug}/S-0001 · изменить потом нельзя`
           }
         >
           <Input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} />

@@ -130,7 +130,7 @@ export function ProjectFateDialog({ id, mode, onClose, onDone }: { id: string; m
     } else {
       dispatch(A.deleteProject({ id, tasks: how === 'shelve' ? 'detach' : how }))
       notify('Книга удалена', 'success')
-      navigate('/g/projects')
+      navigate('/projects')
     }
     onClose()
     onDone?.()
@@ -179,7 +179,7 @@ function Shelf({ books }: { books: Project[] }) {
         const all = projectTasks(g, p.id)
         const done = all.filter((t) => t.status === 'done').length
         return (
-          <RouterLink key={p.id} to={`/g/projects/${p.id}`}>
+          <RouterLink key={p.id} to={`/projects/${p.id}`}>
             <Stack gap="2" transition="transform .2s" _hover={{ transform: 'translateY(-3px)' }}>
               <BookCover project={p} progress={projectProgress(g, p.id)} />
               <Text fontSize="xs" color="fg.muted" textAlign="center">
@@ -252,7 +252,7 @@ function ArchiveDialog({ books, onClose }: { books: Project[]; onClose: () => vo
         <Stack gap="2">
           {books.map((p) => (
             <Panel display="flex" key={p.id} alignItems="center" gap="2" p="2" flexWrap="wrap">
-              <RouterLink to={`/g/projects/${p.id}`} onClick={onClose} style={{ flex: 1, minWidth: 140 }}>
+              <RouterLink to={`/projects/${p.id}`} onClick={onClose} style={{ flex: 1, minWidth: 140 }}>
                 <Text>
                   {p.sigil ?? '🌿'} {p.title}
                 </Text>

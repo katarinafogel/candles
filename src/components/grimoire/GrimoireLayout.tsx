@@ -3,7 +3,8 @@
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
 import { useEffect, type ReactNode } from 'react'
 import { LuBookOpen, LuCalendarDays, LuEllipsis, LuFlame, LuGem, LuLibrary, LuMoon, LuScrollText, LuLayoutGrid, LuPiggyBank, LuSparkles, LuSun, LuUsers } from 'react-icons/lu'
-import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { GoApp } from '../../lib/apps'
 import { useToday } from '../../grimoire/act'
 import { daysBetween } from '@grimoire-core/grimoire/days'
 import { words } from '@grimoire-core/grimoire/selectors'
@@ -60,23 +61,23 @@ export default function GrimoireLayout() {
   }, [loc.pathname])
 
   // Without the role the grimoire doesn't exist: its addresses lead to the workshop, if that is open.
-  if (!witch) return master ? <Navigate to="/" replace /> : <NoAccess />
+  if (!witch) return master ? <GoApp app="workshop" /> : <NoAccess />
 
   const items: NavItem[] = [
-    { to: '/g', label: w.scroll, icon: <LuScrollText /> },
-    { to: '/g/book', label: w.book, icon: <LuBookOpen /> },
-    { to: '/g/rituals', label: w.rituals, icon: <LuMoon /> },
-    { to: '/g/wheel', label: 'Колесо', icon: <LuSun /> },
+    { to: '/', label: w.scroll, icon: <LuScrollText /> },
+    { to: '/book', label: w.book, icon: <LuBookOpen /> },
+    { to: '/rituals', label: w.rituals, icon: <LuMoon /> },
+    { to: '/wheel', label: 'Колесо', icon: <LuSun /> },
   ]
-  const more: NavItem = { to: '/g/more', label: 'Ещё', icon: <LuEllipsis /> }
+  const more: NavItem = { to: '/more', label: 'Ещё', icon: <LuEllipsis /> }
   // On a phone these live under «Ещё»; the side menu shows them all.
   const extra: NavItem[] = [
-    { to: '/g/calendar', label: 'Календарь', icon: <LuCalendarDays /> },
-    { to: '/g/projects', label: w.projects, icon: <LuLibrary /> },
-    { to: '/g/mirror', label: 'Зеркало', icon: <LuGem /> },
-    { to: '/g/people', label: 'Бестиарий', icon: <LuUsers /> },
-    { to: '/g/wishes', label: 'Сундук желаний', icon: <LuSparkles /> },
-    { to: '/g/jars', label: 'Копилки', icon: <LuPiggyBank /> },
+    { to: '/calendar', label: 'Календарь', icon: <LuCalendarDays /> },
+    { to: '/projects', label: w.projects, icon: <LuLibrary /> },
+    { to: '/mirror', label: 'Зеркало', icon: <LuGem /> },
+    { to: '/people', label: 'Бестиарий', icon: <LuUsers /> },
+    { to: '/wishes', label: 'Сундук желаний', icon: <LuSparkles /> },
+    { to: '/jars', label: 'Копилки', icon: <LuPiggyBank /> },
   ]
 
   return (
@@ -91,7 +92,7 @@ export default function GrimoireLayout() {
         <MoonPhases size={12} gap="2.5" color="ember.200" px="2" mb="4" />
         <Stack gap="1">
           {[...items, ...extra, { ...more, label: 'Ещё: навь, настройки' }, { to: '/apps', label: 'Другие проекты', icon: <LuLayoutGrid /> }].map((i) => (
-            <NavLink key={i.to} to={i.to} end={i.to === '/g'}>
+            <NavLink key={i.to} to={i.to} end={i.to === '/'}>
               {({ isActive }) => (
                 <Flex
                   align="center"
@@ -126,7 +127,7 @@ export default function GrimoireLayout() {
             <Box display={{ base: 'none', md: 'block' }} />
             <HeaderRight />
           </Flex>
-          {meta.nav.active && loc.pathname !== '/g' && (
+          {meta.nav.active && loc.pathname !== '/' && (
             <Box mb="3" px="3" py="2" borderRadius="l2" bg="bg.muted" fontSize="xs" color="fg.muted">
               Ты в нави: серии заморожены, привычки молчат.
             </Box>
@@ -140,7 +141,7 @@ export default function GrimoireLayout() {
 
       <Flex as="nav" display={{ base: 'flex', md: 'none' }} position="fixed" bottom="0" left="0" right="0" bg="bg.nav" backdropFilter="blur(8px)" borderTopWidth="1px" borderColor="border" pb="env(safe-area-inset-bottom)" zIndex="sticky">
         {[...items, more].map((i) => (
-          <NavLink key={i.to} to={i.to} end={i.to === '/g'} style={{ flex: 1 }}>
+          <NavLink key={i.to} to={i.to} end={i.to === '/'} style={{ flex: 1 }}>
             {({ isActive: active }) => {
               const isActive = active || (i === more && extra.some((x) => loc.pathname.startsWith(x.to)))
               return (

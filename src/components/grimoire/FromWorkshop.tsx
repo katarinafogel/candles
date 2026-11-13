@@ -3,7 +3,7 @@
 // already. Only items with the same next step go into one deed, and none already in an open one.
 import { Box, Button, Flex, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useGo } from '../../lib/apps'
 import { useToday } from '../../grimoire/act'
 import { addDays, humanDay } from '@grimoire-core/grimoire/days'
 import { doneTitle, inOpenDeed, itemLabel, nextOffer, nextStep, plannedDay, questTitle, readySteps, stepTitles } from '../../grimoire/workshop'
@@ -14,7 +14,7 @@ import { Check, Chips, Empty, Field, Modal, notify, TextInput } from '@shared/co
 
 export function FromWorkshopDialog({ preset, onClose }: { preset?: { kind: WorkshopKind; ids: string[] }; onClose: () => void }) {
   const dispatch = useAppDispatch()
-  const navigate = useNavigate()
+  const go = useGo()
   const data = useAppSelector((s) => s.data)
   const tasks = useAppSelector((s) => s.grimoire.tasks)
   const today = useToday()
@@ -38,7 +38,7 @@ export function FromWorkshopDialog({ preset, onClose }: { preset?: { kind: Works
   const create = () => {
     const t = title.trim() || questTitle(kind!, step!, ids.length)
     dispatch(A.addWorkshopQuest({ title: t, kind: kind!, step: step!, items: ids.map((id) => ({ id, label: itemLabel(data, kind!, id) })), doOn: day }))
-    notify(`В гримуаре: «${t}»`, 'success', day ? `на ${humanDay(day, today)}` : 'в бэклоге', { label: 'Открыть', onClick: () => navigate('/g/book') })
+    notify(`В гримуаре: «${t}»`, 'success', day ? `на ${humanDay(day, today)}` : 'в бэклоге', { label: 'Открыть', onClick: () => go('grimoire', '/book') })
     onClose()
   }
 

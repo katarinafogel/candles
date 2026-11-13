@@ -18,6 +18,7 @@ import { liveScars, nextOccurrence, personBalance, upcomingDates } from '@grimoi
 import { isOpenTask } from '@grimoire-core/grimoire/selectors'
 import type { PersonList, PersonNotes } from '@grimoire-core/grimoire/types'
 import { useAppDispatch, useAppSelector, useLinkPeople } from '../../store'
+import { AppLink } from '../../lib/apps'
 import { actions } from '@workshop-core/store/dataSlice'
 import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 import { PetalBar } from './MirrorInsights'
@@ -113,7 +114,7 @@ export function NewPerson({ onClose }: { onClose: () => void }) {
     const id = nanoid(8)
     dispatch(A.upsertBeing({ id, name: name.trim() }))
     onClose()
-    navigate(`/g/people/${id}`)
+    navigate(`/people/${id}`)
   }
   return (
     <Modal open onClose={onClose} title="Новый человек" footer={<Button onClick={save}>Создать</Button>}>
@@ -143,7 +144,7 @@ export default function Bestiary() {
             {soon.map((d) => (
               <Text key={`${d.personId}${d.label}`} fontSize="sm">
                 🎂{' '}
-                <RouterLink to={`/g/people/${d.personId}`}>
+                <RouterLink to={`/people/${d.personId}`}>
                   <Text as="span" color="ember.100">
                     {people[d.personId].name}
                   </Text>
@@ -165,7 +166,7 @@ export default function Bestiary() {
             const n = g.personNotes[p.id]
             const b = personBalance(g, p.id, today)
             return (
-              <RouterLink key={p.id} to={`/g/people/${p.id}`}>
+              <RouterLink key={p.id} to={`/people/${p.id}`}>
                 <Panel _hover={{ bg: 'bg.muted' }}>
                   <HStack gap="2" wrap="wrap">
                     <Text fontWeight="semibold">{p.name}</Text>
@@ -201,7 +202,7 @@ export function BestiaryCard() {
   const today = useToday()
   const { open, dialog } = useTaskDialog()
   const [scarsShown, setScarsShown] = useState(false)
-  if (!person) return <Navigate to="/g/people" replace />
+  if (!person) return <Navigate to="/people" replace />
   const n: PersonNotes = g.personNotes[id] ?? { id }
   const linked = linkOn && person.personId ? workshopPeople[person.personId] : undefined
   const candles = linked ? Object.values(allCandles).filter((c) => c.personId === linked.id) : []
@@ -226,10 +227,10 @@ export function BestiaryCard() {
 
   return (
     <>
-      <PageHeader title={person.name} back="/g/people">
+      <PageHeader title={person.name} back="/people">
         {linked && (
           <Button asChild size="sm" variant="ghost">
-            <RouterLink to={`/people/${linked.id}`}>в мастерской</RouterLink>
+            <AppLink app="workshop" to={`/people/${linked.id}`}>в мастерской</AppLink>
           </Button>
         )}
       </PageHeader>

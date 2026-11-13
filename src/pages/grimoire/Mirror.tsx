@@ -286,10 +286,10 @@ export default function Mirror() {
   return (
     <>
       <PageHeader title="Зеркало">
-        <Button size="sm" onClick={() => navigate('/g/mirror/new')}>
+        <Button size="sm" onClick={() => navigate('/mirror/new')}>
           Новая запись
         </Button>
-        <Button size="sm" variant="outline" onClick={() => navigate('/g/mirror/evening')}>
+        <Button size="sm" variant="outline" onClick={() => navigate('/mirror/evening')}>
           Вечерняя страница
         </Button>
       </PageHeader>
@@ -301,7 +301,7 @@ export default function Mirror() {
         </Tabs.List>
       </Tabs.Root>
       {tab === 'feed' ? (
-        <Feed entries={entries} onOpen={(entry) => navigate(`/g/mirror/${entry.id}`)} onWord={setInfo} />
+        <Feed entries={entries} onOpen={(entry) => navigate(`/mirror/${entry.id}`)} onWord={setInfo} />
       ) : tab === 'dictionary' ? (
         <Dictionary entries={entries} onWord={setInfo} />
       ) : (

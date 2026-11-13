@@ -3,23 +3,23 @@
 // opens the pour form with the candles chosen. `useWorkshopSync` then ticks, reopens or lets go
 // the grimoire's steps so they always match the items' stages.
 import { useEffect, useSyncExternalStore } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { syncActions } from '../../grimoire/workshop'
 import { workshopRun } from '@grimoire-core/grimoire/workshopRun'
 import { GiveDialog } from '../../pages/CandlePage'
 import { ReadyDialog } from '../../pages/Candles'
 import { store, useAppSelector, useIsMaster, useIsWitch } from '../../store'
+import { useGo } from '../../lib/apps'
 import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 import { DecorateDialog, DefectDialog, HolderStepDialog } from '../StepDialogs'
 
 export function WorkshopRunner() {
   const ask = useSyncExternalStore(workshopRun.subscribe, workshopRun.get)
-  const navigate = useNavigate()
+  const go = useGo()
   const pour = ask && !ask.defect && ask.kind === 'candle' && ask.step === 'pour'
   useEffect(() => {
     if (!pour) return
     workshopRun.clear()
-    navigate(`/pours/new?ids=${ask!.ids.join(',')}`)
+    go('workshop', `/pours/new?ids=${ask!.ids.join(',')}`)
   }, [pour]) // eslint-disable-line react-hooks/exhaustive-deps
   if (!ask || pour) return null
   const close = () => workshopRun.clear()

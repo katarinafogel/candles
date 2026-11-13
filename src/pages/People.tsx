@@ -2,7 +2,8 @@ import { Badge, Box, Button, Flex, HStack, IconButton, Input, Stack, Text, Wrap 
 import { useState } from 'react'
 import { LuPencil, LuPlus } from 'react-icons/lu'
 import { nanoid } from '@reduxjs/toolkit'
-import { Link as RouterLink, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
+import { AppLink } from '../lib/apps'
 import { Check, DeleteButton, Empty, Field, IdBadge, Modal, PageHeader, Select, TextArea, TextInput } from '@shared/components/ui'
 import { candleStageLabel } from '@workshop-core/lib/labels'
 import { reviewsOf } from '@workshop-core/lib/selectors'
@@ -126,7 +127,7 @@ export default function People() {
                   {unanswered.length > 0 && <Badge colorPalette="orange">не ответил(а): {unanswered.length}</Badge>}
                   {beingOf(p.id) && (
                     <Badge asChild variant="outline" colorPalette="purple">
-                      <RouterLink to={`/g/people/${beingOf(p.id)!.id}`}>в бестиарии</RouterLink>
+                      <AppLink app="grimoire" to={`/people/${beingOf(p.id)!.id}`}>в бестиарии</AppLink>
                     </Badge>
                   )}
                 </HStack>

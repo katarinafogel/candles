@@ -139,7 +139,7 @@ function YuleGoals({ today }: { today: string }) {
         </Text>
       </Box>
       <Button asChild size="xs" variant="outline">
-        <RouterLink to="/g/goals">К целям</RouterLink>
+        <RouterLink to="/goals">К целям</RouterLink>
       </Button>
     </Panel>
   )

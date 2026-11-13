@@ -1,7 +1,8 @@
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
 import { useEffect, type ReactNode } from 'react'
 import { LuBox, LuEllipsis, LuFlame, LuHouse, LuLayers, LuLayoutGrid, LuMessageSquare, LuScrollText, LuSettings, LuSparkles, LuUsers, LuWarehouse } from 'react-icons/lu'
-import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { GoApp } from '../lib/apps'
 import { Eucalyptus, MoonPhases, MoonSlice, Sparkle } from '@shared/components/Magic'
 import { HeaderRight } from './UserMenu'
 import { useAppDispatch, useAppSelector, useIsMaster, useIsWitch } from '../store'
@@ -107,7 +108,7 @@ export default function Layout() {
   const master = useIsMaster()
   const witch = useIsWitch()
   const hasWorkshop = useAppSelector((s) => hasWorkshopData(s.data))
-  if (!master && !hasWorkshop) return witch ? <Navigate to="/g" replace /> : <NoAccess />
+  if (!master && !hasWorkshop) return witch ? <GoApp app="grimoire" /> : <NoAccess />
 
   return (
     <Flex minH="100dvh">

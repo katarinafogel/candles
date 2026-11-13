@@ -65,7 +65,7 @@ export function FeedbackPrompt() {
 
   const more = () => {
     feedback.clear()
-    navigate(`/g/mirror/new?task=${task.id}&source=${starting ? 'task_start' : 'task_done'}${word ? `&word=${word}` : ''}`)
+    navigate(`/mirror/new?task=${task.id}&source=${starting ? 'task_start' : 'task_done'}${word ? `&word=${word}` : ''}`)
   }
   const saveStart = (k: string) => {
     dispatch(A.addJournal({ entry: { type: 'entry', source: 'task_start', taskId: task.id, words: [k], tags: task.tags } }))

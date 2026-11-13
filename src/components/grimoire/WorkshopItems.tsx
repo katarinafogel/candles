@@ -3,7 +3,7 @@
 // item can be taken back while it is its last step; a defect is marked without leaving the grimoire.
 import { Box, Button, Flex, HStack, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
-import { Link as RouterLink } from 'react-router-dom'
+import { AppLink } from '../../lib/apps'
 import { canUndo, itemState, stepTitles } from '../../grimoire/workshop'
 import { workshopRun } from '@grimoire-core/grimoire/workshopRun'
 import type { Task } from '@grimoire-core/grimoire/types'
@@ -76,9 +76,9 @@ export function WorkshopItems({ quest, onLeave }: { quest: Task; onLeave: () => 
             )}
             {st !== 'gone' && (
               <Button asChild size="2xs" variant="ghost">
-                <RouterLink to={link.kind === 'holder' ? `/holders/${link.id}` : `/candles/${link.id}`} onClick={onLeave}>
+                <AppLink app="workshop" to={link.kind === 'holder' ? `/holders/${link.id}` : `/candles/${link.id}`} onClick={onLeave}>
                   →
-                </RouterLink>
+                </AppLink>
               </Button>
             )}
           </HStack>

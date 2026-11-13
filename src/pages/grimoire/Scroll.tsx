@@ -489,7 +489,7 @@ function EveningCall({ today }: { today: string }) {
   if (!evening) return null
   return (
     <Button asChild size="xs" variant="outline" mt="2" mr="2">
-      <RouterLink to="/g/mirror/evening">🌙 Вечерняя страница</RouterLink>
+      <RouterLink to="/mirror/evening">🌙 Вечерняя страница</RouterLink>
     </Button>
   )
 }
@@ -511,7 +511,7 @@ function PeopleDates({ today }: { today: string }) {
           <HStack key={`${d.personId}${d.label}`} gap="1.5" mt="1" fontSize="sm" color="fg.muted" wrap="wrap">
             <Text>
               🎂{' '}
-              <RouterLink to={`/g/people/${d.personId}`}>
+              <RouterLink to={`/people/${d.personId}`}>
                 <Text as="span" color="ember.100">
                   {name}
                 </Text>
