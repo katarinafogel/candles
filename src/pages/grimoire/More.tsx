@@ -8,6 +8,7 @@ import { SignOutRow } from '../../components/SignOut'
 import { InvitesAdmin } from '../../components/Invites'
 import { RolesAdmin } from '../../components/RolesAdmin'
 import { LinkPeopleSetting } from '../../components/LinkPeopleSetting'
+import { ErrorLogView } from '../../components/ErrorLogView'
 import { Check, Chips, confirmAction, DateInput, Field, NumInput, PageHeader, Section, TextInput } from '@shared/components/ui'
 import { useToday } from '../../grimoire/act'
 import { humanDay } from '@grimoire-core/grimoire/days'
@@ -238,6 +239,9 @@ export default function GrimoireMore() {
             Вернуть стартовые практики
           </Button>
         </Stack>
+      </Section>
+      <Section title="Последние ошибки">
+        <ErrorLogView />
       </Section>
       {isAdmin && (
         <Section title="Ведьмы и приглашения">

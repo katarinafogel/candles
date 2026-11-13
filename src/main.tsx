@@ -7,11 +7,13 @@ import { PersistGate } from 'redux-persist/integration/react'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App'
 import { catchInvite } from './components/Invites'
+import { ErrorBoundary, installErrorCatcher } from './components/ErrorCatcher'
 import { ConfirmHost, Toaster } from '@shared/components/ui'
 import { persistor, store } from './store'
 import { system } from '@shared/theme'
 import { installThemes } from '@shared/themes'
 
+installErrorCatcher()
 registerSW({ immediate: true })
 installThemes()
 // An invite link (#/invite/…) is remembered before the sign-in, which may leave the page.
@@ -24,7 +26,9 @@ createRoot(document.getElementById('root')!).render(
         <PersistGate loading={null} persistor={persistor}>
           {/* HashRouter: GitHub Pages would answer 404 to deep links from QR codes otherwise. */}
           <HashRouter>
-            <App />
+            <ErrorBoundary>
+              <App />
+            </ErrorBoundary>
           </HashRouter>
         </PersistGate>
       </Provider>

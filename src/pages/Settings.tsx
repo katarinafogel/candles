@@ -4,6 +4,7 @@ import { LuDownload, LuFileUp, LuLogOut, LuUpload } from 'react-icons/lu'
 import { RolesAdmin } from '../components/RolesAdmin'
 import { InvitesAdmin } from '../components/Invites'
 import { LinkPeopleSetting } from '../components/LinkPeopleSetting'
+import { ErrorLogView } from '../components/ErrorLogView'
 import { confirmAction, Field, Modal, notify, NumInput, PageHeader, Row, Section, Select, TextInput } from '@shared/components/ui'
 import { testAccountEmail } from '../lib/config'
 import { downloadBackup, readBackup, type BackupSummary } from '@workshop-core/lib/backup'
@@ -406,6 +407,10 @@ export default function Settings() {
           </Button>
         </Section>
       )}
+
+      <Section title="Последние ошибки">
+        <ErrorLogView />
+      </Section>
 
       <Section title="Бэкап">
         <BackupRestore />
