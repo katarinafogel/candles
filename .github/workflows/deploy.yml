@@ -1,8 +1,8 @@
 name: Deploy
 
+# Frozen during the move to Cloudflare Pages (stage 4 of the split): github.io keeps the last
+# single-app version until the new site takes over. Run by hand only.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
