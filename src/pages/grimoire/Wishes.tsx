@@ -277,7 +277,7 @@ function WishCard({ w, onEdit }: { w: Wish; onEdit: () => void }) {
   const task = useAppSelector((s) => (w.taskId ? s.grimoire.tasks[w.taskId] : undefined))
   const project = useAppSelector((s) => (w.projectId ? s.grimoire.projects[w.projectId] : undefined))
   const jar = useAppSelector((s) => (w.jarId ? s.grimoire.jars[w.jarId] : undefined))
-  const people = useAppSelector((s) => s.data.people)
+  const people = useAppSelector((s) => s.grimoire.beings)
   const today = useToday()
   const [fulfilling, setFulfilling] = useState(false)
   const [embody, setEmbody] = useState(false)

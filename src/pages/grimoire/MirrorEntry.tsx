@@ -17,7 +17,6 @@ import { bodyZones, emotionActions, emotionWords, mirrorFactors, wordColor } fro
 import { isOpenTask } from '@grimoire-core/grimoire/selectors'
 import type { JournalEntry } from '@grimoire-core/grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { actions } from '@workshop-core/store/dataSlice'
 import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 
 export const energyNames = ['почти нет', 'мало', 'ровно', 'бодро', 'через край']
@@ -204,7 +203,7 @@ export default function MirrorEntry() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const g = useAppSelector((s) => s.grimoire)
-  const people = useAppSelector((s) => s.data.people)
+  const people = useAppSelector((s) => s.grimoire.beings)
   const today = useToday()
   const entry = id && id !== 'new' && id !== 'evening' ? g.journal[id] : undefined
   const evening = id === 'evening' || entry?.type === 'evening'
@@ -239,7 +238,7 @@ export default function MirrorEntry() {
   const personOptions = Object.values(people).map((p) => ({ id: p.id, label: p.name }))
   const newPerson = (name: string) => {
     const pid = nanoid(8)
-    dispatch(actions.upsertPerson({ id: pid, name, contact: '', notes: '' }))
+    dispatch(A.upsertBeing({ id: pid, name }))
     return pid
   }
   const peoplePick = (

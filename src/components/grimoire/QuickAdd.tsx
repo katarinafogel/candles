@@ -12,7 +12,7 @@ import { SpellHints } from './SpellHints'
 
 /** Finds workshop people by the name typed after @ (the bestiary shares them). */
 export function matchPeople(names: string[]) {
-  const people = Object.values(store.getState().data.people)
+  const people = Object.values(store.getState().grimoire.beings)
   return names.map((n) => {
     const q = n.toLowerCase()
     return people.find((p) => p.name.toLowerCase() === q) ?? people.find((p) => p.name.toLowerCase().startsWith(q))

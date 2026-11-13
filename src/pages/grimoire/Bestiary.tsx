@@ -1,7 +1,8 @@
-// «Бестиарий»: the workshop's people seen from the grimoire — a memo (birthday and dates, likes, gift
+// «Бестиарий»: the grimoire's own people — a memo (birthday and dates, likes, gift
 // ideas, questions to ask, dated facts), kindness and scars, and the balance of the last year. One
-// person = one card: the name lives on the workshop `person`, the memo in the grimoire's
-// `person_notes`, so candles given to them show here too. Scars are hidden until tapped.
+// person = one card: the name lives on the bestiary's `being`, the memo in `person_notes`. People
+// copied from the workshop when the apps split keep their ids, so candles given to them still show.
+// Scars are hidden until tapped.
 import { Badge, Box, Button, Flex, HStack, IconButton, Input, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { nanoid } from '@reduxjs/toolkit'
 import { useState, type ReactNode } from 'react'
@@ -17,7 +18,6 @@ import { liveScars, nextOccurrence, personBalance, upcomingDates } from '@grimoi
 import { isOpenTask } from '@grimoire-core/grimoire/selectors'
 import type { PersonList, PersonNotes } from '@grimoire-core/grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { actions } from '@workshop-core/store/dataSlice'
 import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 import { PetalBar } from './MirrorInsights'
 
@@ -110,13 +110,13 @@ export function NewPerson({ onClose }: { onClose: () => void }) {
   const save = () => check.attempt(!!name.trim(), create)
   const create = () => {
     const id = nanoid(8)
-    dispatch(actions.upsertPerson({ id, name: name.trim(), contact: '', notes: '' }))
+    dispatch(A.upsertBeing({ id, name: name.trim() }))
     onClose()
     navigate(`/g/people/${id}`)
   }
   return (
     <Modal open onClose={onClose} title="Новый человек" footer={<Button onClick={save}>Создать</Button>}>
-      <Field label="Имя" helper="тот же человек появится в «Людях» мастерской" invalid={check.missing(!name.trim())} error="Как зовут?">
+      <Field label="Имя" invalid={check.missing(!name.trim())} error="Как зовут?">
         <TextInput value={name} onChange={setName} />
       </Field>
     </Modal>
@@ -124,7 +124,7 @@ export function NewPerson({ onClose }: { onClose: () => void }) {
 }
 
 export default function Bestiary() {
-  const people = useAppSelector((s) => s.data.people)
+  const people = useAppSelector((s) => s.grimoire.beings)
   const g = useAppSelector((s) => s.grimoire)
   const today = useToday()
   const [q, setQ] = useState('')
@@ -180,7 +180,7 @@ export default function Bestiary() {
           })}
         </SimpleGrid>
       ) : (
-        <Empty>{Object.keys(people).length ? 'Под этот фильтр никого нет.' : 'Пока никого. Люди мастерской появятся здесь же.'}</Empty>
+        <Empty>{Object.keys(people).length ? 'Под этот фильтр никого нет.' : 'Пока никого.'}</Empty>
       )}
     </>
   )
@@ -189,8 +189,10 @@ export default function Bestiary() {
 export function BestiaryCard() {
   const { id = '' } = useParams()
   const dispatch = useAppDispatch()
-  const person = useAppSelector((s) => s.data.people[id])
+  const person = useAppSelector((s) => s.grimoire.beings[id])
   const allCandles = useAppSelector((s) => s.data.candles)
+  // The same person in the workshop (people copied over when the apps split keep their ids).
+  const inWorkshop = useAppSelector((s) => !!s.data.people[id])
   const g = useAppSelector((s) => s.grimoire)
   const today = useToday()
   const { open, dialog } = useTaskDialog()
@@ -209,9 +211,11 @@ export function BestiaryCard() {
   return (
     <>
       <PageHeader title={person.name} back="/g/people">
-        <Button asChild size="sm" variant="ghost">
-          <RouterLink to={`/people?p=${id}`}>в мастерской</RouterLink>
-        </Button>
+        {inWorkshop && (
+          <Button asChild size="sm" variant="ghost">
+            <RouterLink to={`/people?p=${id}`}>в мастерской</RouterLink>
+          </Button>
+        )}
       </PageHeader>
       <Section>
         <Text fontSize="sm" color="fg.muted">

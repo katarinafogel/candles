@@ -8,7 +8,7 @@ import { syncActions } from '../../grimoire/workshop'
 import { workshopRun } from '@grimoire-core/grimoire/workshopRun'
 import { GiveDialog } from '../../pages/CandlePage'
 import { ReadyDialog } from '../../pages/Candles'
-import { store, useAppSelector, useIsWitch } from '../../store'
+import { store, useAppSelector, useIsMaster, useIsWitch } from '../../store'
 import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 import { DecorateDialog, DefectDialog, HolderStepDialog } from '../StepDialogs'
 
@@ -34,10 +34,12 @@ export function WorkshopRunner() {
 /** Keeps the grimoire's workshop steps in step with the items: ticks, reopens, lets go. */
 export function useWorkshopSync() {
   const witch = useIsWitch()
+  const master = useIsMaster()
   const data = useAppSelector((s) => s.data)
   const tasks = useAppSelector((s) => s.grimoire.tasks)
   useEffect(() => {
-    if (!witch) return
+    // Both apps are needed: without the workshop its items look gone and the steps would be let go.
+    if (!witch || !master) return
     for (const a of syncActions(data, tasks)) {
       const t = store.getState().grimoire.tasks[a.id]
       if (!t?.workshop) continue
@@ -50,5 +52,5 @@ export function useWorkshopSync() {
         store.dispatch(A.updateTask({ id: a.id, workshop: { ...t.workshop, lost: true } }))
       }
     }
-  }, [witch, data, tasks])
+  }, [witch, master, data, tasks])
 }

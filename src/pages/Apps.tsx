@@ -6,7 +6,7 @@ import { LuArrowLeft, LuDownload, LuExternalLink } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
 import { MoonPhases } from '@shared/components/Magic'
 import { appOf, apps, chooseForInstall, isIOS, isStandalone, promptInstall, useInstallPrompt, type AppId } from '../lib/apps'
-import { useIsWitch } from '../store'
+import { useIsMaster, useIsWitch } from '../store'
 
 const about: Record<AppId, { text: string; icon: string }> = {
   workshop: { text: 'Производственный журнал: подсвечники, свечи, склад, формы, отзывы получателей.', icon: './icon-192.png' },
@@ -63,7 +63,8 @@ function AppCard({ id }: { id: AppId }) {
 export default function Apps() {
   const navigate = useNavigate()
   const witch = useIsWitch()
-  const list: AppId[] = witch ? ['workshop', 'grimoire'] : ['workshop']
+  const master = useIsMaster()
+  const list = (['workshop', 'grimoire'] as AppId[]).filter((id) => (id === 'workshop' ? master : witch))
   return (
     <Container maxW="760px" px="4" py={{ base: '6', md: '10' }} pt={{ base: 'calc(24px + env(safe-area-inset-top))', md: '10' }}>
       <Stack gap="6">

@@ -10,7 +10,6 @@ import { priorities, priorityOf } from '@grimoire-core/grimoire/selectors'
 import type { TaskDraft } from '@grimoire-core/grimoire/newTask'
 import type { ChecklistItem, Task, TaskPriority } from '@grimoire-core/grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { actions } from '@workshop-core/store/dataSlice'
 import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 import { Check, Chips, DateInput, Field, NumInput, RemovableChip, TextArea, TextInput } from '@shared/components/ui'
 import { MarkPicker, PriorityIcon } from './Marks'
@@ -460,7 +459,7 @@ function Checklist({ items, onChange }: { items: ChecklistItem[]; onChange: (ite
 /** People from the bestiary as chips, with a field that finds one or adds a new one by name. */
 export function PeoplePicker({ value, onChange, scar }: { value: string[]; onChange: (ids: string[]) => void; scar?: boolean }) {
   const dispatch = useAppDispatch()
-  const people = useAppSelector((s) => s.data.people)
+  const people = useAppSelector((s) => s.grimoire.beings)
   return (
     <Stack gap="2" w="full">
       {value.length > 0 && (
@@ -480,7 +479,7 @@ export function PeoplePicker({ value, onChange, scar }: { value: string[]; onCha
         onPick={(id) => onChange([...value, id])}
         onCreate={(name) => {
           const id = nanoid(8)
-          dispatch(actions.upsertPerson({ id, name, contact: '', notes: '' }))
+          dispatch(A.upsertBeing({ id, name }))
           onChange([...value, id])
         }}
       />

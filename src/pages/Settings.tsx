@@ -370,9 +370,9 @@ export default function Settings() {
       </Section>
 
       {isAdmin && (
-        <Section title="Роли мастеров">
-          <RolesAdmin />
-          <InvitesAdmin />
+        <Section title="Мастера и приглашения">
+          <RolesAdmin roles={['master', 'admin']} />
+          <InvitesAdmin role="master" />
         </Section>
       )}
 

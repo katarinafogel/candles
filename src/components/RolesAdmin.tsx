@@ -14,9 +14,11 @@ interface Master {
   roles: string[]
 }
 
-const roleLabel: Record<string, string> = { witch: 'гримуар', admin: 'раздаёт роли' }
+type Role = 'witch' | 'master' | 'admin'
+const roleLabel: Record<Role, string> = { witch: 'гримуар', master: 'мастерская', admin: 'раздаёт роли' }
 
-export function RolesAdmin() {
+/** `roles`: the switches this app shows — its own role and the admin's. */
+export function RolesAdmin({ roles }: { roles: Role[] }) {
   const me = useAppSelector((s) => s.local.ownerId)
   const [masters, setMasters] = useState<Master[]>()
   const [error, setError] = useState<string>()
@@ -37,7 +39,7 @@ export function RolesAdmin() {
     setBusy(undefined)
     if (error) return notify('Не получилось', 'error', error.message === 'last admin' ? 'Нельзя снять с себя роль последнего админа' : error.message)
     await refresh()
-    // My own roles changed: reload so the grimoire appears or disappears right away.
+    // My own roles changed: reload so the app appears or disappears right away.
     if (m.user_id === me) void load()
   }
 
@@ -59,7 +61,7 @@ export function RolesAdmin() {
               {m.user_id === me ? ' · это ты' : ''}
             </Text>
           </Box>
-          {(['witch', 'admin'] as const).map((role) => (
+          {roles.map((role) => (
             <Box key={role} opacity={busy === `${m.user_id}:${role}` ? 0.5 : 1}>
               <Check checked={m.roles.includes(role)} onChange={(v) => void toggle(m, role, v)}>
                 {roleLabel[role]}

@@ -184,7 +184,7 @@ function DayDialog({ day, today, holiday, onClose }: { day: DayKey; today: DayKe
   const { open, dialog } = useTaskDialog()
   const deeds = Object.values(g.tasks).filter((t) => !t.habitId && t.status !== 'cancelled' && (t.doneDay === day || (t.doOn === day && t.status !== 'done')))
   const notes = Object.values(g.journal).filter((e) => e.day === day)
-  const people = useAppSelector((s) => s.data.people)
+  const people = useAppSelector((s) => s.grimoire.beings)
   const born = Object.values(g.personNotes ?? {}).filter((n) => n.birthday?.slice(-5) === day.slice(5) && people[n.id])
   const full = isFullMoon(day)
   const n = daysBetween(today, day)
@@ -284,7 +284,7 @@ export default function Calendar() {
   const months = useMemo(() => Array.from({ length: 12 }, (_, i) => monthInfo(year, i + 1, hemisphere, holidays)), [year, hemisphere, holidays])
   // A dot under days that have deeds: planned or done there.
   // Birthdays by «MM-DD», so every year's card shows them.
-  const people = useAppSelector((s) => s.data.people)
+  const people = useAppSelector((s) => s.grimoire.beings)
   const born = useMemo(() => {
     const by = new Map<string, string[]>()
     for (const n of Object.values(g.personNotes ?? {})) if (n.birthday && people[n.id]) by.set(n.birthday.slice(-5), [...(by.get(n.birthday.slice(-5)) ?? []), people[n.id].name])

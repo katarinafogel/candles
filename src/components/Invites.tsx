@@ -1,5 +1,5 @@
-// Invites: an admin makes a one-time link (alive 7 days) that gives the grimoire to whoever opens it
-// and signs in. The token is caught from /invite/<token> before the sign-in (it may go through Google
+// Invites: an admin makes a one-time link (alive 7 days) that opens one app — the grimoire (role witch)
+// or the workshop (role master) — to whoever opens it and signs in. The token is caught from /invite/<token> before the sign-in (it may go through Google
 // and come back to the start page), kept on the device, and taken once the session is known.
 import { Box, Button, Flex, HStack, Stack, Text } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
@@ -31,7 +31,7 @@ const why: Record<string, string> = {
   revoked: 'Приглашение отозвано.',
 }
 
-/** Inside the sign-in: takes a waiting invite for the signed-in person, then opens the grimoire. */
+/** Inside the sign-in: takes a waiting invite for the signed-in person, then opens the app it gave. */
 export function InviteTaker() {
   const owner = useAppSelector((s) => s.local.ownerId)
   const navigate = useNavigate()
@@ -54,8 +54,9 @@ export function InviteTaker() {
       if (error) return notify('Не получилось принять приглашение', 'error', error.message)
       if (data !== 'ok') return notify('Приглашение не сработало', 'warning', why[data as string] ?? String(data))
       await load()
-      notify('Добро пожаловать в гримуар', 'success')
-      navigate('/g', { replace: true })
+      notify('Добро пожаловать', 'success')
+      // The workshop's start sends a witch without a workshop on to the grimoire.
+      navigate('/', { replace: true })
     })()
   }, [owner, navigate])
   return null
@@ -71,19 +72,26 @@ interface Invite {
 
 export const inviteLink = (token: string) => `${publicBase()}#/invite/${token}`
 
-/** For an admin, under the roles: make a link, see the ones made, revoke the waiting ones. */
-export function InvitesAdmin() {
+const inviteText: Record<InviteRole, string> = {
+  witch: 'Ссылка-приглашение даёт гримуар тому, кто по ней зарегистрируется или войдёт. Одноразовая, живёт 7 дней.',
+  master: 'Ссылка-приглашение даёт мастерскую тому, кто по ней зарегистрируется или войдёт: свой журнал заливки и отзывы на свои свечи. Одноразовая, живёт 7 дней.',
+}
+
+export type InviteRole = 'witch' | 'master'
+
+/** For an admin, under the roles: make a link into this app, see the ones made, revoke the waiting ones. */
+export function InvitesAdmin({ role }: { role: InviteRole }) {
   const [list, setList] = useState<Invite[]>()
   const [fresh, setFresh] = useState<string>()
   async function refresh() {
-    const { data, error } = await supabase.from('invites').select('token, created_at, expires_at, used_at, revoked_at').order('created_at', { ascending: false }).limit(20)
+    const { data, error } = await supabase.from('invites').select('token, created_at, expires_at, used_at, revoked_at').eq('role', role).order('created_at', { ascending: false }).limit(20)
     if (!error) setList(data as Invite[])
   }
   useEffect(() => {
     void refresh()
-  }, [])
+  }, [role]) // eslint-disable-line react-hooks/exhaustive-deps
   async function create() {
-    const { data, error } = await supabase.rpc('create_invite', { p_role: 'witch' })
+    const { data, error } = await supabase.rpc('create_invite', { p_role: role })
     if (error) return notify('Не получилось', 'error', error.message)
     setFresh(data as string)
     void refresh()
@@ -105,7 +113,7 @@ export function InvitesAdmin() {
   return (
     <Stack gap="3" mt="4">
       <Text fontSize="sm" color="fg.muted">
-        Ссылка-приглашение даёт гримуар тому, кто по ней зарегистрируется или войдёт. Одноразовая, живёт 7 дней.
+        {inviteText[role]}
       </Text>
       <Button size="sm" alignSelf="flex-start" onClick={() => void create()}>
         Пригласить

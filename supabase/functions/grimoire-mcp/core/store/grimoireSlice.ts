@@ -8,6 +8,7 @@ import { addDays, dayKey, nextRepeat } from '../grimoire/days.ts'
 import { habitLogId, habitTaskId, isDone, isScheduled } from '../grimoire/habits.ts'
 import { priorityOf } from '../grimoire/selectors.ts'
 import type {
+  Being,
   DayKey,
   GrimoireMeta,
   GrimoireState,
@@ -66,6 +67,7 @@ export const initialGrimoire: GrimoireState = {
   journal: {},
   jars: {},
   jarTxs: {},
+  beings: {},
   personNotes: {},
   cycles: {},
   events: {},
@@ -812,7 +814,15 @@ const slice = createSlice({
       s.meta.spells = s.meta.spells.filter((x) => x.id !== a.payload)
     },
 
-    // ----- the bestiary: memo, scars and kindness of a workshop person -----
+    // ----- the bestiary: its people, and the memo, scars and kindness of each -----
+    upsertBeing(s, a: PayloadAction<Being>) {
+      const name = a.payload.name.trim().slice(0, 200)
+      if (name) s.beings[a.payload.id] = { ...s.beings[a.payload.id], ...a.payload, name }
+    },
+    deleteBeing(s, a: PayloadAction<string>) {
+      delete s.beings[a.payload]
+      delete s.personNotes[a.payload]
+    },
     updatePersonNotes(s, a: PayloadAction<Partial<PersonNotes> & { id: string }>) {
       s.personNotes[a.payload.id] = { ...s.personNotes[a.payload.id], ...a.payload }
     },

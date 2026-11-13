@@ -5,6 +5,8 @@ import { Link as RouterLink } from 'react-router-dom'
 import { AgentKeys } from '../../components/grimoire/AgentKeys'
 import { PushSettings } from '../../components/grimoire/PushSettings'
 import { SignOutRow } from '../../components/SignOut'
+import { InvitesAdmin } from '../../components/Invites'
+import { RolesAdmin } from '../../components/RolesAdmin'
 import { Check, Chips, confirmAction, DateInput, Field, NumInput, PageHeader, Section, TextInput } from '@shared/components/ui'
 import { useToday } from '../../grimoire/act'
 import { humanDay } from '@grimoire-core/grimoire/days'
@@ -14,7 +16,7 @@ import { Tag } from '../../components/grimoire/Marks'
 import { isTouchDevice, saveFile } from '@shared/lib/download'
 import { actionLabel, bodyLabel, factorLabel } from '@grimoire-core/grimoire/emotions'
 import { mirrorCsv } from '@grimoire-core/grimoire/mirrorStats'
-import { store, useAppDispatch, useAppSelector } from '../../store'
+import { store, useAppDispatch, useAppSelector, useIsAdmin } from '../../store'
 import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 
 /** A colour for each tag: the swatches under it; until one is chosen the name picks it. */
@@ -64,6 +66,7 @@ function TagColors() {
 
 export default function GrimoireMore() {
   const dispatch = useAppDispatch()
+  const isAdmin = useIsAdmin()
   const g = useAppSelector((s) => s.grimoire)
   const today = useToday()
   const meta = g.meta
@@ -214,7 +217,7 @@ export default function GrimoireMore() {
             variant="outline"
             alignSelf="flex-start"
             onClick={async () => {
-              const csv = mirrorCsv(store.getState().grimoire, store.getState().data.people, { factor: factorLabel, body: bodyLabel, action: actionLabel })
+              const csv = mirrorCsv(store.getState().grimoire, store.getState().grimoire.beings, { factor: factorLabel, body: bodyLabel, action: actionLabel })
               await saveFile(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `mirror-${today}.csv`, isTouchDevice())
             }}
           >
@@ -234,6 +237,12 @@ export default function GrimoireMore() {
           </Button>
         </Stack>
       </Section>
+      {isAdmin && (
+        <Section title="Ведьмы и приглашения">
+          <RolesAdmin roles={['witch', 'admin']} />
+          <InvitesAdmin role="witch" />
+        </Section>
+      )}
     </>
   )
 }

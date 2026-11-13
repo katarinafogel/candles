@@ -6,7 +6,7 @@ import { LuArrowLeftRight, LuChevronDown, LuLayoutGrid, LuLogOut, LuSettings, Lu
 import { useLocation, useNavigate } from 'react-router-dom'
 import { signOut } from '../lib/sync'
 import { supabase } from '@shared/lib/supabase'
-import { useAppDispatch, useAppSelector, useIsWitch } from '../store'
+import { useAppDispatch, useAppSelector, useIsMaster, useIsWitch } from '../store'
 import { actions } from '@workshop-core/store/dataSlice'
 import { localActions } from '../store/localSlice'
 import { SyncBadge } from './SyncBadge'
@@ -113,6 +113,7 @@ export function UserMenu() {
   const nav = useNavigate()
   const loc = useLocation()
   const witch = useIsWitch()
+  const master = useIsMaster()
   const name = useAppSelector((s) => s.local.profile?.name ?? '')
   const email = useAppSelector((s) => s.local.email)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -167,7 +168,7 @@ export function UserMenu() {
                   <LuSettings /> Настройки мастерской
                 </Menu.Item>
               )}
-              {witch && (
+              {witch && master && (
                 <Menu.Item value={inGrimoire ? '/' : '/g'}>
                   <LuArrowLeftRight /> {inGrimoire ? 'В мастерскую' : 'В гримуар'}
                 </Menu.Item>

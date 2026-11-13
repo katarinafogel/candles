@@ -499,7 +499,7 @@ function PeopleDates({ today }: { today: string }) {
   const dispatch = useAppDispatch()
   const notes = useAppSelector((s) => s.grimoire.personNotes)
   const tasks = useAppSelector((s) => s.grimoire.tasks)
-  const people = useAppSelector((s) => s.data.people)
+  const people = useAppSelector((s) => s.grimoire.beings)
   const soon = upcomingDates(notes, today, 14).filter((d) => people[d.personId])
   return (
     <>

@@ -53,7 +53,7 @@ const quiet = (text: string) => (
 
 export function MirrorInsights({ entries }: { entries: JournalEntry[] }) {
   const g = useAppSelector((s) => s.grimoire)
-  const people = useAppSelector((s) => s.data.people)
+  const people = useAppSelector((s) => s.grimoire.beings)
   const today = useToday()
   const [period, setPeriod] = useState<Period>('month')
   const now = wheelNow(today, g.meta.hemisphere)

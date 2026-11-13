@@ -29,7 +29,7 @@ export function TaskDialog({ task, onClose }: { task: Task; onClose: () => void 
   const dispatch = useAppDispatch()
   const today = useToday()
   const g = useAppSelector((s) => s.grimoire)
-  const people = useAppSelector((s) => s.data.people)
+  const people = useAppSelector((s) => s.grimoire.beings)
   const live = g.tasks[task.id] ?? task
   const navigate = useNavigate()
   const [t, setT] = useState<Task>(live)

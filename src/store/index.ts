@@ -55,6 +55,7 @@ export const useAppSelector = useSelector.withTypes<RootState>()
 export const useData = () => useAppSelector((s) => s.data)
 export const useGrimoire = () => useAppSelector((s) => s.grimoire)
 export const useIsWitch = () => useAppSelector((s) => !!s.local.roles?.includes('witch'))
+export const useIsMaster = () => useAppSelector((s) => !!s.local.roles?.includes('master'))
 export const useIsAdmin = () => useAppSelector((s) => !!s.local.roles?.includes('admin'))
 
 // Handy for debugging in the browser console during development.

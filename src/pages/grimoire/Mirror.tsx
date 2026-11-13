@@ -85,7 +85,7 @@ function EnergyChart({ entries, today, inNav }: { entries: JournalEntry[]; today
 
 function EntryCard({ e, onOpen, onWord }: { e: JournalEntry; onOpen: () => void; onWord: (k: string) => void }) {
   const tasks = useAppSelector((s) => s.grimoire.tasks)
-  const people = useAppSelector((s) => s.data.people)
+  const people = useAppSelector((s) => s.grimoire.beings)
   const task = e.taskId ? tasks[e.taskId] : undefined
   return (
     <Panel nested onClick={onOpen}>
@@ -139,7 +139,7 @@ function EntryCard({ e, onOpen, onWord }: { e: JournalEntry; onOpen: () => void;
 
 function Feed({ entries, onOpen, onWord }: { entries: JournalEntry[]; onOpen: (e: JournalEntry) => void; onWord: (k: string) => void }) {
   const g = useAppSelector((s) => s.grimoire)
-  const people = useAppSelector((s) => s.data.people)
+  const people = useAppSelector((s) => s.grimoire.beings)
   const today = useToday()
   const [petal, setPetal] = useState<Petal>()
   const [taskId, setTaskId] = useState('')

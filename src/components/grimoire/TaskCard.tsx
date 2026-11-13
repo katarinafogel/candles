@@ -43,7 +43,7 @@ export function TaskCard({
   pick?: { on: boolean; toggle: (t: Task, range: boolean) => void }
 }) {
   const g = useAppSelector((s) => s.grimoire)
-  const people = useAppSelector((s) => s.data.people)
+  const people = useAppSelector((s) => s.grimoire.beings)
   const tone = cardTone(t)
   const done = t.status === 'done'
   const frog = isFrog(t)

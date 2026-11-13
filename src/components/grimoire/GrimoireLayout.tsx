@@ -8,7 +8,8 @@ import { useToday } from '../../grimoire/act'
 import { daysBetween } from '@grimoire-core/grimoire/days'
 import { words } from '@grimoire-core/grimoire/selectors'
 import { builtInPractices } from '@grimoire-core/grimoire/wheel'
-import { useAppDispatch, useAppSelector, useIsWitch } from '../../store'
+import { useAppDispatch, useAppSelector, useIsMaster, useIsWitch } from '../../store'
+import { NoAccess } from '../NoAccess'
 import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 import { Eucalyptus, MoonPhases, MoonSlice } from '@shared/components/Magic'
 import { HeaderRight } from '../UserMenu'
@@ -48,6 +49,7 @@ function useDailyChores() {
 
 export default function GrimoireLayout() {
   const witch = useIsWitch()
+  const master = useIsMaster()
   const meta = useAppSelector((s) => s.grimoire.meta)
   const loc = useLocation()
   useDailyChores()
@@ -57,8 +59,8 @@ export default function GrimoireLayout() {
     window.scrollTo(0, 0)
   }, [loc.pathname])
 
-  // Without the role the grimoire doesn't exist: its addresses lead to the workshop.
-  if (!witch) return <Navigate to="/" replace />
+  // Without the role the grimoire doesn't exist: its addresses lead to the workshop, if that is open.
+  if (!witch) return master ? <Navigate to="/" replace /> : <NoAccess />
 
   const items: NavItem[] = [
     { to: '/g', label: w.scroll, icon: <LuScrollText /> },

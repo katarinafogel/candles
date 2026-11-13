@@ -12,7 +12,7 @@ export interface LocalState {
   ownerId?: string | null
   email?: string
   profile?: Profile | null
-  /** Roles from user_roles (witch opens the grimoire, admin hands out roles). Cached for offline start. */
+  /** Roles from user_roles (witch opens the grimoire, master the workshop, admin hands out roles). Cached for offline start. */
   roles?: string[]
   sync: {
     pending: number

@@ -6,7 +6,7 @@ import { useAppSelector } from '../../store'
 
 export function ScarNote({ personIds }: { personIds: (string | undefined)[] }) {
   const notes = useAppSelector((s) => s.grimoire.personNotes)
-  const people = useAppSelector((s) => s.data.people)
+  const people = useAppSelector((s) => s.grimoire.beings)
   const lines = [...new Set(personIds.filter((x): x is string => !!x))]
     .map((id) => ({ id, scar: liveScars(notes[id])[0] }))
     .filter((x) => x.scar && people[x.id])

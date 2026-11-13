@@ -130,7 +130,9 @@ export const syncMiddleware: Middleware = (api) => (next) => (action) => {
   if (typeof a.type !== 'string' || a.meta?.fromServer) return result
   const state = api.getState() as SyncedState
   if (!state.local.ownerId) return result
-  if (a.type.startsWith('data/') && state.data !== before.data)
+  // Workshop rows go out for a master, or from a device that already holds a workshop (its roles may
+  // not be refreshed yet). Others' devices keep no workshop: the server will refuse it without the role.
+  if (a.type.startsWith('data/') && state.data !== before.data && (state.local.roles?.includes('master') || hasLocalData(before.data)))
     enqueue(diff(before.data, state.data, actions.deleteItem.match(a) ? a.payload.date : undefined))
   // Without the witch role the server refuses grimoire rows, and one refused row would fail the whole batch.
   if (a.type.startsWith('grimoire/') && state.grimoire !== before.grimoire && state.local.roles?.includes('witch'))
@@ -216,11 +218,17 @@ const grimoireIsEmpty = (g: GrimoireState) => grimoireCollections.every(([key]) 
 export async function load(): Promise<void> {
   if (!store) return
   const ownerId = store.getState().local.ownerId
-  if (ownerId) {
-    const roles = await fetchRoles(ownerId).catch(() => undefined)
-    if (roles) store.dispatch(localActions.setRoles(roles))
-  }
+  // Fresh roles from the server, or undefined when offline (then the cached ones are used).
+  const roles = ownerId ? await fetchRoles(ownerId).catch(() => undefined) : undefined
+  if (roles) store.dispatch(localActions.setRoles(roles))
   const witch = !!store.getState().local.roles?.includes('witch')
+  const master = !!store.getState().local.roles?.includes('master')
+  // Only roles just read from the server may close the workshop: a stale cache must not drop local work.
+  const noWorkshop = !!roles && !master
+  if (noWorkshop) {
+    for (const [k, c] of pending) if (!isGrimoireRow(c.kind, c.id) && c.kind !== 'review') pending.delete(k)
+    void saveQueue()
+  }
   if (!witch) {
     // The role went away: grimoire changes can't be sent any more, and the device copy is cleared.
     for (const [k, c] of pending) if (isGrimoireRow(c.kind, c.id)) pending.delete(k)
@@ -235,7 +243,10 @@ export async function load(): Promise<void> {
     const { data, grimoire, empty } = await fetchAll()
     if (witch) store.dispatch(fromServer(grimoireActions.replaceAll(grimoire)))
     const local = store.getState().data
-    if (empty) {
+    if (noWorkshop) {
+      // Without the workshop role the device keeps no workshop at all.
+      store.dispatch(fromServer(actions.replaceAll(initialData)))
+    } else if (empty) {
       // First sign-in: data made on this device before accounts existed moves into the account.
       const start = hasLocalData(local) ? local : data
       store.dispatch(fromServer(actions.replaceAll(start)))

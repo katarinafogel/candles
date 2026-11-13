@@ -70,7 +70,7 @@ function grimoireOf(rows: { kind: string; id: string; data: unknown }[]): Grimoi
     nav: { active: false, history: [], ...m.nav },
     notify: { morning: '09:00', afternoon: '', evening: true, deadlines: true, sabbats: true, ...m.notify },
   } as GrimoireMeta
-  return { tasks: {}, projects: {}, habits: {}, habitLogs: {}, wishes: {}, practices: {}, journal: {}, jars: {}, jarTxs: {}, personNotes: {}, cycles: {}, events: {}, tarot: {}, goals: {}, notes: {}, ...g, meta }
+  return { tasks: {}, projects: {}, habits: {}, habitLogs: {}, wishes: {}, practices: {}, journal: {}, jars: {}, jarTxs: {}, beings: {}, personNotes: {}, cycles: {}, events: {}, tarot: {}, goals: {}, notes: {}, ...g, meta }
 }
 
 const localTime = (tz: string, at: Date) => new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false }).format(at)

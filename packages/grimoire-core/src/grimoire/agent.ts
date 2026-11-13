@@ -35,7 +35,7 @@ export class AgentError extends Error {}
 export interface AgentContext {
   state: GrimoireState
   now: Date
-  /** Workshop people (the bestiary shares them), for names on tasks. Read only. */
+  /** The bestiary's people, for names on tasks. Read only. */
   people?: Record<string, { id: string; name: string }>
 }
 

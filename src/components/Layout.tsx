@@ -1,10 +1,11 @@
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
 import { useEffect, type ReactNode } from 'react'
 import { LuBox, LuEllipsis, LuFlame, LuHouse, LuLayers, LuLayoutGrid, LuMessageSquare, LuScrollText, LuSettings, LuSparkles, LuUsers, LuWarehouse } from 'react-icons/lu'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Eucalyptus, MoonPhases, MoonSlice, Sparkle } from '@shared/components/Magic'
 import { HeaderRight } from './UserMenu'
-import { useAppDispatch, useAppSelector } from '../store'
+import { useAppDispatch, useAppSelector, useIsMaster, useIsWitch } from '../store'
+import { NoAccess } from './NoAccess'
 import { localActions } from '../store/localSlice'
 
 interface NavItem {
@@ -84,6 +85,9 @@ function BottomLink({ item }: { item: NavItem }) {
   )
 }
 
+const hasWorkshopData = (d: { molds: object; materials: object; holders: object; candles: object }) =>
+  Object.keys(d.molds).length + Object.keys(d.materials).length + Object.keys(d.holders).length + Object.keys(d.candles).length > 0
+
 export default function Layout() {
   const dispatch = useAppDispatch()
   const unread = useAppSelector((s) => Object.values(s.data.reviews).filter((r) => !r.read).length)
@@ -97,6 +101,13 @@ export default function Layout() {
     // Ask the browser not to evict our IndexedDB when space runs low.
     navigator.storage?.persist?.().then((ok) => dispatch(localActions.setPersistGranted(ok)))
   }, [dispatch])
+
+  // The workshop is for the master role. A device that already holds workshop data stays open
+  // while the roles are being refreshed, so nothing jumps away on the first start after an update.
+  const master = useIsMaster()
+  const witch = useIsWitch()
+  const hasWorkshop = useAppSelector((s) => hasWorkshopData(s.data))
+  if (!master && !hasWorkshop) return witch ? <Navigate to="/g" replace /> : <NoAccess />
 
   return (
     <Flex minH="100dvh">

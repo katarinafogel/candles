@@ -221,7 +221,7 @@ export interface Wish {
   jarId?: string
   practiceId?: string
   sabbat?: Sabbat
-  /** Who it is with or for (people of the workshop's bestiary). */
+  /** Who it is with or for (people of the bestiary). */
   personIds?: string[]
   /** After this day the chest asks whether it is still wanted; nothing goes away by itself. */
   relevantUntil?: DayKey
@@ -477,6 +477,14 @@ export type PersonList = 'gifts' | 'ask' | 'facts' | 'scars' | 'kindness'
  * the grimoire, not on `person`: it is the witch's alone, under her role, and never reaches a
  * candle's public page.
  */
+/** A person of the bestiary (kind `being`): the grimoire's own list, apart from the workshop's recipients. */
+export interface Being {
+  id: string
+  name: string
+  contact?: string
+  notes?: string
+}
+
 export interface PersonNotes {
   id: string
   nickname?: string
@@ -515,6 +523,7 @@ export interface GrimoireState {
   journal: Record<string, JournalEntry>
   jars: Record<string, Jar>
   jarTxs: Record<string, JarTx>
+  beings: Record<string, Being>
   personNotes: Record<string, PersonNotes>
   cycles: Record<string, CycleEntry>
   events: Record<string, LifeEvent>
