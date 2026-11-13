@@ -1,17 +1,22 @@
 // After the three builds: the site-wide files for Cloudflare Pages in dist/.
-//   _redirects — each app answers every address under its folder with its own index.html (written as
-//                the folder: Pages serves /x/index.html at /x/ and would not find the .html address)
-//                (the router inside takes it from there); /dev/components lives in the workshop.
+//   _redirects — /dev/components lives in the workshop.
+//   404.html, _routes.json — for functions/_middleware.js, which gives each app's pages its index.html.
 //   _headers   — service workers and manifests are never cached, so updates arrive at once.
 import { writeFileSync } from 'node:fs'
 
+writeFileSync('dist/_redirects', '/dev/components /workshop/dev/components 302\n')
+
+// A page that is not a file gets its app's index.html from functions/_middleware.js. For that Pages
+// must answer 404 to unknown addresses (with this page), not the root index.html of its SPA mode.
 writeFileSync(
-  'dist/_redirects',
-  `/dev/components /workshop/dev/components 302
-/workshop/* /workshop/ 200
-/grimoire/* /grimoire/ 200
-/* / 200
-`,
+  'dist/404.html',
+  '<!doctype html><html lang="ru"><meta charset="utf-8"><title>Нет такой страницы</title><p>Такой страницы нет. <a href="/projects">К проектам</a></p></html>\n',
+)
+
+// The function runs only for pages: assets go straight from the cache.
+writeFileSync(
+  'dist/_routes.json',
+  JSON.stringify({ version: 1, include: ['/*'], exclude: ['/assets/*', '/workshop/assets/*', '/grimoire/assets/*'] }, null, 2),
 )
 
 writeFileSync(
@@ -26,4 +31,4 @@ writeFileSync(
   Cache-Control: public, max-age=31536000, immutable
 `,
 )
-console.log('dist/_redirects, dist/_headers written')
+console.log('dist/_redirects, _headers, _routes.json, 404.html written')

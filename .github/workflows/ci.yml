@@ -23,7 +23,7 @@ jobs:
       - run: npm run build
       - name: The site has its three apps
         run: |
-          for f in dist/index.html dist/_redirects dist/_headers dist/privacy.html \
+          for f in dist/index.html dist/_redirects dist/_headers dist/_routes.json dist/404.html dist/privacy.html \
                    dist/workshop/index.html dist/workshop/sw.js dist/workshop/manifest.webmanifest \
                    dist/grimoire/index.html dist/grimoire/sw.js dist/grimoire/manifest.webmanifest dist/grimoire/push-sw.js; do
             [ -f "$f" ] || { echo "::error::$f is missing"; exit 1; }
