@@ -4,7 +4,7 @@ import { LuDroplets, LuGift, LuPlus, LuPrinter, LuSparkles, LuCheck, LuTrash2, L
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { DecorateDialog, DefectDialog } from '../components/StepDialogs'
 import { ArcanaCard } from '../components/ArcanaCard'
-import { Check, confirmAction, Empty, Field, IdBadge, Modal, notify, NumInput, PageHeader, Select, TextInput, Chips } from '../components/ui'
+import { Check, Chips, confirmAction, DateInput, Empty, Field, IdBadge, Modal, notify, NumInput, PageHeader, Select, TextInput } from '../components/ui'
 import { fmt } from '../lib/calc'
 import { nowLocal, toIso } from '../lib/dates'
 import { candleStageLabel, candleStageOrder, wickSchemeLabel } from '../lib/labels'
@@ -39,7 +39,7 @@ function ReadyDialog({ ids, onClose }: { ids: string[]; onClose: () => void }) {
       }
     >
       <Field label="Дата окончания дозревания">
-        <Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
+        <DateInput kind="datetime-local" value={date} onChange={setDate} />
       </Field>
     </Modal>
   )

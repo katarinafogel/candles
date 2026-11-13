@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CandleFields, HolderCommentField, HolderFields, type HolderSections } from '../components/ItemFields'
 import { MoldPicker } from '../components/MoldPicker'
-import { Empty, Field, FormActions, notify, PageHeader, Section, Select, TextInput } from '../components/ui'
+import { DateInput, Empty, Field, FormActions, notify, PageHeader, Section, Select, TextInput } from '../components/ui'
 import { nowLocal, toIso, toLocal } from '../lib/dates'
 import { candleToForm, emptyCandleForm, emptyHolderForm, formToDecor, formToHolder, formToPour, holderToForm, type CandleForm } from '../lib/itemForms'
 import { isPlaster, plasterPurposes } from '../lib/labels'
@@ -55,7 +55,7 @@ export function AddHolders() {
       <Section>
         <SimpleGrid columns={{ base: 1, md: 2 }} gap="4">
           <Field label="Дата">
-            <Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
+            <DateInput kind="datetime-local" value={date} onChange={setDate} />
           </Field>
           <HolderCommentField value={f.comment} onChange={(v) => setF({ ...f, comment: v })} />
         </SimpleGrid>
@@ -121,7 +121,7 @@ export function AddCandles() {
       <Section>
         <SimpleGrid columns={{ base: 1, md: 2 }} gap="4">
           <Field label="Дата готовности">
-            <Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
+            <DateInput kind="datetime-local" value={date} onChange={setDate} />
           </Field>
           <Field label="Кому подарена">
             <Select
@@ -144,7 +144,7 @@ export function AddCandles() {
           )}
           {gift && (
             <Field label="Дата выдачи">
-              <Input type="datetime-local" value={givenAt} onChange={(e) => setGivenAt(e.target.value)} />
+              <DateInput kind="datetime-local" value={givenAt} onChange={setGivenAt} />
             </Field>
           )}
         </SimpleGrid>
@@ -197,11 +197,11 @@ function EditHolderForm({ h }: { h: Holder }) {
         </Text>
         <SimpleGrid columns={{ base: 1, md: 2 }} gap="4">
           <Field label={h.premade ? 'Дата' : 'Начало сушки'}>
-            <Input type="datetime-local" value={dryStart} onChange={(e) => setDryStart(e.target.value)} />
+            <DateInput kind="datetime-local" value={dryStart} onChange={setDryStart} />
           </Field>
           {h.dryEnd && (
             <Field label="Конец сушки">
-              <Input type="datetime-local" value={dryEnd} onChange={(e) => setDryEnd(e.target.value)} />
+              <DateInput kind="datetime-local" value={dryEnd} onChange={setDryEnd} />
             </Field>
           )}
           <HolderCommentField value={f.comment} onChange={(v) => setF({ ...f, comment: v })} />
@@ -269,12 +269,12 @@ function EditCandleForm({ id }: { id: string }) {
           <SimpleGrid columns={{ base: 1, md: 2 }} gap="4">
             {c.pouredAt && (
               <Field label="Дата заливки">
-                <Input type="datetime-local" value={pouredAt} onChange={(e) => setPouredAt(e.target.value)} />
+                <DateInput kind="datetime-local" value={pouredAt} onChange={setPouredAt} />
               </Field>
             )}
             {c.readyAt && (
               <Field label="Дата готовности">
-                <Input type="datetime-local" value={readyAt} onChange={(e) => setReadyAt(e.target.value)} />
+                <DateInput kind="datetime-local" value={readyAt} onChange={setReadyAt} />
               </Field>
             )}
             {c.stage === 'given' && (
@@ -288,7 +288,7 @@ function EditCandleForm({ id }: { id: string }) {
                   />
                 </Field>
                 <Field label="Дата выдачи">
-                  <Input type="datetime-local" value={givenAt} onChange={(e) => setGivenAt(e.target.value)} />
+                  <DateInput kind="datetime-local" value={givenAt} onChange={setGivenAt} />
                 </Field>
               </>
             )}

@@ -552,6 +552,136 @@ export function IdBadge({ id, to }: { id: string; to?: string }) {
   return to ? <RouterLink to={to}>{b}</RouterLink> : b
 }
 
+// ---------- shared small pieces ----------
+
+/**
+ * A date, a time or a date with time. `onChange` gets the field's own text («2026-11-13», «21:00»,
+ * «2026-11-13T21:00»), '' when cleared, as a plain input gives it.
+ */
+export function DateInput({
+  kind = 'date',
+  value,
+  onChange,
+  min,
+  max,
+  w,
+  size,
+  disabled,
+  label,
+}: {
+  kind?: 'date' | 'time' | 'datetime-local'
+  value: string
+  onChange: (v: string) => void
+  min?: string
+  max?: string
+  w?: BoxProps['w']
+  size?: 'xs' | 'sm' | 'md'
+  disabled?: boolean
+  /** For a field with no visible label. */
+  label?: string
+}) {
+  return <Input type={kind} size={size} w={w} value={value} min={min} max={max} disabled={disabled} aria-label={label} onChange={(e) => onChange(e.target.value)} />
+}
+
+/**
+ * «Удалить» in a dialog's footer, on the left: asks first, then deletes. `onDelete` does the deleting
+ * and closes what has to close.
+ */
+export function DeleteButton({ confirm, onDelete, label = 'Удалить', size }: { confirm: string; onDelete: () => void; label?: string; size?: 'xs' | 'sm' | 'md' }) {
+  return (
+    <Button
+      variant="ghost"
+      colorPalette="red"
+      mr="auto"
+      size={size}
+      onClick={async () => {
+        if (await confirmAction(confirm)) onDelete()
+      }}
+    >
+      {label}
+    </Button>
+  )
+}
+
+/**
+ * A bordered block on the page: a row in a list, a card of a reading. With `onClick` it is a button
+ * that lights up under the pointer; `nested` — it holds buttons of its own, so it stays a block that
+ * takes the click.
+ */
+export function Panel({ onClick, nested, children, ...rest }: { onClick?: () => void; nested?: boolean; children: ReactNode } & Omit<BoxProps, 'onClick'>) {
+  const hover = { cursor: 'pointer', _hover: { bg: 'bg.muted' } }
+  return (
+    <Box
+      p="3"
+      borderRadius="l2"
+      borderWidth="1px"
+      borderColor="border"
+      bg="bg.subtle"
+      {...(onClick ? (nested ? { onClick, ...hover } : { as: 'button' as const, onClick, textAlign: 'left' as const, w: 'full', ...hover }) : {})}
+      {...rest}
+    >
+      {children}
+    </Box>
+  )
+}
+
+/** A thin bar of how much is done, with «2/5» beside it. */
+export function ProgressLine({ done, all, h = '4px', bg = 'bg.muted', fill = 'ember.400', fontSize = 'xs' }: { done: number; all: number; h?: string; bg?: string; fill?: string; fontSize?: string }) {
+  return (
+    <HStack gap="2">
+      <Box flex="1" h={h} borderRadius="full" bg={bg} overflow="hidden">
+        <Box h="100%" w={`${all ? (done / all) * 100 : 0}%`} bg={fill} borderRadius="full" transition="width .3s" />
+      </Box>
+      <Text as="span" fontSize={fontSize} color="inherit">
+        {done}/{all}
+      </Text>
+    </HStack>
+  )
+}
+
+/** A row of emoji to pick one from; the picked one again takes it off. */
+export function SigilPicker({ options, value, onChange }: { options: string[]; value?: string; onChange: (v?: string) => void }) {
+  return (
+    <HStack gap="1" wrap="wrap">
+      {options.map((x) => (
+        <Box
+          as="button"
+          key={x}
+          aria-pressed={value === x}
+          onClick={() => onChange(value === x ? undefined : x)}
+          fontSize="xl"
+          w="9"
+          h="9"
+          borderRadius="l2"
+          borderWidth="1px"
+          borderColor={value === x ? 'ember.500' : 'border'}
+          bg={value === x ? 'ember.subtle' : 'transparent'}
+        >
+          {x}
+        </Box>
+      ))}
+    </HStack>
+  )
+}
+
+/**
+ * A chosen thing (a person, a project, a tag) as a pill: a tap takes it off. `plain` — the children
+ * are a pill of their own (a coloured tag), only the button is added.
+ */
+export function RemovableChip({ children, onRemove, label = 'Убрать', plain }: { children: ReactNode; onRemove: () => void; label?: string; plain?: boolean }) {
+  return (
+    <Box as="button" onClick={onRemove} cursor="pointer" display="inline-flex" aria-label={label}>
+      {plain ? (
+        children
+      ) : (
+        <Badge variant="subtle" colorPalette="ember" borderRadius="full" px="2.5" py="1" fontSize="sm" fontWeight="normal">
+          {children}
+        </Badge>
+      )}
+    </Box>
+  )
+}
+
 export function Empty({ children }: { children: ReactNode }) {
   return (
     <Stack py="10" align="center" gap="3" textAlign="center" color="fg.muted" fontSize="sm">

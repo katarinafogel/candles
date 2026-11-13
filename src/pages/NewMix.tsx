@@ -1,7 +1,7 @@
 import { Button, Flex, Input, SimpleGrid, Stack, Table, Text } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Chips, Field, FormActions, notify, NumInput, PageHeader, Section, Select, TextArea, TextInput } from '../components/ui'
+import { Chips, DateInput, Field, FormActions, notify, NumInput, PageHeader, Section, Select, TextArea, TextInput } from '../components/ui'
 import { MoldPicker } from '../components/MoldPicker'
 import { StockHint } from '../components/StockHint'
 import { calcPlaster, fmt, round2 } from '../lib/calc'
@@ -109,7 +109,7 @@ export default function NewMix() {
       <Section title="Рецепт и расчёт">
         <SimpleGrid columns={{ base: 1, md: 3 }} gap="4" mb="4">
           <Field label="Дата и время">
-            <Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
+            <DateInput kind="datetime-local" value={date} onChange={setDate} />
           </Field>
           <Field label="% воды">
             <NumInput value={waterPct} onChange={setWaterPct} suffix="%" />

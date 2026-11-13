@@ -4,7 +4,7 @@
 import { Box, Button, Flex, HStack, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { useAttempt } from '../../components/grimoire/RoundBlocks'
-import { Chips, confirmAction, Empty, Field, Modal, PageHeader, Section, TextArea, TextInput } from '../../components/ui'
+import { Chips, DeleteButton, Empty, Field, Modal, PageHeader, Panel, ProgressLine, Section, TextArea, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
 import type { Goal, GrimoireState } from '../../grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
@@ -54,19 +54,11 @@ export function GoalDialog({ goal, onClose }: { goal: Draft; onClose: () => void
       footer={
         <>
           {x.id && (
-            <Button
-              variant="ghost"
-              colorPalette="red"
-              mr="auto"
-              onClick={async () => {
-                if (await confirmAction('Удалить цель? Книги, желания и копилки останутся.')) {
-                  dispatch(A.deleteGoal(x.id!))
-                  onClose()
-                }
-              }}
-            >
-              Удалить
-            </Button>
+            <DeleteButton confirm="Удалить цель? Книги, желания и копилки останутся." onDelete={() => {
+              dispatch(A.deleteGoal(x.id!))
+              onClose()
+            }}
+            />
           )}
           <Button onClick={save}>Сохранить</Button>
         </>
@@ -139,7 +131,7 @@ function GoalCard({ goal, onOpen }: { goal: Goal; onOpen: () => void }) {
     ...(goal.habitIds ?? []).map((id) => g.habits[id] && `🌙 ${g.habits[id].title}`),
   ].filter(Boolean)
   return (
-    <Box as="button" textAlign="left" w="full" p="4" borderRadius="l3" borderWidth="1px" borderColor={goal.status === 'done' ? 'ember.700' : 'border'} bg="bg.subtle" opacity={goal.status === 'dropped' ? 0.6 : 1} _hover={{ bg: 'bg.muted' }} onClick={onOpen}>
+    <Panel p="4" borderRadius="l3" borderColor={goal.status === 'done' ? 'ember.700' : 'border'} opacity={goal.status === 'dropped' ? 0.6 : 1} onClick={onOpen}>
       <Flex justify="space-between" gap="2" align="baseline" wrap="wrap">
         <Text fontFamily="heading" fontSize="xl" fontWeight="semibold">
           {goal.title}
@@ -154,21 +146,16 @@ function GoalCard({ goal, onOpen }: { goal: Goal; onOpen: () => void }) {
         </Text>
       )}
       {p && (
-        <HStack gap="2" mt="2">
-          <Box flex="1" h="4px" borderRadius="full" bg="bg.muted" overflow="hidden">
-            <Box h="100%" w={`${(p.done / p.all) * 100}%`} bg="ember.400" borderRadius="full" />
-          </Box>
-          <Text fontSize="xs" color="fg.muted">
-            {p.done}/{p.all}
-          </Text>
-        </HStack>
+        <Box mt="2" color="fg.muted">
+          <ProgressLine done={p.done} all={p.all} />
+        </Box>
       )}
       {ties.length > 0 && (
         <Text fontSize="xs" color="fg.subtle" mt="2">
           {ties.join(' · ')}
         </Text>
       )}
-    </Box>
+    </Panel>
   )
 }
 

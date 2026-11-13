@@ -11,7 +11,7 @@ import { EmotionPicker, WordChip } from '../../components/grimoire/EmotionWheel'
 import { matchPeople } from '../../components/grimoire/QuickAdd'
 import { BlockSpot, useRoundBlocks, type RoundBlock } from '../../components/grimoire/RoundBlocks'
 import { WordCard } from '../../components/grimoire/WordCard'
-import { Chips, confirmAction, Field, PageHeader, Section, TextArea, TextInput } from '../../components/ui'
+import { Chips, confirmAction, DateInput, Field, PageHeader, Section, TextArea, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
 import { bodyZones, emotionActions, emotionWords, mirrorFactors, wordColor } from '../../grimoire/emotions'
 import { isOpenTask } from '../../grimoire/selectors'
@@ -313,13 +313,7 @@ export default function MirrorEntry() {
     ),
     when: (
       <Field label="Когда">
-        <input
-          type="datetime-local"
-          value={toLocalInput(at)}
-          max={toLocalInput(new Date().toISOString())}
-          onChange={(ev) => ev.target.value && setAt(new Date(ev.target.value).toISOString())}
-          style={{ background: 'transparent', color: 'inherit', border: '1px solid var(--chakra-colors-border)', borderRadius: 6, padding: '6px 8px' }}
-        />
+        <DateInput kind="datetime-local" w="240px" value={toLocalInput(at)} max={toLocalInput(new Date().toISOString())} onChange={(v) => v && setAt(new Date(v).toISOString())} />
       </Field>
     ),
   }

@@ -9,7 +9,7 @@ import { LuCheck, LuEye, LuEyeOff, LuPlus, LuTrash2, LuUndo2 } from 'react-icons
 import { Link as RouterLink, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useAttempt } from '../../components/grimoire/RoundBlocks'
 import { useTaskDialog } from '../../components/grimoire/TaskDialog'
-import { Chips, confirmAction, Empty, Field, Modal, PageHeader, Section, TextArea, TextInput } from '../../components/ui'
+import { Chips, confirmAction, DateInput, Empty, Field, Modal, PageHeader, Panel, Section, TextArea, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
 import { days, humanDay, plural } from '../../grimoire/days'
 import { countPetals } from '../../grimoire/mirrorStats'
@@ -92,14 +92,7 @@ function Lines({ personId, list, title, placeholder, lines, extra, hint }: { per
         ))}
         <Flex gap="2" wrap="wrap">
           <Input size="sm" flex="1" minW="180px" value={text} placeholder={placeholder} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && text.trim() && add()} />
-          <input
-            type="date"
-            value={on}
-            max={today}
-            aria-label="Когда"
-            onChange={(e) => e.target.value && setOn(e.target.value)}
-            style={{ background: 'transparent', color: 'inherit', border: '1px solid var(--chakra-colors-border)', borderRadius: 6, padding: '4px 6px', fontSize: 13 }}
-          />
+          <DateInput size="sm" w="160px" value={on} max={today} label="Когда" onChange={(v) => v && setOn(v)} />
           <IconButton size="sm" variant="outline" aria-label="Добавить" disabled={!text.trim()} onClick={add}>
             <LuPlus />
           </IconButton>
@@ -172,7 +165,7 @@ export default function Bestiary() {
             const b = personBalance(g, p.id, today)
             return (
               <RouterLink key={p.id} to={`/g/people/${p.id}`}>
-                <Box p="3" borderRadius="l2" borderWidth="1px" borderColor="border" bg="bg.subtle" _hover={{ bg: 'bg.muted' }}>
+                <Panel _hover={{ bg: 'bg.muted' }}>
                   <HStack gap="2" wrap="wrap">
                     <Text fontWeight="semibold">{p.name}</Text>
                     {n?.nickname && <Text fontFamily="hand" color="fg.muted">«{n.nickname}»</Text>}
@@ -181,7 +174,7 @@ export default function Bestiary() {
                   <Text fontSize="xs" color="fg.muted" mt="0.5">
                     {[n?.birthday && `🎂 ${showDate(n.birthday)}`, b.forThem && `для него/неё: ${b.forThem}`, b.kindness && `добрых дел: ${b.kindness}`, b.scars && `шрамов: ${b.scars}`].filter(Boolean).join(' · ') || 'памятка пустая'}
                   </Text>
-                </Box>
+                </Panel>
               </RouterLink>
             )
           })}

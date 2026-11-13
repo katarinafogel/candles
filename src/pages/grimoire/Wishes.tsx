@@ -9,7 +9,7 @@ import { TagInput } from '../../components/grimoire/TagInput'
 import { PeoplePicker, PriorityPicker } from '../../components/grimoire/TaskFields'
 import { HoverTrash } from '../../components/grimoire/HoverTrash'
 import { Crescent, Sparkle } from '../../components/Magic'
-import { Chips, confirmAction, Empty, Field, Modal, notify, NumInput, PageHeader, TextArea, TextInput } from '../../components/ui'
+import { Chips, confirmAction, DateInput, DeleteButton, Empty, Field, Modal, notify, NumInput, PageHeader, TextArea, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
 import { addDays, daysBetween, plural } from '../../grimoire/days'
 import { priorities } from '../../grimoire/selectors'
@@ -85,19 +85,11 @@ export function WishDialog({ wish, onClose }: { wish: Draft; onClose: () => void
           {blocks.toolbar}
           <HStack gap="2" justify="flex-end">
             {w.id && (
-              <Button
-                variant="ghost"
-                colorPalette="red"
-                mr="auto"
-                onClick={async () => {
-                  if (await confirmAction('Удалить хотелку насовсем? Можно вместо этого отпустить.')) {
-                    dispatch(A.deleteWish(w.id!))
-                    onClose()
-                  }
-                }}
-              >
-                Удалить
-              </Button>
+              <DeleteButton confirm="Удалить хотелку насовсем? Можно вместо этого отпустить." onDelete={() => {
+                dispatch(A.deleteWish(w.id!))
+                onClose()
+              }}
+              />
             )}
             <Button onClick={save}>Сохранить</Button>
           </HStack>
@@ -142,7 +134,7 @@ export function WishDialog({ wish, onClose }: { wish: Draft; onClose: () => void
         {blocks.show('until') && (
           <BlockSpot active={blocks.opened === 'until'}>
             <Field label="Актуально до" helper="после этой даты сундук спросит, хочется ли ещё">
-              <Input type="date" w="190px" value={w.relevantUntil ?? ''} onChange={(e) => set({ relevantUntil: e.target.value || undefined })} />
+              <DateInput w="190px" value={w.relevantUntil ?? ''} onChange={(v) => set({ relevantUntil: v || undefined })} />
             </Field>
           </BlockSpot>
         )}
@@ -192,19 +184,11 @@ function FulfillDialog({ w, onClose }: { w: Wish; onClose: () => void }) {
       footer={
         <>
           {done && (
-            <Button
-              variant="ghost"
-              colorPalette="red"
-              mr="auto"
-              onClick={async () => {
-                if (await confirmAction('Убрать мечту из зала славы насовсем?')) {
-                  dispatch(A.deleteWish(w.id))
-                  onClose()
-                }
-              }}
-            >
-              Удалить
-            </Button>
+            <DeleteButton confirm="Убрать мечту из зала славы насовсем?" onDelete={() => {
+              dispatch(A.deleteWish(w.id))
+              onClose()
+            }}
+            />
           )}
           <Button
           onClick={() => {
@@ -279,7 +263,7 @@ function EmbodyDialog({ w, onClose }: { w: Wish; onClose: () => void }) {
               <NumInput integer value={goal} onChange={(v) => setGoal(v && v > 0 ? v : undefined)} placeholder="10 000" suffix="₽" width="200px" />
             </Field>
             <Field label="К какой дате" helper="необязательно: с датой копилка считает, сколько откладывать в неделю">
-              <Input size="sm" type="date" w="170px" value={date} onChange={(e) => setDate(e.target.value)} />
+              <DateInput size="sm" w="170px" value={date} onChange={setDate} />
             </Field>
           </>
         )}
@@ -379,7 +363,6 @@ export default function Wishes() {
   const [tab, setTab] = useState<'chest' | 'hall'>('chest')
   const [edit, setEdit] = useState<Draft>()
   const [words, setWords] = useState<Wish>()
-  const [removing, setRemoving] = useState<Wish>()
   const dispatch = useAppDispatch()
   const all = Object.values(g.wishes)
   const [tag, setTag] = useState<string>()
@@ -425,7 +408,7 @@ export default function Wishes() {
             <SimpleGrid columns={{ base: 1, md: 2 }} gap="3">
               {fame.map((w) => (
                 <Box key={w.id} className="group" position="relative" p="4" borderRadius="l3" borderWidth="1px" borderColor="ember.700" bg="bg.subtle" backgroundImage="radial-gradient(16rem 8rem at 0% 0%, color-mix(in srgb, var(--chakra-colors-ember-400) 14%, transparent), transparent 70%)">
-                  <HoverTrash label="Убрать из зала славы" onClick={() => setRemoving(w)} />
+                  <HoverTrash label="Убрать из зала славы" onClick={async () => (await confirmAction(`«${w.title}» уйдёт из зала славы насовсем. Связанные дела и копилки останутся.`)) && dispatch(A.deleteWish(w.id))} />
                   <HStack gap="2" color="ember.200">
                     <Crescent size={14} />
                     <Text fontFamily="heading" fontSize="xl" fontWeight="semibold">
@@ -455,26 +438,7 @@ export default function Wishes() {
       )}
       {edit && <WishDialog wish={edit} onClose={() => setEdit(undefined)} />}
       {words && <FulfillDialog w={words} onClose={() => setWords(undefined)} />}
-      {removing && (
-        <Modal
-          open
-          onClose={() => setRemoving(undefined)}
-          title="Убрать из зала славы?"
-          footer={
-            <Button
-              colorPalette="red"
-              onClick={() => {
-                dispatch(A.deleteWish(removing.id))
-                setRemoving(undefined)
-              }}
-            >
-              Удалить
-            </Button>
-          }
-        >
-          <Text>«{removing.title}» уйдёт насовсем. Связанные дела и копилки останутся.</Text>
-        </Modal>
-      )}
+
     </>
   )
 }

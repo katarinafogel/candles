@@ -6,7 +6,7 @@ import { LuArchive } from 'react-icons/lu'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import { BookCover, bookColors } from '../../components/grimoire/BookCover'
 import { useAttempt } from '../../components/grimoire/RoundBlocks'
-import { Check, Chips, Empty, Field, Modal, notify, PageHeader, Section, TextArea, TextInput } from '../../components/ui'
+import { Check, Chips, DateInput, Empty, Field, Modal, notify, PageHeader, Panel, Section, SigilPicker, TextArea, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
 import { humanDay, plural } from '../../grimoire/days'
 import { projectProgress, projectTasks, words } from '../../grimoire/selectors'
@@ -76,13 +76,7 @@ export function ProjectDialog({ project, onClose, onSaved }: { project: Draft; o
         </Field>
         <Field label="Сигил" helper="тиснение на обложке; пусто — травинка">
           <Stack gap="2">
-            <HStack gap="1" wrap="wrap">
-              {sigils.map((x) => (
-                <Box as="button" key={x} onClick={() => set({ sigil: p.sigil === x ? undefined : x })} fontSize="xl" w="9" h="9" borderRadius="l2" borderWidth="1px" borderColor={p.sigil === x ? 'ember.500' : 'border'} bg={p.sigil === x ? 'ember.subtle' : 'transparent'}>
-                  {x}
-                </Box>
-              ))}
-            </HStack>
+            <SigilPicker options={sigils} value={p.sigil} onChange={(sigil) => set({ sigil })} />
             <Input value={p.sigil ?? ''} onChange={(e) => set({ sigil: [...e.target.value].slice(0, 2).join('') || undefined })} placeholder="или свой символ" maxW="160px" />
           </Stack>
         </Field>
@@ -101,7 +95,7 @@ export function ProjectDialog({ project, onClose, onSaved }: { project: Draft; o
           </HStack>
         </Field>
         <Field label="Целевая дата" helper="необязательно">
-          <Input type="date" value={p.targetDate ?? ''} onChange={(e) => set({ targetDate: e.target.value || undefined })} maxW="200px" />
+          <DateInput value={p.targetDate ?? ''} onChange={(v) => set({ targetDate: v || undefined })} w="200px" />
         </Field>
         {p.id && p.status !== 'done' && p.status !== 'archived' && (
           <Field label="Состояние">
@@ -257,7 +251,7 @@ function ArchiveDialog({ books, onClose }: { books: Project[]; onClose: () => vo
       {books.length ? (
         <Stack gap="2">
           {books.map((p) => (
-            <Flex key={p.id} align="center" gap="2" p="2" borderRadius="l2" borderWidth="1px" borderColor="border" wrap="wrap">
+            <Panel display="flex" key={p.id} alignItems="center" gap="2" p="2" flexWrap="wrap">
               <RouterLink to={`/g/projects/${p.id}`} onClick={onClose} style={{ flex: 1, minWidth: 140 }}>
                 <Text>
                   {p.sigil ?? '🌿'} {p.title}
@@ -269,7 +263,7 @@ function ArchiveDialog({ books, onClose }: { books: Project[]; onClose: () => vo
               <Button size="xs" variant="ghost" colorPalette="red" onClick={() => setRemoving(p.id)}>
                 Удалить
               </Button>
-            </Flex>
+            </Panel>
           ))}
         </Stack>
       ) : (

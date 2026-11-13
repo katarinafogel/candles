@@ -13,7 +13,7 @@ import type { DayKey, Task } from '../../grimoire/types'
 import { useAppSelector } from '../../store'
 import { ArcanaCard } from '../ArcanaCard'
 import { Sparkle } from '../Magic'
-import { LeafMark } from '../ui'
+import { LeafMark, ProgressLine } from '../ui'
 import { HoverTrash } from './HoverTrash'
 import { Deadline, PriorityIcon, Stars, Tag } from './Marks'
 
@@ -216,14 +216,9 @@ export function TaskCard({
           </HStack>
         )}
         {steps.length > 0 && (
-          <HStack gap="2" mt="1.5" fontSize="2xs">
-            <Box flex="1" h="3px" borderRadius="full" bg="var(--card-hover)" overflow="hidden">
-              <Box h="100%" w={`${(stepsDone / steps.length) * 100}%`} bg="var(--star-on)" borderRadius="full" transition="width .3s" />
-            </Box>
-            <Text as="span">
-              {stepsDone}/{steps.length}
-            </Text>
-          </HStack>
+          <Box mt="1.5">
+            <ProgressLine done={stepsDone} all={steps.length} h="3px" bg="var(--card-hover)" fill="var(--star-on)" fontSize="2xs" />
+          </Box>
         )}
       </ArcanaCard>
     </Box>

@@ -2,7 +2,7 @@ import { Badge, Box, Button, Flex, HStack, Input, SimpleGrid, Stack, Text } from
 import { useState } from 'react'
 import { LuPlus, LuShoppingCart, LuTriangleAlert } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
-import { Check, Chips, Empty, Field, Modal, notify, NumInput, PageHeader, Section, Select, TextArea, TextInput } from '../components/ui'
+import { Check, Chips, DateInput, Empty, Field, Modal, notify, NumInput, PageHeader, Section, Select, TextArea, TextInput } from '../components/ui'
 import { fmt, stockOf } from '../lib/calc'
 import { nowLocal, toIso } from '../lib/dates'
 import { categoryLabel, categoryUnit, scentNotes, seasons, unitLabel } from '../lib/labels'
@@ -156,7 +156,7 @@ export function PurchaseDialog({ materialId, onClose }: { materialId: string; on
     >
       <Stack gap="4">
         <Field label="Дата">
-          <Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
+          <DateInput kind="datetime-local" value={date} onChange={setDate} />
         </Field>
         <SimpleGrid columns={2} gap="3">
           <Field label="Количество">

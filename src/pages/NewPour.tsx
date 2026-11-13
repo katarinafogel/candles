@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { LuPlus, LuTrash2 } from 'react-icons/lu'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { StockHint } from '../components/StockHint'
-import { Check, Chips, Empty, Field, FormActions, notify, NumInput, PageHeader, Section, Select, TextArea, TextInput } from '../components/ui'
+import { Check, Chips, DateInput, Empty, Field, FormActions, notify, NumInput, PageHeader, Section, Select, TextArea, TextInput } from '../components/ui'
 import { calcWax, fmt, round2 } from '../lib/calc'
 import { nowLocal, toIso } from '../lib/dates'
 import { wickSchemeLabel } from '../lib/labels'
@@ -110,7 +110,7 @@ export default function NewPour() {
       <Section title="Рецепт">
         <SimpleGrid columns={{ base: 1, md: 2 }} gap="4">
           <Field label="Дата и время">
-            <Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
+            <DateInput kind="datetime-local" value={date} onChange={setDate} />
           </Field>
           <Field label="Запас на потери">
             <NumInput value={lossPct} onChange={setLossPct} suffix="%" />

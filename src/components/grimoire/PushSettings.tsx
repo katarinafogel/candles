@@ -5,10 +5,10 @@ import { useEffect, useState } from 'react'
 import { currentSubscription, disablePush, enablePush, pushSupported, testPush } from '../../lib/push'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
-import { Check, Field, notify } from '../ui'
+import { Check, DateInput, Field, notify } from '../ui'
 
 function TimeField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  return <Input size="sm" type="time" w="120px" value={value} onChange={(e) => onChange(e.target.value)} />
+  return <DateInput kind="time" size="sm" w="120px" value={value} onChange={onChange} />
 }
 
 export function PushSettings() {

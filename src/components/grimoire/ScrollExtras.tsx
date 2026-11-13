@@ -12,15 +12,14 @@ import { NoteDialog, useNoteOfDay } from '../../pages/grimoire/Notes'
 import { blankDay, ReadingDialog } from '../../pages/grimoire/Tarot'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '../../store/grimoireSlice'
-
-const block = { p: '3', borderRadius: 'l2', borderWidth: '1px', borderColor: 'border', bg: 'bg.subtle' } as const
+import { Panel } from '../ui'
 
 function EventBanner({ today }: { today: string }) {
   const e = useCurrentEvent(today)
   const [open, setOpen] = useState(false)
   if (!e) return null
   return (
-    <Flex {...block} align="center" gap="3" mb="3" wrap="wrap">
+    <Panel display="flex" alignItems="center" gap="3" mb="3" flexWrap="wrap">
       <Text fontSize="2xl">{e.sigil ?? '🗓️'}</Text>
       <Box flex="1" minW="160px">
         <Text fontWeight="semibold">{e.title}</Text>
@@ -33,7 +32,7 @@ function EventBanner({ today }: { today: string }) {
         Изменить
       </Button>
       {open && <EventDialog event={e} onClose={() => setOpen(false)} />}
-    </Flex>
+    </Panel>
   )
 }
 
@@ -46,7 +45,7 @@ function CardOfDay({ today }: { today: string }) {
   const now = new Date()
   const evening = !!eveningAt && `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}` >= eveningAt
   return (
-    <Box {...block}>
+    <Panel>
       <Text fontFamily="heading" fontSize="lg" color="ember.100" mb="1">
         Карта дня
       </Text>
@@ -82,7 +81,7 @@ function CardOfDay({ today }: { today: string }) {
         </Stack>
       )}
       {edit && <ReadingDialog reading={edit} onClose={() => setEdit(undefined)} />}
-    </Box>
+    </Panel>
   )
 }
 
@@ -92,7 +91,7 @@ function NoteOfDay({ today }: { today: string }) {
   const [open, setOpen] = useState(false)
   if (!note) return null
   return (
-    <Box {...block}>
+    <Panel>
       <Text fontFamily="heading" fontSize="lg" color="ember.100" mb="1">
         Вспомнить
       </Text>
@@ -113,7 +112,7 @@ function NoteOfDay({ today }: { today: string }) {
         </Button>
       </HStack>
       {open && <NoteDialog note={note} onClose={() => setOpen(false)} />}
-    </Box>
+    </Panel>
   )
 }
 
@@ -130,7 +129,7 @@ function YuleGoals({ today }: { today: string }) {
   const done = mine.filter((x) => x.status === 'done').length
   const left = daysBetween(today, yule)
   return (
-    <Flex {...block} align="center" gap="3" mb="3" wrap="wrap">
+    <Panel display="flex" alignItems="center" gap="3" mb="3" flexWrap="wrap">
       <Text fontSize="2xl">🕯</Text>
       <Box flex="1" minW="200px">
         <Text fontWeight="semibold">{left > 0 ? `До Йоля ${left} дн.` : 'Время Йоля'}: подвести итоги года</Text>
@@ -142,7 +141,7 @@ function YuleGoals({ today }: { today: string }) {
       <Button asChild size="xs" variant="outline">
         <RouterLink to="/g/goals">К целям</RouterLink>
       </Button>
-    </Flex>
+    </Panel>
   )
 }
 

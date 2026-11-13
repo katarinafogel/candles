@@ -1,9 +1,10 @@
 // Tags of a deed, a wish or a jar: chips to drop with a tap and a field for a new one that suggests the tags already
 // in the book (the most used first) only while typing.
-import { Box, HStack, Stack } from '@chakra-ui/react'
+import { HStack, Stack } from '@chakra-ui/react'
 import { useMemo } from 'react'
 import { tagsByUse } from '../../grimoire/tags'
 import { useAppSelector } from '../../store'
+import { RemovableChip } from '../ui'
 import { Tag } from './Marks'
 import { SuggestInput } from './SuggestInput'
 
@@ -26,9 +27,9 @@ export function TagInput({ value, onChange }: { value: string[]; onChange: (tags
       {value.length > 0 && (
         <HStack gap="1.5" wrap="wrap">
           {value.map((t) => (
-            <Box as="button" key={t} onClick={() => onChange(value.filter((x) => x !== t))} aria-label={`Убрать тег ${t}`} cursor="pointer" display="inline-flex">
+            <RemovableChip key={t} plain onRemove={() => onChange(value.filter((x) => x !== t))} label={`Убрать тег ${t}`}>
               <Tag name={t} />
-            </Box>
+            </RemovableChip>
           ))}
         </HStack>
       )}

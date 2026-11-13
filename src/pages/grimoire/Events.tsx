@@ -4,7 +4,7 @@
 import { Box, Button, Flex, HStack, Input, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { useAttempt } from '../../components/grimoire/RoundBlocks'
-import { confirmAction, Empty, Field, Modal, notify, PageHeader, Section, Select, TextArea, TextInput } from '../../components/ui'
+import { DateInput, DeleteButton, Empty, Field, Modal, notify, PageHeader, Panel, Section, Select, SigilPicker, TextArea, TextInput } from '../../components/ui'
 import { useToday } from '../../grimoire/act'
 import { addDays, daysBetween, humanDay, plural } from '../../grimoire/days'
 import { isOpenTask } from '../../grimoire/selectors'
@@ -75,7 +75,7 @@ export function EventDialog({ event, onClose }: { event: Draft; onClose: () => v
             ))}
           </HStack>
           {inside.map((t) => (
-            <Flex key={t.id} gap="2" align="center" wrap="wrap" p="2" borderRadius="l2" borderWidth="1px" borderColor="border">
+            <Panel display="flex" key={t.id} gap="2" alignItems="center" flexWrap="wrap" p="2">
               <Box flex="1" minW="160px">
                 <Text>{t.title}</Text>
                 <Text fontSize="xs" color="fg.muted">
@@ -85,7 +85,7 @@ export function EventDialog({ event, onClose }: { event: Draft; onClose: () => v
               <Box w="170px">
                 <Select size="sm" value={fate[t.id] ?? 'keep'} onChange={(v) => setFate({ ...fate, [t.id]: (v as Fate) || 'keep' })} options={(Object.keys(fateLabel) as Fate[]).map((f) => ({ value: f, label: fateLabel[f] }))} />
               </Box>
-            </Flex>
+            </Panel>
           ))}
           <Text fontSize="xs" color="fg.subtle">
             Ритуалы этих дней пропускаются сами, серии не рвутся. «На день после» — {humanDay(addDays(e.to, 1), e.to)}.
@@ -102,19 +102,11 @@ export function EventDialog({ event, onClose }: { event: Draft; onClose: () => v
       footer={
         <>
           {e.id && (
-            <Button
-              variant="ghost"
-              colorPalette="red"
-              mr="auto"
-              onClick={async () => {
-                if (await confirmAction('Удалить событие? Дела, которые уже передвинуты, останутся там, где они сейчас.')) {
-                  dispatch(A.deleteEvent(e.id!))
-                  onClose()
-                }
-              }}
-            >
-              Удалить
-            </Button>
+            <DeleteButton confirm="Удалить событие? Дела, которые уже передвинуты, останутся там, где они сейчас." onDelete={() => {
+              dispatch(A.deleteEvent(e.id!))
+              onClose()
+            }}
+            />
           )}
           <Button onClick={next}>{inside.length ? 'Дальше' : 'Сохранить'}</Button>
         </>
@@ -124,19 +116,13 @@ export function EventDialog({ event, onClose }: { event: Draft; onClose: () => v
         <Field label="Что это" invalid={check.missing(!e.title.trim())} error="Назови событие">
           <TextInput value={e.title} onChange={(title) => set({ title })} />
         </Field>
-        <HStack gap="1" wrap="wrap">
-          {sigils.map((x) => (
-            <Box as="button" key={x} onClick={() => set({ sigil: e.sigil === x ? undefined : x })} fontSize="xl" w="9" h="9" borderRadius="l2" borderWidth="1px" borderColor={e.sigil === x ? 'ember.500' : 'border'} bg={e.sigil === x ? 'ember.subtle' : 'transparent'}>
-              {x}
-            </Box>
-          ))}
-        </HStack>
+        <SigilPicker options={sigils} value={e.sigil} onChange={(sigil) => set({ sigil })} />
         <HStack gap="3" wrap="wrap" align="flex-start">
           <Field label="С" w="190px" invalid={check.missing(!e.from)} error="С какого дня?">
-            <Input type="date" value={e.from} onChange={(ev) => set({ from: ev.target.value, ...(e.to && ev.target.value > e.to ? { to: ev.target.value } : {}) })} />
+            <DateInput value={e.from} onChange={(from) => set({ from, ...(e.to && from > e.to ? { to: from } : {}) })} />
           </Field>
           <Field label="По" w="190px" invalid={check.missing(!e.to || e.to < e.from)} error="По какой день?">
-            <Input type="date" value={e.to} min={e.from || undefined} onChange={(ev) => set({ to: ev.target.value })} />
+            <DateInput value={e.to} min={e.from || undefined} onChange={(v) => set({ to: v })} />
           </Field>
         </HStack>
         <Field label="Заметка">
@@ -175,7 +161,7 @@ export default function Events() {
   const ahead = list.filter((e) => e.to >= today).reverse()
   const past = list.filter((e) => e.to < today)
   const row = (e: LifeEvent) => (
-    <Flex key={e.id} as="button" onClick={() => setEdit(e)} textAlign="left" gap="3" align="center" p="3" borderRadius="l2" borderWidth="1px" borderColor="border" bg="bg.subtle" _hover={{ bg: 'bg.muted' }} w="full">
+    <Panel display="flex" key={e.id} onClick={() => setEdit(e)} gap="3" alignItems="center" w="full">
       <Text fontSize="2xl">{e.sigil ?? '🗓️'}</Text>
       <Box flex="1">
         <Text fontWeight="semibold">{e.title}</Text>
@@ -184,7 +170,7 @@ export default function Events() {
           {e.from <= today && e.to >= today ? ` · ${eventDayText(e, today)}` : ''}
         </Text>
       </Box>
-    </Flex>
+    </Panel>
   )
   return (
     <>
