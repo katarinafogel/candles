@@ -459,6 +459,27 @@ export interface Note {
   createdAt: ISODateTime
 }
 
+/** Where a book on the reading shelf is: «хочу прочесть», «читаю», «прочитано». */
+export type BookStatus = 'want' | 'reading' | 'read'
+
+/** A book on «Книжная полка»: what to read and what was read; «куплена» is separate from the status. */
+export interface Book {
+  id: string
+  title: string
+  author?: string
+  status: BookStatus
+  bought?: boolean
+  /** Set by itself when the status moves on; can be corrected. */
+  startedOn?: DayKey
+  finishedOn?: DayKey
+  /** 1–5, for a read one. */
+  rating?: number
+  tags: string[]
+  url?: string
+  note?: string
+  createdAt: ISODateTime
+}
+
 /** A dated line on a person's card: a fact, a scar, a kindness, a question to ask. */
 export interface PersonLine {
   id: string
@@ -533,5 +554,6 @@ export interface GrimoireState {
   tarot: Record<string, TarotReading>
   goals: Record<string, Goal>
   notes: Record<string, Note>
+  books: Record<string, Book>
   meta: GrimoireMeta
 }

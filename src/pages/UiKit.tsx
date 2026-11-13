@@ -1,8 +1,9 @@
 // /ui — a showcase of the components used in the project: a menu of sections on the left,
 // the chosen section on the right.
-import { Box, Flex, Grid, Heading, Stack, Text } from '@chakra-ui/react'
+import { Box, Button, Flex, Grid, Heading, Stack, Text } from '@chakra-ui/react'
 import { useState, type ReactNode } from 'react'
-import { notify } from '@shared/components/ui'
+import { notify, Sheet } from '@shared/components/ui'
+import { ColorDot } from '@shared/components/ColorDot'
 import { Icon, iconSets } from '@shared/icons'
 
 interface Section {
@@ -11,7 +12,35 @@ interface Section {
   render: () => ReactNode
 }
 
-const sections: Section[] = [{ id: 'icons', label: 'Иконки', render: () => <Icons /> }]
+const sections: Section[] = [
+  { id: 'icons', label: 'Иконки', render: () => <Icons /> },
+  { id: 'sheet', label: 'Шторка', render: () => <SheetDemo /> },
+  { id: 'color', label: 'Свой цвет', render: () => <ColorDemo /> },
+]
+
+/** Sheet: the phone's menu slides up from the bottom. */
+function SheetDemo() {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>Открыть шторку</Button>
+      <Sheet open={open} onClose={() => setOpen(false)} title="Шторка">
+        <Text color="fg.muted">Закрывается тапом мимо, Esc или крестиком.</Text>
+      </Sheet>
+    </>
+  )
+}
+
+/** ColorDot: any colour through the system picker. */
+function ColorDemo() {
+  const [c, setC] = useState<string>()
+  return (
+    <Flex gap="3" align="center">
+      <ColorDot value={c} onChange={setC} size="8" />
+      <Text color="fg.muted">{c ?? 'не выбран'}</Text>
+    </Flex>
+  )
+}
 
 function Icons() {
   const copy = (name: string) => {

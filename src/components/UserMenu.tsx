@@ -123,7 +123,7 @@ export function UserMenu() {
     else if (v === 'signout') void signOut()
     else if (v === 'projects') location.assign(appHref('showcase', '/projects'))
     else {
-      // 'grimoire:/more', 'workshop:/settings' — a page of either app.
+      // 'grimoire:/settings', 'workshop:/settings' — a page of either app.
       const [app, path] = v.split(':') as [AppId, string]
       go(app, path)
     }
@@ -164,7 +164,7 @@ export function UserMenu() {
                 <LuUserPen /> Имя и значок
               </Menu.Item>
               {inGrimoire ? (
-                <Menu.Item value="grimoire:/more">
+                <Menu.Item value="grimoire:/settings">
                   <LuSettings /> Настройки гримуара
                 </Menu.Item>
               ) : (

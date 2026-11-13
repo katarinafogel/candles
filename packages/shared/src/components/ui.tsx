@@ -8,6 +8,7 @@ import {
   CloseButton,
   createToaster,
   Dialog,
+  Drawer,
   Field as CField,
   Flex,
   Heading,
@@ -398,6 +399,44 @@ export function Modal({
         </Dialog.Positioner>
       </Portal>
     </Dialog.Root>
+  )
+}
+
+/** A sheet that slides up from the bottom of the screen (the phone's menu); closes on the scrim, Esc or the cross. */
+export function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title?: ReactNode; children: ReactNode }) {
+  return (
+    <Drawer.Root open={open} onOpenChange={(e) => !e.open && onClose()} placement="bottom">
+      <Portal>
+        <Drawer.Backdrop {...scrim} />
+        <Drawer.Positioner>
+          <Drawer.Content
+            bg="bg.panel"
+            borderTopWidth="1px"
+            borderColor="border.emphasized"
+            borderTopRadius="2xl"
+            maxH="85dvh"
+            pb="env(safe-area-inset-bottom)"
+            backgroundImage="radial-gradient(30rem 16rem at 100% 0%, var(--g-glow-soft), transparent 70%)"
+          >
+            {/* The handle: shows the sheet can be pulled. */}
+            <Box w="10" h="1" borderRadius="full" bg="border.emphasized" mx="auto" mt="2" />
+            {title && (
+              <Drawer.Header pb="0">
+                <Drawer.Title fontFamily="heading" fontSize="xl" fontWeight="semibold" color="ember.100">
+                  {title}
+                </Drawer.Title>
+              </Drawer.Header>
+            )}
+            <Drawer.Body py="3" className="quiet-scroll">
+              {children}
+            </Drawer.Body>
+            <Drawer.CloseTrigger asChild>
+              <CloseButton size="sm" />
+            </Drawer.CloseTrigger>
+          </Drawer.Content>
+        </Drawer.Positioner>
+      </Portal>
+    </Drawer.Root>
   )
 }
 

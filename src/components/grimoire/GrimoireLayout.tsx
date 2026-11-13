@@ -1,13 +1,14 @@
-// The grimoire's own shell in the workshop's style: side menu on a computer, bottom tabs on a phone,
-// «Другие проекты» at the end of the menu and the floating «+» with its menu.
-import { Box, Flex, Stack, Text } from '@chakra-ui/react'
-import { useEffect, type ReactNode, Suspense } from 'react'
-import { LuBookOpen, LuCalendarDays, LuEllipsis, LuFlame, LuGem, LuLibrary, LuMoon, LuScrollText, LuLayoutGrid, LuPiggyBank, LuSparkles, LuSun, LuUsers } from 'react-icons/lu'
+// The grimoire's own shell in the workshop's style: side menu on a computer; on a phone the main tabs at the
+// bottom and «Меню», a sheet with the rest (sections.tsx); the floating «+» with its menu.
+import { Box, Flex, Stack } from '@chakra-ui/react'
+import { useEffect, useState, Suspense } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Icon, type IconName } from '@shared/icons'
+import { Sheet } from '@shared/components/ui'
+import { sectionOf, SectionList, useSections } from './sections'
 import { GoApp } from '../../lib/apps'
 import { useToday } from '../../grimoire/act'
 import { daysBetween } from '@grimoire-core/grimoire/days'
-import { words } from '@grimoire-core/grimoire/selectors'
 import { builtInPractices } from '@grimoire-core/grimoire/wheel'
 import { useAppDispatch, useAppSelector, useIsMaster, useIsWitch } from '../../store'
 import { PageLoading } from '../PageLoading'
@@ -19,11 +20,6 @@ import { HeaderRight } from '../UserMenu'
 import { FeedbackPrompt } from './Feedback'
 import { AddMenu } from './AddMenu'
 
-interface NavItem {
-  to: string
-  label: string
-  icon: ReactNode
-}
 
 /** Once a day after the account is loaded: habit tasks for today, and the starter practices once. */
 function useDailyChores() {
@@ -56,7 +52,8 @@ export default function GrimoireLayout() {
   const meta = useAppSelector((s) => s.grimoire.meta)
   const loc = useLocation()
   useDailyChores()
-  const w = words(meta)
+  const sections = useSections()
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -65,22 +62,10 @@ export default function GrimoireLayout() {
   // Without the role the grimoire doesn't exist: its addresses lead to the workshop, if that is open.
   if (!witch) return master ? <GoApp app="workshop" /> : <NoAccess />
 
-  const items: NavItem[] = [
-    { to: '/', label: w.scroll, icon: <LuScrollText /> },
-    { to: '/book', label: w.book, icon: <LuBookOpen /> },
-    { to: '/rituals', label: w.rituals, icon: <LuMoon /> },
-    { to: '/wheel', label: 'Колесо', icon: <LuSun /> },
-  ]
-  const more: NavItem = { to: '/more', label: 'Ещё', icon: <LuEllipsis /> }
-  // On a phone these live under «Ещё»; the side menu shows them all.
-  const extra: NavItem[] = [
-    { to: '/calendar', label: 'Календарь', icon: <LuCalendarDays /> },
-    { to: '/projects', label: w.projects, icon: <LuLibrary /> },
-    { to: '/mirror', label: 'Зеркало', icon: <LuGem /> },
-    { to: '/people', label: 'Бестиарий', icon: <LuUsers /> },
-    { to: '/wishes', label: 'Сундук желаний', icon: <LuSparkles /> },
-    { to: '/jars', label: 'Копилки', icon: <LuPiggyBank /> },
-  ]
+  const mainTabs = sections.filter((x) => x.main)
+  const current = sectionOf(sections, loc.pathname)
+  // The «Меню» tab is lit when the open page is not one of the main tabs.
+  const menuLit = !current?.main
 
   return (
     <Flex minH="100dvh">
@@ -89,28 +74,7 @@ export default function GrimoireLayout() {
           <AppMark size={38} />
         </Flex>
         <MoonPhases size={12} gap="2.5" color="ember.200" px="2" mb="4" />
-        <Stack gap="1">
-          {[...items, ...extra, { ...more, label: 'Ещё: навь, настройки' }, { to: '/apps', label: 'Другие проекты', icon: <LuLayoutGrid /> }].map((i) => (
-            <NavLink key={i.to} to={i.to} end={i.to === '/'}>
-              {({ isActive }) => (
-                <Flex
-                  align="center"
-                  gap="3"
-                  px="3"
-                  py="2"
-                  borderRadius="l2"
-                  color={isActive ? 'ember.200' : 'fg.muted'}
-                  bg={isActive ? 'ember.subtle' : 'transparent'}
-                  _hover={{ bg: 'bg.muted', color: 'fg' }}
-                  fontWeight={isActive ? 'semibold' : 'normal'}
-                >
-                  <Box fontSize="lg">{i.icon}</Box>
-                  <Text flex="1">{i.label}</Text>
-                </Flex>
-              )}
-            </NavLink>
-          ))}
-        </Stack>
+        <SectionList sections={sections} />
         <Eucalyptus width={120} mx="auto" mt="10" opacity={0.45} />
       </Box>
 
@@ -138,21 +102,31 @@ export default function GrimoireLayout() {
       <FeedbackPrompt />
 
       <Flex as="nav" display={{ base: 'flex', md: 'none' }} position="fixed" bottom="0" left="0" right="0" bg="bg.nav" backdropFilter="blur(8px)" borderTopWidth="1px" borderColor="border" pb="env(safe-area-inset-bottom)" zIndex="sticky">
-        {[...items, more].map((i) => (
-          <NavLink key={i.to} to={i.to} end={i.to === '/'} style={{ flex: 1 }}>
-            {({ isActive: active }) => {
-              const isActive = active || (i === more && extra.some((x) => loc.pathname.startsWith(x.to)))
-              return (
-              <Stack align="center" gap="0.5" py="2" color={isActive ? 'ember.300' : 'fg.subtle'} fontSize="2xs" fontWeight="medium">
-                <Box fontSize="xl">{i.icon}</Box>
-                {i.label}
-              </Stack>
-              )
-            }}
+        {mainTabs.map((i) => (
+          <NavLink key={i.to} to={i.to} style={{ flex: 1 }}>
+            <Tab icon={i.icon} label={i.label} lit={i === current} />
           </NavLink>
         ))}
+        <Box as="button" flex="1" cursor="pointer" aria-label="Меню" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}>
+          <Tab icon="circle-dots-horizontal" label="Меню" lit={menuLit} />
+        </Box>
       </Flex>
+      <Sheet open={menuOpen} onClose={() => setMenuOpen(false)}>
+        <SectionList sections={sections.filter((x) => !x.main)} onPick={() => setMenuOpen(false)} />
+      </Sheet>
     </Flex>
+  )
+}
+
+/** A bottom tab: the lit one sits on a soft pill, like the side menu's current line. */
+function Tab({ icon, label, lit }: { icon: IconName; label: string; lit: boolean }) {
+  return (
+    <Stack align="center" gap="0.5" py="1.5" color={lit ? 'ember.200' : 'fg.subtle'} fontSize="2xs" fontWeight={lit ? 'semibold' : 'medium'}>
+      <Flex px="4" py="1" borderRadius="full" bg={lit ? 'ember.subtle' : 'transparent'} transition="background .15s">
+        <Icon name={icon} size={22} />
+      </Flex>
+      {label}
+    </Stack>
   )
 }
 

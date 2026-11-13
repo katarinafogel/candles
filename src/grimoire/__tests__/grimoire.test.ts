@@ -421,6 +421,44 @@ describe('tags', async () => {
   it('puts the most used tags first', () => {
     expect(tagsByUse(g)).toEqual(['дом', 'бумаги', 'дача'])
   })
+  it('counts tags on books, notes and templates too', async () => {
+    const { tagCounts } = await import('@grimoire-core/grimoire/tags')
+    const more = { ...g, books: { x: { tags: ['дача'] } }, notes: { y: { tags: ['дача'] } }, meta: { spells: [{ tags: ['дача'] }] } } as unknown as GS
+    expect(tagCounts(more).get('дача')).toBe(4)
+  })
+  it('wears her own colour or the theme one', async () => {
+    const { tagColor } = await import('@grimoire-core/grimoire/tags')
+    expect(tagColor('дом', { дом: '#a1b2c3' })).toBe('#a1b2c3')
+    expect(tagColor('дом', { дом: 'pine' })).toBe('var(--g-tag-pine)')
+  })
+  it('removes a tag from everything and forgets its colour', () => {
+    let s = reducer(undefined, A.addTask({ fields: { title: 'окна', tags: ['дом', 'весна'] } }))
+    s = reducer(s, A.upsertWish({ wish: { title: 'дача', tags: ['дом'] } }))
+    s = reducer(s, A.upsertBook({ book: { title: 'Цирцея', status: 'want', tags: ['дом'] } }))
+    s = reducer(s, A.updateMeta({ tagColors: { дом: '#112233', весна: 'pine' } }))
+    s = reducer(s, A.removeTag('дом'))
+    expect(Object.values(s.tasks)[0].tags).toEqual(['весна'])
+    expect(Object.values(s.wishes)[0].tags).toEqual([])
+    expect(Object.values(s.books)[0].tags).toEqual([])
+    expect(s.meta.tagColors).toEqual({ весна: 'pine' })
+  })
+})
+
+describe('books', () => {
+  it('dates the reading by itself and clears what no longer fits', () => {
+    let s = reducer(undefined, A.upsertBook({ book: { id: 'b', title: '  Цирцея ', status: 'want', tags: [] }, at: '2026-11-13T10:00:00' } as never))
+    expect(s.books.b.title).toBe('Цирцея')
+    expect(s.books.b.startedOn).toBeUndefined()
+    s = reducer(s, A.upsertBook({ book: { ...s.books.b, status: 'reading' }, at: '2026-11-14T10:00:00' } as never))
+    expect(s.books.b.startedOn).toBe('2026-11-14')
+    s = reducer(s, A.upsertBook({ book: { ...s.books.b, status: 'read', rating: 5 }, at: '2026-11-20T10:00:00' } as never))
+    expect(s.books.b.finishedOn).toBe('2026-11-20')
+    expect(s.books.b.rating).toBe(5)
+    s = reducer(s, A.upsertBook({ book: { ...s.books.b, status: 'want' } }))
+    expect(s.books.b.startedOn).toBeUndefined()
+    expect(s.books.b.finishedOn).toBeUndefined()
+    expect(s.books.b.rating).toBeUndefined()
+  })
 })
 
 describe('mirror analytics', async () => {
@@ -808,5 +846,36 @@ describe('wishlist round two', () => {
     const next = { ...initialGrimoire, events: { e: { id: 'e', title: 't', from: MON, to: MON, createdAt: at(MON) } } }
     expect(diffGrimoire(initialGrimoire, next)).toEqual([{ op: 'upsert', kind: 'event', id: 'e', data: next.events.e }])
     expect(isGrimoireRow('tarot', 'r')).toBe(true)
+  })
+})
+
+describe('wish filters', async () => {
+  const { filterWishes } = await import('@grimoire-core/grimoire/wishes')
+  type W = import('@grimoire-core/grimoire/types').Wish
+  const w = (id: string, extra: Partial<W> = {}): W => ({ id, title: id, tags: [], status: 'dream', createdAt: '2026-01-01T10:00:00', ...extra })
+  const list = [
+    w('тент', { createdAt: '2026-01-01T10:00:00', description: 'на балкон', tags: ['дом'], price: 5000, relevantUntil: '2026-11-20' }),
+    w('подсвечник', { createdAt: '2026-03-01T10:00:00', tags: ['крафт'], priority: 'high' }),
+    w('книжный', { createdAt: '2026-02-01T10:00:00', tags: ['дом', 'крафт'], price: 20000, relevantUntil: '2026-10-01' }),
+  ]
+  const ids = (x: W[]) => x.map((v) => v.id)
+  const today = '2026-11-13'
+  it('searches the title and the description', () => {
+    expect(ids(filterWishes(list, { q: 'балкон' }, today))).toEqual(['тент'])
+  })
+  it('takes any of the chosen tags', () => {
+    expect(ids(filterWishes(list, { tags: ['крафт'], sort: 'age' }, today))).toEqual(['книжный', 'подсвечник'])
+  })
+  it('filters by deadline and price range', () => {
+    expect(ids(filterWishes(list, { deadline: 'soon' }, today))).toEqual(['тент'])
+    expect(ids(filterWishes(list, { deadline: 'overdue' }, today))).toEqual(['книжный'])
+    expect(ids(filterWishes(list, { deadline: 'none' }, today))).toEqual(['подсвечник'])
+    expect(ids(filterWishes(list, { priceFrom: 1000, priceTo: 10000 }, today))).toEqual(['тент'])
+  })
+  it('sorts by deadline, age and price, the ones without last', () => {
+    expect(ids(filterWishes(list, { sort: 'deadline' }, today))).toEqual(['книжный', 'тент', 'подсвечник'])
+    expect(ids(filterWishes(list, { sort: 'age' }, today))).toEqual(['тент', 'книжный', 'подсвечник'])
+    expect(ids(filterWishes(list, { sort: 'priceDesc' }, today))).toEqual(['книжный', 'тент', 'подсвечник'])
+    expect(ids(filterWishes(list, { sort: 'priority' }, today))[0]).toBe('подсвечник')
   })
 })

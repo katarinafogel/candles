@@ -1,7 +1,6 @@
-// «Ещё»: «уйти в навь» and the grimoire's settings.
-import { Box, Button, Flex, HStack, Stack, Text } from '@chakra-ui/react'
-import { LuChevronRight } from 'react-icons/lu'
-import { Link as RouterLink } from 'react-router-dom'
+// «Настройки»: «уйти в навь» and the grimoire's settings. The sections themselves are in the menu (sections.tsx).
+import { Box, Button, Flex, HStack, IconButton, Stack, Text } from '@chakra-ui/react'
+import { LuTrash2 } from 'react-icons/lu'
 import { AgentKeys } from '../../components/grimoire/AgentKeys'
 import { PushSettings } from '../../components/grimoire/PushSettings'
 import { SignOutRow } from '../../components/SignOut'
@@ -12,8 +11,8 @@ import { ErrorLogView } from '../../components/ErrorLogView'
 import { Check, Chips, confirmAction, DateInput, Field, NumInput, PageHeader, Section, TextInput } from '@shared/components/ui'
 import { useToday } from '../../grimoire/act'
 import { humanDay } from '@grimoire-core/grimoire/days'
-import { words } from '@grimoire-core/grimoire/selectors'
-import { tagPalette, tagPalettes, tagsByUse } from '@grimoire-core/grimoire/tags'
+import { isOwnColor, tagCounts, tagPalette, tagPalettes, tagsByUse } from '@grimoire-core/grimoire/tags'
+import { ColorDot } from '@shared/components/ColorDot'
 import { Tag } from '../../components/grimoire/Marks'
 import { isTouchDevice, saveFile } from '@shared/lib/download'
 import { actionLabel, bodyLabel, factorLabel } from '@grimoire-core/grimoire/emotions'
@@ -21,25 +20,35 @@ import { mirrorCsv } from '@grimoire-core/grimoire/mirrorStats'
 import { store, useAppDispatch, useAppSelector, useIsAdmin } from '../../store'
 import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 
-/** A colour for each tag: the swatches under it; until one is chosen the name picks it. */
-function TagColors() {
+/**
+ * Every tag with its colour and its trash can. A colour: one of the theme's swatches, or her own from
+ * the last circle (any colour; it does not follow the theme). Deleting takes the tag off everything.
+ */
+function TagSettings() {
   const dispatch = useAppDispatch()
-  const tasks = useAppSelector((s) => s.grimoire.tasks)
-  const wishTags = useAppSelector((s) => s.grimoire.wishes)
-  const jarTags = useAppSelector((s) => s.grimoire.jars)
-  const colors = useAppSelector((s) => s.grimoire.meta.tagColors)
-  const tags = tagsByUse({ tasks, wishes: wishTags, jars: jarTags })
+  const g = useAppSelector((s) => s.grimoire)
+  const colors = g.meta.tagColors
+  const counts = tagCounts(g)
+  const tags = tagsByUse(g)
   if (!tags.length) return null
+  const remove = async (t: string) => {
+    const n = counts.get(t) ?? 0
+    if (await confirmAction(`Тег #${t} снимется со всего, где он есть (${n}). Сами дела, хотелки и записи останутся.`, { label: 'Удалить тег', danger: true })) dispatch(A.removeTag(t))
+  }
   return (
-    <Field label="Цвета тегов">
+    <Field label="Теги" helper="цвет: кружок из темы или свой (последний); корзинка снимает тег со всего">
       <Stack gap="2">
         {tags.map((t) => {
-          const on = tagPalette(t, colors)
+          const own = colors[t]
+          const on = isOwnColor(own) ? undefined : tagPalette(t, colors)
           return (
             <Flex key={t} align="center" gap="3" wrap="wrap">
-              <Box minW="110px">
+              <HStack minW="140px" gap="1.5">
                 <Tag name={t} />
-              </Box>
+                <Text fontSize="xs" color="fg.subtle">
+                  {counts.get(t)}
+                </Text>
+              </HStack>
               <HStack gap="1.5" wrap="wrap">
                 {tagPalettes.map((p) => (
                   <Box
@@ -57,7 +66,11 @@ function TagColors() {
                     cursor="pointer"
                   />
                 ))}
+                <ColorDot value={isOwnColor(own) ? own : undefined} onChange={(c) => dispatch(A.updateMeta({ tagColors: { ...colors, [t]: c } }))} />
               </HStack>
+              <IconButton size="2xs" variant="ghost" aria-label={`Удалить тег ${t}`} onClick={() => remove(t)}>
+                <LuTrash2 />
+              </IconButton>
             </Flex>
           )
         })}
@@ -66,7 +79,7 @@ function TagColors() {
   )
 }
 
-export default function GrimoireMore() {
+export default function GrimoireSettings() {
   const dispatch = useAppDispatch()
   const isAdmin = useIsAdmin()
   const g = useAppSelector((s) => s.grimoire)
@@ -75,34 +88,7 @@ export default function GrimoireMore() {
 
   return (
     <>
-      <PageHeader title="Ещё" />
-      <Stack gap="0" borderWidth="1px" borderColor="border" borderRadius="l3" bg="bg.subtle" overflow="hidden" mb="4">
-        {[
-          { to: '/calendar', label: 'Календарь: луны, саббаты и эсбаты' },
-          { to: '/projects', label: `${words(meta).projects}: полка проектов` },
-          { to: '/mirror', label: 'Зеркало: словарь эмоций и записи' },
-          { to: '/people', label: 'Бестиарий: люди, памятка и даты' },
-          { to: '/wishes', label: 'Сундук желаний и зал славы' },
-          { to: '/jars', label: 'Копилки: настоящие деньги' },
-          { to: '/goals', label: 'Цели на год' },
-          { to: '/events', label: 'События: поездки, больничные' },
-          { to: '/tarot', label: 'Таро: карта дня и расклады' },
-          { to: '/notes', label: 'Заметки и цитаты' },
-          { to: '/spells', label: `${words(meta).spells}: дела, квесты и цепочки` },
-          { to: '/apps', label: 'Другие проекты' },
-        ].map((i) => (
-          <RouterLink key={i.to} to={i.to}>
-            <Flex align="center" gap="3" px="4" py="3" borderBottomWidth="1px" borderColor="border.muted" _hover={{ bg: 'bg.muted' }}>
-              <Text flex="1">{i.label}</Text>
-              <Box color="fg.subtle">
-                <LuChevronRight />
-              </Box>
-            </Flex>
-          </RouterLink>
-        ))}
-        <SignOutRow />
-      </Stack>
-
+      <PageHeader title="Настройки" />
       <Section title="Навь">
         <Text fontSize="sm" color="fg.muted" mb="3">
           Если ты в нави, делать что-то в яви нельзя. Серии замораживаются, привычки молчат, план пуст. Реальные сроки никуда не деваются, копилки на месте. Без вопросов и причин.
@@ -200,7 +186,7 @@ export default function GrimoireMore() {
           <Field label="Круги бестиария" helper="через запятую">
             <TextInput value={(meta.circles ?? []).join(', ')} onChange={(v) => dispatch(A.updateMeta({ circles: v.split(',').map((x) => x.trim()).filter(Boolean) }))} />
           </Field>
-          <TagColors />
+          <TagSettings />
           <Button
             size="sm"
             variant="outline"
@@ -243,6 +229,9 @@ export default function GrimoireMore() {
       <Section title="Последние ошибки">
         <ErrorLogView />
       </Section>
+      <Stack gap="0" borderWidth="1px" borderColor="border" borderRadius="l3" bg="bg.subtle" overflow="hidden" mb="4">
+        <SignOutRow />
+      </Stack>
       {isAdmin && (
         <Section title="Ведьмы и приглашения">
           <RolesAdmin roles={['witch', 'admin']} />

@@ -28,6 +28,7 @@ import type {
   Goal,
   LifeEvent,
   Note,
+  Book,
   Spell,
   SpellStep,
   TarotReading,
@@ -73,6 +74,7 @@ export const initialGrimoire: GrimoireState = {
   tarot: {},
   goals: {},
   notes: {},
+  books: {},
   meta: defaultMeta,
 }
 
@@ -1096,6 +1098,50 @@ const slice = createSlice({
         n.nextOn = addDays(a.payload.day, a.payload.remember ? noteLadder[step] : 1)
       },
       prepare: (p: { id: string; remember: boolean; boundary?: number }) => ({ payload: when(p) }),
+    },
+
+    // ----- «Книжная полка» -----
+    /**
+     * A book, new or edited. Moving on sets its dates if they are empty (started on «читаю», finished
+     * on «прочитано»); moving back clears the dates that no longer fit.
+     */
+    upsertBook: {
+      reducer(s, a: PayloadAction<{ book: Omit<Book, 'createdAt'> } & When>) {
+        const b = a.payload.book
+        const was = s.books[b.id]
+        const book: Book = { ...b, title: b.title.trim().slice(0, 200), createdAt: was?.createdAt ?? a.payload.at }
+        if (!book.title) return
+        if (book.author !== undefined) book.author = book.author.trim() || undefined
+        if (book.status !== 'want' && !book.startedOn) book.startedOn = a.payload.day
+        if (book.status === 'read' && !book.finishedOn) book.finishedOn = a.payload.day
+        if (book.status === 'want') {
+          delete book.startedOn
+          delete book.finishedOn
+        }
+        if (book.status === 'reading') delete book.finishedOn
+        if (book.status !== 'read') delete book.rating
+        for (const k of ['author', 'url', 'note', 'startedOn', 'finishedOn', 'rating', 'bought'] as const) if (!book[k]) delete book[k]
+        s.books[b.id] = book
+      },
+      prepare: (p: { book: Omit<Book, 'createdAt' | 'id'> & { id?: string }; boundary?: number }) => ({ payload: when({ ...p, book: { ...p.book, id: p.book.id ?? nanoid() } }) }),
+    },
+    deleteBook(s, a: PayloadAction<string>) {
+      delete s.books[a.payload]
+    },
+
+    // ----- tags -----
+    /** A tag is taken off everything that wears it (the things stay) and its colour is forgotten. */
+    removeTag(s, a: PayloadAction<string>) {
+      const tag = a.payload
+      const strip = (x: { tags?: string[] }) => {
+        if (x.tags?.includes(tag)) x.tags = x.tags.filter((t) => t !== tag)
+      }
+      for (const c of [s.tasks, s.wishes, s.journal, s.jars, s.notes, s.books] as Record<string, { tags?: string[] }>[]) Object.values(c).forEach(strip)
+      s.meta.spells.forEach(strip)
+      if (tag in s.meta.tagColors) {
+        const { [tag]: _gone, ...rest } = s.meta.tagColors
+        s.meta.tagColors = rest
+      }
     },
 
     // ----- journal («Зеркало») -----

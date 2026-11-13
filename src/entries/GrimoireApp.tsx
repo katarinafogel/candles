@@ -11,7 +11,7 @@ const MirrorEntry = lazy(() => import('../pages/grimoire/MirrorEntry'))
 import Bestiary, { BestiaryCard } from '../pages/grimoire/Bestiary'
 const ProjectBook = lazy(() => import('../pages/grimoire/ProjectBook'))
 const Projects = lazy(() => import('../pages/grimoire/Projects'))
-const GrimoireMore = lazy(() => import('../pages/grimoire/More'))
+const GrimoireSettings = lazy(() => import('../pages/grimoire/Settings'))
 const Rituals = lazy(() => import('../pages/grimoire/Rituals'))
 import Scroll from '../pages/grimoire/Scroll'
 const Wheel = lazy(() => import('../pages/grimoire/Wheel'))
@@ -22,6 +22,7 @@ const Events = lazy(() => import('../pages/grimoire/Events'))
 const Tarot = lazy(() => import('../pages/grimoire/Tarot'))
 const Goals = lazy(() => import('../pages/grimoire/Goals'))
 const Notes = lazy(() => import('../pages/grimoire/Notes'))
+const Books = lazy(() => import('../pages/grimoire/Books'))
 const SpellsPage = lazy(() => import('../pages/grimoire/SpellsPage'))
 import { useWorkshopSync, WorkshopRunner } from '../components/grimoire/WorkshopRun'
 import { GoApp } from '../lib/apps'
@@ -63,8 +64,10 @@ export default function GrimoireApp() {
             <Route path="tarot" element={<Tarot />} />
             <Route path="goals" element={<Goals />} />
             <Route path="notes" element={<Notes />} />
+            <Route path="books" element={<Books />} />
             <Route path="spells" element={<SpellsPage />} />
-            <Route path="more" element={<GrimoireMore />} />
+            <Route path="settings" element={<GrimoireSettings />} />
+            <Route path="more" element={<Navigate to="/settings" replace />} />
             <Route path="*" element={<NotFound home="/" homeLabel="В гримуар" />} />
           </Route>
         </Route>

@@ -1,10 +1,10 @@
 // The floating «+» on every grimoire screen: a tap rolls out a column of icons for what can be added —
-// a wish, a jar, a book, a ritual, a person, a mirror entry or a deed — over a dimmed page; a tap on the
+// a wish, a jar, a book to read, a project, a ritual, a person, a mirror entry or a deed — over a dimmed page; a tap on the
 // page, Esc or the «+» again rolls it back.
-// On the day scroll a new deed goes into today's plan.
+// A new deed goes where its form says (its «На сегодня» switch), from any page.
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useToday } from '../../grimoire/act'
 import { Icon, type IconName } from '@shared/icons'
 import { NewPerson } from '../../pages/grimoire/Bestiary'
@@ -15,18 +15,22 @@ import { ProjectDialog } from '../../pages/grimoire/Projects'
 import { blank as blankRitual, HabitDialog } from '../../pages/grimoire/Rituals'
 import { WishDialog } from '../../pages/grimoire/Wishes'
 import { NewTaskDialog } from './NewTaskDialog'
+import { useSections } from './sections'
+import { BookDialog, blankBook } from '../../pages/grimoire/Books'
 
-type Kind = 'wish' | 'jar' | 'project' | 'ritual' | 'person' | 'event' | 'note' | 'entry' | 'deed'
+type Kind = 'wish' | 'jar' | 'book' | 'project' | 'ritual' | 'person' | 'event' | 'note' | 'entry' | 'deed'
 
-const items: { kind: Kind; label: string; icon: IconName }[] = [
-  { kind: 'wish', label: 'Желание', icon: 'star-alt-3' },
-  { kind: 'jar', label: 'Копилка', icon: 'coins-alt' },
-  { kind: 'project', label: 'Проект', icon: 'book-open' },
-  { kind: 'ritual', label: 'Ритуал', icon: 'moon' },
-  { kind: 'person', label: 'Человек', icon: 'circle-user' },
-  { kind: 'event', label: 'Событие', icon: 'calendar-alt' },
-  { kind: 'note', label: 'Заметка', icon: 'thumbtack' },
-  { kind: 'entry', label: 'Запись', icon: 'pen-nib' },
+/** What can be added; a kind that has its own section wears that section's icon (sections.tsx). */
+const items: { kind: Kind; label: string; section?: string; icon?: IconName }[] = [
+  { kind: 'wish', label: 'Желание', section: '/wishes' },
+  { kind: 'jar', label: 'Копилка', section: '/jars' },
+  { kind: 'book', label: 'Книга', section: '/books' },
+  { kind: 'project', label: 'Проект', section: '/projects' },
+  { kind: 'ritual', label: 'Ритуал', section: '/rituals' },
+  { kind: 'person', label: 'Человек', section: '/people' },
+  { kind: 'event', label: 'Событие', section: '/events' },
+  { kind: 'note', label: 'Заметка', section: '/notes' },
+  { kind: 'entry', label: 'Запись', section: '/mirror' },
   { kind: 'deed', label: 'Дело', icon: 'leaf-2' },
 ]
 
@@ -34,8 +38,9 @@ export function AddMenu() {
   const [open, setOpen] = useState(false)
   const [adding, setAdding] = useState<Kind>()
   const today = useToday()
-  const onScroll = useLocation().pathname === '/'
   const navigate = useNavigate()
+  const sections = useSections()
+  const iconOf = (i: (typeof items)[number]): IconName => i.icon ?? sections.find((x) => x.to === i.section)?.icon ?? 'plus'
 
   useEffect(() => {
     if (!open) return
@@ -103,7 +108,7 @@ export function AddMenu() {
               _hover={{ bg: 'color-mix(in srgb, var(--chakra-colors-ember-400) 30%, var(--chakra-colors-bg-panel))' }}
               onClick={() => pick(i.kind)}
             >
-              <Icon name={i.icon} size={26} />
+              <Icon name={iconOf(i)} size={26} />
               {/* What the button adds: beside it while the pointer is over it; on a phone, always. */}
               <Text
                 as="span"
@@ -152,7 +157,8 @@ export function AddMenu() {
       {adding === 'person' && <NewPerson onClose={done} />}
       {adding === 'event' && <EventDialog event={blankEvent(today)} onClose={done} />}
       {adding === 'note' && <NoteDialog note={blankNote} onClose={done} />}
-      {adding === 'deed' && <NewTaskDialog planToday={onScroll} onClose={done} />}
+      {adding === 'book' && <BookDialog book={blankBook} onClose={done} />}
+      {adding === 'deed' && <NewTaskDialog onClose={done} />}
     </>
   )
 }
