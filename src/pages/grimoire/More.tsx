@@ -7,6 +7,7 @@ import { PushSettings } from '../../components/grimoire/PushSettings'
 import { SignOutRow } from '../../components/SignOut'
 import { InvitesAdmin } from '../../components/Invites'
 import { RolesAdmin } from '../../components/RolesAdmin'
+import { LinkPeopleSetting } from '../../components/LinkPeopleSetting'
 import { Check, Chips, confirmAction, DateInput, Field, NumInput, PageHeader, Section, TextInput } from '@shared/components/ui'
 import { useToday } from '../../grimoire/act'
 import { humanDay } from '@grimoire-core/grimoire/days'
@@ -131,6 +132,7 @@ export default function GrimoireMore() {
 
       <Section title="Настройки гримуара">
         <Stack gap="5">
+          <LinkPeopleSetting />
           <Field label="Граница дня" helper={`«сегодня» длится до ${meta.dayBoundaryHour}:00 следующего утра`}>
             <NumInput value={meta.dayBoundaryHour} onChange={(v) => dispatch(A.updateMeta({ dayBoundaryHour: Math.max(0, Math.min(12, Math.round(v ?? 0))) }))} suffix="ч" width="140px" />
           </Field>

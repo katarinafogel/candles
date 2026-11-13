@@ -297,6 +297,8 @@ export interface GrimoireMeta {
   /** The owner's time zone (IANA), saved by the app, so the agent counts days the same way. */
   timeZone?: string
   hemisphere: 'north' | 'south'
+  /** A witch who is also a master links the bestiary's people with the workshop's (gifts of candles). */
+  linkWorkshopPeople?: boolean
   /** How many open deeds a day's plan holds before the grimoire asks what to move (0 — no limit). */
   planMax: number
   /** @deprecated The old per-part limits; only read to set planMax once. */
@@ -483,6 +485,8 @@ export interface Being {
   name: string
   contact?: string
   notes?: string
+  /** The same person in the workshop (kind `person`), when the bestiary and the workshop are linked. */
+  personId?: string
 }
 
 export interface PersonNotes {

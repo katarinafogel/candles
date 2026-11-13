@@ -56,6 +56,11 @@ export const useData = () => useAppSelector((s) => s.data)
 export const useGrimoire = () => useAppSelector((s) => s.grimoire)
 export const useIsWitch = () => useAppSelector((s) => !!s.local.roles?.includes('witch'))
 export const useIsMaster = () => useAppSelector((s) => !!s.local.roles?.includes('master'))
+/** Both apps are open to this person. */
+export const useBothApps = () => useAppSelector((s) => !!s.local.roles?.includes('witch') && !!s.local.roles?.includes('master'))
+/** The bestiary and the workshop share people: a witch who is also a master and turned it on. */
+export const useLinkPeople = () =>
+  useAppSelector((s) => !!s.grimoire.meta.linkWorkshopPeople && !!s.local.roles?.includes('witch') && !!s.local.roles?.includes('master'))
 export const useIsAdmin = () => useAppSelector((s) => !!s.local.roles?.includes('admin'))
 
 // Handy for debugging in the browser console during development.

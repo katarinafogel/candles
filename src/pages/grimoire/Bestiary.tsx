@@ -1,8 +1,8 @@
 // «Бестиарий»: the grimoire's own people — a memo (birthday and dates, likes, gift
 // ideas, questions to ask, dated facts), kindness and scars, and the balance of the last year. One
-// person = one card: the name lives on the bestiary's `being`, the memo in `person_notes`. People
-// copied from the workshop when the apps split keep their ids, so candles given to them still show.
-// Scars are hidden until tapped.
+// person = one card: the name lives on the bestiary's `being`, the memo in `person_notes`. A witch who
+// is also a master may link a card to a workshop person (setting «Связывать людей»): then the candles
+// given to them show here. Scars are hidden until tapped.
 import { Badge, Box, Button, Flex, HStack, IconButton, Input, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { nanoid } from '@reduxjs/toolkit'
 import { useState, type ReactNode } from 'react'
@@ -10,14 +10,15 @@ import { LuCheck, LuEye, LuEyeOff, LuPlus, LuTrash2, LuUndo2 } from 'react-icons
 import { Link as RouterLink, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useAttempt } from '../../components/grimoire/RoundBlocks'
 import { useTaskDialog } from '../../components/grimoire/TaskDialog'
-import { Chips, confirmAction, DateInput, Empty, Field, Modal, PageHeader, Panel, Section, TextArea, TextInput } from '@shared/components/ui'
+import { Chips, confirmAction, DateInput, Empty, Field, Modal, PageHeader, Panel, Section, Select, TextArea, TextInput } from '@shared/components/ui'
 import { useToday } from '../../grimoire/act'
 import { days, humanDay, plural } from '@grimoire-core/grimoire/days'
 import { countPetals } from '@grimoire-core/grimoire/mirrorStats'
 import { liveScars, nextOccurrence, personBalance, upcomingDates } from '@grimoire-core/grimoire/people'
 import { isOpenTask } from '@grimoire-core/grimoire/selectors'
 import type { PersonList, PersonNotes } from '@grimoire-core/grimoire/types'
-import { useAppDispatch, useAppSelector } from '../../store'
+import { useAppDispatch, useAppSelector, useLinkPeople } from '../../store'
+import { actions } from '@workshop-core/store/dataSlice'
 import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 import { PetalBar } from './MirrorInsights'
 
@@ -186,20 +187,35 @@ export default function Bestiary() {
   )
 }
 
+const NEW = '__new'
+
 export function BestiaryCard() {
   const { id = '' } = useParams()
   const dispatch = useAppDispatch()
   const person = useAppSelector((s) => s.grimoire.beings[id])
   const allCandles = useAppSelector((s) => s.data.candles)
-  // The same person in the workshop (people copied over when the apps split keep their ids).
-  const inWorkshop = useAppSelector((s) => !!s.data.people[id])
+  const linkOn = useLinkPeople()
+  const workshopPeople = useAppSelector((s) => s.data.people)
+  const beings = useAppSelector((s) => s.grimoire.beings)
   const g = useAppSelector((s) => s.grimoire)
   const today = useToday()
   const { open, dialog } = useTaskDialog()
   const [scarsShown, setScarsShown] = useState(false)
   if (!person) return <Navigate to="/g/people" replace />
   const n: PersonNotes = g.personNotes[id] ?? { id }
-  const candles = Object.values(allCandles).filter((c) => c.personId === id)
+  const linked = linkOn && person.personId ? workshopPeople[person.personId] : undefined
+  const candles = linked ? Object.values(allCandles).filter((c) => c.personId === linked.id) : []
+  const pickWorkshop = (v: string) => {
+    if (v === NEW) {
+      const pid = nanoid(8)
+      dispatch(actions.upsertPerson({ id: pid, name: person.name, contact: '', notes: '' }))
+      dispatch(A.linkBeing({ id, personId: pid }))
+    } else dispatch(A.linkBeing({ id, personId: v || undefined }))
+  }
+  // Workshop people not yet tied to someone else in the bestiary.
+  const free = Object.values(workshopPeople)
+    .filter((p) => p.id === person.personId || !Object.values(beings).some((b) => b.personId === p.id))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
   const set = (p: Partial<PersonNotes>) => dispatch(A.updatePersonNotes({ id, ...p }))
   const b = personBalance(g, id, today)
   const deeds = Object.values(g.tasks).filter((t) => t.personIds?.includes(id) && t.status !== 'cancelled')
@@ -211,12 +227,24 @@ export function BestiaryCard() {
   return (
     <>
       <PageHeader title={person.name} back="/g/people">
-        {inWorkshop && (
+        {linked && (
           <Button asChild size="sm" variant="ghost">
-            <RouterLink to={`/people?p=${id}`}>в мастерской</RouterLink>
+            <RouterLink to={`/people?p=${linked.id}`}>в мастерской</RouterLink>
           </Button>
         )}
       </PageHeader>
+      {linkOn && (
+        <Section>
+          <Field label="В мастерской" helper="кому из получателей свечей это соответствует — подаренные свечи появятся в карточке">
+            <Select
+              value={linked?.id ?? ''}
+              onChange={pickWorkshop}
+              placeholder="не связан"
+              options={[...free.map((p) => ({ value: p.id, label: p.name })), { value: NEW, label: `+ добавить «${person.name}» в мастерскую` }]}
+            />
+          </Field>
+        </Section>
+      )}
       <Section>
         <Text fontSize="sm" color="fg.muted">
           За 12 месяцев: ты для неё/него — {plural(b.forThem, 'дело', 'дела', 'дел')} · добрых дел от неё/него — {b.kindness} · шрамов — {b.scars}

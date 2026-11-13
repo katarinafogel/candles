@@ -822,6 +822,15 @@ const slice = createSlice({
       delete s.beings[a.payload]
       delete s.personNotes[a.payload]
     },
+    /** Ties a bestiary person to a workshop one (or unties, without personId). One workshop person — one bestiary person. */
+    linkBeing(s, a: PayloadAction<{ id: string; personId?: string }>) {
+      const { id, personId } = a.payload
+      if (personId) for (const b of Object.values(s.beings)) if (b.id !== id && b.personId === personId) delete b.personId
+      const b = s.beings[id]
+      if (!b) return
+      if (personId) b.personId = personId
+      else delete b.personId
+    },
     updatePersonNotes(s, a: PayloadAction<Partial<PersonNotes> & { id: string }>) {
       s.personNotes[a.payload.id] = { ...s.personNotes[a.payload.id], ...a.payload }
     },

@@ -10,6 +10,7 @@ begin
   assert (select count(*) from entities where kind = 'being' and owner_id = '00000000-0000-0000-0000-00000000000a' and id = 'p1') = 1,
     'a witch''s person is copied into her bestiary with the same id';
   assert (select data->>'name' from entities where kind = 'being' and id = 'p1') = 'Сестра', 'with the same data';
+  assert (select data->>'personId' from entities where kind = 'being' and id = 'p1') = 'p1', 'and linked to the workshop one';
   assert not exists (select 1 from entities where kind = 'being' and id = 'p2'), 'people in the bin stay behind';
   assert not exists (select 1 from entities where kind = 'being' and owner_id = '00000000-0000-0000-0000-00000000000d'),
     'only witches get a bestiary';

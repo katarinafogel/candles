@@ -1,17 +1,42 @@
 import { Badge, Box, Button, Flex, HStack, IconButton, Input, Stack, Text, Wrap } from '@chakra-ui/react'
 import { useState } from 'react'
 import { LuPencil, LuPlus } from 'react-icons/lu'
-import { useSearchParams } from 'react-router-dom'
-import { Check, DeleteButton, Empty, Field, IdBadge, Modal, PageHeader, TextArea, TextInput } from '@shared/components/ui'
+import { nanoid } from '@reduxjs/toolkit'
+import { Link as RouterLink, useSearchParams } from 'react-router-dom'
+import { Check, DeleteButton, Empty, Field, IdBadge, Modal, PageHeader, Select, TextArea, TextInput } from '@shared/components/ui'
 import { candleStageLabel } from '@workshop-core/lib/labels'
 import { reviewsOf } from '@workshop-core/lib/selectors'
-import { useAppDispatch, useData } from '../store'
+import { useAppDispatch, useAppSelector, useData, useLinkPeople } from '../store'
+import { grimoireActions as G } from '@grimoire-core/store/grimoireSlice'
 import { actions } from '@workshop-core/store/dataSlice'
 import type { Person } from '@workshop-core/types'
+
+const NEW = '__new'
 
 function PersonDialog({ person, onClose }: { person: Omit<Person, 'id'> & { id?: string }; onClose: () => void }) {
   const dispatch = useAppDispatch()
   const [p, setP] = useState(person)
+  // With the bestiary linked: who this is there (a being whose personId points here).
+  const linkOn = useLinkPeople()
+  const beings = useAppSelector((s) => s.grimoire.beings)
+  const was = Object.values(beings).find((b) => p.id && b.personId === p.id)?.id ?? ''
+  const [being, setBeing] = useState(was)
+  const free = Object.values(beings)
+    .filter((b) => !b.personId || b.personId === p.id)
+    .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+  const save = () => {
+    const id = p.id ?? nanoid(8)
+    dispatch(actions.upsertPerson({ ...p, id }))
+    if (linkOn && being !== was) {
+      if (was) dispatch(G.linkBeing({ id: was }))
+      if (being === NEW) {
+        const bid = nanoid(8)
+        dispatch(G.upsertBeing({ id: bid, name: p.name.trim() }))
+        dispatch(G.linkBeing({ id: bid, personId: id }))
+      } else if (being) dispatch(G.linkBeing({ id: being, personId: id }))
+    }
+    onClose()
+  }
   return (
     <Modal
       open
@@ -26,13 +51,7 @@ function PersonDialog({ person, onClose }: { person: Omit<Person, 'id'> & { id?:
             }}
             />
           )}
-          <Button
-            disabled={!p.name.trim()}
-            onClick={() => {
-              dispatch(actions.upsertPerson(p))
-              onClose()
-            }}
-          >
+          <Button disabled={!p.name.trim()} onClick={save}>
             Сохранить
           </Button>
         </>
@@ -48,6 +67,16 @@ function PersonDialog({ person, onClose }: { person: Omit<Person, 'id'> & { id?:
         <Field label="Заметки">
           <TextArea value={p.notes} onChange={(v) => setP({ ...p, notes: v })} placeholder="любит пряные, есть кот" />
         </Field>
+        {linkOn && (
+          <Field label="В бестиарии" helper="тот же человек в гримуаре: там видно, какие свечи ему подарены">
+            <Select
+              value={being}
+              onChange={setBeing}
+              placeholder="не связан"
+              options={[...free.map((b) => ({ value: b.id, label: b.name })), { value: NEW, label: `+ добавить${p.name.trim() ? ` «${p.name.trim()}»` : ''} в бестиарий` }]}
+            />
+          </Field>
+        )}
       </Stack>
     </Modal>
   )
@@ -60,6 +89,9 @@ export default function People() {
   const [q, setQ] = useState('')
   const [silent, setSilent] = useState(false)
   const focus = sp.get('p')
+  const linkOn = useLinkPeople()
+  const beings = useAppSelector((s) => s.grimoire.beings)
+  const beingOf = (pid: string) => (linkOn ? Object.values(beings).find((b) => b.personId === pid) : undefined)
 
   const people = Object.values(d.people)
     .map((p) => {
@@ -92,6 +124,11 @@ export default function People() {
                 <HStack>
                   <Text fontWeight="semibold">{p.name}</Text>
                   {unanswered.length > 0 && <Badge colorPalette="orange">не ответил(а): {unanswered.length}</Badge>}
+                  {beingOf(p.id) && (
+                    <Badge asChild variant="outline" colorPalette="purple">
+                      <RouterLink to={`/g/people/${beingOf(p.id)!.id}`}>в бестиарии</RouterLink>
+                    </Badge>
+                  )}
                 </HStack>
                 <Text fontSize="xs" color="fg.muted">
                   {[p.contact, p.notes].filter(Boolean).join(' · ')}

@@ -6,7 +6,8 @@
 --   * роль master сразу получают те, у кого в мастерской есть своя работа (формы, свечи, склад…);
 --   * новый вид записей being — люди бестиария, строка гримуара. Люди мастерской (person) —
 --     получатели свечей — остаются мастерской;
---   * каждой ведьме её люди из мастерской копируются в бестиарий с теми же id, так что заметки,
+--   * каждой ведьме её люди из мастерской копируются в бестиарий с теми же id и связью с оригиналом
+--     (personId), так что заметки,
 --     дела и даты, привязанные к человеку, остаются при нём. Дальше списки живут отдельно;
 --   * агент берёт имена людей для дел из бестиария, а не из мастерской.
 -- Мастерская пока открыта всем, кто вошёл: закрываем её ролью master во второй части,
@@ -89,7 +90,7 @@ $$;
 
 -- A witch's people move into her bestiary as copies with the same ids.
 insert into public.entities (owner_id, kind, id, data, updated_at)
-select e.owner_id, 'being', e.id, e.data, now()
+select e.owner_id, 'being', e.id, jsonb_set(e.data, '{personId}', to_jsonb(e.id)), now()
 from public.entities e
 where e.kind = 'person' and e.delete_date is null
   and exists (select 1 from public.user_roles r where r.user_id = e.owner_id and r.role = 'witch')

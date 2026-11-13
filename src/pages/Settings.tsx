@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import { LuDownload, LuFileUp, LuLogOut, LuUpload } from 'react-icons/lu'
 import { RolesAdmin } from '../components/RolesAdmin'
 import { InvitesAdmin } from '../components/Invites'
+import { LinkPeopleSetting } from '../components/LinkPeopleSetting'
 import { confirmAction, Field, Modal, notify, NumInput, PageHeader, Row, Section, Select, TextInput } from '@shared/components/ui'
 import { testAccountEmail } from '../lib/config'
 import { downloadBackup, readBackup, type BackupSummary } from '@workshop-core/lib/backup'
@@ -20,7 +21,7 @@ import {
   type ImportPlan,
   type MoldDraft,
 } from '@workshop-core/lib/importSheets'
-import { useAppDispatch, useAppSelector, useData, useIsAdmin } from '../store'
+import { useAppDispatch, useAppSelector, useBothApps, useData, useIsAdmin } from '../store'
 import { actions } from '@workshop-core/store/dataSlice'
 import { localActions } from '../store/localSlice'
 import type { DataState, Settings as S } from '@workshop-core/types'
@@ -272,6 +273,7 @@ function SheetImport() {
 
 export default function Settings() {
   const isAdmin = useIsAdmin()
+  const both = useBothApps()
   const d = useData()
   const dispatch = useAppDispatch()
   const profile = useAppSelector((s) => s.local.profile)
@@ -284,6 +286,12 @@ export default function Settings() {
   return (
     <>
       <PageHeader title="Настройки" back="/more" />
+
+      {both && (
+        <Section title="Гримуар">
+          <LinkPeopleSetting />
+        </Section>
+      )}
 
       <Section title="Коэффициенты расчётов">
         <SimpleGrid columns={{ base: 1, sm: 2, md: 4 }} gap="4">
