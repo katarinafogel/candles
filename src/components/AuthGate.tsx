@@ -51,7 +51,7 @@ function Login() {
   async function signIn() {
     setBusy(true)
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
-    if (error) notify('Гримуар тебя не узнал. Проверь почту и слово-ключ', 'error', error.code === 'invalid_credentials' ? undefined : error.message)
+    if (error) notify(`${apps[APP].short} тебя не узнал${APP === 'grimoire' ? '' : 'а'}. Проверь почту и слово-ключ`, 'error', error.code === 'invalid_credentials' ? undefined : error.message)
     setBusy(false)
   }
 

@@ -11,8 +11,9 @@ import { words } from '@grimoire-core/grimoire/selectors'
 import { builtInPractices } from '@grimoire-core/grimoire/wheel'
 import { useAppDispatch, useAppSelector, useIsMaster, useIsWitch } from '../../store'
 import { NoAccess } from '../NoAccess'
+import { AppMark } from '../AppMark'
 import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
-import { Eucalyptus, MoonPhases, MoonSlice } from '@shared/components/Magic'
+import { Eucalyptus, MoonPhases } from '@shared/components/Magic'
 import { HeaderRight } from '../UserMenu'
 import { FeedbackPrompt } from './Feedback'
 import { AddMenu } from './AddMenu'
@@ -83,11 +84,8 @@ export default function GrimoireLayout() {
   return (
     <Flex minH="100dvh">
       <Box as="nav" display={{ base: 'none', md: 'block' }} w="240px" flexShrink={0} borderRightWidth="1px" borderColor="border" bg="bg.nav" position="sticky" top="0" h="100dvh" overflowY="auto" className="quiet-scroll" p="4">
-        <Flex align="center" gap="3" mb="3" px="1">
-          <MoonSlice size={38} tone="stone" />
-          <Text fontFamily="heading" fontWeight="semibold" fontSize="2xl" lineHeight="1" color="ember.100">
-            Гримуар
-          </Text>
+        <Flex mb="3" px="1">
+          <AppMark size={38} />
         </Flex>
         <MoonPhases size={12} gap="2.5" color="ember.200" px="2" mb="4" />
         <Stack gap="1">
@@ -118,11 +116,8 @@ export default function GrimoireLayout() {
       <Box flex="1" minW="0" position="relative" overflowX="clip">
         <Box position="relative" zIndex="1" px={{ base: '4', md: '8' }} pt={{ base: 'calc(16px + env(safe-area-inset-top))', md: '8' }} pb={{ base: '28', md: '24' }}>
           <Flex as="header" justify="space-between" align="center" mb={{ base: '3', md: '5' }} gap="3">
-            <Flex display={{ base: 'flex', md: 'none' }} align="center" gap="2">
-              <MoonSlice size={26} tone="stone" />
-              <Text fontFamily="heading" fontWeight="semibold" fontSize="lg" color="ember.100">
-                Гримуар
-              </Text>
+            <Flex display={{ base: 'flex', md: 'none' }}>
+              <AppMark size={26} compact />
             </Flex>
             <Box display={{ base: 'none', md: 'block' }} />
             <HeaderRight />
