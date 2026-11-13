@@ -7,30 +7,38 @@
 - Данные хранятся в **Supabase** (Postgres): у каждого мастера свой аккаунт, вход через **Google**. Правила доступа в базе (RLS) не дают видеть чужие данные.
 - Копия данных лежит на устройстве (IndexedDB): без интернета записи можно смотреть, а изменения уходят на сервер, когда связь вернётся.
 - Отзывы получатели оставляют без входа — через функцию базы `submit_review` с проверкой ответов и лимитом частоты.
-- Хостинг — **GitHub Pages**, автодеплой из ветки `main`.
+- Три приложения на одном сайте `katarinafogel.art`, каждое — своя сборка и своё PWA:
+  - **витрина** `/` — «Другие проекты» и форма отзыва на свечу `/candles-review/…` (без входа);
+  - **мастерская** `/workshop/` — журнал заливки (роль `master`);
+  - **гримуар** `/grimoire/` — дела, ритуалы, колесо года (роль `witch`).
+- Хостинг — **Cloudflare Pages**, автодеплой из ветки `main` после тестов.
 
 ## Запуск
 
 ```bash
 npm install
-npm run dev      # http://localhost:5173
+npm run dev            # мастерская: http://localhost:5173/workshop/
+npm run dev:grimoire   # гримуар:    http://localhost:5173/grimoire/
+npm run dev:showcase   # витрина:    http://localhost:5173/
 npm test         # расчёты, этапы, импорт таблиц, гримуар
-npm run build
+npm run build          # все три в dist/: витрина в корне, dist/workshop, dist/grimoire
 ```
 
-## Публикация на GitHub Pages
+Каждое приложение — папка `apps/<имя>/` (`index.html`, `main.tsx`, `public/` с иконками), сборка выбирается режимом Vite (`vite build --mode workshop`, см. `vite.config.ts`). Маршруты — `src/entries/*App.tsx`, общий код — `src/` и `packages/`. Ссылки между приложениями — через `src/lib/apps.tsx` (`AppLink`, `useGo`): это обычный переход на другую страницу сайта.
 
-1. **Settings → Pages → Source: GitHub Actions**.
-2. Пуш в `main` запускает `.github/workflows/deploy.yml`.
+## Публикация на Cloudflare Pages
+
+1. Пуш в `main` запускает `.github/workflows/deploy.yml`: тесты, сборка, выкладка в проект Pages `katarinafogel` (`wrangler pages deploy`).
+2. Секреты репозитория (**Settings → Secrets and variables → Actions → Secrets**): `CLOUDFLARE_API_TOKEN` (токен с правом Account → Cloudflare Pages → Edit) и `CLOUDFLARE_ACCOUNT_ID`.
 3. Переменные репозитория (**Settings → Secrets and variables → Actions → Variables**): `SUPABASE_URL` и `SUPABASE_ANON_KEY` (публичный ключ проекта). Их же для локального запуска — в `.env.local` как `VITE_SUPABASE_URL` и `VITE_SUPABASE_ANON_KEY`.
 4. Workflow `keepalive.yml` раз в 3 дня обращается к базе, чтобы бесплатный проект Supabase не засыпал.
 
-Ссылки в QR имеют вид `https://<логин>.github.io/<репозиторий>/#/c/<мастер>/S-0042/<секретный код>` (HashRouter, чтобы Pages не отдавал 404). Секретный код свечи (`review_tokens`, миграция 0013) не даёт слать отзывы перебором номеров; проверка включена для всех и отключается только в базе (`review_settings`).
+Ссылки в QR имеют вид `https://katarinafogel.art/candles-review/<мастер>/S-0042/<секретный код>`; каждое приложение отвечает на любой адрес в своей папке своим `index.html` (`dist/_redirects`, его пишет `scripts/site.mjs`). Секретный код свечи (`review_tokens`, миграция 0013) не даёт слать отзывы перебором номеров; проверка включена для всех и отключается только в базе (`review_settings`).
 
 ## Supabase
 
 1. Создать проект, выполнить [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql) в SQL Editor.
-2. **Authentication → URL Configuration:** Site URL — адрес сайта, в Redirect URLs — `https://<логин>.github.io/<репозиторий>/**`.
+2. **Authentication → URL Configuration:** Site URL — `https://katarinafogel.art`, в Redirect URLs — `https://katarinafogel.art/**` (и `https://katarinafogel.pages.dev/**` для проверки).
 3. **Authentication → Sign In / Providers → Google:** Client ID и Client Secret из OAuth-клиента Google Cloud (тип Web application, redirect URI — `https://<проект>.supabase.co/auth/v1/callback`).
 
 ## Гримуар дел
@@ -59,7 +67,7 @@ npm run build
 
 ## UI-кит
 
-Витрина компонентов проекта — `/ui` (`src/pages/UiKit.tsx`). Иконки — из наборов [Dazzle Line Icons](https://www.svgrepo.com/collection/dazzle-line-icons/1) (`packages/shared/src/icons/dazzle/`, выборка) и [Magic Glyph Icons](https://www.svgrepo.com/collection/magic-glyph-icons/) (`packages/shared/src/icons/magic/`, весь набор), отдельные иконки — в `packages/shared/src/icons/misc/`; по одной в файле, цвет `currentColor`; в коде — `<Icon name="cauldron" />` из `@shared/icons`. Новая иконка: скачать `https://www.svgrepo.com/show/<id>/<имя>.svg` в папку набора и заменить `#000000` на `currentColor`; имена не должны повторяться между наборами.
+Витрина компонентов проекта — `/dev/components` (только для админа; живёт в мастерской, `src/pages/UiKit.tsx`). Иконки — из наборов [Dazzle Line Icons](https://www.svgrepo.com/collection/dazzle-line-icons/1) (`packages/shared/src/icons/dazzle/`, выборка) и [Magic Glyph Icons](https://www.svgrepo.com/collection/magic-glyph-icons/) (`packages/shared/src/icons/magic/`, весь набор), отдельные иконки — в `packages/shared/src/icons/misc/`; по одной в файле, цвет `currentColor`; в коде — `<Icon name="cauldron" />` из `@shared/icons`. Новая иконка: скачать `https://www.svgrepo.com/show/<id>/<имя>.svg` в папку набора и заменить `#000000` на `currentColor`; имена не должны повторяться между наборами.
 
 ## Где что
 
