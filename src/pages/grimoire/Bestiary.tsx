@@ -6,7 +6,7 @@
 import { Badge, Box, Button, Flex, HStack, IconButton, Input, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { nanoid } from '@reduxjs/toolkit'
 import { useState, type ReactNode } from 'react'
-import { LuCheck, LuEye, LuEyeOff, LuPlus, LuTrash2, LuUndo2 } from 'react-icons/lu'
+import { LuCheck, LuChevronDown, LuChevronRight, LuEye, LuEyeOff, LuPlus, LuTrash2, LuUndo2 } from 'react-icons/lu'
 import { Link as RouterLink, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useAttempt } from '../../components/grimoire/RoundBlocks'
 import { useTaskDialog } from '../../components/grimoire/TaskDialog'
@@ -202,6 +202,7 @@ export function BestiaryCard() {
   const today = useToday()
   const { open, dialog } = useTaskDialog()
   const [scarsShown, setScarsShown] = useState(false)
+  const [doneShown, setDoneShown] = useState(false)
   if (!person) return <Navigate to="/people" replace />
   const n: PersonNotes = g.personNotes[id] ?? { id }
   const linked = linkOn && person.personId ? workshopPeople[person.personId] : undefined
@@ -221,6 +222,7 @@ export function BestiaryCard() {
   const b = personBalance(g, id, today)
   const deeds = Object.values(g.tasks).filter((t) => t.personIds?.includes(id) && t.status !== 'cancelled')
   const openDeeds = deeds.filter(isOpenTask)
+  const doneDeeds = deeds.filter((t) => t.status === 'done').sort((x, y) => (y.doneAt ?? '').localeCompare(x.doneAt ?? ''))
   const mirror = Object.values(g.journal).filter((e) => e.people?.includes(id))
   const live = liveScars(n)
   const next = n.birthday ? nextOccurrence(n.birthday, today) : undefined
@@ -346,18 +348,34 @@ export function BestiaryCard() {
             )}
           </Section>
           <Section title="Дела и свечи">
-            <Stack gap="1.5" fontSize="sm">
+            <Stack gap="0.5" fontSize="sm">
               {openDeeds.map((t) => (
-                <Text key={t.id} cursor="pointer" onClick={() => open(t)}>
-                  ✦ {t.title}
-                  {t.doOn ? ` · ${humanDay(t.doOn, today)}` : ''}
-                </Text>
+                <LinkRow key={t.id} icon="✦" onClick={() => open(t)}>
+                  {t.title}
+                  {t.doOn ? <Text as="span" color="fg.subtle">{` · ${humanDay(t.doOn, today)}`}</Text> : null}
+                </LinkRow>
               ))}
-              {deeds.length > openDeeds.length && <Text color="fg.muted">Сделано для неё/него: {deeds.length - openDeeds.length}</Text>}
+              {doneDeeds.length > 0 && (
+                <Box>
+                  <Button size="xs" variant="ghost" px="1" color="fg.muted" onClick={() => setDoneShown(!doneShown)}>
+                    {doneShown ? <LuChevronDown /> : <LuChevronRight />}
+                    Сделано для неё/него ({doneDeeds.length})
+                  </Button>
+                  {doneShown &&
+                    doneDeeds.map((t) => (
+                      <LinkRow key={t.id} icon="✓" muted onClick={() => open(t)}>
+                        {t.title}
+                        {t.doneAt ? <Text as="span" color="fg.subtle">{` · ${ddmm(t.doneAt.slice(0, 10))}`}</Text> : null}
+                      </LinkRow>
+                    ))}
+                </Box>
+              )}
               {candles.map((c) => (
-                <Text key={c.id} color="fg.muted">
-                  🕯 {c.name}
-                </Text>
+                <AppLink key={c.id} app="workshop" to={`/candles/${c.id}`}>
+                  <LinkRow icon="🕯">
+                    {c.name} <Text as="span" color="fg.subtle">| {c.id}</Text>
+                  </LinkRow>
+                </AppLink>
               ))}
               {!deeds.length && !candles.length && <Text color="fg.subtle">Пока ничего. Дела привязываются через @имя.</Text>}
             </Stack>
@@ -371,6 +389,33 @@ export function BestiaryCard() {
       </SimpleGrid>
       {dialog}
     </>
+  )
+}
+
+/** A line that opens something: a deed's card or a candle in the workshop; looks like a link. */
+function LinkRow({ icon, children, onClick, muted }: { icon: ReactNode; children: ReactNode; onClick?: () => void; muted?: boolean }) {
+  return (
+    <Flex
+      as={onClick ? 'button' : 'span'}
+      onClick={onClick}
+      align="baseline"
+      gap="2"
+      w="full"
+      textAlign="left"
+      px="1.5"
+      py="1"
+      borderRadius="l2"
+      cursor="pointer"
+      color={muted ? 'fg.muted' : 'fg'}
+      _hover={{ bg: 'bg.muted', color: 'ember.200' }}
+    >
+      <Box as="span" w="4" flexShrink={0} textAlign="center" color="fg.subtle">
+        {icon}
+      </Box>
+      <Text as="span" flex="1">
+        {children}
+      </Text>
+    </Flex>
   )
 }
 
