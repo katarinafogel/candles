@@ -79,6 +79,8 @@ jobs:
         run: psql -q -v ON_ERROR_STOP=1 -f supabase/tests/masters.sql 2>&1 | tee out.txt || { grep -m3 -E 'ERROR|FATAL|assert' out.txt | sed 's/^/::error::/'; exit 1; }
       - name: 0015 (twice), the workshop for masters
         run: psql -q -v ON_ERROR_STOP=1 -f supabase/migrations/0015_workshop_for_masters.sql -f supabase/migrations/0015_workshop_for_masters.sql -f supabase/tests/workshop_masters.sql 2>&1 | tee out.txt || { grep -m3 -E 'ERROR|FATAL|assert' out.txt | sed 's/^/::error::/'; exit 1; }
+      - name: 0016 (twice), short QR codes
+        run: psql -q -v ON_ERROR_STOP=1 -f supabase/migrations/0016_short_links.sql -f supabase/migrations/0016_short_links.sql -f supabase/tests/short_links.sql 2>&1 | tee out.txt || { grep -m3 -E 'ERROR|FATAL|assert' out.txt | sed 's/^/::error::/'; exit 1; }
 
   agent:
     # The agent's MCP server (Supabase Edge Function on Deno) with the grimoire core copied from src.
