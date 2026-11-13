@@ -4,7 +4,8 @@ name: Deploy
 # /workshop/, the grimoire at /grimoire/ — built together after the tests pass.
 # Needs repository secrets CLOUDFLARE_API_TOKEN (Account → Cloudflare Pages → Edit) and
 # CLOUDFLARE_ACCOUNT_ID; until they are set the job builds and stops without deploying.
-# github.io keeps the last single-app version until it becomes a forwarding page.
+# github.io (katarinafogel.github.io/candles/) is only a forwarding page now: legacy-pages/ sends old
+# QR codes, bookmarks and shortcuts to the same pages on katarinafogel.art.
 
 on:
   push:
@@ -13,6 +14,8 @@ on:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 concurrency:
   group: deploy
@@ -52,3 +55,16 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npx --yes wrangler@3 pages deploy dist --project-name=katarinafogel --branch=main --commit-dirty=true
+
+  github-io:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: legacy-pages
+      - id: deployment
+        uses: actions/deploy-pages@v4

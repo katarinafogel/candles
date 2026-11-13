@@ -16,3 +16,6 @@ export const reviewPath = (slug: string, id: string, token?: string) => `/candle
  * the secret token proves the person holds the candle (the server rejects reviews without it).
  */
 export const candleLink = (slug: string, id: string, token: string, s?: Settings) => `${publicBase(s)}${reviewPath(slug, id, token)}`
+
+/** The short QR link: the showcase looks the code up and opens the candle's review form. */
+export const shortLink = (code: string, s?: Settings) => `${publicBase(s)}/r/${code}`

@@ -2,10 +2,10 @@ import { Box, Button, HStack, Image, Spinner, Stack, Text } from '@chakra-ui/rea
 import QRCode from 'qrcode'
 import { useEffect, useState } from 'react'
 import { LuCopy, LuDownload } from 'react-icons/lu'
-import { candleLink } from '../lib/config'
+import { shortLink } from '../lib/config'
 import { useReviewTokens } from '../lib/reviewTokens'
 import { saveFile } from '@shared/lib/download'
-import { useAppSelector, useData } from '../store'
+import { useData } from '../store'
 import { notify } from '@shared/components/ui'
 
 export const qrDataUrl = (text: string, width = 512) =>
@@ -13,10 +13,9 @@ export const qrDataUrl = (text: string, width = 512) =>
 
 export function QrBlock({ candleId }: { candleId: string }) {
   const d = useData()
-  const slug = useAppSelector((s) => s.local.profile?.slug ?? '')
   const { tokens, loading, error } = useReviewTokens([candleId])
   const token = tokens[candleId]
-  const link = token ? candleLink(slug, candleId, token, d.settings) : ''
+  const link = token ? shortLink(token.code, d.settings) : ''
   const [src, setSrc] = useState('')
   useEffect(() => {
     if (link) qrDataUrl(link).then(setSrc)

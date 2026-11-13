@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Переехали на katarinafogel.art</title>
+    <script>
+      // The old address katarinafogel.github.io/candles/ lives on only for QR codes already printed on
+      // candles: #/c/<master>/<candle>/<token> opens the same review form on the new site.
+      // Anything else goes to the new site's front page.
+      ;(function () {
+        var m = location.hash.match(/^#\/c\/([^/?]+)\/([^/?]+)(?:\/([^/?]+))?/)
+        var to = m ? '/candles-review/' + m[1] + '/' + m[2] + (m[3] ? '/' + m[3] : '') : '/projects'
+        location.replace('https://katarinafogel.art' + to)
+      })()
+    </script>
+  </head>
+  <body>
+    <p>Мы переехали: <a href="https://katarinafogel.art/projects">katarinafogel.art</a></p>
+  </body>
+</html>

@@ -4,7 +4,7 @@ import { LuPrinter } from 'react-icons/lu'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { qrDataUrl } from '../components/QrBlock'
 import { NumInput } from '@shared/components/ui'
-import { candleLink } from '../lib/config'
+import { shortLink } from '../lib/config'
 import { fetchReviewTokens } from '../lib/reviewTokens'
 import { useAppSelector, useData } from '../store'
 
@@ -26,7 +26,7 @@ export default function PrintQr() {
         const missing = ids.filter((id) => !tokens[id])
         if (missing.length) setFailed(`Нет секретного кода для ${missing.join(', ')}: свечи ещё не сохранились на сервере.`)
         const ready = ids.filter((id) => tokens[id])
-        const e = await Promise.all(ready.map(async (id) => [id, await qrDataUrl(candleLink(slug, id, tokens[id], d.settings), 600)] as const))
+        const e = await Promise.all(ready.map(async (id) => [id, await qrDataUrl(shortLink(tokens[id].code, d.settings), 600)] as const))
         setSrcs(Object.fromEntries(e))
       })
       .catch(() => setFailed('Не получилось получить секретные коды для QR: нет связи с сервером.'))
