@@ -1,4 +1,4 @@
-// GENERATED from src/grimoire/notify.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
+// GENERATED from packages/grimoire-core/src/grimoire/notify.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
 // What the grimoire says by push, and when: the server calls this every quarter of an hour with the
 // owner's local time and what was already sent today. Each kind goes once a day, in a three-hour
 // window from its time (a phone asleep at 9:00 still gets the morning at 9:15). Nothing in the навь.

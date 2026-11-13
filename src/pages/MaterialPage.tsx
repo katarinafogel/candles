@@ -2,12 +2,12 @@ import { Button, Flex, IconButton, SimpleGrid, Stack, Text } from '@chakra-ui/re
 import { useState } from 'react'
 import { LuArchive, LuPencil, LuShoppingCart, LuTrash2, LuClipboardCheck } from 'react-icons/lu'
 import { useParams } from 'react-router-dom'
-import { confirmAction, Empty, notify, IdBadge, PageHeader, Row, Section, Stat } from '../components/ui'
-import { fmt, fmtDateTime, stockOf, thresholdOf, unitPrice } from '../lib/calc'
-import { categoryLabel, unitLabel } from '../lib/labels'
-import { fallbackUse } from '../lib/selectors'
+import { confirmAction, Empty, notify, IdBadge, PageHeader, Row, Section, Stat } from '@shared/components/ui'
+import { fmt, fmtDateTime, stockOf, thresholdOf, unitPrice } from '@workshop-core/lib/calc'
+import { categoryLabel, unitLabel } from '@workshop-core/lib/labels'
+import { fallbackUse } from '@workshop-core/lib/selectors'
 import { useAppDispatch, useData } from '../store'
-import { actions } from '../store/dataSlice'
+import { actions } from '@workshop-core/store/dataSlice'
 import { InventoryDialog, MaterialDialog, PurchaseDialog } from './Stock'
 
 const kindLabel = { purchase: 'закупка', use: 'списание', return: 'возврат', inventory: 'инвентаризация' }

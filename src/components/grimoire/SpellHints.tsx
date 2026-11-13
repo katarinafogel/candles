@@ -1,7 +1,7 @@
 // Templates suggested while a deed is named: from two letters on, up to six whose name has the typed
 // words, the most used first. A pick hands the template back; the form decides what to do with it.
 import { Box, HStack, Text } from '@chakra-ui/react'
-import type { Spell } from '../../grimoire/types'
+import type { Spell } from '@grimoire-core/grimoire/types'
 import { useAppSelector } from '../../store'
 import { spellKind } from './Spells'
 

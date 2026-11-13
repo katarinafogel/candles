@@ -26,7 +26,7 @@ import {
 } from '@chakra-ui/react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
-import { parseNum } from '../lib/calc'
+import { parseNum } from '../lib/format'
 import { Crescent, Leaf, Sparkle } from './Magic'
 
 export const toaster = createToaster({ placement: 'top', pauseOnPageIdle: true, offsets: { top: 'calc(16px + env(safe-area-inset-top))', bottom: '16px', left: '16px', right: '16px' } })

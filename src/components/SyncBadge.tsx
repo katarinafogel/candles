@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { LuCloud, LuCloudOff, LuRefreshCw, LuTriangleAlert } from 'react-icons/lu'
 import { flush, load } from '../lib/sync'
 import { useAppSelector } from '../store'
-import { notify } from './ui'
+import { notify } from '@shared/components/ui'
 
 /**
  * Shows whether the device copy has reached the server, with a button that syncs right now: sends

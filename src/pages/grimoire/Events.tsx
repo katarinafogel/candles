@@ -4,13 +4,13 @@
 import { Box, Button, Flex, HStack, Input, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { useAttempt } from '../../components/grimoire/RoundBlocks'
-import { DateInput, DeleteButton, Empty, Field, Modal, notify, PageHeader, Panel, Section, Select, SigilPicker, TextArea, TextInput } from '../../components/ui'
+import { DateInput, DeleteButton, Empty, Field, Modal, notify, PageHeader, Panel, Section, Select, SigilPicker, TextArea, TextInput } from '@shared/components/ui'
 import { useToday } from '../../grimoire/act'
-import { addDays, daysBetween, humanDay, plural } from '../../grimoire/days'
-import { isOpenTask } from '../../grimoire/selectors'
-import type { LifeEvent, Task } from '../../grimoire/types'
+import { addDays, daysBetween, humanDay, plural } from '@grimoire-core/grimoire/days'
+import { isOpenTask } from '@grimoire-core/grimoire/selectors'
+import type { LifeEvent, Task } from '@grimoire-core/grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { grimoireActions as A } from '../../store/grimoireSlice'
+import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 
 type Fate = 'keep' | 'after' | 'backlog' | 'cancel'
 const fateLabel: Record<Fate, string> = { keep: 'оставить', after: 'на день после', backlog: 'в бэклог', cancel: 'отпустить' }

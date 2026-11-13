@@ -2,14 +2,14 @@ import { Badge, Box, Button, Flex, HStack, Input, SimpleGrid, Stack, Text } from
 import { useState } from 'react'
 import { LuPlus, LuShoppingCart, LuTriangleAlert } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
-import { Check, Chips, DateInput, Empty, Field, Modal, notify, NumInput, PageHeader, Section, Select, TextArea, TextInput } from '../components/ui'
-import { fmt, stockOf } from '../lib/calc'
-import { nowLocal, toIso } from '../lib/dates'
-import { categoryLabel, categoryUnit, scentNotes, seasons, unitLabel } from '../lib/labels'
-import { needsRestock } from '../lib/selectors'
+import { Check, Chips, DateInput, Empty, Field, Modal, notify, NumInput, PageHeader, Section, Select, TextArea, TextInput } from '@shared/components/ui'
+import { fmt, stockOf } from '@workshop-core/lib/calc'
+import { nowLocal, toIso } from '@shared/lib/dates'
+import { categoryLabel, categoryUnit, scentNotes, seasons, unitLabel } from '@workshop-core/lib/labels'
+import { needsRestock } from '@workshop-core/lib/selectors'
 import { useAppDispatch, useData } from '../store'
-import { actions } from '../store/dataSlice'
-import type { Material, MaterialCategory, Unit } from '../types'
+import { actions } from '@workshop-core/store/dataSlice'
+import type { Material, MaterialCategory, Unit } from '@workshop-core/types'
 
 type Draft = Omit<Material, 'id' | 'movements'> & { id?: string; initialQty?: number }
 

@@ -48,7 +48,7 @@ npm run build
 
 ### Агент (MCP)
 
-Ассистент Claude может читать и менять гримуар через свой коннектор — сервер MCP на Supabase Edge Function `grimoire-mcp`. Он выполняет те же правила, что и приложение (код ядра копируется из `src/grimoire` скриптом `node scripts/sync-agent-core.mjs`), и видит только гримуар.
+Ассистент Claude может читать и менять гримуар через свой коннектор — сервер MCP на Supabase Edge Function `grimoire-mcp`. Он выполняет те же правила, что и приложение (код ядра копируется из `packages/grimoire-core/src` скриптом `node scripts/sync-agent-core.mjs`), и видит только гримуар.
 
 1. Выполнить [`supabase/migrations/0003_agent.sql`](supabase/migrations/0003_agent.sql).
 2. Развернуть функцию: `supabase functions deploy grimoire-mcp --no-verify-jwt` (или через коннектор Supabase).
@@ -59,26 +59,37 @@ npm run build
 
 ## UI-кит
 
-Витрина компонентов проекта — `/ui` (`src/pages/UiKit.tsx`). Иконки — из наборов [Dazzle Line Icons](https://www.svgrepo.com/collection/dazzle-line-icons/1) (`src/icons/dazzle/`, выборка) и [Magic Glyph Icons](https://www.svgrepo.com/collection/magic-glyph-icons/) (`src/icons/magic/`, весь набор), отдельные иконки — в `src/icons/misc/`; по одной в файле, цвет `currentColor`; в коде — `<Icon name="cauldron" />` из `src/icons`. Новая иконка: скачать `https://www.svgrepo.com/show/<id>/<имя>.svg` в папку набора и заменить `#000000` на `currentColor`; имена не должны повторяться между наборами.
+Витрина компонентов проекта — `/ui` (`src/pages/UiKit.tsx`). Иконки — из наборов [Dazzle Line Icons](https://www.svgrepo.com/collection/dazzle-line-icons/1) (`packages/shared/src/icons/dazzle/`, выборка) и [Magic Glyph Icons](https://www.svgrepo.com/collection/magic-glyph-icons/) (`packages/shared/src/icons/magic/`, весь набор), отдельные иконки — в `packages/shared/src/icons/misc/`; по одной в файле, цвет `currentColor`; в коде — `<Icon name="cauldron" />` из `@shared/icons`. Новая иконка: скачать `https://www.svgrepo.com/show/<id>/<имя>.svg` в папку набора и заменить `#000000` на `currentColor`; имена не должны повторяться между наборами.
 
 ## Где что
 
+Код разложен по папкам: само приложение — в `src/`, общее — в `packages/`. Каждый пакет подключается по своему имени:
+
+| Пакет | Имя в импортах | Что внутри |
+|---|---|---|
+| `packages/shared` | `@shared/…` | общие компоненты (`components/ui.tsx`, `Magic.tsx`), темы, иконки, вход в Supabase, форматы чисел и дат |
+| `packages/grimoire-core` | `@grimoire-core/…` | модель и правила гримуара без интерфейса — их же копирует себе агент и рассыльщик пушей |
+| `packages/workshop-core` | `@workshop-core/…` | модель и правила мастерской без интерфейса: расчёты, импорт, миграции, операции |
+
+Внутри пакетов пакеты ходят друг к другу только по именам, а ядро гримуара — только внутри себя (агенту на Deno нужны относительные пути). Имена прописаны в `tsconfig.json` (`paths`) и `vite.config.ts` (`resolve.alias`).
+
+
 | Путь | Что |
 |---|---|
-| `src/types.ts` | модель данных (формы, замесы, подсвечники, свечи, заливки, материалы, люди, отзывы) |
-| `src/store/dataSlice.ts` | все операции: замес, этапы, откат, заливка, списание, брак |
-| `src/lib/calc.ts` | формулы замеса и заливки, порог «заканчивается», себестоимость |
-| `src/lib/importSheets.ts` | первичный импорт листов «Формы», «Свечи», «Отдушки» из CSV |
+| `packages/workshop-core/src/types.ts` | модель данных (формы, замесы, подсвечники, свечи, заливки, материалы, люди, отзывы) |
+| `packages/workshop-core/src/store/dataSlice.ts` | все операции: замес, этапы, откат, заливка, списание, брак |
+| `packages/workshop-core/src/lib/calc.ts` | формулы замеса и заливки, порог «заканчивается», себестоимость |
+| `packages/workshop-core/src/lib/importSheets.ts` | первичный импорт листов «Формы», «Свечи», «Отдушки» из CSV |
 | `src/pages/PublicCandle.tsx` | страница получателя: инструкция, трекер горения, отзыв |
 | `supabase/migrations/0001_init.sql` | схема базы, правила доступа, функции `apply_changes`, `candle_public`, `submit_review` |
 | `src/lib/sync.ts` | синхронизация с сервером: очередь изменений, загрузка аккаунта |
 | `public/privacy.html` | политика конфиденциальности (нужна Google для входа) |
-| `src/grimoire/` | модель гримуара, разбор строки, даты, привычки, колесо года |
-| `src/store/grimoireSlice.ts` | все операции гримуара |
+| `packages/grimoire-core/src/grimoire/` | модель гримуара, разбор строки, даты, привычки, колесо года |
+| `packages/grimoire-core/src/store/grimoireSlice.ts` | все операции гримуара |
 | `src/pages/grimoire/` | свиток, книга дел, ритуалы, колесо, зеркало, хотелки, полка проектов и книга проекта, «ещё» |
 | `src/components/grimoire/TaskCard.tsx` | карточка дела четырёх цветов (жаба, радость, сложное, необходимое) |
 | `supabase/tests/` | проверка миграций и правил доступа на чистом Postgres (CI) |
-| `src/grimoire/agent.ts` | инструменты агента поверх логики гримуара |
+| `packages/grimoire-core/src/grimoire/agent.ts` | инструменты агента поверх логики гримуара |
 | `supabase/functions/grimoire-mcp/` | MCP-сервер агента (Deno), `core/` — копия ядра |
 
 Проверка расчётов: «Книжка» (250 мл, 35% воды) → вода 159,25 г, гипс 295,75 г; «Шкатулка овал горшочек» (90 г, 7%) → воск 83,7 г, отдушка 6,3 г.

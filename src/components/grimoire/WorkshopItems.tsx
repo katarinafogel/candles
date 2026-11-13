@@ -5,11 +5,11 @@ import { Box, Button, Flex, HStack, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 import { canUndo, itemState, stepTitles } from '../../grimoire/workshop'
-import { workshopRun } from '../../grimoire/workshopRun'
-import type { Task } from '../../grimoire/types'
+import { workshopRun } from '@grimoire-core/grimoire/workshopRun'
+import type { Task } from '@grimoire-core/grimoire/types'
 import { store, useAppSelector } from '../../store'
-import { actions } from '../../store/dataSlice'
-import { Check, confirmAction } from '../ui'
+import { actions } from '@workshop-core/store/dataSlice'
+import { Check, confirmAction } from '@shared/components/ui'
 
 const stateLabel = { open: '', done: 'сделано', defect: 'брак', gone: 'удалено' } as const
 

@@ -5,7 +5,7 @@
 // and silver (everything needed); see TaskCard.
 import { Box, Flex, Stack, Text, type ButtonProps } from '@chakra-ui/react'
 import type { ReactNode } from 'react'
-import { Sparkle } from './Magic'
+import { Sparkle } from '@shared/components/Magic'
 
 export type ArcanaTone = 'indigo' | 'pearl' | 'olive' | 'swamp' | 'nacre' | 'wine' | 'silver'
 

@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 import { LuCopy, LuDownload } from 'react-icons/lu'
 import { candleLink } from '../lib/config'
 import { useReviewTokens } from '../lib/reviewTokens'
-import { saveFile } from '../lib/download'
+import { saveFile } from '@shared/lib/download'
 import { useAppSelector, useData } from '../store'
-import { notify } from './ui'
+import { notify } from '@shared/components/ui'
 
 export const qrDataUrl = (text: string, width = 512) =>
   QRCode.toDataURL(text, { errorCorrectionLevel: 'M', margin: 2, width, color: { dark: '#000000', light: '#ffffff' } })

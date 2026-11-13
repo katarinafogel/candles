@@ -6,10 +6,10 @@ import { useEffect, useState } from 'react'
 import { LuCopy } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
 import { publicBase } from '../lib/config'
-import { supabase } from '../lib/supabase'
+import { supabase } from '@shared/lib/supabase'
 import { load } from '../lib/sync'
 import { useAppSelector } from '../store'
-import { notify } from './ui'
+import { notify } from '@shared/components/ui'
 
 const KEY = 'pendingInvite'
 

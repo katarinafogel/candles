@@ -4,7 +4,7 @@ import { Box, Button, Container, Flex, Heading, HStack, Image, SimpleGrid, Stack
 import { useState } from 'react'
 import { LuArrowLeft, LuDownload, LuExternalLink } from 'react-icons/lu'
 import { useNavigate } from 'react-router-dom'
-import { MoonPhases } from '../components/Magic'
+import { MoonPhases } from '@shared/components/Magic'
 import { appOf, apps, chooseForInstall, isIOS, isStandalone, promptInstall, useInstallPrompt, type AppId } from '../lib/apps'
 import { useIsWitch } from '../store'
 

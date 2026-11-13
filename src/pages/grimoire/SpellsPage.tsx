@@ -1,8 +1,8 @@
 // «Шаблоны» as a page, from «Ещё»: the same list as the dialog in the book of deeds.
 import { Text } from '@chakra-ui/react'
 import { SpellList } from '../../components/grimoire/Spells'
-import { PageHeader } from '../../components/ui'
-import { words } from '../../grimoire/selectors'
+import { PageHeader } from '@shared/components/ui'
+import { words } from '@grimoire-core/grimoire/selectors'
 import { useAppSelector } from '../../store'
 
 export default function SpellsPage() {

@@ -4,9 +4,9 @@
 import { HStack, IconButton, Input, Stack } from '@chakra-ui/react'
 import { useRef, useState } from 'react'
 import { LuCornerDownLeft, LuSlidersHorizontal } from 'react-icons/lu'
-import type { Spell, Task } from '../../grimoire/types'
+import type { Spell, Task } from '@grimoire-core/grimoire/types'
 import { store, useAppDispatch } from '../../store'
-import { grimoireActions as A } from '../../store/grimoireSlice'
+import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 import { NewTaskDialog } from './NewTaskDialog'
 import { SpellHints } from './SpellHints'
 

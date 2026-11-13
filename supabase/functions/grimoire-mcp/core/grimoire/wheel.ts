@@ -1,4 +1,4 @@
-// GENERATED from src/grimoire/wheel.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
+// GENERATED from packages/grimoire-core/src/grimoire/wheel.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
 // Wheel of the year: eight sabbats split the year into eight segments. Solstices and equinoxes are
 // computed astronomically (Meeus, «Astronomical Algorithms», ch. 27, accurate to minutes), the
 // cross-quarter days are fixed dates. In the southern hemisphere the wheel turns half a year.

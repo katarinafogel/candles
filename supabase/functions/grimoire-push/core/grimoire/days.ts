@@ -1,4 +1,4 @@
-// GENERATED from src/grimoire/days.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
+// GENERATED from packages/grimoire-core/src/grimoire/days.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
 // Grimoire days. A day lasts until the boundary hour (4:00 by default), so a late evening still counts
 // as «today». Day keys are plain YYYY-MM-DD strings; arithmetic on them goes through UTC noon so that
 // daylight saving shifts never move a day.

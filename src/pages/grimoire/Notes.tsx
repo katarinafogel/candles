@@ -6,12 +6,12 @@ import { LuRepeat } from 'react-icons/lu'
 import { Tag } from '../../components/grimoire/Marks'
 import { useAttempt } from '../../components/grimoire/RoundBlocks'
 import { TagInput } from '../../components/grimoire/TagInput'
-import { Check, Chips, DeleteButton, Empty, Field, Modal, PageHeader, Panel, TextArea, TextInput } from '../../components/ui'
+import { Check, Chips, DeleteButton, Empty, Field, Modal, PageHeader, Panel, TextArea, TextInput } from '@shared/components/ui'
 import { useToday } from '../../grimoire/act'
-import { humanDay } from '../../grimoire/days'
-import type { Note } from '../../grimoire/types'
+import { humanDay } from '@grimoire-core/grimoire/days'
+import type { Note } from '@grimoire-core/grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { grimoireActions as A } from '../../store/grimoireSlice'
+import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 
 type Draft = Partial<Note> & { text: string; tags: string[] }
 export const blankNote: Draft = { text: '', tags: [] }

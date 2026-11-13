@@ -3,13 +3,13 @@ import { useState } from 'react'
 import { LuCheckCheck, LuClipboardPaste, LuRefreshCw } from 'react-icons/lu'
 import { useSearchParams } from 'react-router-dom'
 import { ReviewCard } from '../components/ReviewForm'
-import { confirmAction, Empty, Field, IdBadge, Modal, notify, PageHeader, Select, TextArea } from '../components/ui'
-import { fmtDateTime } from '../lib/calc'
+import { confirmAction, Empty, Field, IdBadge, Modal, notify, PageHeader, Select, TextArea } from '@shared/components/ui'
+import { fmtDateTime } from '@workshop-core/lib/calc'
 import { load } from '../lib/sync'
-import type { Review } from '../types'
-import { byId } from '../lib/selectors'
+import type { Review } from '@workshop-core/types'
+import { byId } from '@workshop-core/lib/selectors'
 import { store, useAppDispatch, useAppSelector, useData } from '../store'
-import { actions } from '../store/dataSlice'
+import { actions } from '@workshop-core/store/dataSlice'
 
 /** The recipient's «Скопировать ответ» text is the review JSON; it is imported the same way. */
 function parsePastedReview(text: string): Review {

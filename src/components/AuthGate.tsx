@@ -5,13 +5,13 @@ import { FcGoogle } from 'react-icons/fc'
 import { useLocation } from 'react-router-dom'
 import { appOf, applyApp } from '../lib/apps'
 import { publicBase } from '../lib/config'
-import { authRedirect, supabase, supabaseConfigured } from '../lib/supabase'
+import { authRedirect, supabase, supabaseConfigured } from '@shared/lib/supabase'
 import { startSync } from '../lib/sync'
 import { useAppDispatch, useAppSelector, useData } from '../store'
-import { grimoireActions as A } from '../store/grimoireSlice'
+import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 import { localActions } from '../store/localSlice'
-import { Eucalyptus, MoonPhases, MoonSlice } from './Magic'
-import { Chips, Field, notify } from './ui'
+import { Eucalyptus, MoonPhases, MoonSlice } from '@shared/components/Magic'
+import { Chips, Field, notify } from '@shared/components/ui'
 
 function Shell({ children }: { children: ReactNode }) {
   return (

@@ -5,12 +5,12 @@ import { useState } from 'react'
 import { LuArrowLeftRight, LuChevronDown, LuLayoutGrid, LuLogOut, LuSettings, LuUserPen } from 'react-icons/lu'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { signOut } from '../lib/sync'
-import { supabase } from '../lib/supabase'
+import { supabase } from '@shared/lib/supabase'
 import { useAppDispatch, useAppSelector, useIsWitch } from '../store'
-import { actions } from '../store/dataSlice'
+import { actions } from '@workshop-core/store/dataSlice'
 import { localActions } from '../store/localSlice'
 import { SyncBadge } from './SyncBadge'
-import { Field, Modal, notify, TextInput } from './ui'
+import { Field, Modal, notify, TextInput } from '@shared/components/ui'
 
 export const avatarSigns = ['🌙', '🕯️', '🔮', '🐈‍⬛', '🦉', '🐸', '🦇', '🐍', '🍄', '🌿', '🌸', '🍂', '⭐', '🧿', '🪄', '🌕', '🔥', '💀', '🪶', '🫖']
 

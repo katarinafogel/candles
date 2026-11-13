@@ -1,13 +1,13 @@
 import { Box, Button, Flex, HStack, IconButton, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { LuPlus, LuTrash2 } from 'react-icons/lu'
-import { fmt } from '../lib/calc'
-import type { CandleForm, HolderForm } from '../lib/itemForms'
-import { decorKindLabel, varnishKindLabel, wickSchemeLabel } from '../lib/labels'
-import { materialOptions } from '../lib/selectors'
+import { fmt } from '@workshop-core/lib/calc'
+import type { CandleForm, HolderForm } from '@workshop-core/lib/itemForms'
+import { decorKindLabel, varnishKindLabel, wickSchemeLabel } from '@workshop-core/lib/labels'
+import { materialOptions } from '@workshop-core/lib/selectors'
 import { useData } from '../store'
-import { varnishTarget } from '../store/dataSlice'
-import type { MaterialCategory, VarnishKind, WickScheme } from '../types'
-import { Check, Chips, Field, LeafMark, NumInput, Section, Select, TextArea, TextInput } from './ui'
+import { varnishTarget } from '@workshop-core/store/dataSlice'
+import type { MaterialCategory, VarnishKind, WickScheme } from '@workshop-core/types'
+import { Check, Chips, Field, LeafMark, NumInput, Section, Select, TextArea, TextInput } from '@shared/components/ui'
 
 const dyeForms = [
   { value: 'liquid' as const, label: 'жидкий' },

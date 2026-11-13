@@ -5,12 +5,12 @@ import { Box, Button, Flex, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useToday } from '../../grimoire/act'
-import { addDays, humanDay } from '../../grimoire/days'
+import { addDays, humanDay } from '@grimoire-core/grimoire/days'
 import { doneTitle, inOpenDeed, itemLabel, nextOffer, nextStep, plannedDay, questTitle, readySteps, stepTitles } from '../../grimoire/workshop'
-import type { Task, WorkshopKind } from '../../grimoire/types'
+import type { Task, WorkshopKind } from '@grimoire-core/grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { grimoireActions as A } from '../../store/grimoireSlice'
-import { Check, Chips, Empty, Field, Modal, notify, TextInput } from '../ui'
+import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
+import { Check, Chips, Empty, Field, Modal, notify, TextInput } from '@shared/components/ui'
 
 export function FromWorkshopDialog({ preset, onClose }: { preset?: { kind: WorkshopKind; ids: string[] }; onClose: () => void }) {
   const dispatch = useAppDispatch()

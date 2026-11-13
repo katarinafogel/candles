@@ -2,10 +2,20 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// Shared code lives in packages/ (see README); the same names are in tsconfig.json "paths".
+const pkg = (name: string) => decodeURIComponent(new URL(`./packages/${name}/src`, import.meta.url).pathname)
+
 export default defineConfig({
   // Relative base works on GitHub Pages under /<repo>/ together with HashRouter.
   base: './',
   build: { chunkSizeWarningLimit: 1200 },
+  resolve: {
+    alias: {
+      '@shared': pkg('shared'),
+      '@grimoire-core': pkg('grimoire-core'),
+      '@workshop-core': pkg('workshop-core'),
+    },
+  },
   plugins: [
     react(),
     VitePWA({

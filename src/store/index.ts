@@ -2,10 +2,10 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit'
 import localforage from 'localforage'
 import { useDispatch, useSelector } from 'react-redux'
 import { FLUSH, PAUSE, PERSIST, persistReducer, persistStore, PURGE, REGISTER, REHYDRATE } from 'redux-persist'
-import data, { SCHEMA_VERSION } from './dataSlice'
-import grimoire, { migrateGrimoire, setDayBoundary } from './grimoireSlice'
+import data, { SCHEMA_VERSION } from '@workshop-core/store/dataSlice'
+import grimoire, { migrateGrimoire, setDayBoundary } from '@grimoire-core/store/grimoireSlice'
 import local from './localSlice'
-import { migrate } from '../lib/migrate'
+import { migrate } from '@workshop-core/lib/migrate'
 import { initSync, syncMiddleware } from '../lib/sync'
 
 // IndexedDB through localforage: localStorage is too small and gets cleared too easily.

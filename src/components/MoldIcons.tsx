@@ -1,5 +1,5 @@
 // Shape icons drawn from photos of the castings: white bodies with lines in the card's ink color.
-import type { Mold, MoldIcon } from '../types'
+import type { Mold, MoldIcon } from '@workshop-core/types'
 
 const ink = 'var(--card-ink, currentColor)'
 

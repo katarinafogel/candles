@@ -1,7 +1,7 @@
 import { createSystem, defaultConfig, defineConfig } from '@chakra-ui/react'
 import { palettes } from './themes'
 
-// The design system. Colours live in src/themes.ts as CSS variables per theme (<html data-theme>,
+// The design system. Colours live in themes.ts as CSS variables per theme (<html data-theme>,
 // installed by installThemes in main.tsx);
 // the tokens below only point at them, so a new theme needs no changes here or in the pages.
 // <html class="dark"> stays in every theme: see themes.ts on mirrored palettes.

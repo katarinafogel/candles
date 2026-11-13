@@ -2,10 +2,10 @@
 // database functions grant_role / revoke_role, which check the admin role themselves.
 import { Box, Button, Flex, Stack, Text } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase } from '@shared/lib/supabase'
 import { load } from '../lib/sync'
 import { useAppSelector } from '../store'
-import { Check, notify } from './ui'
+import { Check, notify } from '@shared/components/ui'
 
 interface Master {
   user_id: string

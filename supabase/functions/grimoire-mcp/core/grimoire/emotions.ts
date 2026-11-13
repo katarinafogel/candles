@@ -1,4 +1,4 @@
-// GENERATED from src/grimoire/emotions.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
+// GENERATED from packages/grimoire-core/src/grimoire/emotions.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
 // The emotion dictionary (see the «Гримуар: словарь эмоций» spec): Plutchik's wheel — 8 petals with
 // three words each by strength, and 8 mixed feelings between neighbouring petals. 32 words, no others.
 // It lives in code, not in the database: a mirror entry stores only the keys («anger.1», «dyad.awe»).

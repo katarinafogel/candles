@@ -1,5 +1,5 @@
 import { Text } from '@chakra-ui/react'
-import { avgUse, fmt, stockOf } from '../lib/calc'
+import { avgUse, fmt, stockOf } from '@workshop-core/lib/calc'
 import { useData } from '../store'
 
 /** "Пластификатора хватит на этот замес и ещё примерно на 2". */

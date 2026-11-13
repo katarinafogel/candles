@@ -2,8 +2,8 @@
 // the chosen section on the right.
 import { Box, Flex, Grid, Heading, Stack, Text } from '@chakra-ui/react'
 import { useState, type ReactNode } from 'react'
-import { notify } from '../components/ui'
-import { Icon, iconSets } from '../icons'
+import { notify } from '@shared/components/ui'
+import { Icon, iconSets } from '@shared/icons'
 
 interface Section {
   id: string

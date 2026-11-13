@@ -1,4 +1,4 @@
-// GENERATED from src/grimoire/selectors.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
+// GENERATED from packages/grimoire-core/src/grimoire/selectors.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
 import { dueDay } from './days.ts'
 import type { DayKey, GrimoireMeta, GrimoireState, Task, TaskPriority, TaskSlot } from './types.ts'
 

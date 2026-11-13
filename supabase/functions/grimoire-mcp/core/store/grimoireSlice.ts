@@ -1,4 +1,4 @@
-// GENERATED from src/store/grimoireSlice.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
+// GENERATED from packages/grimoire-core/src/store/grimoireSlice.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
 // All grimoire operations. Business rules live here, like the workshop's in dataSlice: the database
 // only stores the result. Every action that depends on «now» carries the moment and the grimoire day
 // in its payload (filled in by `prepare`), so the reducers stay pure and testable.

@@ -23,12 +23,13 @@ const files = [
   'grimoire/wheel.ts',
   'store/grimoireSlice.ts',
 ]
-const header = (f) => `// GENERATED from src/${f} by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs\n`
+const src = 'packages/grimoire-core/src'
+const header = (f) => `// GENERATED from ${src}/${f} by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs\n`
 
 const check = process.argv.includes('--check')
 const stale = []
 for (const target of targets) for (const f of files) {
-  const want = header(f) + readFileSync(join(root, 'src', f), 'utf8')
+  const want = header(f) + readFileSync(join(root, src, f), 'utf8')
   const out = join(target, f)
   const have = existsSync(out) ? readFileSync(out, 'utf8') : null
   if (have === want) continue

@@ -7,10 +7,10 @@ import { Box, Button, CloseButton, Flex, HStack, Stack, Text } from '@chakra-ui/
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { asksEmotion, feedback } from '../../grimoire/act'
-import { quickWords } from '../../grimoire/emotions'
+import { quickWords } from '@grimoire-core/grimoire/emotions'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { grimoireActions as A } from '../../store/grimoireSlice'
-import { Field, Modal, TextInput } from '../ui'
+import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
+import { Field, Modal, TextInput } from '@shared/components/ui'
 import { WordChip } from './EmotionWheel'
 import { MarkPicker } from './Marks'
 

@@ -1,11 +1,11 @@
 // A word's page in the dictionary: what it means, how it feels in the body, its neighbours by strength,
 // its opposite, and how often it was marked. Read only: the texts live in code.
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
-import { dyads, emotionWords, petals, petalWords, wordColor } from '../../grimoire/emotions'
-import { humanDay, plural } from '../../grimoire/days'
+import { dyads, emotionWords, petals, petalWords, wordColor } from '@grimoire-core/grimoire/emotions'
+import { humanDay, plural } from '@grimoire-core/grimoire/days'
 import { useToday } from '../../grimoire/act'
 import { useAppSelector } from '../../store'
-import { Modal } from '../ui'
+import { Modal } from '@shared/components/ui'
 import { WordChip } from './EmotionWheel'
 
 export function WordCard({ wordKey, onClose, onPick }: { wordKey: string; onClose: () => void; onPick?: (key: string) => void }) {

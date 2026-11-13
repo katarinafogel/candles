@@ -1,4 +1,4 @@
-// GENERATED from src/grimoire/parse.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
+// GENERATED from packages/grimoire-core/src/grimoire/parse.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
 // One line becomes a task — the syntax the assistant (MCP connector, agent.ts) uses; the app's own forms
 // have plain fields and never parse these symbols.
 //   «помыть окна **☠☠ #дом !пт»  → 2 stars, dread 2, tag «дом», deadline on Friday

@@ -2,12 +2,12 @@ import { Badge, Box, Button, Flex, HStack, IconButton, Input, Stack, Text, Wrap 
 import { useState } from 'react'
 import { LuPencil, LuPlus } from 'react-icons/lu'
 import { useSearchParams } from 'react-router-dom'
-import { Check, DeleteButton, Empty, Field, IdBadge, Modal, PageHeader, TextArea, TextInput } from '../components/ui'
-import { candleStageLabel } from '../lib/labels'
-import { reviewsOf } from '../lib/selectors'
+import { Check, DeleteButton, Empty, Field, IdBadge, Modal, PageHeader, TextArea, TextInput } from '@shared/components/ui'
+import { candleStageLabel } from '@workshop-core/lib/labels'
+import { reviewsOf } from '@workshop-core/lib/selectors'
 import { useAppDispatch, useData } from '../store'
-import { actions } from '../store/dataSlice'
-import type { Person } from '../types'
+import { actions } from '@workshop-core/store/dataSlice'
+import type { Person } from '@workshop-core/types'
 
 function PersonDialog({ person, onClose }: { person: Omit<Person, 'id'> & { id?: string }; onClose: () => void }) {
   const dispatch = useAppDispatch()

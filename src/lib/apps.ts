@@ -4,7 +4,7 @@
 // projects page.
 import { useEffect, useSyncExternalStore } from 'react'
 import { useLocation } from 'react-router-dom'
-import { applyTheme, savedTheme } from '../themes'
+import { applyTheme, savedTheme } from '@shared/themes'
 
 export type AppId = 'workshop' | 'grimoire'
 

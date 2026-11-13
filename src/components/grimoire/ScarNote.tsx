@@ -1,7 +1,7 @@
 // A quiet reminder under a deed tied to someone with a scar not let go: the last one, and a question.
 // The decision stays hers — nothing is blocked.
 import { Box, Text } from '@chakra-ui/react'
-import { liveScars, monthDay } from '../../grimoire/people'
+import { liveScars, monthDay } from '@grimoire-core/grimoire/people'
 import { useAppSelector } from '../../store'
 
 export function ScarNote({ personIds }: { personIds: (string | undefined)[] }) {

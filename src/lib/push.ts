@@ -1,7 +1,7 @@
 // Turning push notifications on for this device: the browser's permission, a subscription with the
 // server's VAPID key, and a row in push_subscriptions. On iPhone this works only in the app added to
 // the home screen.
-import { supabase } from './supabase'
+import { supabase } from '@shared/lib/supabase'
 
 export const pushSupported = () => typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
 

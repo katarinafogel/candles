@@ -6,13 +6,13 @@ import { LuBookOpen, LuCalendarClock, LuHash, LuPlus, LuStar, LuTrash2, LuUser }
 import { BlockSpot, useAttempt, useRoundBlocks, type RoundBlock } from '../../components/grimoire/RoundBlocks'
 import { TagInput } from '../../components/grimoire/TagInput'
 import { PeoplePicker } from '../../components/grimoire/TaskFields'
-import { Chips, confirmAction, DateInput, DeleteButton, Empty, Field, Modal, notify, NumInput, PageHeader, Select, TextInput } from '../../components/ui'
+import { Chips, confirmAction, DateInput, DeleteButton, Empty, Field, Modal, notify, NumInput, PageHeader, Select, TextInput } from '@shared/components/ui'
 import { useToday } from '../../grimoire/act'
-import { humanDay } from '../../grimoire/days'
-import { jarPlan, money } from '../../grimoire/jars'
-import type { Jar } from '../../grimoire/types'
+import { humanDay } from '@grimoire-core/grimoire/days'
+import { jarPlan, money } from '@grimoire-core/grimoire/jars'
+import type { Jar } from '@grimoire-core/grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { grimoireActions as A } from '../../store/grimoireSlice'
+import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 
 const statusLabel: Record<Jar['status'], string> = { saving: 'копим', collected: 'собрана', spent: 'потрачена', closed: 'закрыта' }
 

@@ -3,12 +3,12 @@ import { useRef, useState } from 'react'
 import { LuDownload, LuFileUp, LuLogOut, LuUpload } from 'react-icons/lu'
 import { RolesAdmin } from '../components/RolesAdmin'
 import { InvitesAdmin } from '../components/Invites'
-import { confirmAction, Field, Modal, notify, NumInput, PageHeader, Row, Section, Select, TextInput } from '../components/ui'
+import { confirmAction, Field, Modal, notify, NumInput, PageHeader, Row, Section, Select, TextInput } from '@shared/components/ui'
 import { testAccountEmail } from '../lib/config'
-import { downloadBackup, readBackup, type BackupSummary } from '../lib/backup'
-import { fmtDateTime } from '../lib/calc'
+import { downloadBackup, readBackup, type BackupSummary } from '@workshop-core/lib/backup'
+import { fmtDateTime } from '@workshop-core/lib/calc'
 import { publicBase } from '../lib/config'
-import { supabase } from '../lib/supabase'
+import { supabase } from '@shared/lib/supabase'
 import { signOut, resetTestAccount } from '../lib/sync'
 import {
   applyCandleRows,
@@ -19,12 +19,12 @@ import {
   FRAGRANCE_IN_STOCK_G,
   type ImportPlan,
   type MoldDraft,
-} from '../lib/importSheets'
+} from '@workshop-core/lib/importSheets'
 import { useAppDispatch, useAppSelector, useData, useIsAdmin } from '../store'
-import { actions } from '../store/dataSlice'
+import { actions } from '@workshop-core/store/dataSlice'
 import { localActions } from '../store/localSlice'
-import type { DataState, Settings as S } from '../types'
-import { moldPurposeLabel } from '../lib/labels'
+import type { DataState, Settings as S } from '@workshop-core/types'
+import { moldPurposeLabel } from '@workshop-core/lib/labels'
 
 const readFile = (f: File) => f.text()
 

@@ -1,8 +1,8 @@
 import { Badge, Box, Button, Flex, HStack, Slider, Stack, Text, Wrap } from '@chakra-ui/react'
-import { fmt, fmtDateTime } from '../lib/calc'
-import { reviewQuestions, type ChoiceQuestion } from '../lib/labels'
-import type { Review, ReviewAnswers } from '../types'
-import { Chips, Field, TextArea, TextInput } from './ui'
+import { fmt, fmtDateTime } from '@workshop-core/lib/calc'
+import { reviewQuestions, type ChoiceQuestion } from '@workshop-core/lib/labels'
+import type { Review, ReviewAnswers } from '@workshop-core/types'
+import { Chips, Field, TextArea, TextInput } from '@shared/components/ui'
 
 /** A slider that stays "не отвечено" until the person touches it. */
 function SliderQuestion({

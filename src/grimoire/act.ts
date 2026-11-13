@@ -1,12 +1,12 @@
 // Grimoire steps with feedback: a toast with praise and the personal reward, and «Отменить».
 import { useEffect, useState } from 'react'
-import { notify } from '../components/ui'
+import { notify } from '@shared/components/ui'
 import { store, useAppSelector } from '../store'
-import { grimoireActions as A, today } from '../store/grimoireSlice'
-import { isFrog } from './frog'
-import { isHard } from './mirrorStats'
-import { workshopRun } from './workshopRun'
-import type { GrimoireState, Task } from './types'
+import { grimoireActions as A, today } from '@grimoire-core/store/grimoireSlice'
+import { isFrog } from '@grimoire-core/grimoire/frog'
+import { isHard } from '@grimoire-core/grimoire/mirrorStats'
+import { workshopRun } from '@grimoire-core/grimoire/workshopRun'
+import type { GrimoireState, Task } from '@grimoire-core/grimoire/types'
 
 const g = () => store.getState().grimoire
 

@@ -2,11 +2,11 @@ import { Box, Button, Flex, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/r
 import { useState } from 'react'
 import { LuDroplets, LuFlaskConical, LuRefreshCw } from 'react-icons/lu'
 import { Link as RouterLink } from 'react-router-dom'
-import { IdBadge, Link, notify, PageHeader, Section, Stat } from '../components/ui'
-import { fmt, stockOf, thresholdOf } from '../lib/calc'
-import { unitLabel } from '../lib/labels'
+import { IdBadge, Link, notify, PageHeader, Section, Stat } from '@shared/components/ui'
+import { fmt, stockOf, thresholdOf } from '@workshop-core/lib/calc'
+import { unitLabel } from '@workshop-core/lib/labels'
 import { load } from '../lib/sync'
-import { fallbackUse, lowMaterials, unreadReviews } from '../lib/selectors'
+import { fallbackUse, lowMaterials, unreadReviews } from '@workshop-core/lib/selectors'
 import { store, useData } from '../store'
 
 export default function Home() {

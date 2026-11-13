@@ -5,11 +5,11 @@
 import { useEffect, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { syncActions } from '../../grimoire/workshop'
-import { workshopRun } from '../../grimoire/workshopRun'
+import { workshopRun } from '@grimoire-core/grimoire/workshopRun'
 import { GiveDialog } from '../../pages/CandlePage'
 import { ReadyDialog } from '../../pages/Candles'
 import { store, useAppSelector, useIsWitch } from '../../store'
-import { grimoireActions as A } from '../../store/grimoireSlice'
+import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 import { DecorateDialog, DefectDialog, HolderStepDialog } from '../StepDialogs'
 
 export function WorkshopRunner() {

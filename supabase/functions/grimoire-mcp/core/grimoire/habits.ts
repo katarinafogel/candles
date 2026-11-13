@@ -1,4 +1,4 @@
-// GENERATED from src/grimoire/habits.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
+// GENERATED from packages/grimoire-core/src/grimoire/habits.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
 // Rituals (habit trackers). An active habit puts a task into the day scroll on each scheduled day;
 // ticking the task is the mark in the tracker. Streaks follow the schedule, not calendar days:
 // one skip a week is forgiven («оберег»), and days in «навь» freeze

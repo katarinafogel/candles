@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from './supabase'
+import { supabase } from '@shared/lib/supabase'
 
 // Tokens never change once created, so one fetch per candle per session is enough.
 const cache = new Map<string, string>()

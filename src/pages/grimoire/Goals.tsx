@@ -4,11 +4,11 @@
 import { Box, Button, Flex, HStack, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { useAttempt } from '../../components/grimoire/RoundBlocks'
-import { Chips, DeleteButton, Empty, Field, Modal, PageHeader, Panel, ProgressLine, Section, TextArea, TextInput } from '../../components/ui'
+import { Chips, DeleteButton, Empty, Field, Modal, PageHeader, Panel, ProgressLine, Section, TextArea, TextInput } from '@shared/components/ui'
 import { useToday } from '../../grimoire/act'
-import type { Goal, GrimoireState } from '../../grimoire/types'
+import type { Goal, GrimoireState } from '@grimoire-core/grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { grimoireActions as A } from '../../store/grimoireSlice'
+import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 
 type Draft = Partial<Goal> & { title: string; year: number }
 

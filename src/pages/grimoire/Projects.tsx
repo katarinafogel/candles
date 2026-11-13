@@ -6,13 +6,13 @@ import { LuArchive } from 'react-icons/lu'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import { BookCover, bookColors } from '../../components/grimoire/BookCover'
 import { useAttempt } from '../../components/grimoire/RoundBlocks'
-import { Check, Chips, DateInput, Empty, Field, Modal, notify, PageHeader, Panel, Section, SigilPicker, TextArea, TextInput } from '../../components/ui'
+import { Check, Chips, DateInput, Empty, Field, Modal, notify, PageHeader, Panel, Section, SigilPicker, TextArea, TextInput } from '@shared/components/ui'
 import { useToday } from '../../grimoire/act'
-import { humanDay, plural } from '../../grimoire/days'
-import { projectProgress, projectTasks, words } from '../../grimoire/selectors'
-import type { Project } from '../../grimoire/types'
+import { humanDay, plural } from '@grimoire-core/grimoire/days'
+import { projectProgress, projectTasks, words } from '@grimoire-core/grimoire/selectors'
+import type { Project } from '@grimoire-core/grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { grimoireActions as A } from '../../store/grimoireSlice'
+import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 
 const sigils = ['🌿', '🔨', '🏡', '🌙', '🕯️', '📜', '🌸', '🪴', '🧶', '🎨', '🍄', '🗝️']
 

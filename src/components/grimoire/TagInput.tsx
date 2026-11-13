@@ -2,9 +2,9 @@
 // in the book (the most used first) only while typing.
 import { HStack, Stack } from '@chakra-ui/react'
 import { useMemo } from 'react'
-import { tagsByUse } from '../../grimoire/tags'
+import { tagsByUse } from '@grimoire-core/grimoire/tags'
 import { useAppSelector } from '../../store'
-import { RemovableChip } from '../ui'
+import { RemovableChip } from '@shared/components/ui'
 import { Tag } from './Marks'
 import { SuggestInput } from './SuggestInput'
 

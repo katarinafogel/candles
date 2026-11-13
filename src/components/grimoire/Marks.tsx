@@ -2,11 +2,11 @@
 // (sun, cloud, rain, storm) in cool lilac-grey, so it never mixes with the warm stars — a calm deadline, tags.
 import { Badge, Box, HStack, Text } from '@chakra-ui/react'
 import { LuCloud, LuCloudLightning, LuCloudRain, LuSun } from 'react-icons/lu'
-import { dueDay, humanDay } from '../../grimoire/days'
-import { dreadLabel, priorityLabel } from '../../grimoire/labels'
-import { tagPalette } from '../../grimoire/tags'
+import { dueDay, humanDay } from '@grimoire-core/grimoire/days'
+import { dreadLabel, priorityLabel } from '@grimoire-core/grimoire/labels'
+import { tagPalette } from '@grimoire-core/grimoire/tags'
 import { useAppSelector } from '../../store'
-import type { DayKey, TaskPriority } from '../../grimoire/types'
+import type { DayKey, TaskPriority } from '@grimoire-core/grimoire/types'
 
 const star = (on: boolean, px: string) => (
   <svg width={px} height={px} viewBox="0 0 24 24" aria-hidden="true">

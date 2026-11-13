@@ -4,13 +4,13 @@ import { LuArrowRight, LuDroplets, LuPencil, LuTrash2, LuUndo2, LuTriangleAlert 
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom'
 import { History } from '../components/History'
 import { DefectDialog, HolderStepDialog } from '../components/StepDialogs'
-import { confirmAction, Empty, IdBadge, Link, notify, PageHeader, Row, Section, Select } from '../components/ui'
-import { daysBetween, fmt, fmtDateTime } from '../lib/calc'
-import { candleStageLabel, defectReasonLabel, holderNextTitle, holderStageLabel, moldPurposeLabel, varnishKindLabel } from '../lib/labels'
-import { holderTitle } from '../lib/selectors'
+import { confirmAction, Empty, IdBadge, Link, notify, PageHeader, Row, Section, Select } from '@shared/components/ui'
+import { daysBetween, fmt, fmtDateTime } from '@workshop-core/lib/calc'
+import { candleStageLabel, defectReasonLabel, holderNextTitle, holderStageLabel, moldPurposeLabel, varnishKindLabel } from '@workshop-core/lib/labels'
+import { holderTitle } from '@workshop-core/lib/selectors'
 import { useAppDispatch, useData } from '../store'
-import { actions, nextHolderStage } from '../store/dataSlice'
-import type { MixPart } from '../types'
+import { actions, nextHolderStage } from '@workshop-core/store/dataSlice'
+import type { MixPart } from '@workshop-core/types'
 
 export function MixRecipe({ mix }: { mix: { water: MixPart; plaster: MixPart; plasticizer: MixPart; defoamer: MixPart; dye: MixPart & { color?: string; form?: string }; lossPct?: number; comment: string } }) {
   const d = useData()

@@ -6,13 +6,13 @@ import { useMemo, useState } from 'react'
 import { LuRotateCcw, LuX } from 'react-icons/lu'
 import { useAttempt } from '../../components/grimoire/RoundBlocks'
 import { SuggestInput } from '../../components/grimoire/SuggestInput'
-import { Check, Chips, DateInput, DeleteButton, Empty, Field, Modal, PageHeader, Panel, Select, TextArea, TextInput } from '../../components/ui'
+import { Check, Chips, DateInput, DeleteButton, Empty, Field, Modal, PageHeader, Panel, Select, TextArea, TextInput } from '@shared/components/ui'
 import { useToday } from '../../grimoire/act'
-import { humanDay } from '../../grimoire/days'
-import { cardHistory, cardName, tarotCards, tarotLayouts } from '../../grimoire/tarot'
-import type { TarotCardPick, TarotReading } from '../../grimoire/types'
+import { humanDay } from '@grimoire-core/grimoire/days'
+import { cardHistory, cardName, tarotCards, tarotLayouts } from '@grimoire-core/grimoire/tarot'
+import type { TarotCardPick, TarotReading } from '@grimoire-core/grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { grimoireActions as A } from '../../store/grimoireSlice'
+import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 
 type Draft = Partial<TarotReading> & { type: TarotReading['type']; day: string; cards: TarotCardPick[] }
 

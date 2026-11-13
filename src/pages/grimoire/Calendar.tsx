@@ -9,13 +9,13 @@ import { ArcanaFrame, type Palette } from '../../components/ArcanaCard'
 import { useTaskDialog } from '../../components/grimoire/TaskDialog'
 import { MoonIcon } from '../../components/grimoire/MoonIcon'
 import { Stars } from '../../components/grimoire/Marks'
-import { Modal, PageHeader } from '../../components/ui'
+import { Modal, PageHeader } from '@shared/components/ui'
 import { useToday } from '../../grimoire/act'
-import { addDays, days, daysBetween, plainDay, weekday } from '../../grimoire/days'
-import type { DayKey, Sabbat } from '../../grimoire/types'
-import { isFullMoon, moonPhase, moonPhaseNames, sabbatDays, sabbats, wheelNow } from '../../grimoire/wheel'
+import { addDays, days, daysBetween, plainDay, weekday } from '@grimoire-core/grimoire/days'
+import type { DayKey, Sabbat } from '@grimoire-core/grimoire/types'
+import { isFullMoon, moonPhase, moonPhaseNames, sabbatDays, sabbats, wheelNow } from '@grimoire-core/grimoire/wheel'
 import { useAppSelector } from '../../store'
-import { mainPetal, petals } from '../../grimoire/emotions'
+import { mainPetal, petals } from '@grimoire-core/grimoire/emotions'
 
 const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
 const weekdays = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс']

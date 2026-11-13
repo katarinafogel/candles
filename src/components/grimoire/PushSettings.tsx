@@ -4,8 +4,8 @@ import { Button, Flex, HStack, Input, Stack, Text } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
 import { currentSubscription, disablePush, enablePush, pushSupported, testPush } from '../../lib/push'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { grimoireActions as A } from '../../store/grimoireSlice'
-import { Check, DateInput, Field, notify } from '../ui'
+import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
+import { Check, DateInput, Field, notify } from '@shared/components/ui'
 
 function TimeField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return <DateInput kind="time" size="sm" w="120px" value={value} onChange={onChange} />

@@ -1,7 +1,10 @@
 // Calculations from spec section 5.
 import type { Consumption, DataState, Material, Movement } from '../types'
 
-export const round2 = (n: number) => Math.round(n * 100) / 100
+import { round2 } from '@shared/lib/format'
+
+// Number and date formatting moved to the shared format module; re-exported for the workshop's pages.
+export { daysBetween, fmt, fmtDate, fmtDateTime, parseNum, round2 } from '@shared/lib/format'
 
 export interface PlasterCalc {
   totalG: number
@@ -142,26 +145,4 @@ export function candleCost(data: DataState, candleId: string): Cost {
   const cost = costOf(data, items)
   // What went into a ready-made item before it was added is not known.
   return c.premade || h?.premade ? { ...cost, complete: false } : cost
-}
-
-/** Parses "27,3" as well as "27.3". */
-export function parseNum(v: string | number | undefined | null): number | undefined {
-  if (v == null) return undefined
-  if (typeof v === 'number') return Number.isFinite(v) ? v : undefined
-  const s = v.replace(/\s/g, '').replace(',', '.').replace('%', '')
-  if (!s) return undefined
-  const n = Number(s)
-  return Number.isFinite(n) ? n : undefined
-}
-
-export const fmt = (n: number | undefined, digits = 2) =>
-  n == null ? '—' : n.toLocaleString('ru-RU', { maximumFractionDigits: digits })
-
-export const fmtDate = (d?: string) => (d ? new Date(d).toLocaleDateString('ru-RU') : '—')
-export const fmtDateTime = (d?: string) =>
-  d ? new Date(d).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' }) : '—'
-
-export function daysBetween(a?: string, b?: string) {
-  if (!a || !b) return undefined
-  return round2((new Date(b).getTime() - new Date(a).getTime()) / 86400000)
 }

@@ -7,10 +7,10 @@ import { PersistGate } from 'redux-persist/integration/react'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App'
 import { catchInvite } from './components/Invites'
-import { ConfirmHost, Toaster } from './components/ui'
+import { ConfirmHost, Toaster } from '@shared/components/ui'
 import { persistor, store } from './store'
-import { system } from './theme'
-import { installThemes } from './themes'
+import { system } from '@shared/theme'
+import { installThemes } from '@shared/themes'
 
 registerSW({ immediate: true })
 installThemes()

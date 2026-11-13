@@ -1,7 +1,7 @@
 // The Moon as it looks that day: the lit part drawn from the cycle, waxing on the right (as seen
 // from the north), the dark part a faint disc so a new moon is still a shape.
-import { moonCycle } from '../../grimoire/wheel'
-import type { DayKey } from '../../grimoire/types'
+import { moonCycle } from '@grimoire-core/grimoire/wheel'
+import type { DayKey } from '@grimoire-core/grimoire/types'
 
 export function MoonIcon({ day, size = 14, lit = 'currentColor', dark = 'var(--g-moon-dark)' }: { day: DayKey; size?: number; lit?: string; dark?: string }) {
   const c = moonCycle(day)

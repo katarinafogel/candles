@@ -1,4 +1,4 @@
-// GENERATED from src/grimoire/agent.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
+// GENERATED from packages/grimoire-core/src/grimoire/agent.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
 // The agent's tools: what an assistant may read and do in the grimoire, as plain functions over the
 // grimoire state. Every change goes through the same reducer as the app (streaks, chains,
 // repeats), so the assistant can't skip a rule by writing rows directly. The server

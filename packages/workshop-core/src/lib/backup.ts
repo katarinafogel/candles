@@ -1,6 +1,6 @@
 import { SCHEMA_VERSION } from '../store/dataSlice'
 import type { DataState } from '../types'
-import { saveFile, isTouchDevice } from './download'
+import { saveFile, isTouchDevice } from '@shared/lib/download'
 import { migrate } from './migrate'
 
 export interface BackupFile {

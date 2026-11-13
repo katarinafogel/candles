@@ -4,10 +4,10 @@ import { Button, HStack, Text } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
 import { LuListChecks } from 'react-icons/lu'
 import { removeMany, withUndo } from '../../grimoire/act'
-import type { Task } from '../../grimoire/types'
+import type { Task } from '@grimoire-core/grimoire/types'
 import { useAppDispatch } from '../../store'
-import { grimoireActions as A } from '../../store/grimoireSlice'
-import { confirmAction } from '../ui'
+import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
+import { confirmAction } from '@shared/components/ui'
 
 export function useTaskPick(list: Task[]) {
   const dispatch = useAppDispatch()

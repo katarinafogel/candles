@@ -1,10 +1,10 @@
 import { Box, CloseButton, Flex, Heading, HStack, IconButton, Input, InputGroup, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { LuMinus, LuPlus, LuSearch } from 'react-icons/lu'
-import { moldPurposeLabel, moldPurposePlural } from '../lib/labels'
-import { normalize } from '../lib/selectors'
-import type { Mold, MoldPurpose } from '../types'
-import { Chips, LeafMark } from './ui'
+import { moldPurposeLabel, moldPurposePlural } from '@workshop-core/lib/labels'
+import { normalize } from '@workshop-core/lib/selectors'
+import type { Mold, MoldPurpose } from '@workshop-core/types'
+import { Chips, LeafMark } from '@shared/components/ui'
 
 /** Picks forms with a count each. `limitCopies` is for casting: a form can't be filled more times than there are copies of it. */
 export function MoldPicker({

@@ -3,16 +3,16 @@ import { describe, expect, it, vi } from 'vitest'
 vi.mock('../../lib/supabase', () => ({ supabase: {} }))
 vi.mock('localforage', () => ({ default: { setItem: async () => {}, getItem: async () => null, config: () => {} } }))
 
-const { parseQuickAdd, parseDay } = await import('../parse')
-const { addDays, dayKey, daysBetween, weekday, humanDay, nextRepeat } = await import('../days')
-const { sabbatDays, wheelNow, moonPhase, seasonMoment, isFullMoon, nextFullMoon, sabbats, builtInPractices, lunarPhaseMoment } = await import('../wheel')
-const { streak, habitLogId, habitTaskId } = await import('../habits')
-const { default: reducer, grimoireActions: A, initialGrimoire, migrateGrimoire } = await import('../../store/grimoireSlice')
+const { parseQuickAdd, parseDay } = await import('@grimoire-core/grimoire/parse')
+const { addDays, dayKey, daysBetween, weekday, humanDay, nextRepeat } = await import('@grimoire-core/grimoire/days')
+const { sabbatDays, wheelNow, moonPhase, seasonMoment, isFullMoon, nextFullMoon, sabbats, builtInPractices, lunarPhaseMoment } = await import('@grimoire-core/grimoire/wheel')
+const { streak, habitLogId, habitTaskId } = await import('@grimoire-core/grimoire/habits')
+const { default: reducer, grimoireActions: A, initialGrimoire, migrateGrimoire } = await import('@grimoire-core/store/grimoireSlice')
 const { diffGrimoire, isGrimoireRow } = await import('../../lib/sync')
-const { emotionWords, dyadFor, searchWords, wordPetals } = await import('../emotions')
-const { dayPlan, dayStars, isBlocked, isStuck, toReview, chainOf, cardTone, projectProgress, projectTasks } = await import('../selectors')
+const { emotionWords, dyadFor, searchWords, wordPetals } = await import('@grimoire-core/grimoire/emotions')
+const { dayPlan, dayStars, isBlocked, isStuck, toReview, chainOf, cardTone, projectProgress, projectTasks } = await import('@grimoire-core/grimoire/selectors')
 type GS = typeof initialGrimoire
-type Habit = import('../types').Habit
+type Habit = import('@grimoire-core/grimoire/types').Habit
 
 const MON = '2026-10-26' // a Monday
 const at = (day: string, hh = '12:00') => `${day}T${hh}:00.000Z`
@@ -401,7 +401,7 @@ describe('wheel of the year', () => {
 })
 
 describe('tags', async () => {
-  const { tagPalette, tagPalettes, tagsByUse } = await import('../tags')
+  const { tagPalette, tagPalettes, tagsByUse } = await import('@grimoire-core/grimoire/tags')
   const g = {
     tasks: {
       a: { tags: ['дом', 'бумаги'] },
@@ -424,11 +424,11 @@ describe('tags', async () => {
 })
 
 describe('mirror analytics', async () => {
-  const S = await import('../mirrorStats')
-  const E = await import('../emotions')
-  type J = import('../types').JournalEntry
+  const S = await import('@grimoire-core/grimoire/mirrorStats')
+  const E = await import('@grimoire-core/grimoire/emotions')
+  type J = import('@grimoire-core/grimoire/types').JournalEntry
   const j = (id: string, day: string, words: string[], extra: Partial<J> = {}): J => ({ id, at: `${day}T09:00:00`, day, type: 'entry', words, ...extra })
-  const task = { id: 't', title: 'налоги', dread: 3, stars: 2, tags: ['бумаги'], postponements: [{ at: `${MON}T10:00:00`, day: MON }] } as unknown as import('../types').Task
+  const task = { id: 't', title: 'налоги', dread: 3, stars: 2, tags: ['бумаги'], postponements: [{ at: `${MON}T10:00:00`, day: MON }] } as unknown as import('@grimoire-core/grimoire/types').Task
 
   it('counts petals, a mixed feeling for both', () => {
     const c = S.countPetals([j('a', MON, ['joy.2', 'dyad.love'])])
@@ -469,7 +469,7 @@ describe('mirror analytics', async () => {
 })
 
 describe('spells and the bestiary', async () => {
-  const P = await import('../people')
+  const P = await import('@grimoire-core/grimoire/people')
   it('keeps a quest as a spell and casts it with the steps in order', () => {
     let s: GS = { ...initialGrimoire, meta: { ...initialGrimoire.meta, spells: [] } }
     s = reducer(s, A.addTask({ fields: { id: 'q', title: 'покрасить потолок', stars: 3, tags: ['дом'] } }))
@@ -508,8 +508,8 @@ describe('spells and the bestiary', async () => {
 
 describe('deeds of the workshop', async () => {
   const W = await import('../workshop')
-  const { initialData } = await import('../../store/dataSlice')
-  type D = import('../../types').DataState
+  const { initialData } = await import('@workshop-core/store/dataSlice')
+  type D = import('@workshop-core/types').DataState
   const holder = (id: string, stage: string, extra: object = {}) => ({ id, moldId: 'M-001', mixId: 'G-1', purpose: 'holder', mix: {}, dryStart: '2026-10-20T10:00:00.000Z', stage, history: [{ stage, date: '2026-10-20', consumption: [] }], ...extra })
   const data = (holders: object[], candles: object[] = []): D =>
     ({ ...initialData, molds: { 'M-001': { id: 'M-001', name: 'Книжка' } }, holders: Object.fromEntries(holders.map((h: any) => [h.id, h])), candles: Object.fromEntries(candles.map((c: any) => [c.id, c])) }) as unknown as D
@@ -567,8 +567,8 @@ describe('deeds of the workshop', async () => {
 })
 
 describe('the cycle', async () => {
-  const C = await import('../cycle')
-  const S = await import('../mirrorStats')
+  const C = await import('@grimoire-core/grimoire/cycle')
+  const S = await import('@grimoire-core/grimoire/mirrorStats')
   const mk = (starts: [string, string?][]) => Object.fromEntries(starts.map(([start, end], i) => [`c${i}`, { id: `c${i}`, start, end }]))
   it('guesses 28 days until three cycles, then counts the last ones', () => {
     expect(C.cycleStats(mk([['2026-09-01', '2026-09-05']]))).toEqual({ length: 28, period: 5, approx: true, cycles: 0 })
@@ -603,7 +603,7 @@ describe('the cycle', async () => {
 })
 
 describe('jars', async () => {
-  const J = await import('../jars')
+  const J = await import('@grimoire-core/grimoire/jars')
   it('fills a jar, is collected when full, and a spent jar makes its wish come true', () => {
     let s: GS = initialGrimoire
     s = reducer(s, A.upsertWish({ wish: { id: 'w', title: 'торшер', tags: [], price: 1000 } }))
@@ -654,7 +654,7 @@ describe('jars', async () => {
 })
 
 describe('push notifications', async () => {
-  const N = await import('../notify')
+  const N = await import('@grimoire-core/grimoire/notify')
   it('sends each kind once, in its window, and nothing in the навь', () => {
     let s: GS = initialGrimoire
     s = reducer(s, A.addTask({ fields: { id: 'a', title: 'налоги', doOn: MON, priority: 'high', dueAt: MON } }))
@@ -682,7 +682,7 @@ describe('push notifications', async () => {
 })
 
 describe('new deed form', async () => {
-  const { defaultDraft, draftToFields } = await import('../newTask')
+  const { defaultDraft, draftToFields } = await import('@grimoire-core/grimoire/newTask')
 
   it('starts in the backlog, on today from the day scroll, in the book from a book', () => {
     expect(defaultDraft({}, MON)).toEqual({ title: '', stars: 1, dread: 0, tags: [], type: 'deed' })
@@ -694,7 +694,7 @@ describe('new deed form', async () => {
     expect(f).toEqual({ title: 'купить #2 **☠', stars: 2, dread: 1, tags: [], type: 'deed', checklist: [{ id: 'a', text: 'купить' }] })
   })
   it('stores «нормальный» as no priority and keeps the others', () => {
-    const base: import('../newTask').TaskDraft = { title: 'x', stars: 1, dread: 0, tags: [], type: 'deed' }
+    const base: import('@grimoire-core/grimoire/newTask').TaskDraft = { title: 'x', stars: 1, dread: 0, tags: [], type: 'deed' }
     expect(draftToFields({ ...base, doOn: MON })).not.toHaveProperty('priority')
     expect(draftToFields({ ...base, priority: 'medium' })).not.toHaveProperty('priority')
     expect(draftToFields({ ...base, priority: 'lowest' }).priority).toBe('lowest')
@@ -703,8 +703,8 @@ describe('new deed form', async () => {
 })
 
 describe('priorities', async () => {
-  const { priorityOf, dayPlan } = await import('../selectors')
-  const { migrateGrimoire } = await import('../../store/grimoireSlice')
+  const { priorityOf, dayPlan } = await import('@grimoire-core/grimoire/selectors')
+  const { migrateGrimoire } = await import('@grimoire-core/store/grimoireSlice')
   it('read the old plan parts and sort the day by urgency', () => {
     expect(priorityOf({})).toBe('medium')
     expect(priorityOf({ slot: 'main' })).toBe('high')

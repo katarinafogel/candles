@@ -4,7 +4,7 @@ vi.mock('../supabase', () => ({ supabase: {} }))
 vi.mock('localforage', () => ({ default: { setItem: async () => {}, getItem: async () => null, config: () => {} } }))
 
 const { diff } = await import('../sync')
-const { default: reducer, actions, initialData, nextHolderStage } = await import('../../store/dataSlice')
+const { default: reducer, actions, initialData, nextHolderStage } = await import('@workshop-core/store/dataSlice')
 
 describe('sync diff', () => {
   it('sends only the entities a step touched, in one batch', () => {

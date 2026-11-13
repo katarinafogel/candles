@@ -1,4 +1,4 @@
-// GENERATED from src/grimoire/rows.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
+// GENERATED from packages/grimoire-core/src/grimoire/rows.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
 // How the grimoire lies in the `entities` table: one row per entity, its settings in (meta, grimoire).
 // Shared by the app's sync and by the agent's server (supabase/functions/grimoire-mcp), so both read
 // and write exactly the same rows.

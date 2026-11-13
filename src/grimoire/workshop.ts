@@ -1,11 +1,11 @@
 // Deeds of the workshop: a quest «Расписать подсвечники» with one step per item. A step is never
 // ticked by hand — it is ticked when the item takes that step in the workshop (from the grimoire or
 // right there), so the stock and the stage history go one way.
-import { holderStageOrder } from '../lib/labels'
-import { nextHolderStage } from '../store/dataSlice'
-import type { Candle, CandleStage, DataState, Holder } from '../types'
-import { addDays } from './days'
-import type { DayKey, Task, WorkshopKind, WorkshopLink } from './types'
+import { holderStageOrder } from '@workshop-core/lib/labels'
+import { nextHolderStage } from '@workshop-core/store/dataSlice'
+import type { Candle, CandleStage, DataState, Holder } from '@workshop-core/types'
+import { addDays } from '@grimoire-core/grimoire/days'
+import type { DayKey, Task, WorkshopKind, WorkshopLink } from '@grimoire-core/grimoire/types'
 
 const candleOrder: CandleStage[] = ['wicked', 'curing', 'decorated', 'ready', 'given']
 /** A candle's step → the stage it reaches. */

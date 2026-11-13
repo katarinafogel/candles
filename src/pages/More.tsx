@@ -3,10 +3,10 @@ import { LuChevronRight, LuDownload } from 'react-icons/lu'
 import { Link as RouterLink } from 'react-router-dom'
 import { moreItems } from '../components/Layout'
 import { SignOutRow } from '../components/SignOut'
-import { PageHeader } from '../components/ui'
-import { downloadBackup } from '../lib/backup'
+import { PageHeader } from '@shared/components/ui'
+import { downloadBackup } from '@workshop-core/lib/backup'
 import { useAppDispatch, useData } from '../store'
-import { actions } from '../store/dataSlice'
+import { actions } from '@workshop-core/store/dataSlice'
 
 export default function More() {
   const d = useData()

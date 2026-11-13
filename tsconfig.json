@@ -11,7 +11,13 @@
     "isolatedModules": true,
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
-    "types": ["vite/client", "vite-plugin-pwa/client"]
+    "types": ["vite/client", "vite-plugin-pwa/client"],
+    // Shared code lives in packages/ (see README): one import name per package.
+    "paths": {
+      "@shared/*": ["./packages/shared/src/*"],
+      "@grimoire-core/*": ["./packages/grimoire-core/src/*"],
+      "@workshop-core/*": ["./packages/workshop-core/src/*"]
+    }
   },
-  "include": ["src", "vite.config.ts"]
+  "include": ["src", "packages", "vite.config.ts"]
 }

@@ -2,14 +2,14 @@ import { Badge, Box, Button, Flex, Input, SimpleGrid, Stack, Text } from '@chakr
 import { useState } from 'react'
 import { LuPlus } from 'react-icons/lu'
 import { StockHint } from '../components/StockHint'
-import { Chips, DateInput, Empty, Field, Modal, notify, NumInput, PageHeader, Select, TextArea, TextInput } from '../components/ui'
-import { fmt, fmtDate } from '../lib/calc'
-import { nowLocal, toIso } from '../lib/dates'
-import { decorKindLabel } from '../lib/labels'
-import { byId, materialOptions } from '../lib/selectors'
+import { Chips, DateInput, Empty, Field, Modal, notify, NumInput, PageHeader, Select, TextArea, TextInput } from '@shared/components/ui'
+import { fmt, fmtDate } from '@workshop-core/lib/calc'
+import { nowLocal, toIso } from '@shared/lib/dates'
+import { decorKindLabel } from '@workshop-core/lib/labels'
+import { byId, materialOptions } from '@workshop-core/lib/selectors'
 import { useAppDispatch, useData } from '../store'
-import { actions } from '../store/dataSlice'
-import type { DecorKind } from '../types'
+import { actions } from '@workshop-core/store/dataSlice'
+import type { DecorKind } from '@workshop-core/types'
 
 function NewBatch({ onClose }: { onClose: () => void }) {
   const d = useData()

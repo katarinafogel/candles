@@ -3,16 +3,16 @@
 import { Box, Button, Flex, HStack, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
-import { addDays, daysBetween } from '../../grimoire/days'
-import { cardName } from '../../grimoire/tarot'
-import type { TarotReading } from '../../grimoire/types'
-import { sabbatDays } from '../../grimoire/wheel'
+import { addDays, daysBetween } from '@grimoire-core/grimoire/days'
+import { cardName } from '@grimoire-core/grimoire/tarot'
+import type { TarotReading } from '@grimoire-core/grimoire/types'
+import { sabbatDays } from '@grimoire-core/grimoire/wheel'
 import { EventDialog, eventDayText, useCurrentEvent } from '../../pages/grimoire/Events'
 import { NoteDialog, useNoteOfDay } from '../../pages/grimoire/Notes'
 import { blankDay, ReadingDialog } from '../../pages/grimoire/Tarot'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { grimoireActions as A } from '../../store/grimoireSlice'
-import { Panel } from '../ui'
+import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
+import { Panel } from '@shared/components/ui'
 
 function EventBanner({ today }: { today: string }) {
   const e = useCurrentEvent(today)

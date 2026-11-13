@@ -1,8 +1,8 @@
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
-import { fmt, fmtDateTime } from '../lib/calc'
-import { unitLabel } from '../lib/labels'
+import { fmt, fmtDateTime } from '@workshop-core/lib/calc'
+import { unitLabel } from '@workshop-core/lib/labels'
 import { useData } from '../store'
-import type { StageEntry } from '../types'
+import type { StageEntry } from '@workshop-core/types'
 
 /** Timeline "этап — дата — комментарий" with what each step took from stock. */
 export function History({ entries, labels }: { entries: StageEntry[]; labels: Record<string, string> }) {

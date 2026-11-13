@@ -4,8 +4,8 @@
 import { Box, Button, Flex, HStack, IconButton, Input, Stack, Text } from '@chakra-ui/react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { LuInfo, LuX } from 'react-icons/lu'
-import { dyadFor, dyads, emotionWords, petalOrder, petals, petalsByTone, petalWords, searchWords, wordColor, type Petal } from '../../grimoire/emotions'
-import { Sparkle } from '../Magic'
+import { dyadFor, dyads, emotionWords, petalOrder, petals, petalsByTone, petalWords, searchWords, wordColor, type Petal } from '@grimoire-core/grimoire/emotions'
+import { Sparkle } from '@shared/components/Magic'
 
 const R0 = 26
 const RINGS = [

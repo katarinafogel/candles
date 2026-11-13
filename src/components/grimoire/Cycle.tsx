@@ -3,10 +3,10 @@
 import { Button, Flex, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { useToday, withUndo } from '../../grimoire/act'
-import { cycleSymptoms, openPeriod } from '../../grimoire/cycle'
+import { cycleSymptoms, openPeriod } from '@grimoire-core/grimoire/cycle'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { grimoireActions as A } from '../../store/grimoireSlice'
-import { Chips, DateInput, Field } from '../ui'
+import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
+import { Chips, DateInput, Field } from '@shared/components/ui'
 
 const ddmm = (d: string) => `${d.slice(8)}.${d.slice(5, 7)}`
 

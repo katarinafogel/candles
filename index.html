@@ -15,7 +15,7 @@
       // icon, so the phone installs it as its own app. Kept in step on navigation by src/lib/apps.ts.
       ;(function () {
         var app = new URLSearchParams(location.search).get('app') || (location.hash.indexOf('#/g') === 0 ? 'grimoire' : 'workshop')
-        // The theme before the first paint, the same for both projects (src/themes.ts: savedTheme, applyTheme).
+        // The theme before the first paint, the same for both projects (packages/shared/src/themes.ts: savedTheme, applyTheme).
         var theme = 'paper'
         try { theme = localStorage.getItem('theme') || theme } catch (e) {}
         var root = document.documentElement

@@ -1,4 +1,4 @@
-// GENERATED from src/grimoire/frog.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
+// GENERATED from packages/grimoire-core/src/grimoire/frog.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
 // Frogs: deeds she really does not want to do, or keeps putting off.
 import type { Task } from './types.ts'
 

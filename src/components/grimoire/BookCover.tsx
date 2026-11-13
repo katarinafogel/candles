@@ -3,7 +3,7 @@
 // The crystal fills with light as the deeds get done and is lit whole at 100%; on pause it is dim.
 import { Box, Text } from '@chakra-ui/react'
 import { useId } from 'react'
-import type { Project } from '../../grimoire/types'
+import type { Project } from '@grimoire-core/grimoire/types'
 
 /** Leather and crystal pairs a book may wear (project.color keeps the id). */
 export const bookColors = [

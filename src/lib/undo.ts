@@ -1,7 +1,7 @@
 // «Отменить» in the toast after a stage change: rolls back exactly the step that was just made.
-import { notify } from '../components/ui'
+import { notify } from '@shared/components/ui'
 import { store } from '../store'
-import { actions } from '../store/dataSlice'
+import { actions } from '@workshop-core/store/dataSlice'
 
 type Kind = 'holder' | 'candle'
 

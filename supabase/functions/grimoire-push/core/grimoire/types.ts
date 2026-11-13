@@ -1,4 +1,4 @@
-// GENERATED from src/grimoire/types.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
+// GENERATED from packages/grimoire-core/src/grimoire/types.ts by scripts/sync-agent-core.mjs — edit the original, then run: node scripts/sync-agent-core.mjs
 // Grimoire of deeds: the personal planner that lives next to the workshop (see the «Гримуар дел» spec).
 // Every entity is a row of the same `entities` table as the workshop, with its own `kind`.
 

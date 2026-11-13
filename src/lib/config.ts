@@ -1,4 +1,4 @@
-import type { Settings } from '../types'
+import type { Settings } from '@workshop-core/types'
 
 /** The account for trying things out: only it can wipe itself clean. */
 export const testAccountEmail = 'ww@ww.ww'

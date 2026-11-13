@@ -3,7 +3,7 @@
 import { Box, HStack, Text } from '@chakra-ui/react'
 import type { ReactNode } from 'react'
 import { LuSun } from 'react-icons/lu'
-import type { WheelPractice } from '../../grimoire/types'
+import type { WheelPractice } from '@grimoire-core/grimoire/types'
 import { ArcanaCard } from '../ArcanaCard'
 
 export function PracticeCard({ p, want, lines, actions }: { p: WheelPractice; want?: boolean; lines: ReactNode[]; actions: ReactNode }) {

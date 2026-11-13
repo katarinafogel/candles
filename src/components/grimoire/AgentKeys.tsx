@@ -2,8 +2,8 @@
 // device and shown once; the database keeps only its sha-256 hash.
 import { Box, Button, Code, Flex, HStack, Stack, Text } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabase'
-import { confirmAction, notify, TextInput } from '../ui'
+import { supabase } from '@shared/lib/supabase'
+import { confirmAction, notify, TextInput } from '@shared/components/ui'
 
 interface KeyRow {
   id: string

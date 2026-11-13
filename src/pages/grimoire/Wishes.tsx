@@ -8,15 +8,15 @@ import { BlockSpot, useAttempt, useRoundBlocks, type RoundBlock } from '../../co
 import { TagInput } from '../../components/grimoire/TagInput'
 import { PeoplePicker, PriorityPicker } from '../../components/grimoire/TaskFields'
 import { HoverTrash } from '../../components/grimoire/HoverTrash'
-import { Crescent, Sparkle } from '../../components/Magic'
-import { Chips, confirmAction, DateInput, DeleteButton, Empty, Field, Modal, notify, NumInput, PageHeader, TextArea, TextInput } from '../../components/ui'
+import { Crescent, Sparkle } from '@shared/components/Magic'
+import { Chips, confirmAction, DateInput, DeleteButton, Empty, Field, Modal, notify, NumInput, PageHeader, TextArea, TextInput } from '@shared/components/ui'
 import { useToday } from '../../grimoire/act'
-import { addDays, daysBetween, plural } from '../../grimoire/days'
-import { priorities } from '../../grimoire/selectors'
-import type { Wish } from '../../grimoire/types'
-import { sabbats } from '../../grimoire/wheel'
+import { addDays, daysBetween, plural } from '@grimoire-core/grimoire/days'
+import { priorities } from '@grimoire-core/grimoire/selectors'
+import type { Wish } from '@grimoire-core/grimoire/types'
+import { sabbats } from '@grimoire-core/grimoire/wheel'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { grimoireActions as A } from '../../store/grimoireSlice'
+import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 
 /** «1 год 2 месяца 5 дней»; empty within the same day. */
 export function span(fromIso: string, toIso: string) {

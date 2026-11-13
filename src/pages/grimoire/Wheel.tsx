@@ -9,13 +9,13 @@ import { MoonIcon } from '../../components/grimoire/MoonIcon'
 import { PracticeCard } from '../../components/grimoire/PracticeCard'
 import { cardColumns } from '../../components/grimoire/TaskCard'
 import { WheelPick } from '../../components/grimoire/WheelPick'
-import { Chips, Empty, Field, Modal, notify, PageHeader, Section, TextArea, TextInput } from '../../components/ui'
+import { Chips, Empty, Field, Modal, notify, PageHeader, Section, TextArea, TextInput } from '@shared/components/ui'
 import { useToday, withUndo } from '../../grimoire/act'
-import { addDays, days, daysBetween, humanDay, plainDay } from '../../grimoire/days'
-import type { DayKey, JournalEntry, Sabbat, WheelPractice } from '../../grimoire/types'
-import { isFullMoon, nextFullMoon, sabbatCardDefaults, sabbatCardFields, sabbatOrder, sabbats, segmentOf, wheelNow } from '../../grimoire/wheel'
+import { addDays, days, daysBetween, humanDay, plainDay } from '@grimoire-core/grimoire/days'
+import type { DayKey, JournalEntry, Sabbat, WheelPractice } from '@grimoire-core/grimoire/types'
+import { isFullMoon, nextFullMoon, sabbatCardDefaults, sabbatCardFields, sabbatOrder, sabbats, segmentOf, wheelNow } from '@grimoire-core/grimoire/wheel'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { grimoireActions as A } from '../../store/grimoireSlice'
+import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
 
 const SIZE = 440
 const C = SIZE / 2

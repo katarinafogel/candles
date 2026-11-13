@@ -1,10 +1,10 @@
 import { Box, Button, Flex, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { LuPlus } from 'react-icons/lu'
-import { DeleteButton, Field, Modal, PageHeader, TextArea, TextInput } from '../components/ui'
+import { DeleteButton, Field, Modal, PageHeader, TextArea, TextInput } from '@shared/components/ui'
 import { useAppDispatch, useData } from '../store'
-import { actions } from '../store/dataSlice'
-import type { Instruction } from '../types'
+import { actions } from '@workshop-core/store/dataSlice'
+import type { Instruction } from '@workshop-core/types'
 
 export default function Instructions() {
   const d = useData()

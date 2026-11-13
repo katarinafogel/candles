@@ -4,12 +4,12 @@
 import { Button, Flex, HStack, Stack, Text } from '@chakra-ui/react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useToday } from '../../grimoire/act'
-import { addDays } from '../../grimoire/days'
-import { byPlanOrder, dayStars, isOpenTask, overLimit, planCount, priorityOf } from '../../grimoire/selectors'
-import type { DayKey, GrimoireState } from '../../grimoire/types'
+import { addDays } from '@grimoire-core/grimoire/days'
+import { byPlanOrder, dayStars, isOpenTask, overLimit, planCount, priorityOf } from '@grimoire-core/grimoire/selectors'
+import type { DayKey, GrimoireState } from '@grimoire-core/grimoire/types'
 import { store, useAppDispatch, useAppSelector } from '../../store'
-import { grimoireActions as A } from '../../store/grimoireSlice'
-import { Modal } from '../ui'
+import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
+import { Modal } from '@shared/components/ui'
 import { Dread, PriorityIcon, Stars } from './Marks'
 
 /**
