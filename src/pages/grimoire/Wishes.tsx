@@ -2,7 +2,7 @@
 // a book or a jar, and a fulfilled one moves to the hall of fame with the time it took «от мечты до яви».
 import { Box, Button, Flex, HStack, Input, SimpleGrid, Stack, Tabs, Text } from '@chakra-ui/react'
 import { useState } from 'react'
-import { LuCoins, LuExternalLink, LuFlag, LuHash, LuHourglass, LuLink, LuUser } from 'react-icons/lu'
+import { LuArrowUpDown, LuCoins, LuExternalLink, LuFlag, LuHash, LuHourglass, LuLink, LuUser } from 'react-icons/lu'
 import { PriorityIcon, Tag } from '../../components/grimoire/Marks'
 import { BlockSpot, useAttempt, useRoundBlocks, type RoundBlock } from '../../components/grimoire/RoundBlocks'
 import { TagInput } from '../../components/grimoire/TagInput'
@@ -12,8 +12,8 @@ import { Crescent, Sparkle } from '@shared/components/Magic'
 import { Chips, confirmAction, DateInput, DeleteButton, Empty, Field, Modal, notify, NumInput, PageHeader, TextArea, TextInput } from '@shared/components/ui'
 import { useToday } from '../../grimoire/act'
 import { addDays, daysBetween, plural } from '@grimoire-core/grimoire/days'
-import { priorities } from '@grimoire-core/grimoire/selectors'
 import type { Wish } from '@grimoire-core/grimoire/types'
+import { filterWishes, isFiltering, wishDeadlines, wishSorts, type WishDeadline, type WishFilter, type WishSort } from '@grimoire-core/grimoire/wishes'
 import { sabbats } from '@grimoire-core/grimoire/wheel'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
@@ -272,6 +272,8 @@ function EmbodyDialog({ w, onClose }: { w: Wish; onClose: () => void }) {
   )
 }
 
+const stop = (e: { stopPropagation: () => void }) => e.stopPropagation()
+
 function WishCard({ w, onEdit }: { w: Wish; onEdit: () => void }) {
   const dispatch = useAppDispatch()
   const task = useAppSelector((s) => (w.taskId ? s.grimoire.tasks[w.taskId] : undefined))
@@ -283,9 +285,26 @@ function WishCard({ w, onEdit }: { w: Wish; onEdit: () => void }) {
   const [embody, setEmbody] = useState(false)
   const left = w.relevantUntil ? daysBetween(today, w.relevantUntil) : undefined
   return (
-    <Box p="4" borderRadius="l3" borderWidth="1px" borderColor="emerald.800" bg="bg.subtle" backgroundImage="radial-gradient(16rem 8rem at 100% 0%, color-mix(in srgb, var(--chakra-colors-emerald-400) 14%, transparent), transparent 70%)">
+    // The whole card opens the wish, empty space included; its buttons and link only do their own thing.
+    <Box
+      role="button"
+      tabIndex={0}
+      aria-label={`Открыть: ${w.title}`}
+      h="full"
+      cursor="pointer"
+      onClick={onEdit}
+      onKeyDown={(e) => e.key === 'Enter' && e.target === e.currentTarget && onEdit()}
+      p="4"
+      borderRadius="l3"
+      borderWidth="1px"
+      borderColor="emerald.800"
+      bg="bg.subtle"
+      _hover={{ borderColor: 'emerald.600' }}
+      transition="border-color .15s"
+      backgroundImage="radial-gradient(16rem 8rem at 100% 0%, color-mix(in srgb, var(--chakra-colors-emerald-400) 14%, transparent), transparent 70%)"
+    >
       <Flex justify="space-between" gap="2" align="flex-start">
-        <Box cursor="pointer" onClick={onEdit}>
+        <Box>
           <HStack gap="2">
             <Box color="purple.200">
               <Sparkle size={12} />
@@ -322,7 +341,7 @@ function WishCard({ w, onEdit }: { w: Wish; onEdit: () => void }) {
         </Box>
       </Flex>
       {left != null && left < 0 && (
-        <HStack gap="2" mt="3" p="2" borderRadius="l2" bg="bg.muted" wrap="wrap">
+        <HStack gap="2" mt="3" p="2" borderRadius="l2" bg="bg.muted" wrap="wrap" onClick={stop}>
           <Text fontSize="sm" flex="1" minW="140px">
             Срок «актуально до» прошёл. Ещё хочется?
           </Text>
@@ -334,7 +353,7 @@ function WishCard({ w, onEdit }: { w: Wish; onEdit: () => void }) {
           </Button>
         </HStack>
       )}
-      <HStack gap="2" mt="3" wrap="wrap">
+      <HStack gap="2" mt="3" wrap="wrap" onClick={stop}>
         {w.status === 'dream' && (
           <Button size="xs" colorPalette="purple" onClick={() => setEmbody(true)}>
             Воплотить
@@ -352,41 +371,91 @@ function WishCard({ w, onEdit }: { w: Wish; onEdit: () => void }) {
           Отпустить
         </Button>
       </HStack>
-      {fulfilling && <FulfillDialog w={w} onClose={() => setFulfilling(false)} />}
-      {embody && <EmbodyDialog w={w} onClose={() => setEmbody(false)} />}
+      {/* Dialogs render in a portal, but their clicks still bubble up the React tree to the card. */}
+      <span onClick={stop}>
+        {fulfilling && <FulfillDialog w={w} onClose={() => setFulfilling(false)} />}
+        {embody && <EmbodyDialog w={w} onClose={() => setEmbody(false)} />}
+      </span>
     </Box>
   )
 }
 
+type FilterBlock = 'tags' | 'deadline' | 'price' | 'sort'
+const filterBlocks: RoundBlock<FilterBlock>[] = [
+  { key: 'tags', label: 'Теги', icon: <LuHash /> },
+  { key: 'deadline', label: 'Дедлайн', icon: <LuHourglass /> },
+  { key: 'price', label: 'Цена', icon: <LuCoins /> },
+  { key: 'sort', label: 'Сортировка', icon: <LuArrowUpDown /> },
+]
+const clearFilter: Record<FilterBlock, Partial<WishFilter>> = {
+  tags: { tags: undefined },
+  deadline: { deadline: undefined },
+  price: { priceFrom: undefined, priceTo: undefined },
+  sort: { sort: undefined },
+}
+
 export default function Wishes() {
   const g = useAppSelector((s) => s.grimoire)
+  const today = useToday()
   const [tab, setTab] = useState<'chest' | 'hall'>('chest')
   const [edit, setEdit] = useState<Draft>()
   const [words, setWords] = useState<Wish>()
   const dispatch = useAppDispatch()
   const all = Object.values(g.wishes)
-  const [tag, setTag] = useState<string>()
+  const [f, setF] = useState<WishFilter>({})
+  const set = (p: Partial<WishFilter>) => setF((x) => ({ ...x, ...p }))
+  const blocks = useRoundBlocks(tab === 'chest' ? filterBlocks : filterBlocks.slice(0, 1), [], (k) => set(clearFilter[k]))
   const open = all.filter((w) => w.status === 'dream' || w.status === 'inProgress')
-  const chestTags = [...new Set(open.flatMap((w) => w.tags))].sort((a, b) => a.localeCompare(b, 'ru'))
-  const rank = (w: Wish) => priorities.indexOf(w.priority ?? 'medium')
-  const dreams = open.filter((w) => !tag || w.tags.includes(tag)).sort((a, b) => rank(a) - rank(b) || b.createdAt.localeCompare(a.createdAt))
-  const fame = all.filter((w) => w.status === 'fulfilled').sort((a, b) => (b.fulfilledAt ?? '').localeCompare(a.fulfilledAt ?? ''))
+  const fulfilled = all.filter((w) => w.status === 'fulfilled')
+  const tagsOf = (list: Wish[]) => [...new Set(list.flatMap((w) => w.tags))].sort((a, b) => a.localeCompare(b, 'ru'))
+  const shownTags = tagsOf(tab === 'chest' ? open : fulfilled)
+  const dreams = filterWishes(open, f, today)
+  // The hall keeps its own order (newest fulfilled first) and takes only the search and the tags.
+  const fame = filterWishes(fulfilled, { q: f.q, tags: f.tags, sort: 'age' }, today).sort((a, b) => (b.fulfilledAt ?? '').localeCompare(a.fulfilledAt ?? ''))
+  const filtering = tab === 'chest' ? isFiltering(f) : !!(f.q?.trim() || f.tags?.length)
   const avgDays = fame.length ? Math.round(fame.reduce((s, w) => s + daysBetween(w.createdAt.slice(0, 10), (w.fulfilledAt ?? w.createdAt).slice(0, 10)), 0) / fame.length) : 0
+  const resetAll = () => {
+    setF({})
+    blocks.reset()
+  }
 
   return (
     <>
       <PageHeader title={tab === 'chest' ? 'Сундук желаний' : 'Зал славы'} />
       <Tabs.Root value={tab} onValueChange={(e) => setTab(e.value as 'chest' | 'hall')} variant="line" size="sm" mb="4">
         <Tabs.List>
-          <Tabs.Trigger value="chest">Сундук · {dreams.length}</Tabs.Trigger>
-          <Tabs.Trigger value="hall">Зал славы · {fame.length}</Tabs.Trigger>
+          <Tabs.Trigger value="chest">Сундук · {open.length}</Tabs.Trigger>
+          <Tabs.Trigger value="hall">Зал славы · {fulfilled.length}</Tabs.Trigger>
         </Tabs.List>
       </Tabs.Root>
-      {tab === 'chest' && chestTags.length > 0 && (
-        <Box mb="3">
-          <Chips value={tag} onChange={(v) => setTag((v as string) ?? undefined)} options={chestTags.map((t) => ({ value: t, label: `#${t}` }))} />
-        </Box>
-      )}
+      <Stack gap="3" mb="4">
+        <Flex gap="2" align="center" wrap="wrap">
+          <Input size="sm" maxW={{ base: 'full', md: '280px' }} flex={{ base: '1 1 100%', md: 'initial' }} value={f.q ?? ''} onChange={(e) => set({ q: e.target.value || undefined })} placeholder="Поиск по названию и описанию" />
+          <Box>{blocks.toolbar}</Box>
+          {(filtering || f.sort) && (
+            <Button size="xs" variant="ghost" onClick={resetAll}>
+              сбросить всё
+            </Button>
+          )}
+        </Flex>
+        {blocks.show('tags') && shownTags.length > 0 && (
+          <Chips multi value={f.tags ?? []} onChange={(v) => set({ tags: (v as string[]).length ? (v as string[]) : undefined })} options={shownTags.map((t) => ({ value: t, label: `#${t}` }))} />
+        )}
+        {tab === 'chest' && blocks.show('deadline') && <Chips value={f.deadline} onChange={(v) => set({ deadline: v as WishDeadline | undefined })} options={wishDeadlines} />}
+        {tab === 'chest' && blocks.show('price') && (
+          <HStack gap="2" wrap="wrap">
+            <NumInput integer value={f.priceFrom} onChange={(v) => set({ priceFrom: v ?? undefined })} placeholder="от" suffix="₽" width="150px" size="sm" />
+            <Text color="fg.subtle">—</Text>
+            <NumInput integer value={f.priceTo} onChange={(v) => set({ priceTo: v ?? undefined })} placeholder="до" suffix="₽" width="150px" size="sm" />
+          </HStack>
+        )}
+        {tab === 'chest' && blocks.show('sort') && <Chips value={f.sort ?? 'priority'} onChange={(v) => set({ sort: (v as WishSort | undefined) ?? 'priority' })} options={wishSorts} />}
+        {filtering && (
+          <Text fontSize="xs" color="fg.subtle">
+            показано {(tab === 'chest' ? dreams : fame).length} из {(tab === 'chest' ? open : fulfilled).length}
+          </Text>
+        )}
+      </Stack>
       {tab === 'chest' ? (
         dreams.length ? (
           <SimpleGrid columns={{ base: 1, md: 2 }} gap="3">
@@ -395,7 +464,7 @@ export default function Wishes() {
             ))}
           </SimpleGrid>
         ) : (
-          <Empty>{tag ? `С тегом «${tag}» мечтаний нет.` : 'Сундук пуст. Мечте не нужен дедлайн. Добавить — через плюсик внизу.'}</Empty>
+          <Empty>{filtering ? 'Под эти фильтры мечтаний нет.' : 'Сундук пуст. Мечте не нужен дедлайн. Добавить — через плюсик внизу.'}</Empty>
         )
       ) : (
         <>
@@ -432,7 +501,7 @@ export default function Wishes() {
               ))}
             </SimpleGrid>
           ) : (
-            <Empty>Здесь будут сбывшиеся мечты.</Empty>
+            <Empty>{filtering ? 'Под эти фильтры ничего нет.' : 'Здесь будут сбывшиеся мечты.'}</Empty>
           )}
         </>
       )}

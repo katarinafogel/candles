@@ -78,7 +78,12 @@ export function useRoundBlocks<K extends string>(blocks: RoundBlock<K>[], filled
       ))}
     </HStack>
   )
-  return { shown, opened, toolbar, show: (k: K) => shown.has(k) }
+  /** Every block hidden again (their values are the caller's to clear). */
+  const reset = () => {
+    setShown(new Set())
+    setOpened(undefined)
+  }
+  return { shown, opened, toolbar, show: (k: K) => shown.has(k), reset }
 }
 
 /** Wraps a block that was just turned on, so the form scrolls to it. */
