@@ -2,7 +2,7 @@ import { Badge, Box, Button, Flex, HStack, IconButton, Input, Stack, Text, Wrap 
 import { useState } from 'react'
 import { LuPencil, LuPlus } from 'react-icons/lu'
 import { nanoid } from '@reduxjs/toolkit'
-import { Link as RouterLink, Navigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link as RouterLink, useParams } from 'react-router-dom'
 import { Check, DeleteButton, Empty, Field, IdBadge, Modal, PageHeader, Select, TextArea, TextInput } from '@shared/components/ui'
 import { candleStageLabel } from '@workshop-core/lib/labels'
 import { reviewsOf } from '@workshop-core/lib/selectors'
@@ -84,13 +84,11 @@ function PersonDialog({ person, onClose }: { person: Omit<Person, 'id'> & { id?:
 
 export default function People() {
   const d = useData()
-  const [sp] = useSearchParams()
   const [edit, setEdit] = useState<(Omit<Person, 'id'> & { id?: string }) | null>(null)
   const [q, setQ] = useState('')
   const [silent, setSilent] = useState(false)
-  // /people/<id>: that person first and highlighted. The old ?p=<id> moves to it.
+  // /people/<id>: that person first and highlighted.
   const { id: focus } = useParams()
-  const oldFocus = sp.get('p')
   const linkOn = useLinkPeople()
   const beings = useAppSelector((s) => s.grimoire.beings)
   const beingOf = (pid: string) => (linkOn ? Object.values(beings).find((b) => b.personId === pid) : undefined)
@@ -103,8 +101,6 @@ export default function People() {
     })
     .filter((x) => (!q || x.p.name.toLowerCase().includes(q.toLowerCase())) && (!silent || x.unanswered.length))
     .sort((a, b) => (a.p.id === focus ? -1 : b.p.id === focus ? 1 : a.p.name.localeCompare(b.p.name, 'ru')))
-
-  if (oldFocus) return <Navigate to={`/people/${oldFocus}`} replace />
 
   return (
     <>

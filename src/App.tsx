@@ -1,7 +1,7 @@
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { AuthGate } from './components/AuthGate'
 import { InviteTaker } from './components/Invites'
-import { Moved, NotFound } from './components/NotFound'
+import { NotFound } from './components/NotFound'
 import GrimoireLayout from './components/grimoire/GrimoireLayout'
 import Layout from './components/Layout'
 import CandlePage from './pages/CandlePage'
@@ -106,13 +106,6 @@ export default function App() {
         <Route path="candles/:id/edit" element={<EditCandle />} />
         <Route path="mixes/new" element={<NewMix />} />
         <Route path="pours/new" element={<NewPour />} />
-        {/* Old addresses, still in bookmarks. */}
-        <Route path="mix/new" element={<Moved to="/mixes/new" />} />
-        <Route path="pour/new" element={<Moved to="/pours/new" />} />
-        <Route path="holders/add" element={<Moved to="/holders/new" />} />
-        <Route path="candles/add" element={<Moved to="/candles/new" />} />
-        <Route path="stock" element={<Moved to="/materials" />} />
-        <Route path="stock/:id" element={<Moved to="/materials" keepTail />} />
         <Route path="molds" element={<Molds />} />
         <Route path="molds/:id" element={<MoldPage />} />
         <Route path="materials" element={<Stock />} />
