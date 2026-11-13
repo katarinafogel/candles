@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import { useEffect, useState, type ReactNode } from 'react'
 import { FcGoogle } from 'react-icons/fc'
 import { useLocation } from 'react-router-dom'
-import { appOf, applyApp, setTitleOverride } from '../lib/apps'
+import { appOf, applyApp } from '../lib/apps'
 import { publicBase } from '../lib/config'
 import { authRedirect, supabase, supabaseConfigured } from '../lib/supabase'
 import { startSync } from '../lib/sync'
@@ -49,15 +49,8 @@ function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  // The sign-in page is shared by both projects and carries the grimoire's name in the tab.
-  useEffect(() => {
-    setTitleOverride('Гримуар')
-    applyApp(appOf(pathname))
-    return () => {
-      setTitleOverride(null)
-      applyApp(appOf(pathname))
-    }
-  }, [pathname])
+  // The sign-in page is shared by both projects and carries the name of the one being opened.
+  useEffect(() => applyApp(appOf(pathname)), [pathname])
 
   async function signIn() {
     setBusy(true)

@@ -1,7 +1,7 @@
 {
   "id": "./?app=workshop",
-  "name": "Гримуар",
-  "short_name": "Свечи",
+  "name": "Мастерская свечей",
+  "short_name": "Мастерская",
   "description": "Производственный журнал мастерской свечей",
   "lang": "ru",
   "theme_color": "#ffffff",

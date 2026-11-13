@@ -9,8 +9,8 @@ import { applyTheme, savedTheme } from '../themes'
 export type AppId = 'workshop' | 'grimoire'
 
 export const apps: Record<AppId, { name: string; short: string; start: string; manifest: string; touchIcon: string; icon: string }> = {
-  workshop: { name: 'Гримуар', short: 'Свечи', start: '/', manifest: './manifest.webmanifest', touchIcon: './apple-touch-icon.png', icon: './icon.svg' },
-  grimoire: { name: 'Гримуар', short: 'Гримуар', start: '/g', manifest: './manifest-grimoire.webmanifest', touchIcon: './apple-touch-icon-grimoire.png', icon: './icon-grimoire.svg' },
+  workshop: { name: 'Мастерская свечей', short: 'Мастерская', start: '/', manifest: './manifest.webmanifest', touchIcon: './apple-touch-icon.png', icon: './icon.svg' },
+  grimoire: { name: 'Гримуар дел', short: 'Гримуар', start: '/g', manifest: './manifest-grimoire.webmanifest', touchIcon: './apple-touch-icon-grimoire.png', icon: './icon-grimoire.svg' },
 }
 
 /** The app an address belongs to; on the projects page the one chosen for install (`?app=`). */
@@ -25,20 +25,13 @@ function setHref(id: string, href: string) {
   if (el && el.getAttribute('href') !== href) el.setAttribute('href', href)
 }
 
-let titleOverride: string | null = null
-
-/** A tab title that wins over the project's own while set (the shared sign-in page). */
-export function setTitleOverride(title: string | null) {
-  titleOverride = title
-}
-
 export function applyApp(app: AppId) {
   const a = apps[app]
   setHref('app-manifest', a.manifest)
   setHref('app-touch-icon', a.touchIcon)
   setHref('app-icon', a.icon)
   document.getElementById('app-title')?.setAttribute('content', a.short)
-  document.title = titleOverride ?? a.name
+  document.title = a.name
   applyTheme(savedTheme())
 }
 
