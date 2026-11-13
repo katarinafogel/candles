@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../lib/supabase', () => ({ supabase: {} }))
+vi.mock('@shared/lib/supabase', () => ({ supabase: {} }))
 vi.mock('localforage', () => ({ default: { setItem: async () => {}, getItem: async () => null, config: () => {} } }))
 
 const { parseQuickAdd, parseDay } = await import('@grimoire-core/grimoire/parse')

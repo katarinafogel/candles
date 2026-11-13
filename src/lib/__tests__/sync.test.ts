@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('../supabase', () => ({ supabase: {} }))
+vi.mock('@shared/lib/supabase', () => ({ supabase: {} }))
 vi.mock('localforage', () => ({ default: { setItem: async () => {}, getItem: async () => null, config: () => {} } }))
 
 const { diff } = await import('../sync')
