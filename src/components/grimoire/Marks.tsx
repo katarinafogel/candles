@@ -4,7 +4,7 @@ import { Badge, Box, HStack, Text } from '@chakra-ui/react'
 import { LuCloud, LuCloudLightning, LuCloudRain, LuSun } from 'react-icons/lu'
 import { dueDay, humanDay } from '@grimoire-core/grimoire/days'
 import { dreadLabel, priorityLabel } from '@grimoire-core/grimoire/labels'
-import { tagPalette } from '@grimoire-core/grimoire/tags'
+import { tagColor } from '@grimoire-core/grimoire/tags'
 import { useAppSelector } from '../../store'
 import type { DayKey, TaskPriority } from '@grimoire-core/grimoire/types'
 
@@ -145,8 +145,8 @@ export function Tag({ name }: { name: string }) {
     // (an arcana card's own on a card), so it reads on light paper and on dark cards alike.
     <Badge
       variant="plain"
-      bg={`color-mix(in srgb, var(--g-tag-${tagPalette(name, colors)}) 26%, transparent)`}
-      color={`color-mix(in srgb, var(--g-tag-${tagPalette(name, colors)}) 45%, var(--card-fg, var(--g-fg)))`}
+      bg={`color-mix(in srgb, ${tagColor(name, colors)} 26%, transparent)`}
+      color={`color-mix(in srgb, ${tagColor(name, colors)} 45%, var(--card-fg, var(--g-fg)))`}
       fontSize="2xs"
       borderRadius="full"
       px="2"

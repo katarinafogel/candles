@@ -34,14 +34,32 @@ export function tagPalette(tag: string, colors: Record<string, string>): TagPale
   return tagPalettes[h % tagPalettes.length]
 }
 
-/** Every tag in the book, the most used first (ties in alphabetical order). */
-export function tagsByUse(g: Pick<GrimoireState, 'tasks'> & Partial<Pick<GrimoireState, 'wishes' | 'jars'>>): string[] {
+/** A colour she mixed herself: «#rrggbb», kept in the same meta.tagColors. */
+export const isOwnColor = (c?: string): c is string => !!c && /^#[0-9a-f]{6}$/i.test(c)
+
+/** The tag's colour as CSS: her own «#rrggbb», or the theme's variable for a palette colour. */
+export function tagColor(tag: string, colors: Record<string, string>): string {
+  const own = colors[tag]
+  return isOwnColor(own) ? own : `var(--g-tag-${tagPalette(tag, colors)})`
+}
+
+type Tagged = { tags?: string[] }
+type TagSources = Pick<GrimoireState, 'tasks'> &
+  Partial<Pick<GrimoireState, 'wishes' | 'jars' | 'journal' | 'notes' | 'books'>> & { meta?: { spells?: Tagged[] } }
+
+/** How many things wear each tag: deeds, wishes, jars, mirror entries, notes, books and templates. */
+export function tagCounts(g: TagSources): Map<string, number> {
   const n = new Map<string, number>()
-  const count = (tags?: string[]) => {
-    for (const x of tags ?? []) n.set(x, (n.get(x) ?? 0) + 1)
+  const count = (x: Tagged) => {
+    for (const t of x.tags ?? []) n.set(t, (n.get(t) ?? 0) + 1)
   }
-  for (const t of Object.values(g.tasks)) count(t.tags)
-  for (const w of Object.values(g.wishes ?? {})) count(w.tags)
-  for (const j of Object.values(g.jars ?? {})) count(j.tags)
+  for (const c of [g.tasks, g.wishes, g.jars, g.journal, g.notes, g.books]) Object.values((c ?? {}) as Record<string, Tagged>).forEach(count)
+  g.meta?.spells?.forEach(count)
+  return n
+}
+
+/** Every tag in the book, the most used first (ties in alphabetical order). */
+export function tagsByUse(g: TagSources): string[] {
+  const n = tagCounts(g)
   return [...n.keys()].sort((a, b) => n.get(b)! - n.get(a)! || a.localeCompare(b, 'ru'))
 }
