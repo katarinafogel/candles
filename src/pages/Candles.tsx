@@ -185,7 +185,7 @@ export default function Candles() {
     <>
       <PageHeader title="Свечи">
         <Button asChild size="sm" variant="outline">
-          <RouterLink to="/candles/add">
+          <RouterLink to="/candles/new">
             <LuPlus /> Добавить готовые
           </RouterLink>
         </Button>

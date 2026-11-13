@@ -72,7 +72,7 @@ export default function Home() {
             <Stack gap="2">
               {low.map((m) => (
                 <Flex key={m.id} justify="space-between" gap="2">
-                  <Link to={`/stock/${m.id}`}>{m.name}</Link>
+                  <Link to={`/materials/${m.id}`}>{m.name}</Link>
                   <Text color={stockOf(m) <= 0 ? 'red.400' : 'orange.300'} fontSize="sm" whiteSpace="nowrap">
                     {stockOf(m) <= 0
                       ? 'закончилось'

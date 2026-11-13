@@ -263,7 +263,7 @@ export default function Stock() {
                 const low = needsRestock(d, m)
                 return (
                   <Flex key={m.id} align="center" gap="2" py="2" borderBottomWidth="1px" borderColor="border.muted" _last={{ borderBottomWidth: 0 }}>
-                    <Box flex="1" minW="0" cursor="pointer" onClick={() => nav(`/stock/${m.id}`)}>
+                    <Box flex="1" minW="0" cursor="pointer" onClick={() => nav(`/materials/${m.id}`)}>
                       <HStack gap="2">
                         <Text truncate fontWeight="medium">
                           {m.name}

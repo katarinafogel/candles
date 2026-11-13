@@ -27,7 +27,7 @@ export default function MaterialPage() {
 
   return (
     <>
-      <PageHeader title={m.name} back="/stock">
+      <PageHeader title={m.name} back="/materials">
         <Button size="sm" onClick={() => setDialog('buy')}>
           <LuShoppingCart /> Закупка
         </Button>

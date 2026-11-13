@@ -22,8 +22,10 @@ export function NotFound({ home, homeLabel }: { home: string; homeLabel: string 
   )
 }
 
-/** An old address that moved: goes to the new one, keeping the query (?ids=…). */
-export function Moved({ to }: { to: string }) {
-  const { search } = useLocation()
-  return <Navigate to={to + search} replace />
+/** An old address that moved: goes to the new one, keeping the query (?ids=…); `keepTail` carries the last
+ * part of the address over (/stock/42 → /materials/42). */
+export function Moved({ to, keepTail }: { to: string; keepTail?: boolean }) {
+  const { pathname, search } = useLocation()
+  const tail = keepTail ? `/${pathname.split('/').pop()}` : ''
+  return <Navigate to={to + tail + search} replace />
 }

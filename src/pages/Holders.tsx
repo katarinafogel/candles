@@ -110,7 +110,7 @@ export default function Holders() {
     <>
       <PageHeader title="Подсвечники">
         <Button asChild size="sm" variant="outline">
-          <RouterLink to="/holders/add">
+          <RouterLink to="/holders/new">
             <LuPlus /> Добавить готовые
           </RouterLink>
         </Button>

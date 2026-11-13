@@ -229,7 +229,7 @@ export function BestiaryCard() {
       <PageHeader title={person.name} back="/g/people">
         {linked && (
           <Button asChild size="sm" variant="ghost">
-            <RouterLink to={`/people?p=${linked.id}`}>в мастерской</RouterLink>
+            <RouterLink to={`/people/${linked.id}`}>в мастерской</RouterLink>
           </Button>
         )}
       </PageHeader>

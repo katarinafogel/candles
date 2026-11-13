@@ -255,7 +255,7 @@ export default function CandlePage() {
           </Row>
         )}
         <Row label="Кому">
-          {c.burnedBySelf ? 'сожгла сама' : person ? <Link to={`/people?p=${person.id}`}>{person.name}</Link> : '—'}
+          {c.burnedBySelf ? 'сожгла сама' : person ? <Link to={`/people/${person.id}`}>{person.name}</Link> : '—'}
           {c.givenAt && ` · ${fmtDate(c.givenAt)}`}
         </Row>
         {c.defect && (

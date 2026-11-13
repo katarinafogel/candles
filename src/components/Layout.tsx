@@ -18,7 +18,7 @@ const primary: NavItem[] = [
   { to: '/', label: 'Главная', icon: <LuHouse /> },
   { to: '/holders', label: 'Подсвечники', icon: <LuBox /> },
   { to: '/candles', label: 'Свечи', icon: <LuFlame /> },
-  { to: '/stock', label: 'Склад', icon: <LuWarehouse /> },
+  { to: '/materials', label: 'Склад', icon: <LuWarehouse /> },
 ]
 
 const secondary: NavItem[] = [

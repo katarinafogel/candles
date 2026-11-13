@@ -97,11 +97,11 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="holders" element={<Holders />} />
-        <Route path="holders/add" element={<AddHolders />} />
+        <Route path="holders/new" element={<AddHolders />} />
         <Route path="holders/:id" element={<HolderPage />} />
         <Route path="holders/:id/edit" element={<EditHolder />} />
         <Route path="candles" element={<Candles />} />
-        <Route path="candles/add" element={<AddCandles />} />
+        <Route path="candles/new" element={<AddCandles />} />
         <Route path="candles/:id" element={<CandlePage />} />
         <Route path="candles/:id/edit" element={<EditCandle />} />
         <Route path="mixes/new" element={<NewMix />} />
@@ -109,12 +109,17 @@ export default function App() {
         {/* Old addresses, still in bookmarks. */}
         <Route path="mix/new" element={<Moved to="/mixes/new" />} />
         <Route path="pour/new" element={<Moved to="/pours/new" />} />
+        <Route path="holders/add" element={<Moved to="/holders/new" />} />
+        <Route path="candles/add" element={<Moved to="/candles/new" />} />
+        <Route path="stock" element={<Moved to="/materials" />} />
+        <Route path="stock/:id" element={<Moved to="/materials" keepTail />} />
         <Route path="molds" element={<Molds />} />
         <Route path="molds/:id" element={<MoldPage />} />
-        <Route path="stock" element={<Stock />} />
-        <Route path="stock/:id" element={<MaterialPage />} />
+        <Route path="materials" element={<Stock />} />
+        <Route path="materials/:id" element={<MaterialPage />} />
         <Route path="decor" element={<Decor />} />
         <Route path="people" element={<People />} />
+        <Route path="people/:id" element={<People />} />
         <Route path="reviews" element={<Reviews />} />
         <Route path="instructions" element={<Instructions />} />
         <Route path="settings" element={<Settings />} />
