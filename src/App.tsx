@@ -1,6 +1,7 @@
-import { Outlet, Route, Routes } from 'react-router-dom'
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { AuthGate } from './components/AuthGate'
 import { InviteTaker } from './components/Invites'
+import { Moved, NotFound } from './components/NotFound'
 import GrimoireLayout from './components/grimoire/GrimoireLayout'
 import Layout from './components/Layout'
 import CandlePage from './pages/CandlePage'
@@ -66,6 +67,8 @@ export default function App() {
           </AuthGate>
         }
       >
+      {/* The invite's token is taken from the address at start (catchInvite); the page itself is the start page. */}
+      <Route path="/invite/:token" element={<Navigate to="/" replace />} />
       <Route path="/print" element={<PrintQr />} />
       <Route path="/apps" element={<Apps />} />
       {/* The grimoire: only for the witch role (GrimoireLayout sends everyone else to the workshop). */}
@@ -89,7 +92,7 @@ export default function App() {
         <Route path="notes" element={<Notes />} />
         <Route path="spells" element={<SpellsPage />} />
         <Route path="more" element={<GrimoireMore />} />
-        <Route path="*" element={<Scroll />} />
+        <Route path="*" element={<NotFound home="/g" homeLabel="В гримуар" />} />
       </Route>
       <Route element={<Layout />}>
         <Route index element={<Home />} />
@@ -101,8 +104,11 @@ export default function App() {
         <Route path="candles/add" element={<AddCandles />} />
         <Route path="candles/:id" element={<CandlePage />} />
         <Route path="candles/:id/edit" element={<EditCandle />} />
-        <Route path="mix/new" element={<NewMix />} />
-        <Route path="pour/new" element={<NewPour />} />
+        <Route path="mixes/new" element={<NewMix />} />
+        <Route path="pours/new" element={<NewPour />} />
+        {/* Old addresses, still in bookmarks. */}
+        <Route path="mix/new" element={<Moved to="/mixes/new" />} />
+        <Route path="pour/new" element={<Moved to="/pours/new" />} />
         <Route path="molds" element={<Molds />} />
         <Route path="molds/:id" element={<MoldPage />} />
         <Route path="stock" element={<Stock />} />
@@ -113,7 +119,7 @@ export default function App() {
         <Route path="instructions" element={<Instructions />} />
         <Route path="settings" element={<Settings />} />
         <Route path="more" element={<More />} />
-        <Route path="*" element={<Home />} />
+        <Route path="*" element={<NotFound home="/" homeLabel="В мастерскую" />} />
       </Route>
       </Route>
     </Routes>

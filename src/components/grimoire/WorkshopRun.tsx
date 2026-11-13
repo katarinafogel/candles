@@ -19,7 +19,7 @@ export function WorkshopRunner() {
   useEffect(() => {
     if (!pour) return
     workshopRun.clear()
-    navigate(`/pour/new?ids=${ask!.ids.join(',')}`)
+    navigate(`/pours/new?ids=${ask!.ids.join(',')}`)
   }, [pour]) // eslint-disable-line react-hooks/exhaustive-deps
   if (!ask || pour) return null
   const close = () => workshopRun.clear()

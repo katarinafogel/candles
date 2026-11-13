@@ -193,7 +193,7 @@ export default function Candles() {
           <LuPlus /> Формовая
         </Button>
         <Button asChild size="sm">
-          <RouterLink to="/pour/new">
+          <RouterLink to="/pours/new">
             <LuDroplets /> Создать свечи
           </RouterLink>
         </Button>
@@ -306,7 +306,7 @@ export default function Candles() {
         <Box position="fixed" bottom={{ base: '72px', md: '6' }} left={{ base: '4', md: 'calc(240px + 2rem)' }} right="4" zIndex="docked">
           <Flex gap="2" p="2" bg="bg.panel" borderWidth="1px" borderColor="emerald.700" borderRadius="l3" maxW="720px" mx="auto" wrap="wrap" justify="center">
             {allIn('wicked') && (
-              <Button size="sm" onClick={() => nav(`/pour/new?ids=${selected.join(',')}`)}>
+              <Button size="sm" onClick={() => nav(`/pours/new?ids=${selected.join(',')}`)}>
                 <LuDroplets /> Залить · {selected.length}
               </Button>
             )}

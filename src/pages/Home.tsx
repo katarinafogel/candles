@@ -32,12 +32,12 @@ export default function Home() {
     <>
       <PageHeader title="Главная">
         <Button asChild>
-          <RouterLink to="/mix/new">
+          <RouterLink to="/mixes/new">
             <LuFlaskConical /> Создать подсвечники
           </RouterLink>
         </Button>
         <Button asChild variant="outline">
-          <RouterLink to="/pour/new">
+          <RouterLink to="/pours/new">
             <LuDroplets /> Создать свечи
           </RouterLink>
         </Button>

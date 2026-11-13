@@ -63,7 +63,7 @@ export default function HolderPage() {
     <>
       <PageHeader title={holderTitle(d, h)} back="/holders">
         {h.stage === 'wicked' && candle?.stage === 'wicked' && (
-          <Button size="sm" onClick={() => nav(`/pour/new?ids=${candle.id}`)}>
+          <Button size="sm" onClick={() => nav(`/pours/new?ids=${candle.id}`)}>
             <LuDroplets /> Залить
           </Button>
         )}

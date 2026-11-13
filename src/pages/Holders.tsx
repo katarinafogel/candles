@@ -104,7 +104,7 @@ export default function Holders() {
     notify('Удалено')
     setSel([])
   }
-  const pour = (ids: string[]) => nav(`/pour/new?ids=${ids.map((i) => d.holders[i].candleId).join(',')}`)
+  const pour = (ids: string[]) => nav(`/pours/new?ids=${ids.map((i) => d.holders[i].candleId).join(',')}`)
 
   return (
     <>
@@ -115,7 +115,7 @@ export default function Holders() {
           </RouterLink>
         </Button>
         <Button asChild size="sm">
-          <RouterLink to="/mix/new">
+          <RouterLink to="/mixes/new">
             <LuFlaskConical /> Создать подсвечники
           </RouterLink>
         </Button>
