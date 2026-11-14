@@ -2,7 +2,7 @@
 // later it gets the master's own words and pictures. An admin also sees the component showcase.
 import { Box, Container, Flex, Heading, Image, Stack, Text } from '@chakra-ui/react'
 import { useEffect, useState, type ReactNode } from 'react'
-import { LuLayers } from 'react-icons/lu'
+import { Icon } from '@shared/icons'
 import { MoonPhases } from '@shared/components/Magic'
 import { supabase } from '@shared/lib/supabase'
 
@@ -32,7 +32,7 @@ function useIsAdmin() {
 type Project = { href: string; icon: string | ReactNode; name: string; text: string }
 
 const adminProjects: Project[] = [
-  { href: '/workshop/dev/components', icon: <LuLayers />, name: 'Витрина компонентов', text: 'Общие компоненты всех трёх приложений — видно только админу.' },
+  { href: '/workshop/dev/components', icon: <Icon name="crow" size={30} />, name: 'Витрина компонентов', text: 'Общие компоненты всех трёх приложений — видно только админу.' },
 ]
 
 const projects: Project[] = [
