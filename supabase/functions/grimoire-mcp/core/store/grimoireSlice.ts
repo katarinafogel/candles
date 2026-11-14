@@ -7,6 +7,7 @@ import { cleanWords } from '../grimoire/emotions.ts'
 import { addDays, dayKey, nextRepeat } from '../grimoire/days.ts'
 import { habitLogId, habitTaskId, isDone, isScheduled } from '../grimoire/habits.ts'
 import { priorityOf } from '../grimoire/selectors.ts'
+import { moveInQueue } from '../grimoire/books.ts'
 import type {
   Being,
   DayKey,
@@ -1073,6 +1074,8 @@ const slice = createSlice({
         const was = s.notes[n.id]
         const note: Note = { ...n, text: n.text.trim(), createdAt: was?.createdAt ?? a.payload.at }
         if (!note.text) return
+        note.title = note.title?.trim() || undefined
+        if (!note.title) delete note.title
         // Turned on for repeating: it first comes back tomorrow.
         if (note.repeat && !was?.repeat) {
           note.step = 0
@@ -1121,13 +1124,25 @@ const slice = createSlice({
         }
         if (book.status === 'reading') delete book.finishedOn
         if (book.status !== 'read') delete book.rating
-        for (const k of ['author', 'url', 'note', 'startedOn', 'finishedOn', 'rating', 'bought'] as const) if (!book[k]) delete book[k]
+        // «Хочу прочесть» keeps its queue: a new book, or one back on this shelf, joins at the end.
+        if (book.status !== 'want') delete book.queue
+        else if (book.queue == null || was?.status !== 'want') {
+          const places = Object.values(s.books).filter((x) => x.id !== b.id && x.status === 'want').map((x) => x.queue ?? 0)
+          book.queue = Math.max(0, ...places) + 1
+        }
+        if (book.priority === 'medium') delete book.priority
+        for (const k of ['author', 'url', 'note', 'startedOn', 'finishedOn', 'rating', 'bought', 'priority', 'format'] as const) if (!book[k]) delete book[k]
         s.books[b.id] = book
       },
       prepare: (p: { book: Omit<Book, 'createdAt' | 'id'> & { id?: string }; boundary?: number }) => ({ payload: when({ ...p, book: { ...p.book, id: p.book.id ?? nanoid() } }) }),
     },
     deleteBook(s, a: PayloadAction<string>) {
       delete s.books[a.payload]
+    },
+    /** «Выше» / «ниже» in the «хочу прочесть» queue: every book there gets its place number. */
+    moveBookInQueue(s, a: PayloadAction<{ id: string; by: -1 | 1 }>) {
+      const places = moveInQueue(Object.values(s.books), a.payload.id, a.payload.by)
+      for (const [id, n] of Object.entries(places)) s.books[id].queue = n
     },
 
     // ----- tags -----
@@ -1221,6 +1236,20 @@ const slice = createSlice({
         if (a.payload.note) w.fulfilledNote = a.payload.note
       },
       prepare: (p: { id: string; note?: string }) => ({ payload: when(p) }),
+    },
+    /** Back from the hall of fame into the chest. Its words stay, hidden until it comes true again. */
+    restoreWish(s, a: PayloadAction<string>) {
+      const w = s.wishes[a.payload]
+      if (!w || w.status !== 'fulfilled') return
+      delete w.fulfilledAt
+      const t = w.taskId ? s.tasks[w.taskId] : undefined
+      if (t && t.status !== 'done') w.status = 'inProgress'
+      else {
+        w.status = 'dream'
+        // Its deed is done and stays done: the dream starts over without it.
+        if (t?.wishId === w.id) delete t.wishId
+        delete w.taskId
+      }
     },
     releaseWish(s, a: PayloadAction<string>) {
       const w = s.wishes[a.payload]

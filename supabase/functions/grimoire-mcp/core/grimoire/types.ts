@@ -450,6 +450,8 @@ export interface Goal {
  */
 export interface Note {
   id: string
+  /** Optional heading over the text. */
+  title?: string
   text: string
   source?: string
   tags: string[]
@@ -464,12 +466,19 @@ export interface Note {
 export type BookStatus = 'want' | 'reading' | 'read'
 
 /** A book on «Книжная полка»: what to read and what was read; «куплена» is separate from the status. */
+export type BookFormat = 'paper' | 'ebook' | 'print'
+
 export interface Book {
   id: string
   title: string
   author?: string
   status: BookStatus
   bought?: boolean
+  /** How much she wants it, as with deeds and wishes. */
+  priority?: TaskPriority
+  /** Her own order of «хочу прочесть»: the smaller, the sooner. New ones go to the end. */
+  queue?: number
+  format?: BookFormat
   /** Set by itself when the status moves on; can be corrected. */
   startedOn?: DayKey
   finishedOn?: DayKey
