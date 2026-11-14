@@ -95,6 +95,11 @@ function NoteOfDay({ today }: { today: string }) {
       <Text fontFamily="heading" fontSize="lg" color="ember.100" mb="1">
         Вспомнить
       </Text>
+      {note.title && (
+        <Text fontWeight="semibold" color="ember.200" cursor="pointer" onClick={() => setOpen(true)}>
+          {note.title}
+        </Text>
+      )}
       <Text fontFamily="hand" fontSize="md" whiteSpace="pre-wrap" lineClamp={6} cursor="pointer" onClick={() => setOpen(true)}>
         {note.text}
       </Text>

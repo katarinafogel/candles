@@ -2,18 +2,18 @@
 // a book or a jar, and a fulfilled one moves to the hall of fame with the time it took «от мечты до яви».
 import { Box, Button, Flex, HStack, Input, SimpleGrid, Stack, Tabs, Text } from '@chakra-ui/react'
 import { useState } from 'react'
-import { LuArrowUpDown, LuCoins, LuExternalLink, LuFlag, LuHash, LuHourglass, LuLink, LuUser } from 'react-icons/lu'
+import { LuCoins, LuExternalLink, LuFlag, LuHash, LuHourglass, LuLink, LuUser } from 'react-icons/lu'
 import { PriorityIcon, Tag } from '../../components/grimoire/Marks'
 import { BlockSpot, useAttempt, useRoundBlocks, type RoundBlock } from '../../components/grimoire/RoundBlocks'
 import { TagInput } from '../../components/grimoire/TagInput'
 import { PeoplePicker, PriorityPicker } from '../../components/grimoire/TaskFields'
 import { HoverTrash } from '../../components/grimoire/HoverTrash'
 import { Crescent, Sparkle } from '@shared/components/Magic'
-import { Chips, confirmAction, DateInput, DeleteButton, Empty, Field, Modal, notify, NumInput, PageHeader, TextArea, TextInput } from '@shared/components/ui'
+import { Chips, confirmAction, DateInput, DeleteButton, Empty, Field, Modal, notify, NumInput, PageHeader, Select, TextArea, TextInput } from '@shared/components/ui'
 import { useToday } from '../../grimoire/act'
 import { addDays, daysBetween, plural } from '@grimoire-core/grimoire/days'
 import type { Wish } from '@grimoire-core/grimoire/types'
-import { filterWishes, isFiltering, wishDeadlines, wishSorts, type WishDeadline, type WishFilter, type WishSort } from '@grimoire-core/grimoire/wishes'
+import { defaultWishSort, filterWishes, isFiltering, wishDeadlines, wishSorts, wishWithins, type WishDeadline, type WishFilter, type WishSort, type WishWithin } from '@grimoire-core/grimoire/wishes'
 import { sabbats } from '@grimoire-core/grimoire/wheel'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
@@ -171,9 +171,20 @@ function WishLink({ url }: { url?: string }) {
   )
 }
 
+/** «Вернуть в сундук»: the hall of fame gives the dream back, active again. */
+function useRestoreWish(after?: () => void) {
+  const dispatch = useAppDispatch()
+  return (w: Wish) => {
+    dispatch(A.restoreWish(w.id))
+    notify('Мечта вернулась в сундук', 'success')
+    after?.()
+  }
+}
+
 /** «Сбылась»: a few words to keep with it in the hall of fame (or later, for one the deed fulfilled). */
 function FulfillDialog({ w, onClose }: { w: Wish; onClose: () => void }) {
   const dispatch = useAppDispatch()
+  const restore = useRestoreWish(onClose)
   const done = w.status === 'fulfilled'
   const [note, setNote] = useState(w.fulfilledNote ?? '')
   return (
@@ -189,6 +200,11 @@ function FulfillDialog({ w, onClose }: { w: Wish; onClose: () => void }) {
               onClose()
             }}
             />
+          )}
+          {done && (
+            <Button variant="outline" onClick={() => restore(w)}>
+              Вернуть в сундук
+            </Button>
           )}
           <Button
           onClick={() => {
@@ -380,18 +396,14 @@ function WishCard({ w, onEdit }: { w: Wish; onEdit: () => void }) {
   )
 }
 
-type FilterBlock = 'tags' | 'deadline' | 'price' | 'sort'
+type FilterBlock = 'tags' | 'price'
 const filterBlocks: RoundBlock<FilterBlock>[] = [
   { key: 'tags', label: 'Теги', icon: <LuHash /> },
-  { key: 'deadline', label: 'Дедлайн', icon: <LuHourglass /> },
   { key: 'price', label: 'Цена', icon: <LuCoins /> },
-  { key: 'sort', label: 'Сортировка', icon: <LuArrowUpDown /> },
 ]
 const clearFilter: Record<FilterBlock, Partial<WishFilter>> = {
   tags: { tags: undefined },
-  deadline: { deadline: undefined },
   price: { priceFrom: undefined, priceTo: undefined },
-  sort: { sort: undefined },
 }
 
 export default function Wishes() {
@@ -401,6 +413,7 @@ export default function Wishes() {
   const [edit, setEdit] = useState<Draft>()
   const [words, setWords] = useState<Wish>()
   const dispatch = useAppDispatch()
+  const restore = useRestoreWish()
   const all = Object.values(g.wishes)
   const [f, setF] = useState<WishFilter>({})
   const set = (p: Partial<WishFilter>) => setF((x) => ({ ...x, ...p }))
@@ -411,7 +424,7 @@ export default function Wishes() {
   const shownTags = tagsOf(tab === 'chest' ? open : fulfilled)
   const dreams = filterWishes(open, f, today)
   // The hall keeps its own order (newest fulfilled first) and takes only the search and the tags.
-  const fame = filterWishes(fulfilled, { q: f.q, tags: f.tags, sort: 'age' }, today).sort((a, b) => (b.fulfilledAt ?? '').localeCompare(a.fulfilledAt ?? ''))
+  const fame = filterWishes(fulfilled, { q: f.q, tags: f.tags, sort: 'old' }, today).sort((a, b) => (b.fulfilledAt ?? '').localeCompare(a.fulfilledAt ?? ''))
   const filtering = tab === 'chest' ? isFiltering(f) : !!(f.q?.trim() || f.tags?.length)
   const avgDays = fame.length ? Math.round(fame.reduce((s, w) => s + daysBetween(w.createdAt.slice(0, 10), (w.fulfilledAt ?? w.createdAt).slice(0, 10)), 0) / fame.length) : 0
   const resetAll = () => {
@@ -431,8 +444,13 @@ export default function Wishes() {
       <Stack gap="3" mb="4">
         <Flex gap="2" align="center" wrap="wrap">
           <Input size="sm" maxW={{ base: 'full', md: '280px' }} flex={{ base: '1 1 100%', md: 'initial' }} value={f.q ?? ''} onChange={(e) => set({ q: e.target.value || undefined })} placeholder="Поиск по названию и описанию" />
+          {tab === 'chest' && (
+            <Box w="210px">
+              <Select size="sm" value={f.sort ?? defaultWishSort} onChange={(v) => set({ sort: v as WishSort })} options={wishSorts} />
+            </Box>
+          )}
           <Box>{blocks.toolbar}</Box>
-          {(filtering || f.sort) && (
+          {(filtering || (f.sort && f.sort !== defaultWishSort)) && (
             <Button size="xs" variant="ghost" onClick={resetAll}>
               сбросить всё
             </Button>
@@ -441,7 +459,15 @@ export default function Wishes() {
         {blocks.show('tags') && shownTags.length > 0 && (
           <Chips multi value={f.tags ?? []} onChange={(v) => set({ tags: (v as string[]).length ? (v as string[]) : undefined })} options={shownTags.map((t) => ({ value: t, label: `#${t}` }))} />
         )}
-        {tab === 'chest' && blocks.show('deadline') && <Chips value={f.deadline} onChange={(v) => set({ deadline: v as WishDeadline | undefined })} options={wishDeadlines} />}
+        {tab === 'chest' && (
+          <Flex gap="2" align="center" wrap="wrap">
+            <Box color="fg.subtle" title="Дедлайн">
+              <LuHourglass />
+            </Box>
+            <Chips value={f.deadline} onChange={(v) => set({ deadline: v as WishDeadline | undefined, within: undefined })} options={wishDeadlines} />
+            {f.deadline === 'has' && <Chips value={f.within} onChange={(v) => set({ within: v as WishWithin | undefined })} options={wishWithins} />}
+          </Flex>
+        )}
         {tab === 'chest' && blocks.show('price') && (
           <HStack gap="2" wrap="wrap">
             <NumInput integer value={f.priceFrom} onChange={(v) => set({ priceFrom: v ?? undefined })} placeholder="от" suffix="₽" width="150px" size="sm" />
@@ -449,7 +475,6 @@ export default function Wishes() {
             <NumInput integer value={f.priceTo} onChange={(v) => set({ priceTo: v ?? undefined })} placeholder="до" suffix="₽" width="150px" size="sm" />
           </HStack>
         )}
-        {tab === 'chest' && blocks.show('sort') && <Chips value={f.sort ?? 'priority'} onChange={(v) => set({ sort: (v as WishSort | undefined) ?? 'priority' })} options={wishSorts} />}
         {filtering && (
           <Text fontSize="xs" color="fg.subtle">
             показано {(tab === 'chest' ? dreams : fame).length} из {(tab === 'chest' ? open : fulfilled).length}
@@ -496,6 +521,11 @@ export default function Wishes() {
                       Пара слов
                     </Button>
                   )}
+                  <Box>
+                    <Button size="xs" variant="ghost" mt="1" color="fg.muted" onClick={() => restore(w)}>
+                      вернуть в сундук
+                    </Button>
+                  </Box>
                   <WishLink url={w.url} />
                 </Box>
               ))}

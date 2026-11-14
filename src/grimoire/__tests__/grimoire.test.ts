@@ -864,18 +864,70 @@ describe('wish filters', async () => {
     expect(ids(filterWishes(list, { q: 'балкон' }, today))).toEqual(['тент'])
   })
   it('takes any of the chosen tags', () => {
-    expect(ids(filterWishes(list, { tags: ['крафт'], sort: 'age' }, today))).toEqual(['книжный', 'подсвечник'])
+    expect(ids(filterWishes(list, { tags: ['крафт'], sort: 'old' }, today))).toEqual(['книжный', 'подсвечник'])
   })
   it('filters by deadline and price range', () => {
-    expect(ids(filterWishes(list, { deadline: 'soon' }, today))).toEqual(['тент'])
-    expect(ids(filterWishes(list, { deadline: 'overdue' }, today))).toEqual(['книжный'])
+    expect(ids(filterWishes(list, { deadline: 'has', sort: 'urgent' }, today))).toEqual(['книжный', 'тент'])
+    expect(ids(filterWishes(list, { deadline: 'has', within: 'twoWeeks' }, today))).toEqual(['тент'])
+    expect(ids(filterWishes(list, { deadline: 'has', within: 'month' }, today))).toEqual(['тент'])
+    expect(ids(filterWishes(list, { deadline: 'has', within: 'overdue' }, today))).toEqual(['книжный'])
     expect(ids(filterWishes(list, { deadline: 'none' }, today))).toEqual(['подсвечник'])
     expect(ids(filterWishes(list, { priceFrom: 1000, priceTo: 10000 }, today))).toEqual(['тент'])
   })
   it('sorts by deadline, age and price, the ones without last', () => {
-    expect(ids(filterWishes(list, { sort: 'deadline' }, today))).toEqual(['книжный', 'тент', 'подсвечник'])
-    expect(ids(filterWishes(list, { sort: 'age' }, today))).toEqual(['тент', 'книжный', 'подсвечник'])
+    expect(ids(filterWishes(list, { sort: 'urgent' }, today))).toEqual(['книжный', 'тент', 'подсвечник'])
+    expect(ids(filterWishes(list, { sort: 'later' }, today))).toEqual(['тент', 'книжный', 'подсвечник'])
+    expect(ids(filterWishes(list, { sort: 'old' }, today))).toEqual(['тент', 'книжный', 'подсвечник'])
+    expect(ids(filterWishes(list, { sort: 'new' }, today))).toEqual(['подсвечник', 'книжный', 'тент'])
     expect(ids(filterWishes(list, { sort: 'priceDesc' }, today))).toEqual(['книжный', 'тент', 'подсвечник'])
-    expect(ids(filterWishes(list, { sort: 'priority' }, today))[0]).toBe('подсвечник')
+    expect(ids(filterWishes(list, { sort: 'priorityHigh' }, today))[0]).toBe('подсвечник')
+    expect(ids(filterWishes(list, { sort: 'priorityLow' }, today))[2]).toBe('подсвечник')
+    expect(ids(filterWishes(list, {}, today))[0]).toBe('подсвечник')
+  })
+})
+
+describe('book shelf', async () => {
+  const { filterBooks, moveInQueue } = await import('@grimoire-core/grimoire/books')
+  type B = import('@grimoire-core/grimoire/types').Book
+  const b = (id: string, extra: Partial<B> = {}): B => ({ id, title: id, tags: [], status: 'want', createdAt: '2026-01-01T10:00:00', ...extra })
+  const list = [
+    b('дюна', { createdAt: '2026-01-01T10:00:00', tags: ['фантастика'], format: 'paper', queue: 2 }),
+    b('мастер', { createdAt: '2026-02-01T10:00:00', tags: ['классика'], format: 'ebook', priority: 'high', queue: 1 }),
+    b('старая', { createdAt: '2025-12-01T10:00:00', format: 'print' }),
+    b('прочла', { status: 'read', finishedOn: '2026-10-01' }),
+  ]
+  const ids = (x: B[]) => x.map((v) => v.id)
+  it('keeps «хочу прочесть» in its queue, the unnumbered after', () => {
+    expect(ids(filterBooks(list, 'want', {}))).toEqual(['мастер', 'дюна', 'старая'])
+  })
+  it('filters by tags and format, sorts by priority', () => {
+    expect(ids(filterBooks(list, 'want', { tags: ['фантастика', 'классика'], sort: 'old' }))).toEqual(['дюна', 'мастер'])
+    expect(ids(filterBooks(list, 'want', { format: 'print' }))).toEqual(['старая'])
+    expect(ids(filterBooks(list, 'want', { sort: 'priorityHigh' }))[0]).toBe('мастер')
+    expect(ids(filterBooks(list, 'read', { sort: 'queue' }))).toEqual(['прочла'])
+  })
+  it('moves a book in the queue and numbers them all', () => {
+    expect(moveInQueue(list, 'старая', -1)).toEqual({ мастер: 1, старая: 2, дюна: 3 })
+    expect(moveInQueue(list, 'мастер', -1)).toEqual({ мастер: 1, дюна: 2, старая: 3 })
+  })
+  it('puts a new book at the end of the queue and drops the place when it is read', () => {
+    let s = reducer(initialGrimoire, A.upsertBook({ book: { id: 'a', title: 'А', status: 'want', tags: [] } }))
+    s = reducer(s, A.upsertBook({ book: { id: 'b', title: 'Б', status: 'want', tags: [] } }))
+    expect([s.books.a.queue, s.books.b.queue]).toEqual([1, 2])
+    s = reducer(s, A.upsertBook({ book: { ...s.books.a, status: 'reading' } }))
+    expect(s.books.a.queue).toBeUndefined()
+    s = reducer(s, A.upsertBook({ book: { ...s.books.a, status: 'want' } }))
+    expect(s.books.a.queue).toBe(3)
+  })
+})
+
+describe('hall of fame', () => {
+  it('gives a fulfilled wish back to the chest', () => {
+    let s = reducer(initialGrimoire, A.upsertWish({ wish: { id: 'w', title: 'море', tags: [] } }))
+    s = reducer(s, A.fulfillWish({ id: 'w', note: 'было' }))
+    s = reducer(s, A.restoreWish('w'))
+    expect(s.wishes.w.status).toBe('dream')
+    expect(s.wishes.w.fulfilledAt).toBeUndefined()
+    expect(s.wishes.w.fulfilledNote).toBe('было')
   })
 })

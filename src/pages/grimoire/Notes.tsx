@@ -11,9 +11,12 @@ import { useToday } from '../../grimoire/act'
 import { humanDay } from '@grimoire-core/grimoire/days'
 import type { Note } from '@grimoire-core/grimoire/types'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { grimoireActions as A } from '@grimoire-core/store/grimoireSlice'
+import { grimoireActions as A, noteLadder } from '@grimoire-core/store/grimoireSlice'
 
 type Draft = Partial<Note> & { text: string; tags: string[] }
+
+/** The ladder in words, from the same numbers the slice uses. */
+const repeatHint = `Заметка появится в свитке ${noteLadder[0] === 1 ? 'завтра' : `через ${noteLadder[0]} дн.`}. Нажмёшь «помню» — вернётся через ${noteLadder[1]} дня, потом через ${noteLadder.slice(2).join(', ').replace(/, (\d+)$/, ' и $1')} дней. «Ещё повторить» — завтра снова.`
 export const blankNote: Draft = { text: '', tags: [] }
 
 export function NoteDialog({ note, onClose }: { note: Draft; onClose: () => void }) {
@@ -23,14 +26,14 @@ export function NoteDialog({ note, onClose }: { note: Draft; onClose: () => void
   const check = useAttempt()
   const save = () =>
     check.attempt(!!n.text.trim(), () => {
-      dispatch(A.upsertNote({ note: { ...n, source: n.source?.trim() || undefined } }))
+      dispatch(A.upsertNote({ note: { ...n, title: n.title?.trim() || undefined, source: n.source?.trim() || undefined } }))
       onClose()
     })
   return (
     <Modal
       open
       onClose={onClose}
-      title={n.id ? 'Заметка' : 'Новая заметка'}
+      title={n.id ? note.title || 'Заметка' : 'Новая заметка'}
       footer={
         <>
           {n.id && (
@@ -45,6 +48,9 @@ export function NoteDialog({ note, onClose }: { note: Draft; onClose: () => void
       }
     >
       <Stack gap="4">
+        <Field label="Заголовок" helper="можно не заполнять">
+          <TextInput value={n.title ?? ''} onChange={(title) => set({ title })} />
+        </Field>
         <Field label="Текст" invalid={check.missing(!n.text.trim())} error="Здесь пусто">
           <TextArea value={n.text} onChange={(text) => set({ text })} rows={5} />
         </Field>
@@ -54,9 +60,14 @@ export function NoteDialog({ note, onClose }: { note: Draft; onClose: () => void
         <Field label="Теги">
           <TagInput value={n.tags} onChange={(tags) => set({ tags })} />
         </Field>
-        <Check checked={!!n.repeat} onChange={(repeat) => set({ repeat: repeat || undefined })}>
-          Повторять: показывать в свитке дня, всё реже
-        </Check>
+        <Stack gap="1">
+          <Check checked={!!n.repeat} onChange={(repeat) => set({ repeat: repeat || undefined })}>
+            Возвращать в свиток дня
+          </Check>
+          <Text fontSize="xs" color="fg.muted" pl="7">
+            {repeatHint}
+          </Text>
+        </Stack>
       </Stack>
     </Modal>
   )
@@ -80,7 +91,7 @@ export default function Notes() {
   const tags = [...new Set(all.flatMap((n) => n.tags))].sort((a, b) => a.localeCompare(b, 'ru'))
   const needle = q.trim().toLowerCase()
   const list = all
-    .filter((n) => (!tag || n.tags.includes(tag)) && (!needle || `${n.text} ${n.source ?? ''}`.toLowerCase().includes(needle)))
+    .filter((n) => (!tag || n.tags.includes(tag)) && (!needle || `${n.title ?? ''} ${n.text} ${n.source ?? ''}`.toLowerCase().includes(needle)))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   return (
     <>
@@ -93,6 +104,11 @@ export default function Notes() {
         <Stack gap="2">
           {list.map((n) => (
             <Panel key={n.id} onClick={() => setEdit(n)}>
+              {n.title && (
+                <Text fontFamily="heading" fontSize="lg" fontWeight="semibold" color="ember.100" lineHeight="1.2" mb="1">
+                  {n.title}
+                </Text>
+              )}
               <Text whiteSpace="pre-wrap" lineClamp={5}>
                 {n.text}
               </Text>
@@ -104,7 +120,7 @@ export default function Notes() {
                 {n.repeat && (
                   <HStack gap="1" title="повторяется">
                     <LuRepeat />
-                    <Text>{n.nextOn ? (n.nextOn <= today ? 'сегодня' : humanDay(n.nextOn, today)) : ''}</Text>
+                    <Text>{n.nextOn ? (n.nextOn <= today ? 'в свитке сегодня' : `в свитке ${humanDay(n.nextOn, today)}`) : ''}</Text>
                   </HStack>
                 )}
               </Flex>

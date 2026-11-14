@@ -47,14 +47,14 @@ export function sectionOf(sections: GrimoireSection[], path: string) {
   return sections.find((s) => (s.to === '/' ? path === '/' : path === s.to || path.startsWith(`${s.to}/`)))
 }
 
-/** The menu as a column of links, grouped; the current section is lit. `onPick` — after a tap (closes the sheet). */
+/** The menu as one even column of links (the groups only keep the order); the current section is lit. `onPick` — after a tap (closes the sheet). */
 export function SectionList({ sections, onPick }: { sections: GrimoireSection[]; onPick?: () => void }) {
   const path = useLocation().pathname
   const current = sectionOf(sections, path)
   return (
     <Stack gap="1">
-      {sections.map((s, i) => (
-        <Box key={s.to} mt={i > 0 && sections[i - 1].group !== s.group ? '3' : undefined}>
+      {sections.map((s) => (
+        <Box key={s.to}>
           <NavLink to={s.to} onClick={onPick}>
             <Flex
               align="center"

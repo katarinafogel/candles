@@ -12,11 +12,14 @@ export interface Suggestion {
 }
 
 /** Matches by the start of the label first, then anywhere in it; at most `limit`. */
+/** Case and ё/е don't matter when matching. */
+const fold = (s: string) => s.trim().toLowerCase().replace(/ё/g, 'е').replace(/^#+/, '')
+
 export function matchSuggestions(q: string, options: Suggestion[], limit = 6): Suggestion[] {
-  const s = q.trim().toLowerCase()
+  const s = fold(q)
   if (!s) return []
-  const starts = options.filter((o) => o.label.toLowerCase().startsWith(s))
-  const inside = options.filter((o) => !o.label.toLowerCase().startsWith(s) && o.label.toLowerCase().includes(s))
+  const starts = options.filter((o) => fold(o.label).startsWith(s))
+  const inside = options.filter((o) => !fold(o.label).startsWith(s) && fold(o.label).includes(s))
   return [...starts, ...inside].slice(0, limit)
 }
 

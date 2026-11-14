@@ -1,5 +1,5 @@
 // Tags of a deed, a wish or a jar: chips to drop with a tap and a field for a new one that suggests the tags already
-// in the book (the most used first) only while typing.
+// anywhere in the book (the most used first) only while typing.
 import { HStack, Stack } from '@chakra-ui/react'
 import { useMemo } from 'react'
 import { tagsByUse } from '@grimoire-core/grimoire/tags'
@@ -11,10 +11,14 @@ import { SuggestInput } from './SuggestInput'
 const clean = (s: string) => s.trim().replace(/^#+/, '').toLowerCase()
 
 export function TagInput({ value, onChange }: { value: string[]; onChange: (tags: string[]) => void }) {
-  const tasks = useAppSelector((s) => s.grimoire.tasks)
-  const wishes = useAppSelector((s) => s.grimoire.wishes)
-  const jars = useAppSelector((s) => s.grimoire.jars)
-  const known = useMemo(() => tagsByUse({ tasks, wishes, jars }), [tasks, wishes, jars])
+  const g = useAppSelector((s) => s.grimoire)
+  const { tasks, wishes, jars, journal, notes, books, meta } = g
+  // Every tag of the book — deeds, wishes, jars, the mirror, notes, books, templates — and the ones
+  // given a colour in the settings, so a tag used in one section is offered in every other.
+  const known = useMemo(() => {
+    const used = tagsByUse({ tasks, wishes, jars, journal, notes, books, meta })
+    return [...used, ...Object.keys(meta.tagColors ?? {}).filter((t) => !used.includes(t))]
+  }, [tasks, wishes, jars, journal, notes, books, meta])
   const options = known.filter((t) => !value.includes(t)).map((t) => ({ value: t, label: t, view: <Tag name={t} /> }))
 
   function add(raw: string) {

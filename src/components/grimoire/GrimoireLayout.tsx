@@ -79,7 +79,7 @@ export default function GrimoireLayout() {
       </Box>
 
       <Box flex="1" minW="0" position="relative" overflowX="clip">
-        <Box position="relative" zIndex="1" px={{ base: '4', md: '8' }} pt={{ base: 'calc(16px + env(safe-area-inset-top))', md: '8' }} pb={{ base: '28', md: '24' }}>
+        <Box position="relative" zIndex="1" px={{ base: '4', md: '8' }} pt={{ base: 'calc(16px + env(safe-area-inset-top))', md: '4' }} pb={{ base: '28', md: '24' }}>
           <Flex as="header" justify="space-between" align="center" mb={{ base: '3', md: '5' }} gap="3">
             <Flex display={{ base: 'flex', md: 'none' }}>
               <AppMark size={26} compact />
