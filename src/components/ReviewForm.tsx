@@ -3,6 +3,8 @@ import { fmt, fmtDateTime } from '@workshop-core/lib/calc'
 import { reviewQuestions, type ChoiceQuestion } from '@workshop-core/lib/labels'
 import type { Review, ReviewAnswers } from '@workshop-core/types'
 import { Chips, Field, TextArea, TextInput } from '@shared/components/ui'
+import { Icon } from '@shared/icons'
+import { useState } from 'react'
 
 /** A slider that stays "не отвечено" until the person touches it. */
 function SliderQuestion({
@@ -69,6 +71,72 @@ function SliderQuestion({
   )
 }
 
+const starIcons = ['star-1', 'star-2', 'star-3', 'star-4', 'star-5'] as const
+
+/**
+ * Five of her own stars instead of a slider, each bigger than the last. The chosen one and all
+ * before it light up, each a little brighter than the one before, so 5 burns brightest. A mouse
+ * previews the rating on hover; tapping the chosen star again clears it.
+ */
+function StarQuestion({ label, value, onChange }: { label: string; value: number | undefined; onChange: (v: number | undefined) => void }) {
+  const [hover, setHover] = useState<number>()
+  const shown = hover ?? value ?? 0
+  return (
+    <Box>
+      <Flex justify="space-between" align="baseline" gap="3" mb="2">
+        <Text fontSize="sm" color="fg.muted">
+          {label}
+        </Text>
+        {value != null ? (
+          <HStack gap="2">
+            <Text fontSize="sm" fontWeight="semibold" color="emerald.300">
+              {value} из 5
+            </Text>
+            <Button size="2xs" variant="ghost" color="fg.subtle" onClick={() => onChange(undefined)} aria-label="сбросить">
+              ✕
+            </Button>
+          </HStack>
+        ) : (
+          <Text fontSize="xs" color="fg.subtle">
+            не отвечено
+          </Text>
+        )}
+      </Flex>
+      <HStack gap={{ base: '1', md: '2' }} role="radiogroup" aria-label={label} onPointerLeave={() => setHover(undefined)}>
+        {starIcons.map((name, i) => {
+          const n = i + 1
+          const lit = n <= shown
+          return (
+            <Box
+              as="button"
+              key={name}
+              role="radio"
+              aria-checked={value === n}
+              aria-label={`${n} из 5`}
+              title={`${n} из 5`}
+              p="1.5"
+              borderRadius="full"
+              cursor="pointer"
+              lineHeight="0"
+              color={lit ? 'ember.400' : 'fg.subtle'}
+              // Brighter with every star: 1 is pale, 5 is full.
+              opacity={lit ? 0.45 + (0.55 * i) / 4 : 0.28}
+              filter={lit && n === shown && n >= 4 ? 'drop-shadow(0 0 6px var(--chakra-colors-ember-400))' : undefined}
+              transform={lit && n === shown ? 'scale(1.08)' : undefined}
+              transition="opacity .15s, color .15s, transform .15s, filter .15s"
+              _focusVisible={{ outline: '2px solid', outlineColor: 'ember.400', outlineOffset: '1px' }}
+              onPointerEnter={(e: React.PointerEvent) => e.pointerType === 'mouse' && setHover(n)}
+              onClick={() => onChange(value === n ? undefined : n)}
+            >
+              <Icon name={name} size={36} />
+            </Box>
+          )
+        })}
+      </HStack>
+    </Box>
+  )
+}
+
 const tens = Array.from({ length: 10 }, (_, i) => String(i + 1))
 const sliderQuestions: ChoiceQuestion[] = ['scentCold', 'scentHot', 'burn', 'wentOut', 'soot', 'heat']
 const chipQuestions: ChoiceQuestion[] = ['crack', 'leak', 'finished']
@@ -103,12 +171,7 @@ export function ReviewForm({ value, onChange }: { value: ReviewAnswers; onChange
         index={value.overall != null ? value.overall - 1 : undefined}
         onChange={(i) => set('overall', i != null ? i + 1 : undefined)}
       />
-      <SliderQuestion
-        label="Понравился ли дизайн?"
-        steps={tens}
-        index={value.design != null ? value.design - 1 : undefined}
-        onChange={(i) => set('design', i != null ? i + 1 : undefined)}
-      />
+      <StarQuestion label="Понравился ли дизайн?" value={value.design} onChange={(v) => set('design', v)} />
       {sliderQuestions.map((k) => {
         const q = reviewQuestions[k]
         const keys = Object.keys(q.options)
@@ -151,7 +214,7 @@ export function ReviewCard({ r, children }: { r: Review; children?: React.ReactN
         </HStack>
         <HStack gap="3" fontSize="sm">
           {r.overall != null && <Text>общая <b>{r.overall}</b>/10</Text>}
-          {r.design != null && <Text>дизайн <b>{r.design}</b>/10</Text>}
+          {r.design != null && <Text>дизайн <b>{r.design}</b>/5</Text>}
         </HStack>
       </HStack>
       <Wrap gap="1.5" mb={r.comment ? 2 : 0}>

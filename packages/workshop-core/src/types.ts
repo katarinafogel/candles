@@ -286,6 +286,7 @@ export type Scale4 = 'none' | 'weak' | 'nice' | 'strong'
 
 export interface ReviewAnswers {
   overall?: number
+  /** 1–5 stars (was 1–10 before November 2026; old ratings were halved). */
   design?: number
   scentCold?: Scale4
   scentHot?: Scale4

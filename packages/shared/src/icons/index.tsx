@@ -1,4 +1,4 @@
-// Icons from svgrepo, one file each, a folder per set, drawn in currentColor so they take the
+// Icons from svgrepo and her own, one file each, a folder per set, drawn in currentColor so they take the
 // text colour. A new icon: drop its .svg into its set's folder and it shows up; names are unique
 // across sets.
 const files = import.meta.glob('./*/*.svg', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
@@ -15,6 +15,8 @@ const sets: Omit<IconSet, 'names'>[] = [
   { id: 'magic', label: 'Magic Glyph', link: 'https://www.svgrepo.com/collection/magic-glyph-icons/' },
   // Single icons picked from svgrepo one by one.
   { id: 'misc', label: 'Разные' },
+  // Drawn by Katarina in Clip Studio (a 240 px canvas, scaled to the 24 grid).
+  { id: 'custom', label: 'Свои' },
 ]
 
 const parsed = Object.entries(files)
