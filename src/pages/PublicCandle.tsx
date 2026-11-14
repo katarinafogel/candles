@@ -1,8 +1,9 @@
-import { Box, Button, Container, Flex, Heading, HStack, Spinner, Stack, Text } from '@chakra-ui/react'
+import { Box, Button, Container, Flex, Grid, Heading, HStack, Spinner, Stack, Text } from '@chakra-ui/react'
 import { useEffect, useMemo, useState } from 'react'
 import { LuCopy, LuFlame, LuSend, LuWind } from 'react-icons/lu'
 import { useParams } from 'react-router-dom'
 import { ReviewForm } from '../components/ReviewForm'
+import { InstructionText } from '../components/InstructionText'
 import { Chips, Field, notify, NumInput, TextArea } from '@shared/components/ui'
 import { candleColors, scentNotes } from '@workshop-core/lib/labels'
 import { fmt, round2 } from '@workshop-core/lib/calc'
@@ -324,7 +325,7 @@ export default function PublicCandle() {
   }
 
   return (
-    <Container maxW="560px" px="4" pt="calc(32px + env(safe-area-inset-top))" pb="16">
+    <Container maxW={askTester ? '560px' : { base: '560px', lg: '1080px' }} px="4" pt="calc(32px + env(safe-area-inset-top))" pb="16">
       <Stack gap="8">
         <Box textAlign="center">
           <Flex justify="center" mb="3">
@@ -365,69 +366,72 @@ export default function PublicCandle() {
         )}
 
         {!askTester && (
-          <>
-            {info?.instruction && (
-              <Box p="4" borderRadius="l3" bg="bg.subtle" borderWidth="1px" borderColor="border">
-                <Heading size="sm" mb="2">
-                  Как жечь свечу
+          // Phone: tracker, instruction, form one under another. Computer: the form on the left,
+          // the tracker and the instruction on the right, staying in view while the form scrolls.
+          <Grid templateColumns={{ base: '1fr', lg: 'minmax(0, 1fr) 400px' }} gap={{ base: '8', lg: '10' }} alignItems="start">
+            <Stack gap="6" gridColumn={{ lg: '2' }} gridRow={{ lg: '1' }} position={{ lg: 'sticky' }} top={{ lg: '6' }}>
+              <Box p="5" borderRadius="l3" bg="bg.subtle" borderWidth="1px" borderColor="border">
+                <Heading size="md" mb="4" textAlign="center">
+                  Трекер горения
                 </Heading>
-                <Text whiteSpace="pre-wrap" fontSize="sm" color="fg.muted">
-                  {info.instruction}
+                <BurnTracker id={trackerKey} sessions={sessions} setSessions={setSessions} />
+                <Text fontSize="xs" color="fg.subtle" textAlign="center" mt="3">
+                  История хранится в этом браузере: при смене телефона или очистке браузера она потеряется.
                 </Text>
               </Box>
-            )}
-
-            <Box>
-              <Heading size="md" mb="4" textAlign="center">
-                Трекер горения
-              </Heading>
-              <BurnTracker id={trackerKey} sessions={sessions} setSessions={setSessions} />
-              <Text fontSize="xs" color="fg.subtle" textAlign="center" mt="3">
-                История хранится в этом браузере: при смене телефона или очистке браузера она потеряется.
-              </Text>
-            </Box>
-
-            <Box>
-              <Heading size="md" mb="1">
-                Отзыв
-              </Heading>
-              <Text fontSize="sm" color="fg.muted" mb="4">
-                Все вопросы необязательные — ответьте, на что хочется.
-              </Text>
-              <ReviewForm value={{ ...answers, wentOut: answers.wentOut ?? wentOut }} onChange={setAnswers} />
-            </Box>
-
-            <Stack gap="3">
-              <Button size="xl" onClick={send} loading={sending}>
-                <LuSend /> Отправить
-              </Button>
-              {badQr && (
-                <Box p="3" borderWidth="1px" borderColor="orange.700" borderRadius="l3">
-                  <Text fontSize="sm" color="orange.300">
-                    Этот QR-код не подходит к свече — отзыв по нему отправить нельзя. Отсканируйте QR с самой свечи или напишите
-                    мастеру{info?.master ? ` (${info.master})` : ''}, и вам пришлют правильную ссылку.
-                  </Text>
-                </Box>
-              )}
-              {failed && (
-                <Box p="3" borderWidth="1px" borderColor="orange.700" borderRadius="l3">
-                  <Text fontSize="sm" color="orange.300" mb="2">
-                    Не получилось отправить. Скопируйте ответ и перешлите его мастеру в мессенджер.
-                  </Text>
-                  <Button
-                    variant="outline"
-                    w="100%"
-                    onClick={async () => {
-                      await navigator.clipboard.writeText(`Отзыв на свечу ${slug}/${id}:\n${failed}`)
-                      notify('Ответ скопирован')
-                    }}
-                  >
-                    <LuCopy /> Скопировать ответ
-                  </Button>
+              {info?.instruction && (
+                <Box p="5" borderRadius="l3" bg="bg.subtle" borderWidth="1px" borderColor="border">
+                  <Heading size="md" mb="3">
+                    Как жечь свечу
+                  </Heading>
+                  <InstructionText text={info.instruction} />
                 </Box>
               )}
             </Stack>
-          </>
+
+            <Stack gap="6" gridColumn={{ lg: '1' }} gridRow={{ lg: '1' }}>
+              <Box>
+                <Heading size="lg" mb="1">
+                  Отзыв
+                </Heading>
+                <Text fontSize="sm" color="fg.muted" mb="4">
+                  Все вопросы необязательные — ответьте, на что хочется.
+                </Text>
+                <ReviewForm value={{ ...answers, wentOut: answers.wentOut ?? wentOut }} onChange={setAnswers} />
+              </Box>
+
+              <Stack gap="3">
+                <Button size="xl" onClick={send} loading={sending}>
+                  <LuSend /> Отправить
+                </Button>
+                {badQr && (
+                  <Box p="3" borderWidth="1px" borderColor="orange.700" borderRadius="l3">
+                    <Text fontSize="sm" color="orange.300">
+                      Этот QR-код не подходит к свече — отзыв по нему отправить нельзя. Отсканируйте QR с самой свечи или напишите
+                      мастеру{info?.master ? ` (${info.master})` : ''}, и вам пришлют правильную ссылку.
+                    </Text>
+                  </Box>
+                )}
+                {failed && (
+                  <Box p="3" borderWidth="1px" borderColor="orange.700" borderRadius="l3">
+                    <Text fontSize="sm" color="orange.300" mb="2">
+                      Не получилось отправить. Скопируйте ответ и перешлите его мастеру в мессенджер.
+                    </Text>
+                    <Button
+                      variant="outline"
+                      w="100%"
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(`Отзыв на свечу ${slug}/${id}:\n${failed}`)
+                        notify('Ответ скопирован')
+                      }}
+                    >
+                      <LuCopy /> Скопировать ответ
+                    </Button>
+                  </Box>
+                )}
+              </Stack>
+            </Stack>
+          </Grid>
         )}
       </Stack>
     </Container>

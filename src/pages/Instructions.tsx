@@ -5,6 +5,8 @@ import { DeleteButton, Field, Modal, PageHeader, TextArea, TextInput } from '@sh
 import { useAppDispatch, useData } from '../store'
 import { actions } from '@workshop-core/store/dataSlice'
 import type { Instruction } from '@workshop-core/types'
+import { plainInstruction } from '@workshop-core/lib/instructionText'
+import { InstructionText } from '../components/InstructionText'
 
 export default function Instructions() {
   const d = useData()
@@ -32,7 +34,7 @@ export default function Instructions() {
               </Text>
             </Flex>
             <Text fontSize="sm" color="fg.muted" whiteSpace="pre-wrap" mt="2" lineClamp={4}>
-              {i.text}
+              {plainInstruction(i.text)}
             </Text>
           </Box>
         ))}
@@ -68,9 +70,17 @@ export default function Instructions() {
             <Field label="Название">
               <TextInput value={edit.title} onChange={(v) => setEdit({ ...edit, title: v })} />
             </Field>
-            <Field label="Текст">
+            <Field label="Текст" helper="[[фраза|пояснение]] — фраза другим цветом, пояснение всплывает при наведении или тапе. Строка с ! в начале — отдельный блок «почему это важно».">
               <TextArea value={edit.text} onChange={(v) => setEdit({ ...edit, text: v })} rows={10} />
             </Field>
+            {edit.text.trim() && (
+              <Box p="4" borderRadius="l3" bg="bg.subtle" borderWidth="1px" borderColor="border">
+                <Text fontSize="xs" color="fg.subtle" mb="2">
+                  Так увидит получатель
+                </Text>
+                <InstructionText text={edit.text} />
+              </Box>
+            )}
           </Stack>
         </Modal>
       )}

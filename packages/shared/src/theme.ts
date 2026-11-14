@@ -18,6 +18,9 @@ const config = defineConfig({
       backgroundAttachment: 'fixed',
     },
     '::selection': { bg: 'var(--g-selection)' },
+    // Every menu line is clickable: the hand cursor, as on buttons (Chakra's menu leaves the arrow).
+    '[role=menuitem], [role=menuitemradio], [role=menuitemcheckbox]': { cursor: 'pointer' },
+    '[role=menuitem][data-disabled]': { cursor: 'default' },
     // iOS Safari zooms the page into any field with text under 16px and doesn't zoom back: on touch
     // screens every field gets 16px, whatever its size.
     'input, textarea, select': {
