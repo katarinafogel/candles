@@ -11,6 +11,7 @@ function Hint({ text, hint }: { text: string; hint: string }) {
   const [shift, setShift] = useState(0)
   const wrap = useRef<HTMLDivElement>(null)
   const bubble = useRef<HTMLDivElement>(null)
+  const touch = useRef(false)
 
   useLayoutEffect(() => {
     if (!open || !bubble.current) return setShift(0)
@@ -43,11 +44,16 @@ function Hint({ text, hint }: { text: string; hint: string }) {
       textUnderlineOffset="3px"
       cursor="help"
       outline="none"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-      onFocus={() => setOpen(true)}
+      // A mouse opens it by hovering (a click keeps it open); a tap opens and closes it; the keyboard
+      // opens it on focus. Taps also send mouse-like events, so the pointer's type decides.
+      onPointerEnter={(e: React.PointerEvent) => e.pointerType === 'mouse' && setOpen(true)}
+      onPointerLeave={(e: React.PointerEvent) => e.pointerType === 'mouse' && setOpen(false)}
+      onPointerDown={(e: React.PointerEvent) => {
+        touch.current = e.pointerType !== 'mouse'
+      }}
+      onClick={() => setOpen((o) => (touch.current ? !o : true))}
+      onFocus={(e: React.FocusEvent<HTMLElement>) => e.currentTarget.matches(':focus-visible') && setOpen(true)}
       onBlur={() => setOpen(false)}
-      onClick={() => setOpen((o) => !o)}
       onKeyDown={(e: React.KeyboardEvent) => e.key === 'Escape' && setOpen(false)}
     >
       {text}

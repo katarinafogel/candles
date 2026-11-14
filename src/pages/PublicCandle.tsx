@@ -369,7 +369,7 @@ export default function PublicCandle() {
           // Phone: tracker, instruction, form one under another. Computer: the form on the left,
           // the tracker and the instruction on the right, staying in view while the form scrolls.
           <Grid templateColumns={{ base: '1fr', lg: 'minmax(0, 1fr) 400px' }} gap={{ base: '8', lg: '10' }} alignItems="start">
-            <Stack gap="6" gridColumn={{ lg: '2' }} gridRow={{ lg: '1' }} position={{ lg: 'sticky' }} top={{ lg: '6' }}>
+            <Stack gap="6" gridColumn={{ lg: '2' }} gridRow={{ lg: '1' }} position={{ lg: 'sticky' }} top={{ lg: '6' }} maxH={{ lg: 'calc(100dvh - 48px)' }} overflowY={{ lg: 'auto' }} className="quiet-scroll" pb={{ lg: '24' }}>
               <Box p="5" borderRadius="l3" bg="bg.subtle" borderWidth="1px" borderColor="border">
                 <Heading size="md" mb="4" textAlign="center">
                   Трекер горения
